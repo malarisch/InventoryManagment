@@ -1,5 +1,4 @@
-"use client";
-
+"use client"
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { cn } from "@/lib/utils";
@@ -13,7 +12,9 @@ import {
 import {
     CompanyNameHeader,
     companyType
-} from "@/components/app/components/company-name-header";
+} from "@/app/management/_libs/company-name-header";
+import {useCompany} from "@/app/management/_libs/companyHook";
+import React from "react";
 
 type NavItem = {
   label: string;
@@ -29,12 +30,15 @@ const iconMap: Record<string, React.ComponentType<any>> = {
   settings: Settings,
 };
 
-export function Sidebar({ items }: { items: NavItem[] }, company: companyType) {
+
+//const { company, loading, error } = useCompany();
+
+export function Sidebar({ items }: { items: NavItem[] }) {
   const pathname = usePathname();
 
   return (
     <div className="flex h-full min-h-0 flex-col">
-      <CompanyNameHeader company={company} />
+      <CompanyNameHeader />
 
       <nav className="flex-1 overflow-y-auto p-2">
         <div className="px-2 py-2 text-xs font-medium uppercase tracking-wide text-muted-foreground">Main</div>

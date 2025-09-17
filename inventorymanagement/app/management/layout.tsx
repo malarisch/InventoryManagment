@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
-import { Sidebar } from "@/components/app/management-sidebar";
-import { Header } from "@/components/app/management-header";
+import { Sidebar } from "@/app/management/_libs/management-sidebar";
+import { Header } from "@/app/management/_libs/management-header";
+import {companyType} from "@/app/management/_libs/company-name-header";
 
 export const metadata: Metadata = {
   title: "Management | Inventory",

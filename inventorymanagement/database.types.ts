@@ -66,6 +66,7 @@ export type Database = {
       }
       articles: {
         Row: {
+            equipments?: any;
           company_id: number
           created_at: string
           created_by: string | null
