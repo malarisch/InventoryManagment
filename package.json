@@ -1,0 +1,26 @@
+{
+  "name": "inventorymanagment",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/malarisch/InventoryManagment.git"
+  },
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/malarisch/InventoryManagment/issues"
+  },
+  "homepage": "https://github.com/malarisch/InventoryManagment#readme",
+  "devDependencies": {
+    "@snaplet/copycat": "^6.0.0",
+    "@snaplet/seed": "^0.98.0",
+    "@types/pg": "^8.15.5",
+    "pg": "^8.16.3",
+    "supabase": "^2.40.7"
+  }
+}
