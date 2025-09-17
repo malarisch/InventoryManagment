@@ -5,7 +5,7 @@ import type { Tables } from "@/database.types";
 import Link from "next/link";
 import { safeParseDate, formatDateTime } from "@/lib/dates";
 import { fallbackDisplayFromId } from "@/lib/userDisplay";
-import { fetchUserDisplayProfile } from "@/lib/users/userDisplay.server";
+import { fetchUserDisplayAdmin } from "@/lib/users/userDisplay.server";
 
 type Location = Tables<"locations">;
 type Equipment = Tables<"equipments"> & { articles?: { name: string } | null };
@@ -35,7 +35,7 @@ export default async function LocationDetailPage({ params }: { params: { id: str
 
   const loc = data as Location;
 
-  const creator = await fetchUserDisplayProfile(supabase as any, (loc as any).created_by as any);
+  const creator = await fetchUserDisplayAdmin((loc as any).created_by as any);
 
   // Compute equipments currently at this location:
   // Fetch latest history entries per equipment (approx via ordering + reduce) and filter to this location

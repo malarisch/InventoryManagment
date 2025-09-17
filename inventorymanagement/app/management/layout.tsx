@@ -18,7 +18,7 @@ const navItems: NavItem[] = [
   { label: "Equipments", href: "/management/equipments", icon: "package" },
   { label: "Articles", href: "/management/articles", icon: "box" },
   { label: "Locations", href: "/management/locations", icon: "map-pin" },
-  { label: "Settings", href: "/management/settings", icon: "settings" },
+  { label: "Settings", href: "/management/company-settings", icon: "settings" },
 ];
 
 export default function ManagementLayout({
@@ -39,4 +39,3 @@ export default function ManagementLayout({
     </div>
   );
 }
-

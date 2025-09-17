@@ -42,13 +42,16 @@
 - Required env: `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_ANON_KEY`.
 - RLS on tables: enforced per-company. Ensure queries always include/derive `company_id` and that policies restrict access to users who own the company.
 
-### User Profiles & Privacy
-- Verwende `public.profiles` für Anzeigenamen/Email/Pronomen (Migrationen `*_profiles.sql`, `*_profiles_pronouns.sql`).
-- RLS:
-  - select: authenticated only (nur Anzeigezwecke; keine Anon-Zugriffe).
-  - insert/update: nur eigener Datensatz (`user_id = auth.uid()`).
+### User Management & Privacy
+- Nutze Supabase Auth als Quelle der Wahrheit:
+  - Anzeigename/Pronomen als `user_metadata` Felder (`display_name`, `pronouns`).
+  - Email/Passwort über `supabase.auth.updateUser` verwalten (E-Mail-Bestätigung beachten).
+- Für serverseitige Anzeige anderer Nutzer (z. B. "Erstellt von") verwende den Admin-Client (`lib/supabase/admin.ts`) und lese `auth.users` (nur serverseitig!).
 - Profilpflege in der App unter `/management/settings`.
-- Vermeide Zugriffe auf `auth.users` im App-Code.
+
+### Seed Dump
+- Button in `/management/company-settings` erzeugt via API (`POST /api/admin/dump-seed`) eine `supabase/seed.sql` mit Daten aus `auth.users`, `auth.identities` und allen `public`-Tabellen (FK-Reihenfolge, `truncate ... restart identity cascade` + `insert`).
+- Server-seitig wird der Admin-Client (`SUPABASE_SERVICE_ROLE_KEY`) genutzt, nur für authentifizierte Owner einer Company.
 
 ## Agent Workflow & Logging
 - After each major task, append a short summary to `agentlog.md` to track project status.

@@ -128,11 +128,10 @@ function MobileDrawer({ items, onClose }: { items: NavItem[]; onClose: () => voi
 }
 
 function UserMenu() {
-  // Minimal placeholder avatar
+  // Minimal avatar linking to profile settings
   return (
-    <div className="inline-flex h-8 w-8 items-center justify-center rounded-full bg-muted text-xs font-medium text-muted-foreground">
+    <Link href="/management/profile/settings" aria-label="Profile settings" className="inline-flex h-8 w-8 items-center justify-center rounded-full bg-muted text-xs font-medium text-muted-foreground hover:bg-muted/80">
       <User className="h-4 w-4" />
-    </div>
+    </Link>
   );
 }
-

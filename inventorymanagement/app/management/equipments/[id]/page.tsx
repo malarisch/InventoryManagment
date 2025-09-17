@@ -5,7 +5,7 @@ import type { Tables } from "@/database.types";
 import Link from "next/link";
 import { safeParseDate, formatDate, formatDateTime } from "@/lib/dates";
 import { fallbackDisplayFromId } from "@/lib/userDisplay";
-import { fetchUserDisplayProfile } from "@/lib/users/userDisplay.server";
+import { fetchUserDisplayAdmin } from "@/lib/users/userDisplay.server";
 
 type Equipment = Tables<"equipments">;
 
@@ -34,7 +34,7 @@ export default async function EquipmentDetailPage({ params }: { params: { id: st
   const eq = data as any as Equipment & { articles?: { name: string } | null; article_location_history?: { locations?: { name: string } | null }[] };
 
   // Creator email (if accessible), fallback to UUID
-  const creator = await fetchUserDisplayProfile(supabase as any, eq.created_by as any);
+  const creator = await fetchUserDisplayAdmin(eq.created_by as any);
 
   return (
     <main className="min-h-screen w-full flex flex-col items-center p-5">
