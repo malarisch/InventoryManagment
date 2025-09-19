@@ -1,7 +1,6 @@
 import type { Metadata } from "next";
 import { Sidebar } from "@/app/management/_libs/management-sidebar";
 import { Header } from "@/app/management/_libs/management-header";
-import {companyType} from "@/app/management/_libs/company-name-header";
 
 export const metadata: Metadata = {
   title: "Management | Inventory",
@@ -18,6 +17,9 @@ const navItems: NavItem[] = [
   { label: "Equipments", href: "/management/equipments", icon: "package" },
   { label: "Articles", href: "/management/articles", icon: "box" },
   { label: "Locations", href: "/management/locations", icon: "map-pin" },
+  { label: "Customers", href: "/management/customers", icon: "users" },
+  { label: "Cases", href: "/management/cases", icon: "archive" },
+  { label: "Jobs", href: "/management/jobs", icon: "briefcase" },
   { label: "Settings", href: "/management/company-settings", icon: "settings" },
 ];
 

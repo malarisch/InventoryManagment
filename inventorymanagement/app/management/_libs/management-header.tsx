@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useState } from "react";
+import { useEffect, useMemo, useState, type ComponentType, type SVGProps } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { ThemeSwitcher } from "@/components/theme-switcher";
@@ -16,9 +16,28 @@ import {
   Box,
   MapPin,
   Settings,
+  Briefcase,
+  Users,
+  Archive,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { usePathname } from "next/navigation";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuSub,
+  DropdownMenuSubContent,
+  DropdownMenuSubTrigger,
+  DropdownMenuTrigger,
+  DropdownMenuRadioGroup,
+  DropdownMenuRadioItem,
+} from "@/components/ui/dropdown-menu";
+import { createClient } from "@/lib/supabase/client";
+import type { Tables } from "@/database.types";
+import { useRouter } from "next/navigation";
 
 type NavItem = {
   label: string;
@@ -26,11 +45,14 @@ type NavItem = {
   icon: string; // lucide icon name
 };
 
-const iconMap: Record<string, React.ComponentType<any>> = {
+const iconMap: Record<string, ComponentType<SVGProps<SVGSVGElement>>> = {
   "layout-dashboard": LayoutDashboard,
   package: Package,
   box: Box,
   "map-pin": MapPin,
+  briefcase: Briefcase,
+  users: Users,
+  archive: Archive,
   settings: Settings,
 };
 
@@ -127,11 +149,126 @@ function MobileDrawer({ items, onClose }: { items: NavItem[]; onClose: () => voi
   );
 }
 
+type Company = Tables<"companies">;
+
 function UserMenu() {
-  // Minimal avatar linking to profile settings
+  const supabase = useMemo(() => createClient(), []);
+  const router = useRouter();
+  const [companies, setCompanies] = useState<Company[]>([]);
+  const [selectedCompanyId, setSelectedCompanyId] = useState<string | null>(null);
+  const [loadingCompanies, setLoadingCompanies] = useState(true);
+
+  // Load companies for the current user
+  useEffect(() => {
+    let active = true;
+    async function load() {
+      setLoadingCompanies(true);
+      const { data: auth } = await supabase.auth.getUser();
+      const userId = auth.user?.id;
+      if (!userId) {
+        if (active) {
+          setCompanies([]);
+          setLoadingCompanies(false);
+        }
+        return;
+      }
+
+      const desired = (typeof window !== "undefined" && localStorage.getItem("active_company_id")) || null;
+
+      const list: Company[] = [];
+      const { data: memberships, error: mErr } = await supabase
+        .from("users_companies")
+        .select("companies(*)")
+        .eq("user_id", userId)
+        .order("created_at", { ascending: true });
+
+      if (mErr && mErr.code !== "PGRST116") {
+        // ignore not found, but keep going to owned
+      }
+      if (memberships?.length) {
+        for (const row of memberships) {
+          if (row.companies) list.push(row.companies as Company);
+        }
+      }
+
+      // Fallback: also include companies owned by the user (in case membership rows are missing)
+      const { data: owned, error: ownedErr } = await supabase
+        .from("companies")
+        .select("*")
+        .eq("owner_user_id", userId)
+        .order("created_at", { ascending: true });
+      if (!ownedErr && owned?.length) {
+        for (const c of owned as Company[]) {
+          if (!list.find((x) => x.id === c.id)) list.push(c);
+        }
+      }
+
+      if (!active) return;
+      setCompanies(list);
+      setSelectedCompanyId(desired ?? list[0]?.id ?? null);
+      setLoadingCompanies(false);
+    }
+    load();
+    return () => {
+      active = false;
+    };
+  }, [supabase]);
+
+  const onSelectCompany = async (id: string) => {
+    setSelectedCompanyId(id);
+    if (typeof window !== "undefined") {
+      localStorage.setItem("active_company_id", id);
+    }
+    // Refresh UI so components reading company update
+    router.refresh();
+  };
+
+  const onLogout = async () => {
+    await supabase.auth.signOut();
+    router.push("/auth/login");
+  };
+
   return (
-    <Link href="/management/profile/settings" aria-label="Profile settings" className="inline-flex h-8 w-8 items-center justify-center rounded-full bg-muted text-xs font-medium text-muted-foreground hover:bg-muted/80">
-      <User className="h-4 w-4" />
-    </Link>
+    <DropdownMenu>
+      <DropdownMenuTrigger asChild>
+        <button
+          aria-label="Benutzermenü"
+          className="inline-flex h-8 w-8 items-center justify-center rounded-full bg-muted text-xs font-medium text-muted-foreground hover:bg-muted/80"
+        >
+          <User className="h-4 w-4" />
+        </button>
+      </DropdownMenuTrigger>
+      <DropdownMenuContent align="end" className="w-56">
+        <DropdownMenuLabel>Menü</DropdownMenuLabel>
+        <DropdownMenuSeparator />
+        <DropdownMenuSub>
+          <DropdownMenuSubTrigger>Company Switcher</DropdownMenuSubTrigger>
+          <DropdownMenuSubContent className="w-56">
+            {loadingCompanies ? (
+              <DropdownMenuItem disabled>Lädt…</DropdownMenuItem>
+            ) : companies.length ? (
+              <DropdownMenuRadioGroup value={selectedCompanyId ?? undefined} onValueChange={onSelectCompany}>
+                {companies.map((c) => (
+                  <DropdownMenuRadioItem key={c.id} value={c.id}>
+                    <span className="truncate">{c.name ?? c.id}</span>
+                  </DropdownMenuRadioItem>
+                ))}
+              </DropdownMenuRadioGroup>
+            ) : (
+              <DropdownMenuItem disabled>Keine Company gefunden</DropdownMenuItem>
+            )}
+            <DropdownMenuSeparator />
+            <DropdownMenuItem asChild>
+              <Link href="/management/company/new">+ Neue Company…</Link>
+            </DropdownMenuItem>
+          </DropdownMenuSubContent>
+        </DropdownMenuSub>
+        <DropdownMenuItem asChild>
+          <Link href="/management/profile/settings">Profileinstellungen</Link>
+        </DropdownMenuItem>
+        <DropdownMenuSeparator />
+        <DropdownMenuItem onClick={onLogout}>Abmelden</DropdownMenuItem>
+      </DropdownMenuContent>
+    </DropdownMenu>
   );
 }

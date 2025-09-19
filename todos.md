@@ -1,0 +1,29 @@
+# To-Do List
+Diese To-Do List enthält Aufgaben, die an der Software zu bearbeiten sind. Sobald eine Aufgabe bearbeited wurde soll diese hier in der Datei unten in die Done-List eingefügt und aus der To-Do list entfernt werden.
+
+## To-Do
+- Erstelle nun ein Dashboard auf der management/ route. Es soll übersichtlich und responsiv sein (wie eigentlich alles). Wichtige elemente darauf. Kommende Veranstaltungen, allgemeiner history log mit 20 einträgen in scrollbarer tabelle - die tabelle soll nicht die ganze seite super lang machen!
+- Alle Objekte sollen Files bekommen können. Dazu in den jeweiligen tabellen ein files arry column anlegen als jsonb, in jedem objekt stehen name und beschreibung (beides opeitonal) und link sowie id aus dem supabase storage. Die Edit Seiten bekommen eine Dateiübersicht und ein File Upload (nicht die create seiten!)
+### Fixes:
+die artiel edit seite hat zwei equipment hinzufügen knöpfe.
+## Done
+- Übersicht von Jobs von Kunden (Liste in Kunden-Detail)
+- Übersichtstabellen mit "Bearbeiten"-Buttons; Detailseiten mit Löschen + Undo
+- Fix: Kunde in Jobübersicht ist jetzt anklickbar
+- Job-Detail: Übersicht gebuchter Assets (Cases/Equipments) + schnelles Buchen (Artikel X Stück, Equipment-ID, Case).
+- Fixes: History streamt live; Equipments-Auswahl (Case Create/Edit) paginiert und filtert Case-Equipment wie bereits eingebuchte; Cases haben Name/Beschreibung (Titel/Description Felder im Formular); "Von: dir" in History.
+- Cases: Im Detail Items (Equipments/Artikel) nachträglich hinzufügen/entfernen.
+- Fixes: Case Creator – Equipment-Auswahl als Tabelle mit Suche/Checkboxen; History zeigt Namen/"Du" statt UUID.
+- Fixes: "Im Lager seit" hat nun Standard heute; History-Anzeige schöner (Operation + kompakte Werte, besserer Nutzer-Fallback); Case-Form zeigt Namen von Equipments/Artikeln; Redirect nach Case-Erstellung zur Case-Detailseite.
+- Caseübersicht und Erstellen: Liste unter /management/cases, Create-Form inkl. Equipments und ungetrackter Artikel (articles jsonb[] mit {article_id, amount}).
+- History: Trigger-Funktion + Triggers für Kern-Tabellen; Insert-Policy für history. UI-Karte auf Detailseiten (Articles, Equipments, Locations, Customers, Jobs).
+- Company: "+ Neue Company" im Switcher; Create-Form unter /management/company/new (legt users_companies Mitgliedschaft an).
+- Fixes: Next.js params Warnung behoben (alle Detailseiten nutzen await params). Equipment-Create-Knopf auf Artikelseite nun rechts oben in der Equipments-Liste.
+- Equipment-Form-Verbesserungen: Leere Date-Picker senden keine Nulls (DB-Default greift), Button "Neues Equipment" in der Artikel-Detailseite (öffnet Create-Seite mit vorgewähltem Artikel), Bulk-Create (Anzahl) im Equipment-Create-Formular.
+- Formulare um neue Artikel, Locations, Equipments, Cases, Kunden und Jobs zu erstellen 
+- Seite für Kunden, sowie Kunden Detailview
+- Seite für Jobs, sowie Job Detailview
+- In der Header Leiste wird auf dem User-Icon ein Drop-Down Menü angezeigt mit:
+  - Company Switcher (Subliste mit allen Companies, Auswahl wird gespeichert)
+  - Profileinstellungen (Link zu `/management/profile/settings`)
+  - Abmelden (Supabase Sign-Out)

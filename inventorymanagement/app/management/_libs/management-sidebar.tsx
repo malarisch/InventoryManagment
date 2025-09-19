@@ -8,12 +8,11 @@ import {
   Box,
   MapPin,
   Settings,
+  Briefcase,
+  Users,
+  Archive,
 } from "lucide-react";
-import {
-    CompanyNameHeader,
-    companyType
-} from "@/app/management/_libs/company-name-header";
-import {useCompany} from "@/app/management/_libs/companyHook";
+import { CompanyNameHeader } from "@/app/management/_libs/company-name-header";
 import React from "react";
 
 type NavItem = {
@@ -22,16 +21,16 @@ type NavItem = {
   icon: string; // lucide icon name
 };
 
-const iconMap: Record<string, React.ComponentType<any>> = {
+const iconMap: Record<string, React.ComponentType<React.SVGProps<SVGSVGElement>>> = {
   "layout-dashboard": LayoutDashboard,
   package: Package,
   box: Box,
   "map-pin": MapPin,
+  briefcase: Briefcase,
+  users: Users,
+  archive: Archive,
   settings: Settings,
 };
-
-
-//const { company, loading, error } = useCompany();
 
 export function Sidebar({ items }: { items: NavItem[] }) {
   const pathname = usePathname();
@@ -71,4 +70,3 @@ export function Sidebar({ items }: { items: NavItem[] }) {
     </div>
   );
 }
-

@@ -8,6 +8,7 @@ import { SignUpUserSteps } from "@/components/tutorial/sign-up-user-steps";
 import { hasEnvVars } from "@/lib/utils";
 import { createClient } from "@/lib/supabase/server";
 import Link from "next/link";
+import {redirect} from "next/navigation";
 
 export default async function Home() {
   let user = null as null | { id: string };
@@ -17,6 +18,7 @@ export default async function Home() {
       data: { user: u },
     } = await supabase.auth.getUser();
     user = u ? { id: u.id } : null;
+    if (user) redirect("/management");
   }
   return (
     <main className="min-h-screen flex flex-col items-center">
@@ -25,11 +27,7 @@ export default async function Home() {
           <div className="w-full max-w-5xl flex justify-between items-center p-3 px-5 text-sm">
             <div className="flex gap-5 items-center font-semibold">
               <Link href={"/"}>Next.js Supabase Starter</Link>
-              {user && (
-                <Link href="/articles" className="hover:underline">
-                  Articles
-                </Link>
-              )}
+
               <div className="flex items-center gap-2">
                 <DeployButton />
               </div>

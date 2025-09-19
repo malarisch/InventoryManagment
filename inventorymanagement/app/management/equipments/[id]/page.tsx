@@ -6,17 +6,26 @@ import Link from "next/link";
 import { safeParseDate, formatDate, formatDateTime } from "@/lib/dates";
 import { fallbackDisplayFromId } from "@/lib/userDisplay";
 import { fetchUserDisplayAdmin } from "@/lib/users/userDisplay.server";
+import { HistoryCard } from "@/components/historyCard";
+import { DeleteWithUndo } from "@/components/forms/delete-with-undo";
 
-type Equipment = Tables<"equipments">;
+type EquipmentRow = Tables<"equipments"> & {
+  articles?: { name: string } | null;
+  asset_tags?: { printed_code: string | null } | null;
+  current_location_location?: { id: number; name: string | null } | null;
+};
 
-export default async function EquipmentDetailPage({ params }: { params: { id: string } }) {
-  const id = Number(params.id);
+export default async function EquipmentDetailPage({ params }: { params: Promise<{ id: string }> }) {
+  const { id: idParam } = await params;
+  const id = Number(idParam);
   const supabase = await createClient();
   const { data: auth } = await supabase.auth.getUser();
   const currentUserId = auth.user?.id ?? null;
   const { data, error } = await supabase
     .from("equipments")
-    .select("*, articles(name), article_location_history(location_id, locations(name))")
+    .select(
+      "*, articles(name), asset_tags:asset_tag(printed_code), current_location_location:current_location(id,name)"
+    )
     .eq("id", id)
     .limit(1)
     .single();
@@ -31,10 +40,10 @@ export default async function EquipmentDetailPage({ params }: { params: { id: st
     );
   }
 
-  const eq = data as any as Equipment & { articles?: { name: string } | null; article_location_history?: { locations?: { name: string } | null }[] };
+  const eq = data as EquipmentRow;
 
   // Creator email (if accessible), fallback to UUID
-  const creator = await fetchUserDisplayAdmin(eq.created_by as any);
+  const creator = await fetchUserDisplayAdmin(eq.created_by ?? undefined);
 
   return (
     <main className="min-h-screen w-full flex flex-col items-center p-5">
@@ -46,16 +55,34 @@ export default async function EquipmentDetailPage({ params }: { params: { id: st
           <CardHeader>
             <CardTitle>Equipment #{eq.id}</CardTitle>
             <CardDescription>
-              Artikel: {eq.articles?.name ?? "—"} • Aktueller Standort: {eq.article_location_history?.[0]?.locations?.name ?? "—"}
+              Artikel: {eq.article_id ? (
+                <Link className="underline-offset-2 hover:underline" href={`/management/articles/${eq.article_id}`}>
+                  {eq.articles?.name ?? `#${eq.article_id}`}
+                </Link>
+              ) : "—"}
+              {" • Asset Tag: "}
+              {eq.asset_tag ? (eq.asset_tags?.printed_code ?? `#${eq.asset_tag}`) : "—"}
+              {" • Aktueller Standort: "}
+              {eq.current_location ? (
+                <Link className="underline-offset-2 hover:underline" href={`/management/locations/${eq.current_location}`}>
+                  {eq.current_location_location?.name ?? `#${eq.current_location}`}
+                </Link>
+              ) : "—"}
               <br />
-              Im Lager seit: {formatDate(safeParseDate(eq.added_to_inventory_at as any))}
-              {" • Erstellt am: "}{formatDateTime(safeParseDate(eq.created_at as any))} {`• Erstellt von: ${creator ?? (eq.created_by === currentUserId ? 'Du' : fallbackDisplayFromId(eq.created_by as any)) ?? '—'}`}
+              Im Lager seit: {formatDate(safeParseDate(eq.added_to_inventory_at))}
+              {" • Erstellt am: "}{formatDateTime(safeParseDate(eq.created_at))} {`• Erstellt von: ${creator ?? (eq.created_by === currentUserId ? 'Du' : fallbackDisplayFromId(eq.created_by)) ?? '—'}`}
             </CardDescription>
           </CardHeader>
           <CardContent>
+            <div className="mb-4">
+              <DeleteWithUndo table="equipments" id={eq.id} payload={eq as any} redirectTo="/management/equipments" />
+            </div>
             <EquipmentEditForm equipment={eq} />
           </CardContent>
         </Card>
+      </div>
+      <div className="w-full max-w-3xl mt-4">
+        <HistoryCard table="equipments" dataId={id} />
       </div>
     </main>
   );

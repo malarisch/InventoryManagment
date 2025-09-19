@@ -3,22 +3,29 @@ import { createClient } from "@/lib/supabase/server";
 import type { Tables } from "@/database.types";
 import { ArticleEditForm } from "@/components/forms/article-edit-form";
 import Link from "next/link";
+import { Button } from "@/components/ui/button";
+import { DeleteWithUndo } from "@/components/forms/delete-with-undo";
+import { HistoryCard } from "@/components/historyCard";
+ 
 import { ArticleEquipmentsTable } from "@/components/articleEquipmentsTable";
 import { safeParseDate, formatDateTime } from "@/lib/dates";
 import { fallbackDisplayFromId } from "@/lib/userDisplay";
 import { fetchUserDisplayAdmin } from "@/lib/users/userDisplay.server";
 
-type Article = Tables<"articles">;
-type Equipment = Tables<"equipments"> & { article_location_history?: { location_id: number; locations?: { name: string } | null }[] };
+type ArticleRow = Tables<"articles"> & {
+  locations?: { name: string } | null;
+  asset_tags?: { printed_code: string | null } | null;
+};
 
-export default async function ArticleDetailPage({ params }: { params: { id: string } }) {
-  const id = Number(params.id);
+export default async function ArticleDetailPage({ params }: { params: Promise<{ id: string }> }) {
+  const { id: idParam } = await params;
+  const id = Number(idParam);
   const supabase = await createClient();
   const { data: auth } = await supabase.auth.getUser();
   const currentUserId = auth.user?.id ?? null;
   const { data, error } = await supabase
     .from("articles")
-    .select("*, locations:default_location(name)")
+    .select("*, locations:default_location(name), asset_tags:asset_tag(printed_code)")
     .eq("id", id)
     .limit(1)
     .single();
@@ -33,10 +40,10 @@ export default async function ArticleDetailPage({ params }: { params: { id: stri
     );
   }
 
-  const article = data as Article & { locations?: { name: string } | null };
+  const article = data as ArticleRow;
 
   // Creator name/email if available
-  const creator = await fetchUserDisplayAdmin((article as any).created_by as any);
+  const creator = await fetchUserDisplayAdmin(article.created_by ?? undefined);
 
   // Equipments werden clientseitig paginiert geladen
 
@@ -55,16 +62,22 @@ export default async function ArticleDetailPage({ params }: { params: { id: stri
                   {article.locations?.name ?? `#${article.default_location}`}
                 </Link>
               ) : "—"}
+              {" • Asset Tag: "}
+              {article.asset_tag ? (article.asset_tags?.printed_code ?? `#${article.asset_tag}`) : "—"}
               <br />
-              Erstellt am: {formatDateTime(safeParseDate((article as any).created_at))} {`• Erstellt von: ${creator ?? ((article as any).created_by === currentUserId ? 'Du' : fallbackDisplayFromId((article as any).created_by)) ?? '—'}`}
+              Erstellt am: {formatDateTime(safeParseDate(article.created_at))} {`• Erstellt von: ${creator ?? (article.created_by === currentUserId ? 'Du' : fallbackDisplayFromId(article.created_by)) ?? '—'}`}
             </CardDescription>
           </CardHeader>
           <CardContent>
+            <div className="mb-4">
+              <DeleteWithUndo table="articles" id={article.id} payload={article as any} redirectTo="/management/articles" />
+            </div>
             <ArticleEditForm article={article} />
           </CardContent>
         </Card>
 
         <ArticleEquipmentsTable articleId={id} pageSize={10} />
+        <HistoryCard table="articles" dataId={id} />
       </div>
     </main>
   );

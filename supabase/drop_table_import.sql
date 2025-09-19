@@ -1,0 +1,2 @@
+DROP TABLE IF EXISTS import.users;
+DROP SCHEMA IF EXISTS import;

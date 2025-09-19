@@ -11,7 +11,7 @@ function sqlEscapeString(s: string) {
   return s.replace(/'/g, "''");
 }
 
-function sqlValue(v: any): string {
+function sqlValue(v: unknown): string {
   if (v === null || v === undefined) return "NULL";
   if (typeof v === "number") return Number.isFinite(v) ? String(v) : "NULL";
   if (typeof v === "boolean") return v ? "true" : "false";
@@ -42,21 +42,53 @@ export async function POST() {
     const admin = createAdminClient();
 
     // Fetch data in FK-friendly order
-    const [companies, locations, articles, equipments, history, users, identities] = await Promise.all([
+    const [
+      companies,
+      usersCompanies,
+      assetTagTemplates,
+      assetTags,
+      locations,
+      articles,
+      customers,
+      jobs,
+      equipments,
+      cases,
+      jobBookedAssets,
+      jobAssetsOnJob,
+      history,
+      users,
+      identities,
+    ] = await Promise.all([
       admin.from("companies").select("*").order("id"),
+      admin.from("users_companies").select("*").order("id"),
+      admin.from("asset_tag_templates").select("*").order("id"),
+      admin.from("asset_tags").select("*").order("id"),
       admin.from("locations").select("*").order("id"),
-      admin.from("articles").select("*\n, default_location, company_id, name, metadata, created_at, created_by, id").order("id"),
+      admin.from("articles").select("*").order("id"),
+      admin.from("customers").select("*").order("id"),
+      admin.from("jobs").select("*").order("id"),
       admin.from("equipments").select("*").order("id"),
-      admin.from("article_location_history").select("*").order("id"),
-      admin.schema("auth").from("users" as any).select("id, email, raw_user_meta_data, created_at, updated_at, last_sign_in_at").order("id"),
-      admin.schema("auth").from("identities" as any).select("*").order("id"),
+      admin.from("cases").select("*").order("id"),
+      admin.from("job_booked_assets").select("*").order("id"),
+      admin.from("job_assets_on_job").select("*").order("id"),
+      admin.from("history").select("*").order("id"),
+      admin
+        .schema("auth")
+        .from<{ id: string; email: string | null; raw_user_meta_data: unknown; created_at: string | null; updated_at: string | null; last_sign_in_at: string | null }>("users")
+        .select("id, email, raw_user_meta_data, created_at, updated_at, last_sign_in_at")
+        .order("id"),
+      admin
+        .schema("auth")
+        .from<Record<string, unknown>>("identities")
+        .select("*")
+        .order("id"),
     ]);
 
-    function buildInserts(table: string, rows: any[], columns?: string[]) {
+    function buildInserts(table: string, rows: ReadonlyArray<Record<string, unknown>>, columns?: string[]) {
       if (!rows || rows.length === 0) return "";
       const cols = columns ?? Object.keys(rows[0]);
       const values = rows
-        .map((r) => `(${cols.map((c) => sqlValue((r as any)[c])).join(", ")})`)
+        .map((r) => `(${cols.map((c) => sqlValue(r[c])).join(", ")})`)
         .join(",\n");
       return `truncate table ${table} restart identity cascade;\ninsert into ${table} (${cols.join(", ")}) values\n${values};\n\n`;
     }
@@ -64,21 +96,29 @@ export async function POST() {
     let sql = "-- Generated seed for public + auth (data only)\nBEGIN;\n\n";
     // auth.users (limited columns) then auth.identities
     if (users && users.data) {
-      const rows = users.data as any[];
+      const rows = (users.data ?? []) as Record<string, unknown>[];
       const cols = ["id", "email", "raw_user_meta_data", "created_at", "updated_at", "last_sign_in_at"];
       sql += buildInserts("auth.users", rows, cols);
     }
     if (identities && identities.data) {
-      const rows = identities.data as any[];
+      const rows = (identities.data ?? []) as Record<string, unknown>[];
       // derive columns from first row to be robust across versions
       const cols = rows.length ? Object.keys(rows[0]) : ["id", "user_id", "identity_data", "provider", "last_sign_in_at", "created_at", "updated_at", "email"].filter(Boolean);
       sql += buildInserts("auth.identities", rows, cols);
     }
-    if (companies && companies.data) sql += buildInserts("public.companies", companies.data as any[]);
-    if (locations && locations.data) sql += buildInserts("public.locations", locations.data as any[]);
-    if (articles && articles.data) sql += buildInserts("public.articles", articles.data as any[]);
-    if (equipments && equipments.data) sql += buildInserts("public.equipments", equipments.data as any[]);
-    if (history && history.data) sql += buildInserts("public.article_location_history", history.data as any[]);
+    if (companies && companies.data) sql += buildInserts("public.companies", companies.data as Record<string, unknown>[]);
+    if (usersCompanies && usersCompanies.data) sql += buildInserts("public.users_companies", usersCompanies.data as Record<string, unknown>[]);
+    if (assetTagTemplates && assetTagTemplates.data) sql += buildInserts("public.asset_tag_templates", assetTagTemplates.data as Record<string, unknown>[]);
+    if (assetTags && assetTags.data) sql += buildInserts("public.asset_tags", assetTags.data as Record<string, unknown>[]);
+    if (locations && locations.data) sql += buildInserts("public.locations", locations.data as Record<string, unknown>[]);
+    if (articles && articles.data) sql += buildInserts("public.articles", articles.data as Record<string, unknown>[]);
+    if (customers && customers.data) sql += buildInserts("public.customers", customers.data as Record<string, unknown>[]);
+    if (jobs && jobs.data) sql += buildInserts("public.jobs", jobs.data as Record<string, unknown>[]);
+    if (equipments && equipments.data) sql += buildInserts("public.equipments", equipments.data as Record<string, unknown>[]);
+    if (cases && cases.data) sql += buildInserts("public.cases", cases.data as Record<string, unknown>[]);
+    if (jobBookedAssets && jobBookedAssets.data) sql += buildInserts("public.job_booked_assets", jobBookedAssets.data as Record<string, unknown>[]);
+    if (jobAssetsOnJob && jobAssetsOnJob.data) sql += buildInserts("public.job_assets_on_job", jobAssetsOnJob.data as Record<string, unknown>[]);
+    if (history && history.data) sql += buildInserts("public.history", history.data as Record<string, unknown>[]);
     sql += "COMMIT;\n";
 
     // Write to repo root supabase/seed.sql (Next app lives in ./inventorymanagement)
@@ -88,7 +128,8 @@ export async function POST() {
     await fs.writeFile(outPath, sql, "utf8");
 
     return NextResponse.json({ ok: true, path: "../supabase/seed.sql", bytes: Buffer.byteLength(sql) });
-  } catch (e: any) {
-    return NextResponse.json({ error: String(e?.message || e) }, { status: 500 });
+  } catch (e: unknown) {
+    const message = e instanceof Error ? e.message : String(e);
+    return NextResponse.json({ error: message }, { status: 500 });
   }
 }

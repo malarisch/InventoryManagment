@@ -7,12 +7,19 @@
   - `lib/`: utilities (e.g., `lib/supabase/{client,server}.ts`).
   - Config: `next.config.ts`, `tailwind.config.ts`, `eslint.config.mjs`, `tsconfig.json`.
 - `supabase/`: local config and SQL migrations (`migrations/*.sql`).
-- Domain model:
-  - `companies`: tenant boundary. All domain rows reference a `company_id`. Ownership enforced via RLS: only users owning the company can access data.
-  - `articles`: product types (e.g., microphones, mixers); fields include `metadata`, optional `default_location`, and `company_id`.
-  - `equipments`: physical items referencing an `article` (`article_id`); fields include `asset_tag`, `has_asset_sticker`, `metadata`, and `company_id`.
-  - `locations`: canonical place names; fields include `name`, `description`, `metadata`, and `company_id`.
-  - `article_location_history`: append-only history of equipment locations. Current location is determined by the newest entry per equipment.
+- Domain model (all business tables include a `company_id` FK and enforce RLS through `users_companies` membership):
+  - `companies`: tenant boundary with `name`, `description`, optional `metadata`, and `owner_user_id` (FK to `auth.users`). Members listed in `users_companies` get read access; owners retain full CRUD rights.
+  - `users_companies`: join table between `auth.users` and `companies`; owners can manage rows, members can list co-workers. All downstream RLS checks reference this table.
+  - `articles`: product definitions scoped to a company; columns include `name`, `metadata`, optional `default_location` (FK `locations.id`), optional `asset_tag` (FK `asset_tags.id`), `created_by` (FK `auth.users.id`), and timestamps.
+  - `asset_tag_templates`: JSON templates for printing asset labels; ties to `company_id` and optional `created_by`. Once an applied `asset_tags.printed_template` references a template, update/delete is blocked via dedicated RLS policies.
+  - `asset_tags`: generated labels with `printed_code`, optional `printed_template` reference, `printed_applied` flag, `company_id`, and optional `created_by`. Referenced by `articles`, `equipments`, and `locations`.
+  - `equipments`: physical inventory linked to an `article_id`, optional `asset_tag`, optional `current_location` (FK `locations.id`), `has_asset_sticker`, `added_to_inventory_at`, `metadata`, `created_by`, and `company_id`.
+  - `locations`: canonical place names per company with `name`, optional `description`, optional `asset_tag`, `created_by`, and timestamps.
+  - `cases`: groupings of gear with optional `case_equipment` (FK `equipments.id`), an array of contained equipment IDs, `company_id`, and `created_by`.
+  - `customers`: contact records (`type`, personal/company details, address fields, `metadata`) tied to `company_id` and optional `created_by`.
+  - `jobs`: scheduled work linked to `company_id`, optional `customer_id`, optional `created_by`, scheduling fields, `name`, `type`, `job_location`, and `meta` JSON.
+  - `job_booked_assets` and `job_assets_on_job`: materialized reservations/assignments of equipment or cases to jobs; columns include `job_id`, optional `equipment_id`/`case_id`, `company_id`, optional `created_by`, and timestamps.
+  - `history`: append-only audit trail storing `table_name`, `data_id`, `old_data`, optional `change_made_by`, and `company_id`; readable to company members.
 
 ## Build, Test, and Development Commands
 - Install: `cd inventorymanagement && npm install`.
@@ -30,7 +37,7 @@
 ## Testing Guidelines
 - Add when needed: RTL + Vitest/Jest for UI/logic; Playwright for E2E.
 - Name tests `*.test.ts(x)` colocated or under `__tests__/`.
-- Cover: auth flows, Supabase queries, and location resolution (newest entry defines current location). Example SQL pattern: `SELECT DISTINCT ON (equipment_id) * FROM article_location_history ORDER BY equipment_id, created_at DESC`.
+- Cover: auth flows, Supabase queries, and location assignment flows (`equipments.current_location`, related history snapshots).
 
 ## Commit & Pull Request Guidelines
 - Commits: Conventional Commits (`feat:`, `fix:`, `chore:`, `refactor:`). Small and focused.

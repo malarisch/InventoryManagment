@@ -9,64 +9,9 @@ export type Json =
 export type Database = {
   public: {
     Tables: {
-      article_location_history: {
-        Row: {
-          company_id: number
-          created_at: string
-          created_by_user: string
-          equipment_id: number
-          gps_accuracy: string | null
-          gps_coordinates: string | null
-          id: number
-          location_id: number
-        }
-        Insert: {
-          company_id: number
-          created_at?: string
-          created_by_user?: string
-          equipment_id: number
-          gps_accuracy?: string | null
-          gps_coordinates?: string | null
-          id?: number
-          location_id: number
-        }
-        Update: {
-          company_id?: number
-          created_at?: string
-          created_by_user?: string
-          equipment_id?: number
-          gps_accuracy?: string | null
-          gps_coordinates?: string | null
-          id?: number
-          location_id?: number
-        }
-        Relationships: [
-          {
-            foreignKeyName: "article_location_history_company_id_fkey"
-            columns: ["company_id"]
-            isOneToOne: false
-            referencedRelation: "companies"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "article_location_history_equipment_id_fkey"
-            columns: ["equipment_id"]
-            isOneToOne: false
-            referencedRelation: "equipments"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "article_location_history_location_id_fkey"
-            columns: ["location_id"]
-            isOneToOne: false
-            referencedRelation: "locations"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
       articles: {
         Row: {
-            equipments?: any;
+          asset_tag: number | null
           company_id: number
           created_at: string
           created_by: string | null
@@ -76,6 +21,7 @@ export type Database = {
           name: string
         }
         Insert: {
+          asset_tag?: number | null
           company_id: number
           created_at?: string
           created_by?: string | null
@@ -85,6 +31,7 @@ export type Database = {
           name?: string
         }
         Update: {
+          asset_tag?: number | null
           company_id?: number
           created_at?: string
           created_by?: string | null
@@ -94,6 +41,13 @@ export type Database = {
           name?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "articles_asset_tag_fkey"
+            columns: ["asset_tag"]
+            isOneToOne: false
+            referencedRelation: "asset_tags"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "articles_company_id_fkey"
             columns: ["company_id"]
@@ -106,6 +60,137 @@ export type Database = {
             columns: ["default_location"]
             isOneToOne: false
             referencedRelation: "locations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      asset_tag_templates: {
+        Row: {
+          company_id: number | null
+          created_at: string
+          created_by: string | null
+          id: number
+          template: Json | null
+        }
+        Insert: {
+          company_id?: number | null
+          created_at?: string
+          created_by?: string | null
+          id?: number
+          template?: Json | null
+        }
+        Update: {
+          company_id?: number | null
+          created_at?: string
+          created_by?: string | null
+          id?: number
+          template?: Json | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "asset_tag_templates_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      asset_tags: {
+        Row: {
+          company_id: number | null
+          created_at: string
+          created_by: string | null
+          id: number
+          printed_applied: boolean
+          printed_code: string | null
+          printed_template: number | null
+        }
+        Insert: {
+          company_id?: number | null
+          created_at?: string
+          created_by?: string | null
+          id?: number
+          printed_applied?: boolean
+          printed_code?: string | null
+          printed_template?: number | null
+        }
+        Update: {
+          company_id?: number | null
+          created_at?: string
+          created_by?: string | null
+          id?: number
+          printed_applied?: boolean
+          printed_code?: string | null
+          printed_template?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "asset_tags_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      cases: {
+        Row: {
+          articles: Json[] | null
+          asset_tag: number | null
+          case_equipment: number | null
+          company_id: number | null
+          created_at: string
+          created_by: string | null
+          description: string | null
+          equipments: number[] | null
+          id: number
+          name: string | null
+        }
+        Insert: {
+          articles?: Json[] | null
+          asset_tag?: number | null
+          case_equipment?: number | null
+          company_id?: number | null
+          created_at?: string
+          created_by?: string | null
+          description?: string | null
+          equipments?: number[] | null
+          id?: number
+          name?: string | null
+        }
+        Update: {
+          articles?: Json[] | null
+          asset_tag?: number | null
+          case_equipment?: number | null
+          company_id?: number | null
+          created_at?: string
+          created_by?: string | null
+          description?: string | null
+          equipments?: number[] | null
+          id?: number
+          name?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "cases_asset_tag_fkey"
+            columns: ["asset_tag"]
+            isOneToOne: false
+            referencedRelation: "asset_tags"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "cases_case_equipment_fkey"
+            columns: ["case_equipment"]
+            isOneToOne: false
+            referencedRelation: "equipments"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "cases_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
             referencedColumns: ["id"]
           },
         ]
@@ -137,37 +222,93 @@ export type Database = {
         }
         Relationships: []
       }
+      customers: {
+        Row: {
+          address: string | null
+          company_id: number
+          company_name: string | null
+          country: string | null
+          created_at: string
+          created_by: string | null
+          email: string | null
+          forename: string | null
+          id: number
+          metadata: Json | null
+          postal_code: string | null
+          surname: string | null
+          type: string | null
+        }
+        Insert: {
+          address?: string | null
+          company_id: number
+          company_name?: string | null
+          country?: string | null
+          created_at?: string
+          created_by?: string | null
+          email?: string | null
+          forename?: string | null
+          id?: number
+          metadata?: Json | null
+          postal_code?: string | null
+          surname?: string | null
+          type?: string | null
+        }
+        Update: {
+          address?: string | null
+          company_id?: number
+          company_name?: string | null
+          country?: string | null
+          created_at?: string
+          created_by?: string | null
+          email?: string | null
+          forename?: string | null
+          id?: number
+          metadata?: Json | null
+          postal_code?: string | null
+          surname?: string | null
+          type?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "customers_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       equipments: {
         Row: {
           added_to_inventory_at: string | null
           article_id: number | null
-          asset_tag: string | null
+          asset_tag: number | null
           company_id: number
           created_at: string
           created_by: string
-          has_asset_sticker: boolean | null
+          current_location: number | null
           id: number
           metadata: Json | null
         }
         Insert: {
           added_to_inventory_at?: string | null
           article_id?: number | null
-          asset_tag?: string | null
+          asset_tag?: number | null
           company_id: number
           created_at?: string
           created_by?: string
-          has_asset_sticker?: boolean | null
+          current_location?: number | null
           id?: number
           metadata?: Json | null
         }
         Update: {
           added_to_inventory_at?: string | null
           article_id?: number | null
-          asset_tag?: string | null
+          asset_tag?: number | null
           company_id?: number
           created_at?: string
           created_by?: string
-          has_asset_sticker?: boolean | null
+          current_location?: number | null
           id?: number
           metadata?: Json | null
         }
@@ -180,7 +321,59 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
+            foreignKeyName: "equipments_asset_tag_fkey"
+            columns: ["asset_tag"]
+            isOneToOne: false
+            referencedRelation: "asset_tags"
+            referencedColumns: ["id"]
+          },
+          {
             foreignKeyName: "equipments_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "equipments_current_location_fkey"
+            columns: ["current_location"]
+            isOneToOne: false
+            referencedRelation: "locations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      history: {
+        Row: {
+          change_made_by: string | null
+          company_id: number | null
+          created_at: string
+          data_id: number
+          id: number
+          old_data: Json
+          table_name: string
+        }
+        Insert: {
+          change_made_by?: string | null
+          company_id?: number | null
+          created_at?: string
+          data_id: number
+          id?: number
+          old_data: Json
+          table_name: string
+        }
+        Update: {
+          change_made_by?: string | null
+          company_id?: number | null
+          created_at?: string
+          data_id?: number
+          id?: number
+          old_data?: Json
+          table_name?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "history_company_id_fkey"
             columns: ["company_id"]
             isOneToOne: false
             referencedRelation: "companies"
@@ -188,37 +381,248 @@ export type Database = {
           },
         ]
       }
+      job_assets_on_job: {
+        Row: {
+          case_id: number | null
+          company_id: number
+          created_at: string
+          created_by: string | null
+          equipment_id: number | null
+          id: number
+          job_id: number
+        }
+        Insert: {
+          case_id?: number | null
+          company_id: number
+          created_at?: string
+          created_by?: string | null
+          equipment_id?: number | null
+          id?: number
+          job_id: number
+        }
+        Update: {
+          case_id?: number | null
+          company_id?: number
+          created_at?: string
+          created_by?: string | null
+          equipment_id?: number | null
+          id?: number
+          job_id?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "job_assets_on_job_case_id_fkey"
+            columns: ["case_id"]
+            isOneToOne: false
+            referencedRelation: "cases"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "job_assets_on_job_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "job_assets_on_job_equipment_id_fkey"
+            columns: ["equipment_id"]
+            isOneToOne: false
+            referencedRelation: "equipments"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "job_assets_on_job_job_id_fkey"
+            columns: ["job_id"]
+            isOneToOne: false
+            referencedRelation: "jobs"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      job_booked_assets: {
+        Row: {
+          case_id: number | null
+          company_id: number
+          created_at: string
+          created_by: string | null
+          equipment_id: number | null
+          id: number
+          job_id: number
+        }
+        Insert: {
+          case_id?: number | null
+          company_id: number
+          created_at?: string
+          created_by?: string | null
+          equipment_id?: number | null
+          id?: number
+          job_id: number
+        }
+        Update: {
+          case_id?: number | null
+          company_id?: number
+          created_at?: string
+          created_by?: string | null
+          equipment_id?: number | null
+          id?: number
+          job_id?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "job_booked_assets_case_id_fkey"
+            columns: ["case_id"]
+            isOneToOne: false
+            referencedRelation: "cases"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "job_booked_assets_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "job_booked_assets_equipment_id_fkey"
+            columns: ["equipment_id"]
+            isOneToOne: false
+            referencedRelation: "equipments"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "job_booked_assets_job_id_fkey"
+            columns: ["job_id"]
+            isOneToOne: false
+            referencedRelation: "jobs"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      jobs: {
+        Row: {
+          company_id: number
+          created_at: string
+          created_by: string | null
+          customer_id: number | null
+          enddate: string | null
+          id: number
+          job_location: string | null
+          meta: Json | null
+          name: string | null
+          startdate: string | null
+          type: string | null
+        }
+        Insert: {
+          company_id: number
+          created_at?: string
+          created_by?: string | null
+          customer_id?: number | null
+          enddate?: string | null
+          id?: number
+          job_location?: string | null
+          meta?: Json | null
+          name?: string | null
+          startdate?: string | null
+          type?: string | null
+        }
+        Update: {
+          company_id?: number
+          created_at?: string
+          created_by?: string | null
+          customer_id?: number | null
+          enddate?: string | null
+          id?: number
+          job_location?: string | null
+          meta?: Json | null
+          name?: string | null
+          startdate?: string | null
+          type?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "jobs_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "jobs_customer_id_fkey"
+            columns: ["customer_id"]
+            isOneToOne: false
+            referencedRelation: "customers"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       locations: {
         Row: {
+          asset_tag: number | null
           company_id: number
           created_at: string
           created_by: string
           description: string | null
           id: number
-          metadata: Json | null
           name: string
         }
         Insert: {
+          asset_tag?: number | null
           company_id: number
           created_at?: string
           created_by?: string
           description?: string | null
           id?: number
-          metadata?: Json | null
           name: string
         }
         Update: {
+          asset_tag?: number | null
           company_id?: number
           created_at?: string
           created_by?: string
           description?: string | null
           id?: number
-          metadata?: Json | null
           name?: string
         }
         Relationships: [
           {
+            foreignKeyName: "locations_asset_tag_fkey"
+            columns: ["asset_tag"]
+            isOneToOne: false
+            referencedRelation: "asset_tags"
+            referencedColumns: ["id"]
+          },
+          {
             foreignKeyName: "locations_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      users_companies: {
+        Row: {
+          company_id: number
+          created_at: string
+          id: number
+          user_id: string
+        }
+        Insert: {
+          company_id: number
+          created_at?: string
+          id?: number
+          user_id: string
+        }
+        Update: {
+          company_id?: number
+          created_at?: string
+          id?: number
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "users_companies_company_id_fkey"
             columns: ["company_id"]
             isOneToOne: false
             referencedRelation: "companies"
@@ -231,7 +635,14 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      company_ids_current_user: {
+        Args: Record<PropertyKey, never>
+        Returns: number[]
+      }
+      owned_company_ids_current_user: {
+        Args: Record<PropertyKey, never>
+        Returns: number[]
+      }
     }
     Enums: {
       [_ in never]: never

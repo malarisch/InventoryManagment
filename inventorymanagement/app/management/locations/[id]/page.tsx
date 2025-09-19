@@ -6,19 +6,25 @@ import Link from "next/link";
 import { safeParseDate, formatDateTime } from "@/lib/dates";
 import { fallbackDisplayFromId } from "@/lib/userDisplay";
 import { fetchUserDisplayAdmin } from "@/lib/users/userDisplay.server";
-
-type Location = Tables<"locations">;
-type Equipment = Tables<"equipments"> & { articles?: { name: string } | null };
 import { LocationCurrentEquipmentsList } from "@/components/locationCurrentEquipmentsList";
+import { HistoryCard } from "@/components/historyCard";
+import { DeleteWithUndo } from "@/components/forms/delete-with-undo";
 
-export default async function LocationDetailPage({ params }: { params: { id: string } }) {
-  const id = Number(params.id);
+type LocationRow = Tables<"locations"> & { asset_tags?: { printed_code: string | null } | null };
+type EquipmentRow = Tables<"equipments"> & {
+  articles?: { name: string } | null;
+  asset_tags?: { printed_code: string | null } | null;
+};
+
+export default async function LocationDetailPage({ params }: { params: Promise<{ id: string }> }) {
+  const { id: idParam } = await params;
+  const id = Number(idParam);
   const supabase = await createClient();
   const { data: auth } = await supabase.auth.getUser();
   const currentUserId = auth.user?.id ?? null;
   const { data, error } = await supabase
     .from("locations")
-    .select("*")
+    .select("*, asset_tags:asset_tag(printed_code)")
     .eq("id", id)
     .limit(1)
     .single();
@@ -33,28 +39,17 @@ export default async function LocationDetailPage({ params }: { params: { id: str
     );
   }
 
-  const loc = data as Location;
+  const loc = data as LocationRow;
 
-  const creator = await fetchUserDisplayAdmin((loc as any).created_by as any);
+  const creator = await fetchUserDisplayAdmin(loc.created_by ?? undefined);
 
-  // Compute equipments currently at this location:
-  // Fetch latest history entries per equipment (approx via ordering + reduce) and filter to this location
-  const { data: hist } = await supabase
-    .from("article_location_history")
-    .select("equipment_id, location_id, created_at, equipments(id, asset_tag, has_asset_sticker, created_at, articles(name))")
-    .order("equipment_id", { ascending: true })
+  const { data: equipmentsData } = await supabase
+    .from("equipments")
+    .select("*, articles(name), asset_tags:asset_tag(printed_code)")
+    .eq("current_location", id)
     .order("created_at", { ascending: false });
 
-  const currentByEquipment = new Map<number, { equipment: Equipment; location_id: number }>();
-  for (const row of (hist as any[] | null) ?? []) {
-    const eid = row.equipment_id as number;
-    if (!currentByEquipment.has(eid)) {
-      currentByEquipment.set(eid, { equipment: row.equipments as Equipment, location_id: row.location_id as number });
-    }
-  }
-  const equipmentsHere = Array.from(currentByEquipment.values())
-    .filter((e) => e.location_id === id)
-    .map((e) => e.equipment);
+  const equipmentsHere = (equipmentsData as EquipmentRow[] | null) ?? [];
 
   return (
     <main className="min-h-screen w-full flex flex-col items-center p-5">
@@ -67,16 +62,22 @@ export default async function LocationDetailPage({ params }: { params: { id: str
             <CardTitle>Standort #{loc.id}</CardTitle>
             <CardDescription>
               {loc.name}
+              {" • Asset Tag: "}
+              {loc.asset_tag ? (loc.asset_tags?.printed_code ?? `#${loc.asset_tag}`) : "—"}
               <br />
-              Erstellt am: {formatDateTime(safeParseDate((loc as any).created_at))} {`• Erstellt von: ${creator ?? ((loc as any).created_by === currentUserId ? 'Du' : fallbackDisplayFromId((loc as any).created_by)) ?? '—'}`}
+              Erstellt am: {formatDateTime(safeParseDate(loc.created_at))} {`• Erstellt von: ${creator ?? (loc.created_by === currentUserId ? 'Du' : fallbackDisplayFromId(loc.created_by)) ?? '—'}`}
             </CardDescription>
           </CardHeader>
           <CardContent>
+            <div className="mb-4">
+              <DeleteWithUndo table="locations" id={loc.id} payload={loc as any} redirectTo="/management/locations" />
+            </div>
             <LocationEditForm location={loc} />
           </CardContent>
         </Card>
 
         <LocationCurrentEquipmentsList items={equipmentsHere} pageSize={10} />
+        <HistoryCard table="locations" dataId={id} />
       </div>
     </main>
   );

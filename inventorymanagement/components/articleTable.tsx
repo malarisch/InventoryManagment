@@ -4,11 +4,16 @@ import { createClient } from "@/lib/supabase/client";
 import { Button } from "@/components/ui/button";
 import {Card, CardContent, CardDescription, CardHeader, CardTitle} from "@/components/ui/card";
 import type { Tables } from "@/database.types";
-import { useEffect, useMemo, useState } from "react";
+import { useDeferredValue, useEffect, useMemo, useState } from "react";
 import Link from "next/link";
+import { Input } from "@/components/ui/input";
 
 type Article = Tables<"articles">;
-type ArticleRow = Article & { locations?: { name: string } | null };
+type ArticleRow = Article & {
+  locations?: { name: string } | null;
+  asset_tags?: { printed_code: string | null } | null;
+  equipments?: { count: number }[];
+};
 
 type Props = {
   pageSize?: number;
@@ -22,6 +27,8 @@ export function ArticleTable({ pageSize = 10, className }: Props) {
   const [count, setCount] = useState<number | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [q, setQ] = useState("");
+  const dq = useDeferredValue(q);
 
   useEffect(() => {
     let isActive = true;
@@ -30,12 +37,32 @@ export function ArticleTable({ pageSize = 10, className }: Props) {
       setError(null);
       const from = (page - 1) * pageSize;
       const to = from + pageSize - 1;
-      const { data, error, count } = await supabase
+      let query = supabase
         .from("articles")
-        .select("*, equipments(count), locations:default_location(name)", { count: "exact" })
-        .order("created_at", { ascending: false })
-        .range(from, to);
-      console.log(data);
+        .select("*, equipments(count), locations:default_location(name), asset_tags:asset_tag(printed_code)", { count: "exact" })
+        .order("created_at", { ascending: false });
+
+      const term = dq.trim();
+      if (term.length > 0) {
+        const filters: string[] = [];
+        const numeric = Number(term);
+        if (!Number.isNaN(numeric)) filters.push(`id.eq.${numeric}`);
+        // own name ilike
+        const like = `%${term}%`;
+        filters.push(`name.ilike.${like}`);
+        // FTS on asset tag code and location name to ids
+        const [{ data: tagIdsFts }, { data: locIdsFts }] = await Promise.all([
+          supabase.from("asset_tags").select("id").textSearch("printed_code", term, { type: "websearch" }).limit(100),
+          supabase.from("locations").select("id").textSearch("name", term, { type: "websearch" }).limit(100),
+        ]);
+        const tagIds = (tagIdsFts as Array<{ id: number }> | null)?.map((t) => t.id) ?? [];
+        const locIds = (locIdsFts as Array<{ id: number }> | null)?.map((l) => l.id) ?? [];
+        if (tagIds.length > 0) filters.push(`asset_tag.in.(${tagIds.join(",")})`);
+        if (locIds.length > 0) filters.push(`default_location.in.(${locIds.join(",")})`);
+        if (filters.length > 0) query = query.or(filters.join(",")); else query = query.or("id.eq.0");
+      }
+
+      const { data, error, count } = await query.range(from, to);
       if (!isActive) return;
       if (error) {
         setError(error.message);
@@ -51,7 +78,7 @@ export function ArticleTable({ pageSize = 10, className }: Props) {
     return () => {
       isActive = false;
     };
-  }, [page, pageSize, supabase]);
+  }, [page, pageSize, dq, supabase]);
 
   const totalPages = useMemo(() => {
     if (!count || count <= 0) return 1;
@@ -65,9 +92,18 @@ export function ArticleTable({ pageSize = 10, className }: Props) {
     <Card className={className}>
       <CardHeader>
         <CardTitle>Artikel</CardTitle>
-          <CardDescription>{count} total</CardDescription>
+        <CardDescription>{count ?? 0} total</CardDescription>
       </CardHeader>
       <CardContent>
+        <div className="mb-2 flex items-center gap-2">
+          <Input
+            placeholder="Suche (Name, AssetTag, Standort)"
+            value={q}
+            onChange={(e) => { setPage(1); setQ(e.target.value); }}
+            className="w-64"
+          />
+          {q !== dq && <span className="text-xs text-muted-foreground">Sucht…</span>}
+        </div>
         <div className="overflow-x-auto border rounded-md">
           <table className="w-full border-collapse text-sm">
             <thead className="bg-muted/50">
@@ -75,28 +111,30 @@ export function ArticleTable({ pageSize = 10, className }: Props) {
                 <th className="text-left font-medium px-3 py-2 border-b">ID</th>
                 <th className="text-left font-medium px-3 py-2 border-b">Name</th>
                 <th className="text-left font-medium px-3 py-2 border-b">Default Location</th>
-                  <th className="text-left font-medium px-3 py-2 border-b">Anzahl</th>
+                <th className="text-left font-medium px-3 py-2 border-b">Asset Tag</th>
+                <th className="text-left font-medium px-3 py-2 border-b">Anzahl</th>
+                <th className="text-left font-medium px-3 py-2 border-b">Aktionen</th>
                 
               </tr>
             </thead>
             <tbody>
-              {loading && (
+              {loading && rows.length === 0 && (
                 <tr>
-                  <td className="px-3 py-3 text-muted-foreground" colSpan={4}>
+                  <td className="px-3 py-3 text-muted-foreground" colSpan={6}>
                     Lädt…
                   </td>
                 </tr>
               )}
               {!loading && error && (
                 <tr>
-                  <td className="px-3 py-3 text-red-600" colSpan={4}>
+                  <td className="px-3 py-3 text-red-600" colSpan={6}>
                     Fehler beim Laden: {error}
                   </td>
                 </tr>
               )}
               {!loading && !error && rows.length === 0 && (
                 <tr>
-                  <td className="px-3 py-3 text-muted-foreground" colSpan={4}>
+                  <td className="px-3 py-3 text-muted-foreground" colSpan={6}>
                     Keine Artikel gefunden.
                   </td>
                 </tr>
@@ -119,8 +157,14 @@ export function ArticleTable({ pageSize = 10, className }: Props) {
                         "—"
                       )}
                     </td>
-                      <td className="px-3 py-2 border-t align-top">{(row as any).equipments?.[0]?.count ?? 0}</td>
-                  
+                    <td className="px-3 py-2 border-t align-top">{row.asset_tag ? (row.asset_tags?.printed_code ?? `#${row.asset_tag}`) : "—"}</td>
+                    <td className="px-3 py-2 border-t align-top">{row.equipments?.[0]?.count ?? 0}</td>
+                    <td className="px-3 py-2 border-t align-top">
+                      <Button asChild variant="outline" size="sm">
+                        <Link href={`/management/articles/${row.id}`}>Bearbeiten</Link>
+                      </Button>
+                    </td>
+
                   </tr>
                 ))}
             </tbody>

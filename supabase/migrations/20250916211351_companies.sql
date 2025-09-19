@@ -16,7 +16,6 @@ create table "public"."companies" (
 
 alter table "public"."companies" enable row level security;
 
-alter table "public"."article_location_history" add column "company_id" bigint not null;
 
 alter table "public"."articles" add column "company_id" bigint not null;
 
@@ -27,10 +26,6 @@ alter table "public"."locations" add column "company_id" bigint not null;
 CREATE UNIQUE INDEX companies_pkey ON public.companies USING btree (id);
 
 alter table "public"."companies" add constraint "companies_pkey" PRIMARY KEY using index "companies_pkey";
-
-alter table "public"."article_location_history" add constraint "article_location_history_company_id_fkey" FOREIGN KEY (company_id) REFERENCES companies(id) ON UPDATE CASCADE ON DELETE CASCADE not valid;
-
-alter table "public"."article_location_history" validate constraint "article_location_history_company_id_fkey";
 
 alter table "public"."articles" add constraint "articles_company_id_fkey" FOREIGN KEY (company_id) REFERENCES companies(id) ON UPDATE CASCADE ON DELETE CASCADE not valid;
 
@@ -89,15 +84,6 @@ grant trigger on table "public"."companies" to "service_role";
 grant truncate on table "public"."companies" to "service_role";
 
 grant update on table "public"."companies" to "service_role";
-
-create policy "Policy with security definer functions"
-on "public"."article_location_history"
-as permissive
-for all
-to authenticated
-using ((company_id IN ( SELECT companies.id
-   FROM companies
-  WHERE (companies.owner_user_id = auth.uid()))));
 
 
 create policy "allow owner"
