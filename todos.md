@@ -12,8 +12,9 @@ Diese To-Do List enthält Aufgaben, die an der Software zu bearbeiten sind. Soba
 - Implementiere Loading Screens
 - Überprüfe die Security Best Practices
 ### Fixes:
-die artiel edit seite hat zwei equipment hinzufügen knöpfe.
+
 ## Done
+- Fix: Artikel-Detailseite zeigt nur noch einen "Equipment hinzufügen"-Button.
 - Übersicht von Jobs von Kunden (Liste in Kunden-Detail)
 - Übersichtstabellen mit "Bearbeiten"-Buttons; Detailseiten mit Löschen + Undo
 - Fix: Kunde in Jobübersicht ist jetzt anklickbar

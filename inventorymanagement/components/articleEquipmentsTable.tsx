@@ -59,14 +59,9 @@ export function ArticleEquipmentsTable({ articleId, pageSize = 10 }: { articleId
   return (
     <Card>
       <CardHeader>
-        <div className="flex items-center justify-between gap-3">
-          <div>
-            <CardTitle>Equipments dieses Artikels</CardTitle>
-            <CardDescription>{count ?? 0} Einträge</CardDescription>
-          </div>
-          <Button asChild>
-            <Link href={`/management/equipments/new?articleId=${articleId}`}>Neu</Link>
-          </Button>
+        <div>
+          <CardTitle>Equipments dieses Artikels</CardTitle>
+          <CardDescription>{count ?? 0} Einträge</CardDescription>
         </div>
       </CardHeader>
       <CardContent>

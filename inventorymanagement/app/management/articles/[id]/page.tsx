@@ -69,8 +69,11 @@ export default async function ArticleDetailPage({ params }: { params: Promise<{ 
             </CardDescription>
           </CardHeader>
           <CardContent>
-            <div className="mb-4">
+            <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
               <DeleteWithUndo table="articles" id={article.id} payload={article as any} redirectTo="/management/articles" />
+              <Button asChild variant="secondary">
+                <Link href={`/management/equipments/new?articleId=${article.id}`}>Equipment hinzufügen</Link>
+              </Button>
             </div>
             <ArticleEditForm article={article} />
           </CardContent>
