@@ -3,7 +3,14 @@ Diese To-Do List enthält Aufgaben, die an der Software zu bearbeiten sind. Soba
 
 ## To-Do
 - Erstelle nun ein Dashboard auf der management/ route. Es soll übersichtlich und responsiv sein (wie eigentlich alles). Wichtige elemente darauf. Kommende Veranstaltungen, allgemeiner history log mit 20 einträgen in scrollbarer tabelle - die tabelle soll nicht die ganze seite super lang machen!
-- Alle Objekte sollen Files bekommen können. Dazu in den jeweiligen tabellen ein files arry column anlegen als jsonb, in jedem objekt stehen name und beschreibung (beides opeitonal) und link sowie id aus dem supabase storage. Die Edit Seiten bekommen eine Dateiübersicht und ein File Upload (nicht die create seiten!)
+- Alle Objekte sollen Files bekommen können. Dazu in den jeweiligen tabellen ein files arry column anlegen als jsonb, in jedem objekt stehen name und beschreibung (beides opeitonal) und link sowie id aus dem supabase storage. Die Edit Seiten bekommen eine Dateiübersicht und ein File Upload (nicht die create seiten!) - 
+- Implementiere vernünftiges logging über Supabase Logflare
+- Implementiere Error Handling in der UI
+- Räume das Repo auf - ungenutze Sachen entfernen, Dokumentation aktualisieren, etc.
+- Implementiere Tests
+- Räume deinen Code auf - modifiziere ggf. Komponenten, das sie reusable sind soweit wie möglich.
+- Implementiere Loading Screens
+- Überprüfe die Security Best Practices
 ### Fixes:
 die artiel edit seite hat zwei equipment hinzufügen knöpfe.
 ## Done

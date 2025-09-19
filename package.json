@@ -19,6 +19,7 @@
   "devDependencies": {
     "@snaplet/copycat": "^6.0.0",
     "@snaplet/seed": "^0.98.0",
+    "@supabase/mcp-server-supabase": "^0.5.5",
     "@types/pg": "^8.15.5",
     "pg": "^8.16.3",
     "supabase": "^2.40.7"
