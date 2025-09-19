@@ -64,4 +64,5 @@
 - After each major task, append a short summary to `agentlog.md` to track project status.
 - Keep it concise (2–5 lines): include date/time, task name, key files/migrations/policies touched, and next step if any.
 - Append entries chronologically; no need for elaborate formatting.
+- Always consult Context7 for external library usage (writing, updating, or reviewing code) before making changes.
 - After each completed task, create a git commit that captures the changes you made.

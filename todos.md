@@ -2,7 +2,6 @@
 Diese To-Do List enthält Aufgaben, die an der Software zu bearbeiten sind. Sobald eine Aufgabe bearbeited wurde soll diese hier in der Datei unten in die Done-List eingefügt und aus der To-Do list entfernt werden.
 
 ## To-Do
-- Erstelle nun ein Dashboard auf der management/ route. Es soll übersichtlich und responsiv sein (wie eigentlich alles). Wichtige elemente darauf. Kommende Veranstaltungen, allgemeiner history log mit 20 einträgen in scrollbarer tabelle - die tabelle soll nicht die ganze seite super lang machen!
 - Alle Objekte sollen Files bekommen können. Dazu in den jeweiligen tabellen ein files arry column anlegen als jsonb, in jedem objekt stehen name und beschreibung (beides opeitonal) und link sowie id aus dem supabase storage. Die Edit Seiten bekommen eine Dateiübersicht und ein File Upload (nicht die create seiten!) - 
 - Implementiere vernünftiges logging über Supabase Logflare
 - Implementiere Error Handling in der UI
@@ -14,6 +13,7 @@ Diese To-Do List enthält Aufgaben, die an der Software zu bearbeiten sind. Soba
 ### Fixes:
 
 ## Done
+- Dashboard unter /management/: responsive Übersicht mit Kennzahlen, kommenden Veranstaltungen und komprimierter Historientabelle.
 - Fix: Artikel-Detailseite zeigt nur noch einen "Equipment hinzufügen"-Button.
 - Übersicht von Jobs von Kunden (Liste in Kunden-Detail)
 - Übersichtstabellen mit "Bearbeiten"-Buttons; Detailseiten mit Löschen + Undo
