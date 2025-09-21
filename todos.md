@@ -4,15 +4,16 @@ Diese To-Do List enthält Aufgaben, die an der Software zu bearbeiten sind. Soba
 
 ## To-Do
 - Kommentiere sämtlichen Code von dir im TSDoc Style (fortlaufend; neue Module sind dokumentiert).
-- Räume das Repo auf - ungenutze Sachen entfernen, etc.
-- Implementiere Tests - insbesondere auch für die UI! Nutze für die UI playwright Tests! Wenn du bestimmte Dinge nicht aus dem Code bzw. deinem Env getestet bekommst lege dafür ein User Todo in human-review-todos.md an! Du hast auch zugriff auf einen playwright mcp server.
+- Implementiere Tests - insbesondere auch für die UI! Nutze für die UI playwright Tests! Wenn du bestimmte Dinge nicht aus dem Code bzw. deinem Env getestet bekommst lege dafür ein User Todo in human-review-todos.md an! Du hast auch zugriff auf einen playwright mcp server. Nutze insgesamt ein vitest Environment. Lass als erstes ein Test laufen, der einen Supabase Testuser anlegt, sowie eine Company für diesen. Dann weiter mit playwright Tests. Teste erstmal keinen Email versand oder so.
 - Räume deinen Code auf - modifiziere ggf. Komponenten, das sie reusable sind soweit wie möglich.
 - Überprüfe die Security Best Practices - schaue dass die Supabase Referenzen eingehalten werden!
+- Validate RLS policies comprehensively against `users_companies` membership for all tables (articles, equipments, locations, cases, customers, jobs, job_* tables, history). Create Vitest for that.
 
 ### Fixes
 
 
 ## Done
+- Repo-Cleanup: Landingpage entschlackt, Tutorial-Komponenten entfernt und Dashboard-Helfer in `app/management/_libs/dashboard-utils.ts` ausgelagert.
 - Playwright E2E Setup (playwright.config.ts, Script `test:e2e`) + erster Test `tests/e2e/home.spec.ts` (Startseite sichtbar).
 - Supabase Env-Variablen vereinheitlicht: Nutzung von `NEXT_PUBLIC_SUPABASE_ANON_KEY` statt `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_OR_ANON_KEY` in Code und `.env(.example)`.
 - TSDoc ergänzt für `lib/supabase/{client,server,admin}.ts`; kleinere Lint/Repo-Cleanup (unbenutzte Funktion entfernt, unnötige eslint-disable entfernt). 

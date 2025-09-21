@@ -1,63 +1,59 @@
-import { DeployButton } from "@/components/deploy-button";
-import { EnvVarWarning } from "@/components/env-var-warning";
-import { AuthButton } from "@/components/auth-button";
-import { Hero } from "@/components/hero";
-import { ThemeSwitcher } from "@/components/theme-switcher";
-import { ConnectSupabaseSteps } from "@/components/tutorial/connect-supabase-steps";
-import { SignUpUserSteps } from "@/components/tutorial/sign-up-user-steps";
-import { hasEnvVars } from "@/lib/utils";
-import { createClient } from "@/lib/supabase/server";
 import Link from "next/link";
-import {redirect} from "next/navigation";
+import { redirect } from "next/navigation";
+import { createClient } from "@/lib/supabase/server";
+import { hasEnvVars } from "@/lib/utils";
 
-export default async function Home() {
-  let user = null as null | { id: string };
-  if (hasEnvVars) {
-    const supabase = await createClient();
-    const {
-      data: { user: u },
-    } = await supabase.auth.getUser();
-    user = u ? { id: u.id } : null;
-    if (user) redirect("/management");
-  }
-  return (
-    <main className="min-h-screen flex flex-col items-center">
-      <div className="flex-1 w-full flex flex-col gap-20 items-center">
-        <nav className="w-full flex justify-center border-b border-b-foreground/10 h-16">
-          <div className="w-full max-w-5xl flex justify-between items-center p-3 px-5 text-sm">
-            <div className="flex gap-5 items-center font-semibold">
-              <Link href={"/"}>Next.js Supabase Starter</Link>
+const REQUIRED_ENV_VARS = ["NEXT_PUBLIC_SUPABASE_URL", "NEXT_PUBLIC_SUPABASE_ANON_KEY"] as const;
 
-              <div className="flex items-center gap-2">
-                <DeployButton />
-              </div>
-            </div>
-            {!hasEnvVars ? <EnvVarWarning /> : <AuthButton />}
-          </div>
-        </nav>
-        <div className="flex-1 flex flex-col gap-20 max-w-5xl p-5">
-          <Hero />
-          <main className="flex-1 flex flex-col gap-6 px-4">
-            <h2 className="font-medium text-xl mb-4">Next steps</h2>
-            {hasEnvVars ? <SignUpUserSteps /> : <ConnectSupabaseSteps />}
-          </main>
-        </div>
-
-        <footer className="w-full flex items-center justify-center border-t mx-auto text-center text-xs gap-8 py-16">
-          <p>
-            Powered by{" "}
+/**
+ * Landing page for the application. When Supabase credentials are configured,
+ * the user is forwarded straight to the management dashboard or login screen.
+ * Otherwise we render setup instructions so local developers know what to do.
+ */
+export default async function HomePage() {
+  if (!hasEnvVars) {
+    return (
+      <main className="flex min-h-screen flex-col items-center justify-center px-6 py-16">
+        <div className="mx-auto w-full max-w-xl space-y-6 text-center">
+          <h1 className="text-3xl font-semibold">Supabase-Konfiguration benötigt</h1>
+          <p className="text-muted-foreground">
+            Lege eine `.env.local` im Verzeichnis `inventorymanagement/` an und setze folgende Variablen:
+          </p>
+          <ul className="space-y-3 rounded-md border border-dashed border-foreground/20 bg-muted/30 p-4 text-left text-sm">
+            {REQUIRED_ENV_VARS.map((name) => (
+              <li key={name}>
+                <code className="rounded bg-background/80 px-2 py-1 text-xs font-semibold">{name}</code>
+              </li>
+            ))}
+          </ul>
+          <p className="text-sm text-muted-foreground">
+            Du findest die Werte im Supabase Dashboard unter <strong>Project Settings -> API</strong>. Anschließend
+            starte den Dev-Server neu.
+          </p>
+          <div className="flex items-center justify-center gap-3 text-sm">
             <a
-              href="https://supabase.com/?utm_source=create-next-app&utm_medium=template&utm_term=nextjs"
+              className="underline"
+              href="https://supabase.com/docs/guides/getting-started/quickstarts/nextjs"
               target="_blank"
-              className="font-bold hover:underline"
               rel="noreferrer"
             >
-              Supabase
+              Supabase Next.js Quickstart
             </a>
-          </p>
-          <ThemeSwitcher />
-        </footer>
-      </div>
-    </main>
-  );
+            <span aria-hidden="true">&bull;</span>
+            <Link className="underline" href="/management">
+              Management Dashboard
+            </Link>
+          </div>
+        </div>
+      </main>
+    );
+  }
+
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
+  redirect(user ? "/management" : "/auth/login");
+  return null;
 }

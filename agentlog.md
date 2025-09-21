@@ -253,3 +253,12 @@ Next: Run `supabase db push` to add `files` columns and `attachments` bucket; co
 - Added `test:tsc` script and ran type checks; resolved errors across management header, company hook, company settings, calendar, history live, and auth user display.
 - Removed unused `components/dev/*` (react-buddy previews) and normalized Next.js 15 `searchParams` typing.
 - Type guards for PostgREST relation shapes (object vs array) and stringified company IDs for UI radios.
+
+2025-09-21 22:31 CEST — lint cleanup
+- Added `lib/companies.ts` helper to normalize relation payloads; removed lingering `any` casts.
+- Updated Supabase auth user fetches to use typed `maybeSingle`, dropped unused calendar icon imports.
+- Lint now passes via `npm run lint`.
+2025-09-21 23:47 CEST — Landing cleanup & dashboard docs
+- Simplified `/` route to Supabase setup guidance + auth redirect; removed template tutorial components.
+- Added shared dashboard utils with TSDoc, documented date/user helpers, and refreshed env guard comment.
+- Lint, type-check, and build all green via `npm run lint`, `npm run test:tsc`, `npm run build`.

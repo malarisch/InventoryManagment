@@ -8,9 +8,9 @@ export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
 }
 
-// This check can be removed, it is just for tutorial purposes
 /**
- * Whether required public Supabase env vars are present.
+ * Whether required public Supabase env vars are present. Used to guard routes
+ * that depend on Supabase configuration during local development.
  */
 export const hasEnvVars =
   process.env.NEXT_PUBLIC_SUPABASE_URL &&

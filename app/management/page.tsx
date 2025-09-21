@@ -2,131 +2,37 @@ import Link from "next/link";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { createClient } from "@/lib/supabase/server";
-import { formatDate, formatDateTime, safeParseDate } from "@/lib/dates";
+import { formatDateTime, safeParseDate } from "@/lib/dates";
 import { fallbackDisplayFromId } from "@/lib/userDisplay";
 import { fetchUserDisplayAdmin } from "@/lib/users/userDisplay.server";
 import type { Tables } from "@/database.types";
+import {
+  QUICK_LINKS,
+  TABLE_ROUTES,
+  buildHistorySummary,
+  formatJobPeriod,
+  formatTableLabel,
+  isRecord,
+  jobCustomerDisplay,
+  type JobCustomer,
+} from "@/app/management/_libs/dashboard-utils";
 
-type JobCustomer = {
-  id: number;
-  company_name: string | null;
-  forename: string | null;
-  surname: string | null;
-};
-
+/**
+ * Jobs row enriched with the optional customer relation for dashboard usage.
+ */
 type UpcomingJobRow = Tables<"jobs"> & {
   customers: JobCustomer | null;
 };
 
+/**
+ * History record shape retrieved from Supabase for recent change log entries.
+ */
 type HistoryRow = Tables<"history">;
 
-const TABLE_LABELS: Record<string, string> = {
-  articles: "Artikel",
-  asset_tags: "Asset Tags",
-  cases: "Cases",
-  customers: "Kunden",
-  equipments: "Equipments",
-  jobs: "Jobs",
-  locations: "Standorte",
-};
-
-const TABLE_ROUTES: Record<string, string> = {
-  articles: "/management/articles",
-  cases: "/management/cases",
-  customers: "/management/customers",
-  equipments: "/management/equipments",
-  jobs: "/management/jobs",
-  locations: "/management/locations",
-};
-
-const HISTORY_PREVIEW_KEYS = [
-  "name",
-  "title",
-  "job_location",
-  "type",
-  "article_id",
-  "equipment_id",
-  "location_id",
-  "customer_id",
-  "case_id",
-  "company_id",
-] as const;
-
-const QUICK_LINKS = [
-  {
-    label: "Equipments",
-    description: "Pflege Status, Standort und Asset-Tags deiner Geräte.",
-    href: "/management/equipments",
-  },
-  {
-    label: "Jobs",
-    description: "Plane Einsätze und buche Assets unkompliziert.",
-    href: "/management/jobs",
-  },
-  {
-    label: "Cases",
-    description: "Strukturiere Gear in Cases und Sets für den schnellen Zugriff.",
-    href: "/management/cases",
-  },
-  {
-    label: "Company Settings",
-    description: "Verwalte Unternehmens-Einstellungen und Seed-Dumps.",
-    href: "/management/company-settings",
-  },
-] as const;
-
-function isRecord(value: unknown): value is Record<string, unknown> {
-  return value !== null && typeof value === "object" && !Array.isArray(value);
-}
-
-function truncate(value: string, max = 80): string {
-  return value.length <= max ? value : `${value.slice(0, max - 1)}…`;
-}
-
-function formatTableLabel(table: string): string {
-  const label = TABLE_LABELS[table];
-  if (label) return label;
-  return table.charAt(0).toUpperCase() + table.slice(1).replace(/_/g, " ");
-}
-
-function buildHistorySummary(payload: Record<string, unknown>): string {
-  const parts: string[] = [];
-  for (const key of HISTORY_PREVIEW_KEYS) {
-    const raw = payload[key];
-    if (raw === null || raw === undefined) continue;
-    const text = typeof raw === "object" ? JSON.stringify(raw) : String(raw);
-    if (text.trim().length === 0) continue;
-    parts.push(`${key}: ${truncate(text)}`);
-  }
-  if (parts.length > 0) return parts.join(" • ");
-
-  const entries = Object.entries(payload).filter(([key, value]) => key !== "_op" && value !== null && value !== undefined);
-  if (entries.length > 0) {
-    const [firstKey, firstValue] = entries[0];
-    const text = typeof firstValue === "object" ? JSON.stringify(firstValue) : String(firstValue);
-    if (text.trim().length > 0) return `${firstKey}: ${truncate(text)}`;
-  }
-  return "Keine Details";
-}
-
-function jobCustomerDisplay(customer: JobCustomer | null): string {
-  if (!customer) return "Kein Kunde zugeordnet";
-  const company = customer.company_name?.trim();
-  if (company) return company;
-  const fullName = [customer.forename, customer.surname].filter(Boolean).join(" ").trim();
-  return fullName.length > 0 ? fullName : `Kunde #${customer.id}`;
-}
-
-function formatJobPeriod(job: UpcomingJobRow): string {
-  const start = formatDate(safeParseDate(job.startdate));
-  const end = formatDate(safeParseDate(job.enddate));
-  if (start === "—" && end === "—") return "Termin offen";
-  if (start === "—") return `Bis ${end}`;
-  if (end === "—") return `Ab ${start}`;
-  if (start === end) return start;
-  return `${start} – ${end}`;
-}
-
+/**
+ * Management dashboard landing screen showing inventory stats, upcoming jobs
+ * and the latest audit history entries for the active company.
+ */
 export default async function ManagementHomePage() {
   const supabase = await createClient();
   const { data: auth } = await supabase.auth.getUser();

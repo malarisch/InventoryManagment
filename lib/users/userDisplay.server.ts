@@ -1,25 +1,7 @@
 // Server-only user display lookup using Supabase service role.
 // Resolves a human-friendly display from name > email in auth.users raw_user_meta_data.
 import { createAdminClient } from "@/lib/supabase/admin";
-
-type AuthUserRow = {
-  id: string;
-  email: string | null;
-  raw_user_meta_data: unknown;
-};
-
-/**
- * Return the first non-empty string value for any key in order.
- */
-function pickFirstString(meta: Record<string, unknown>, keys: string[]): string | undefined {
-  for (const key of keys) {
-    const value = meta[key];
-    if (typeof value === "string" && value.trim().length > 0) {
-      return value;
-    }
-  }
-  return undefined;
-}
+import { USER_DISPLAY_META_KEYS, type AuthUserRow, pickFirstString } from "@/lib/userDisplay";
 
 /**
  * Server-side fetch for a friendly user display value based on auth.users.
@@ -37,7 +19,7 @@ export async function fetchUserDisplayAdmin(userId?: string | null): Promise<str
   const row = data ?? null;
   if (error || !row) return null;
   const meta = (row.raw_user_meta_data ?? {}) as Record<string, unknown>;
-  const name = pickFirstString(meta, ["name", "full_name", "user_name", "nickname"]);
+  const name = pickFirstString(meta, USER_DISPLAY_META_KEYS);
   const email = typeof row.email === "string" && row.email.trim().length > 0 ? row.email : undefined;
   return name || email || null;
 }
