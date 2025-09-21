@@ -265,3 +265,7 @@ Next: Run `supabase db push` to add `files` columns and `attachments` bucket; co
 2025-09-22 00:01 CEST — Doc pass for recent maintenance
 - Added TSDoc for landing env requirements and dashboard helper types.
 - Lint + type-check re-run via `npm run lint` and `npm run test:tsc`.
+2025-09-22 00:14 CEST — Testing scaffolding
+- Added Vitest config + Supabase seeding test (skips without service-role env).
+- Updated Playwright specs for new landing page and added authenticated dashboard flow with Supabase admin seeding helper.
+- Added npm scripts (`test:unit`) and ensured lint/type checks stay green.
