@@ -18,6 +18,7 @@
     "start": "next start",
     "lint": "eslint .",
     "test:e2e": "playwright test",
+    "test:tsc": "tsc --noEmit",
     "supabase-gen-types": "supabase migrations up && supabase gen types typescript > ./types/supabase.ts"
   },
   "dependencies": {

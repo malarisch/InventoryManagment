@@ -48,7 +48,8 @@ export function CompanySettingsForm() {
       if (membershipError && membershipError.code !== "PGRST116") {
         setError(membershipError.message);
       } else if (membership?.companies) {
-        targetCompany = membership.companies as Company;
+        const comp = (membership as any).companies as unknown;
+        targetCompany = (Array.isArray(comp) ? comp[0] : comp) as Company | null;
       }
 
       if (!targetCompany) {

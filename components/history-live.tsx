@@ -117,23 +117,23 @@ export function HistoryLive({
               }
               const newRow = payload.new as HistoryRow | null;
               if (!newRow) return prev;
-              const payload = isObject(newRow.old_data) ? (newRow.old_data as Record<string, unknown>) : {};
-              const op = (payload as { _op?: string })._op;
+              const rowPayload = isObject(newRow.old_data) ? (newRow.old_data as Record<string, unknown>) : {};
+              const op = (rowPayload as { _op?: string })._op;
               const actorDisplay = newRow.change_made_by && newRow.change_made_by === currentUserId
                 ? 'dir'
                 : fallbackDisplayFromId(newRow.change_made_by);
               const previousSameTable = prev.find((existing) => existing.table_name === tableName && existing.id !== newRow.id);
               const prevPayload = previousSameTable?.payload ?? null;
               const includeDiff = !DETAIL_TABLES.has(tableName);
-              const changes = includeDiff ? deepDiff(prevPayload, payload) : [];
+              const changes = includeDiff ? deepDiff(prevPayload, rowPayload) : [];
               const disp: HistoryDisplayRow = {
                 id: newRow.id,
                 table_name: tableName,
                 created_at: newRow.created_at,
                 change_made_by: newRow.change_made_by,
                 op,
-                summary: describeHistoryEvent(tableName, op, payload),
-                payload,
+                summary: describeHistoryEvent(tableName, op, rowPayload),
+                payload: rowPayload,
                 actorDisplay,
                 changes,
               };
@@ -175,10 +175,12 @@ export function HistoryLive({
       if (cancelled || error || !data) return;
       setEquipmentDetails((prev) => {
         const next = { ...prev };
-        for (const row of data as Array<{ id: number; articles?: { name: string | null } | null; asset_tags?: { printed_code: string | null } | null }>) {
+        for (const row of data as Array<{ id: number; articles?: { name: string | null } | { name: string | null }[] | null; asset_tags?: { printed_code: string | null } | { printed_code: string | null }[] | null }>) {
+          const art = Array.isArray(row.articles) ? row.articles[0] : row.articles;
+          const tag = Array.isArray(row.asset_tags) ? row.asset_tags[0] : row.asset_tags;
           next[row.id] = {
-            articleName: row.articles?.name ?? null,
-            assetCode: row.asset_tags?.printed_code ?? null,
+            articleName: art?.name ?? null,
+            assetCode: tag?.printed_code ?? null,
           };
         }
         return next;

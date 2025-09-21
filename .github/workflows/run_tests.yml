@@ -30,3 +30,14 @@ jobs:
       - name: Run ESLint
         run: npm run lint
 
+      - name: Upload ESLint results
+        if: failure()
+        uses: actions/upload-artifact@v3
+        with:
+          name: eslint-results
+          path: eslint-results.xml
+          retention-days: 5
+          if-no-files-found: ignore
+          
+      - name : Run TypeScript Compiler
+        run: npx tsc --noEmit

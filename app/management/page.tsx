@@ -93,7 +93,7 @@ function buildHistorySummary(payload: Record<string, unknown>): string {
   const parts: string[] = [];
   for (const key of HISTORY_PREVIEW_KEYS) {
     const raw = payload[key];
-    if (raw === null || raw === undefined || key === "_op") continue;
+    if (raw === null || raw === undefined) continue;
     const text = typeof raw === "object" ? JSON.stringify(raw) : String(raw);
     if (text.trim().length === 0) continue;
     parts.push(`${key}: ${truncate(text)}`);

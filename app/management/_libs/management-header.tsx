@@ -187,7 +187,9 @@ function UserMenu() {
       }
       if (memberships?.length) {
         for (const row of memberships) {
-          if (row.companies) list.push(row.companies as Company);
+          const comp = (row as any).companies as unknown;
+          const picked = (Array.isArray(comp) ? comp[0] : comp) as Company | undefined;
+          if (picked) list.push(picked);
         }
       }
 
@@ -205,7 +207,7 @@ function UserMenu() {
 
       if (!active) return;
       setCompanies(list);
-      setSelectedCompanyId(desired ?? list[0]?.id ?? null);
+      setSelectedCompanyId(desired ?? (list[0] ? String(list[0].id) : null));
       setLoadingCompanies(false);
     }
     load();
@@ -249,7 +251,7 @@ function UserMenu() {
             ) : companies.length ? (
               <DropdownMenuRadioGroup value={selectedCompanyId ?? undefined} onValueChange={onSelectCompany}>
                 {companies.map((c) => (
-                  <DropdownMenuRadioItem key={c.id} value={c.id}>
+                  <DropdownMenuRadioItem key={c.id} value={String(c.id)}>
                     <span className="truncate">{c.name ?? c.id}</span>
                   </DropdownMenuRadioItem>
                 ))}

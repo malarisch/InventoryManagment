@@ -2,8 +2,9 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import Link from "next/link";
 import { EquipmentCreateForm } from "@/components/forms/equipment-create-form";
 
-export default function EquipmentNewPage({ searchParams }: { searchParams?: { [key: string]: string | string[] | undefined } }) {
-  const initialArticleId = typeof searchParams?.articleId === "string" ? Number(searchParams?.articleId) : undefined;
+export default async function EquipmentNewPage({ searchParams }: { searchParams?: Promise<Record<string, string | string[] | undefined>> }) {
+  const sp = (await searchParams) ?? {};
+  const initialArticleId = typeof sp.articleId === "string" ? Number(sp.articleId) : undefined;
   return (
     <main className="min-h-screen w-full flex flex-col items-center p-5">
       <div className="w-full max-w-3xl flex-1 space-y-4">

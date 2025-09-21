@@ -57,12 +57,15 @@ export function useCompany() {
         }
 
         if (data?.companies) {
-          const picked = data.companies as CompanyRecord;
-          setCompany(picked);
-          if (typeof window !== "undefined" && !desiredId) {
-            try { localStorage.setItem("active_company_id", String(picked.id)); } catch {}
+          const comp = (data as any).companies as unknown;
+          const picked = (Array.isArray(comp) ? comp[0] : comp) as CompanyRecord | undefined;
+          if (picked) {
+            setCompany(picked);
+            if (typeof window !== "undefined" && !desiredId) {
+              try { localStorage.setItem("active_company_id", String(picked.id)); } catch {}
+            }
+            return;
           }
-          return;
         }
 
         // Fallback: look for a company the user owns (in case membership rows are missing yet).
