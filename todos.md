@@ -7,7 +7,6 @@ Diese To-Do List enthält Aufgaben, die an der Software zu bearbeiten sind. Soba
 - Kommentiere sämtlichen Code von dir im TSDoc Style. Auch komplexere Teile von Funktionen, deren Zweck nicht sofort ersichtlich ist.
 - Alle Objekte sollen Files bekommen können. Dazu in den jeweiligen tabellen ein files arry column anlegen als jsonb, in jedem objekt stehen name und beschreibung (beides opeitonal) und link sowie id aus dem supabase storage. Die Edit Seiten bekommen eine Dateiübersicht und ein File Upload (nicht die create seiten!) - 
 - Implementiere vernünftiges logging über Supabase Logflare
-- Implementiere Error Handling in der UI
 - Räume das Repo auf - ungenutze Sachen entfernen, Dokumentation aktualisieren, etc.
 - Implementiere Tests
 - Räume deinen Code auf - modifiziere ggf. Komponenten, das sie reusable sind soweit wie möglich.
@@ -17,6 +16,8 @@ Diese To-Do List enthält Aufgaben, die an der Software zu bearbeiten sind. Soba
 
 
 ## Done
+
+- Error Handling: Einheitliche Fehlerseiten (global/Management) mit Retry-Option.
 
 - Fixes: Job-Detail befüllt Start-/Enddatum korrekt und reduziert redundante Metadaten auf der Seite.
 - Fixes: Benutzerfreundlicher Date-Picker ersetzt native Date-Inputs projektweit.

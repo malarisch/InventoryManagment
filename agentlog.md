@@ -233,3 +233,7 @@ Next: Run supabase db push to apply migration.
 Task: History diff guards for mixed job tables
 Files: components/history-live.tsx; components/historyCard.tsx
 Next: Consider batching realtime detail lookups for performance if dataset grows.
+2025-09-22 00:20 CEST
+Task: UI error handling foundations
+Files: components/error-state.tsx; app/error.tsx; app/global-error.tsx; app/management/error.tsx; app/management/global-error.tsx; todos.md
+Next: Consider route-specific error copy if future modules need custom actions.
