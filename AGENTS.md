@@ -64,12 +64,15 @@
 
 ## Agent Workflow & Logging
 - Whenever you are planning to implement a feature you have heared about in the `todos.md`, read it again to make sure you have the correct understanding of what the user wants. When writing to it read it first so you don't overwrite any changes made by the user while you were working. The same is true for `human-review-todos.md`.
+- When doing database schema updates, update the run_seed api call if necessary, then run `npm run supabase-gen-types` to apply the migration and update the database.types.ts BEFORE writing any additional code.
 - After each major task, append a short summary to `agentlog.md` to track project status.
 - Keep it concise (2–5 lines): include date/time, task name, key files/migrations/policies touched, and next step if any.
 - Append entries chronologically; no need for elaborate formatting.
 - Always consult Context7 for external library usage (writing, updating, or reviewing code) before making changes.
 - When unsure if changes in the repo are accidential while commiting, do NOT revert them. Instead, add a Human Review Todo to `human-review-todos.md`. Do not modify the files you are unsure about! Its more likely they are edits made by the user.
 - After each completed task, create a git commit that captures the changes you made.
+
+
 
 
 
