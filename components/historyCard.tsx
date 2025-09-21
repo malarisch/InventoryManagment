@@ -74,10 +74,20 @@ export async function HistoryCard({ table, dataId, extraTables }: { table: strin
   );
 
   // Compute shallow diffs vs previous (older) snapshot
+  function findPreviousPayload(index: number, tableName: string): Record<string, unknown> | null {
+    for (let j = index + 1; j < base.length; j += 1) {
+      const candidate = base[j];
+      if (candidate.table_name === tableName) {
+        return candidate.payload ?? null;
+      }
+    }
+    return null;
+  }
+
   const initial: HistoryDisplayRow[] = base.map((row, i) => {
-    const older = base[i + 1]?.payload ?? null;
+    const previousPayload = findPreviousPayload(i, row.table_name);
     const curr = row.payload ?? {};
-    const olderFlat = older ? flatten(older) : {};
+    const olderFlat = previousPayload ? flatten(previousPayload) : {};
     const currFlat = flatten(curr);
     const keys = Array.from(new Set([...Object.keys(olderFlat), ...Object.keys(currFlat)]));
     const changes: Array<{ key: string; from: unknown; to: unknown }> = [];

@@ -229,3 +229,7 @@ Next: Optional – enrich history summaries with Job-Titeln, falls verfügbar.
 Task: Fix company history trigger company_id lookup
 Files: supabase/migrations/20250921233500_history_companies_fix.sql
 Next: Run supabase db push to apply migration.
+2025-09-22 00:05 CEST
+Task: History diff guards for mixed job tables
+Files: components/history-live.tsx; components/historyCard.tsx
+Next: Consider batching realtime detail lookups for performance if dataset grows.

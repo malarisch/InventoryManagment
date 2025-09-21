@@ -122,7 +122,8 @@ export function HistoryLive({
               const actorDisplay = newRow.change_made_by && newRow.change_made_by === currentUserId
                 ? 'dir'
                 : fallbackDisplayFromId(newRow.change_made_by);
-              const prevPayload = prev[0]?.payload ?? null;
+              const previousSameTable = prev.find((existing) => existing.table_name === tableName && existing.id !== newRow.id);
+              const prevPayload = previousSameTable?.payload ?? null;
               const includeDiff = !DETAIL_TABLES.has(tableName);
               const changes = includeDiff ? deepDiff(prevPayload, payload) : [];
               const disp: HistoryDisplayRow = {
