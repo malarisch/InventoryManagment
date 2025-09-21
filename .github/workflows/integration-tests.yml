@@ -28,6 +28,8 @@ jobs:
 
       - name: Install Supabase CLI
         uses: supabase/setup-cli@v1
+        with:
+          version: latest
 
       - name: Start Supabase stack
         run: supabase start

@@ -271,3 +271,6 @@ Next: Run `supabase db push` to add `files` columns and `attachments` bucket; co
 - Added npm scripts (`test:unit`) and ensured lint/type checks stay green.
 2025-09-22 00:30 CEST — CI integration setup
 - Added GitHub workflow to launch Supabase locally, export env vars, run Vitest and Playwright suites against Next.js dev server.
+2025-09-22 01:05 CEST — Supabase CLI compatibility
+- Trimmed unsupported keys from `supabase/config.toml` (removed network restrictions/web3, normalized migrations block).
+- Pinned GitHub Actions Supabase CLI install to `version: latest` to match updated config schema.
