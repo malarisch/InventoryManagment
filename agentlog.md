@@ -225,3 +225,7 @@ Next: Extend history coverage to additional related tables if needed; consider a
 Task: History detail cleanup for job bookings
 Files: components/history-live.tsx; components/historyCard.tsx
 Next: Optional – enrich history summaries with Job-Titeln, falls verfügbar.
+2025-09-21 23:45 CEST
+Task: Fix company history trigger company_id lookup
+Files: supabase/migrations/20250921233500_history_companies_fix.sql
+Next: Run supabase db push to apply migration.
