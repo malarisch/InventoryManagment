@@ -111,17 +111,25 @@ export function DatePicker({
         <span className={cn("truncate", !displayValue && "text-muted-foreground")}>{displayValue || placeholder}</span>
         <div className="inline-flex items-center gap-2 pl-2 text-muted-foreground">
           {value && !disabled ? (
-            <button
-              type="button"
+            <span
+              role="button"
+              tabIndex={0}
               onClick={(event) => {
                 event.stopPropagation();
                 handleClear();
               }}
-              className="flex h-6 w-6 items-center justify-center rounded-md text-muted-foreground transition hover:bg-muted hover:text-foreground focus:outline-none focus-visible:ring-1 focus-visible:ring-ring"
+              onKeyDown={(event) => {
+                if (event.key === "Enter" || event.key === " ") {
+                  event.preventDefault();
+                  event.stopPropagation();
+                  handleClear();
+                }
+              }}
+              className="flex h-6 w-6 cursor-pointer items-center justify-center rounded-md text-muted-foreground transition hover:bg-muted hover:text-foreground focus:outline-none focus-visible:ring-1 focus-visible:ring-ring"
               aria-label={clearLabel}
             >
               <X className="h-3.5 w-3.5" strokeWidth={2} />
-            </button>
+            </span>
           ) : null}
           <CalendarIcon className="h-4 w-4" aria-hidden="true" />
         </div>
