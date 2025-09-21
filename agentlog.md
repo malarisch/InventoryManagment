@@ -237,3 +237,7 @@ Next: Consider batching realtime detail lookups for performance if dataset grows
 Task: UI error handling foundations
 Files: components/error-state.tsx; app/error.tsx; app/global-error.tsx; app/management/error.tsx; app/management/global-error.tsx; todos.md
 Next: Consider route-specific error copy if future modules need custom actions.
+2025-09-22 00:34 CEST
+Task: CI – lint workflow
+Files: .github/workflows/lint.yml
+Next: Optionally add a separate type-check job if needed.
