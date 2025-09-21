@@ -221,3 +221,7 @@ Next: Monitor SearchPicker adoption across remaining search inputs; add tests ar
 Task: Job Booking Sync + History formatting
 Files: components/job-booked-assets{.tsx,.client.tsx}; components/forms/job-quick-book.tsx; components/history{Card,live}.tsx; lib/dates.ts; supabase/migrations/20250921221000_history_job_bookings_use_job_id.sql; app/management/jobs/[id]/page.tsx
 Next: Extend history coverage to additional related tables if needed; consider adding automated tests for realtime updates.
+2025-09-21 23:30 CEST
+Task: History detail cleanup for job bookings
+Files: components/history-live.tsx; components/historyCard.tsx
+Next: Optional – enrich history summaries with Job-Titeln, falls verfügbar.

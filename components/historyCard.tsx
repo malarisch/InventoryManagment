@@ -53,6 +53,8 @@ export async function HistoryCard({ table, dataId, extraTables }: { table: strin
 
   const rows = (data as HistoryRow[] | null) ?? [];
 
+  const detailTables = new Set(["job_booked_assets", "job_assets_on_job"]);
+
   const base: HistoryDisplayRow[] = await Promise.all(
     rows.map(async (h) => {
       const actor = await fetchUserDisplayAdmin(h.change_made_by ?? undefined);
@@ -85,7 +87,7 @@ export async function HistoryCard({ table, dataId, extraTables }: { table: strin
       const b = currFlat[key];
       if (JSON.stringify(a) !== JSON.stringify(b)) changes.push({ key, from: a, to: b });
     }
-    return { ...row, changes };
+    return { ...row, changes: detailTables.has(row.table_name) ? [] : changes };
   });
 
   return (

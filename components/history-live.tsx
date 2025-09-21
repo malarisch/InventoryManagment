@@ -51,6 +51,7 @@ function lastSegment(path: string): string {
 }
 
 const EXCLUDE_KEYS = new Set(['created_at', 'updated_at']);
+const DETAIL_TABLES = new Set(['job_booked_assets', 'job_assets_on_job']);
 
 function deepDiff(prevPayload: Record<string, unknown> | null, currPayload: Record<string, unknown>): Array<{ key: string; from: unknown; to: unknown }> {
   const prevFlat = prevPayload ? flatten(prevPayload) : {};
@@ -88,6 +89,8 @@ export function HistoryLive({
   const supabase = useMemo(() => createClient(), []);
   const normalizedTables = useMemo(() => Array.from(new Set(tables)).sort(), [tables]);
   const [rows, setRows] = useState<HistoryDisplayRow[]>(() => initial);
+  const [equipmentDetails, setEquipmentDetails] = useState<Record<number, { articleName: string | null; assetCode: string | null }>>({});
+  const [caseDetails, setCaseDetails] = useState<Record<number, { name: string | null }>>({});
 
   useEffect(() => {
     let mounted = true;
@@ -120,7 +123,8 @@ export function HistoryLive({
                 ? 'dir'
                 : fallbackDisplayFromId(newRow.change_made_by);
               const prevPayload = prev[0]?.payload ?? null;
-              const changes = deepDiff(prevPayload, payload);
+              const includeDiff = !DETAIL_TABLES.has(tableName);
+              const changes = includeDiff ? deepDiff(prevPayload, payload) : [];
               const disp: HistoryDisplayRow = {
                 id: newRow.id,
                 table_name: tableName,
@@ -153,7 +157,117 @@ export function HistoryLive({
     };
   }, [supabase, normalizedTables, dataId]);
 
+  useEffect(() => {
+    const equipIds = rows
+      .filter((row) => DETAIL_TABLES.has(row.table_name))
+      .map((row) => row.payload['equipment_id'])
+      .filter((value): value is unknown => typeof value !== 'undefined');
+    const numericIds = Array.from(new Set(equipIds.filter((value): value is number => typeof value === 'number')));
+    const missing = numericIds.filter((id) => !(id in equipmentDetails));
+    if (missing.length === 0) return;
+    let cancelled = false;
+    async function load() {
+      const { data, error } = await supabase
+        .from('equipments')
+        .select('id, articles:article_id(name), asset_tags:asset_tag(printed_code)')
+        .in('id', missing);
+      if (cancelled || error || !data) return;
+      setEquipmentDetails((prev) => {
+        const next = { ...prev };
+        for (const row of data as Array<{ id: number; articles?: { name: string | null } | null; asset_tags?: { printed_code: string | null } | null }>) {
+          next[row.id] = {
+            articleName: row.articles?.name ?? null,
+            assetCode: row.asset_tags?.printed_code ?? null,
+          };
+        }
+        return next;
+      });
+    }
+    void load();
+    return () => {
+      cancelled = true;
+    };
+  }, [rows, equipmentDetails, supabase]);
+
+  useEffect(() => {
+    const caseIds = rows
+      .filter((row) => DETAIL_TABLES.has(row.table_name))
+      .map((row) => row.payload['case_id'])
+      .filter((value): value is unknown => typeof value !== 'undefined');
+    const numericIds = Array.from(new Set(caseIds.filter((value): value is number => typeof value === 'number')));
+    const missing = numericIds.filter((id) => !(id in caseDetails));
+    if (missing.length === 0) return;
+    let cancelled = false;
+    async function load() {
+      const { data, error } = await supabase
+        .from('cases')
+        .select('id, name')
+        .in('id', missing);
+      if (cancelled || error || !data) return;
+      setCaseDetails((prev) => {
+        const next = { ...prev };
+        for (const row of data as Array<{ id: number; name: string | null }>) {
+          next[row.id] = { name: row.name ?? null };
+        }
+        return next;
+      });
+    }
+    void load();
+    return () => {
+      cancelled = true;
+    };
+  }, [rows, caseDetails, supabase]);
+
   const previewKeys = ["id", "name", "article_id", "default_location", "asset_tag", "current_location", "company_id"] as const;
+
+  function readNumber(payload: Record<string, unknown>, key: string): number | null {
+    const value = payload[key];
+    return typeof value === 'number' && Number.isFinite(value) ? value : null;
+  }
+
+  function buildJobDetail(row: HistoryDisplayRow): string | null {
+    if (!DETAIL_TABLES.has(row.table_name)) return null;
+    const payload = row.payload ?? {};
+    const equipmentId = readNumber(payload, 'equipment_id');
+    const caseId = readNumber(payload, 'case_id');
+
+    const parts: string[] = [];
+    if (typeof equipmentId === 'number') {
+      const info = equipmentDetails[equipmentId];
+      let label = info?.articleName?.trim() || `Equipment #${equipmentId}`;
+      const assetCode = info?.assetCode?.trim();
+      if (assetCode) {
+        label += ` (Asset-Tag ${assetCode})`;
+      }
+      parts.push(label);
+    }
+
+    if (typeof caseId === 'number') {
+      const info = caseDetails[caseId];
+      parts.push(info?.name?.trim() || `Case #${caseId}`);
+    }
+
+    if (parts.length === 0) return null;
+
+    const op = (row.op ?? '').toUpperCase();
+    let action: string;
+    switch (op) {
+      case 'INSERT':
+        action = 'zum Job hinzugefügt';
+        break;
+      case 'DELETE':
+        action = 'aus dem Job entfernt';
+        break;
+      case 'UPDATE':
+        action = 'im Job aktualisiert';
+        break;
+      default:
+        action = 'aktualisiert';
+        break;
+    }
+
+    return `${parts.join(' • ')} ${action}`;
+  }
 
   return (
     <div className="overflow-x-auto border rounded-md">
@@ -176,7 +290,8 @@ export function HistoryLive({
               .filter((k) => Object.prototype.hasOwnProperty.call(h.payload, k))
               .map((k) => `${k}: ${String(h.payload[k])}`)
               .join(" • ");
-            const hasSecondary = (h.changes?.length ?? 0) > 0 || Boolean(preview);
+            const detailText = buildJobDetail(h);
+            const hasSecondary = detailText ? true : (h.changes?.length ?? 0) > 0 || Boolean(preview);
             return (
               <tr key={h.id} className="odd:bg-background even:bg-muted/20 align-top">
                 <td className="px-3 py-2 border-t whitespace-nowrap">{formatDateTime(safeParseDate(h.created_at))}</td>
@@ -193,7 +308,9 @@ export function HistoryLive({
                       {h.summary}
                     </div>
                   ) : null}
-                  {h.changes && h.changes.length > 0 ? (
+                  {detailText ? (
+                    <div className="text-xs text-muted-foreground">{detailText}</div>
+                  ) : h.changes && h.changes.length > 0 ? (
                     <div className="text-xs text-muted-foreground space-y-1">
                       {h.changes.map((c) => (
                         <div key={c.key}>
