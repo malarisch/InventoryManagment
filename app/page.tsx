@@ -3,6 +3,9 @@ import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { hasEnvVars } from "@/lib/utils";
 
+/**
+ * Public Supabase environment variables required for a functional local setup.
+ */
 const REQUIRED_ENV_VARS = ["NEXT_PUBLIC_SUPABASE_URL", "NEXT_PUBLIC_SUPABASE_ANON_KEY"] as const;
 
 /**
@@ -27,7 +30,7 @@ export default async function HomePage() {
             ))}
           </ul>
           <p className="text-sm text-muted-foreground">
-            Du findest die Werte im Supabase Dashboard unter <strong>Project Settings -> API</strong>. Anschließend
+            Du findest die Werte im Supabase Dashboard unter <strong>Project Settings &rarr; API</strong>. Anschließend
             starte den Dev-Server neu.
           </p>
           <div className="flex items-center justify-center gap-3 text-sm">

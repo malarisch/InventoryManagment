@@ -1,5 +1,8 @@
 import { formatDate, safeParseDate } from "@/lib/dates";
 
+/**
+ * Minimal shape of a related customer required for dashboard job previews.
+ */
 export type JobCustomer = {
   id: number;
   company_name: string | null;
@@ -7,11 +10,17 @@ export type JobCustomer = {
   surname: string | null;
 };
 
+/**
+ * Subset of fields used to calculate a readable job period label.
+ */
 export type JobPeriodLike = {
   startdate: string | null;
   enddate: string | null;
 };
 
+/**
+ * Generic history payload representation that we can inspect for summaries.
+ */
 export type HistoryPreviewRecord = Record<string, unknown>;
 
 /**

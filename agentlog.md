@@ -262,3 +262,6 @@ Next: Run `supabase db push` to add `files` columns and `attachments` bucket; co
 - Simplified `/` route to Supabase setup guidance + auth redirect; removed template tutorial components.
 - Added shared dashboard utils with TSDoc, documented date/user helpers, and refreshed env guard comment.
 - Lint, type-check, and build all green via `npm run lint`, `npm run test:tsc`, `npm run build`.
+2025-09-22 00:01 CEST — Doc pass for recent maintenance
+- Added TSDoc for landing env requirements and dashboard helper types.
+- Lint + type-check re-run via `npm run lint` and `npm run test:tsc`.
