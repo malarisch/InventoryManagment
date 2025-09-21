@@ -241,3 +241,7 @@ Next: Consider route-specific error copy if future modules need custom actions.
 Task: CI – lint workflow
 Files: .github/workflows/lint.yml
 Next: Optionally add a separate type-check job if needed.
+2025-09-22 00:48 CEST
+Task: Files feature + Logflare hooks
+Files: supabase/migrations/20250922004500_add_files_columns.sql; components/files/file-manager.tsx; lib/files.ts; app/management/*/[id]/page.tsx; lib/log.ts; components/forms/job-quick-book.tsx; todos.md
+Next: Run `supabase db push` to add `files` columns and `attachments` bucket; configure LOGFLARE_SOURCE/LOGFLARE_API_KEY to enable remote logging.

@@ -8,6 +8,7 @@ import { fetchUserDisplayAdmin } from "@/lib/users/userDisplay.server";
 import { CustomerEditForm } from "@/components/forms/customer-edit-form";
 import { HistoryCard } from "@/components/historyCard";
 import { DeleteWithUndo } from "@/components/forms/delete-with-undo";
+import { FileManager } from "@/components/files/file-manager";
 
 type Customer = Tables<"customers">;
 
@@ -74,6 +75,9 @@ export default async function CustomerDetailPage({ params }: { params: Promise<{
               <DeleteWithUndo table="customers" id={cust.id} payload={cust as Record<string, unknown>} redirectTo="/management/customers" />
             </div>
             <CustomerEditForm customer={cust} />
+            <div className="mt-6">
+              <FileManager table="customers" rowId={cust.id} initial={(cust as Record<string, unknown>).files} />
+            </div>
           </CardContent>
         </Card>
         <Card>

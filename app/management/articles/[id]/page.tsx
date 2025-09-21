@@ -11,6 +11,7 @@ import { ArticleEquipmentsTable } from "@/components/articleEquipmentsTable";
 import { safeParseDate, formatDateTime } from "@/lib/dates";
 import { fallbackDisplayFromId } from "@/lib/userDisplay";
 import { fetchUserDisplayAdmin } from "@/lib/users/userDisplay.server";
+import { FileManager } from "@/components/files/file-manager";
 
 type ArticleRow = Tables<"articles"> & {
   locations?: { name: string } | null;
@@ -76,6 +77,9 @@ export default async function ArticleDetailPage({ params }: { params: Promise<{ 
               </Button>
             </div>
             <ArticleEditForm article={article} />
+            <div className="mt-6">
+              <FileManager table="articles" rowId={article.id} initial={(article as Record<string, unknown>).files} />
+            </div>
           </CardContent>
         </Card>
 

@@ -10,6 +10,7 @@ import { HistoryCard } from "@/components/historyCard";
 import { JobBookedAssetsCard } from "@/components/job-booked-assets";
 import { JobQuickBook } from "@/components/forms/job-quick-book";
 import { DeleteWithUndo } from "@/components/forms/delete-with-undo";
+import { FileManager } from "@/components/files/file-manager";
 
 type JobRow = Tables<"jobs">;
 
@@ -61,6 +62,9 @@ export default async function JobDetailPage({ params }: { params: Promise<{ id: 
               <DeleteWithUndo table="jobs" id={job.id} payload={job as Record<string, unknown>} redirectTo="/management/jobs" />
             </div>
             <JobEditForm job={job} />
+            <div className="mt-6">
+              <FileManager table="jobs" rowId={job.id} initial={(job as Record<string, unknown>).files} />
+            </div>
           </CardContent>
         </Card>
         <JobBookedAssetsCard jobId={id} />

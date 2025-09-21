@@ -8,6 +8,7 @@ import { fallbackDisplayFromId } from "@/lib/userDisplay";
 import { fetchUserDisplayAdmin } from "@/lib/users/userDisplay.server";
 import { HistoryCard } from "@/components/historyCard";
 import { DeleteWithUndo } from "@/components/forms/delete-with-undo";
+import { FileManager } from "@/components/files/file-manager";
 
 type EquipmentRow = Tables<"equipments"> & {
   articles?: { name: string } | null;
@@ -78,6 +79,9 @@ export default async function EquipmentDetailPage({ params }: { params: Promise<
               <DeleteWithUndo table="equipments" id={eq.id} payload={eq as Record<string, unknown>} redirectTo="/management/equipments" />
             </div>
             <EquipmentEditForm equipment={eq} />
+            <div className="mt-6">
+              <FileManager table="equipments" rowId={eq.id} initial={(eq as Record<string, unknown>).files} />
+            </div>
           </CardContent>
         </Card>
       </div>

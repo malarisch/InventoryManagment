@@ -3,20 +3,19 @@
 Diese To-Do List enthält Aufgaben, die an der Software zu bearbeiten sind. Sobald eine Aufgabe bearbeited wurde soll diese hier in der Datei unten in die Done-List eingefügt und aus der To-Do list entfernt werden.
 
 ## To-Do
-- Fixe die ganzen Linter Issues.
-- Kommentiere sämtlichen Code von dir im TSDoc Style. Auch komplexere Teile von Funktionen, deren Zweck nicht sofort ersichtlich ist.
-- Alle Objekte sollen Files bekommen können. Dazu in den jeweiligen tabellen ein files arry column anlegen als jsonb, in jedem objekt stehen name und beschreibung (beides opeitonal) und link sowie id aus dem supabase storage. Die Edit Seiten bekommen eine Dateiübersicht und ein File Upload (nicht die create seiten!) - 
-- Implementiere vernünftiges logging über Supabase Logflare
-- Räume das Repo auf - ungenutze Sachen entfernen, Dokumentation aktualisieren, etc.
+- Kommentiere sämtlichen Code von dir im TSDoc Style (fortlaufend; neue Module sind dokumentiert).
+- Räume das Repo auf - ungenutze Sachen entfernen, etc.
 - Implementiere Tests
 - Räume deinen Code auf - modifiziere ggf. Komponenten, das sie reusable sind soweit wie möglich.
-- Überprüfe die Security Best Practices
+- Überprüfe die Security Best Practices - schaue dass die Supabase Referenzen eingehalten werden!
 
 ### Fixes
 
 
 ## Done
-
+- Dateien pro Objekt: `files jsonb[]` für Articles, Equipments, Locations, Cases, Customers, Jobs + UI FileManager (Upload/Liste) in Edit-Ansichten; Storage-Bucket `attachments`.
+- Logging: `lib/log.ts` mit optionaler Weiterleitung an Logflare (env: `LOGFLARE_SOURCE`, `LOGFLARE_API_KEY`); Events bei Schnell-Buchung.
+- Fixe die ganzen Linter Issues.
 - Error Handling: Einheitliche Fehlerseiten (global/Management) mit Retry-Option.
 
 - Fixes: Job-Detail befüllt Start-/Enddatum korrekt und reduziert redundante Metadaten auf der Seite.

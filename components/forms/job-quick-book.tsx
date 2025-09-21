@@ -12,6 +12,7 @@ import {
   type SearchItem,
 } from "@/components/search/search-picker";
 import { cn } from "@/lib/utils";
+import { logEvent } from "@/lib/log";
 
 type Article = Tables<"articles">;
 type Equipment = Tables<"equipments"> & {
@@ -158,16 +159,17 @@ export function JobQuickBook({ jobId }: { jobId: number }) {
       const { error } = await supabase
         .from("job_booked_assets")
         .insert({ job_id: jobId, company_id: company.id, equipment_id: equipment.id });
-    if (error) {
-      setStatus({ kind: "error", message: error.message });
-    } else {
-      setStatus({
-        kind: "success",
-        message: `Equipment ${equipment.asset_tags?.printed_code ?? `#${equipment.id}`} gebucht.`,
-      });
-      setBookedEqIds((prev) => [...prev, equipment.id]);
-      setSelectedArticle(null);
-    }
+      if (error) {
+        setStatus({ kind: "error", message: error.message });
+      } else {
+        setStatus({
+          kind: "success",
+          message: `Equipment ${equipment.asset_tags?.printed_code ?? `#${equipment.id}`} gebucht.`,
+        });
+        setBookedEqIds((prev) => [...prev, equipment.id]);
+        setSelectedArticle(null);
+        void logEvent("job_book_equipment", { job_id: jobId, equipment_id: equipment.id });
+      }
     setActionLoading(false);
   },
   [company, jobId, supabase],
@@ -183,12 +185,13 @@ export function JobQuickBook({ jobId }: { jobId: number }) {
       const { error } = await supabase
         .from("job_booked_assets")
         .insert({ job_id: jobId, company_id: company.id, case_id: caseRow.id });
-    if (error) {
-      setStatus({ kind: "error", message: error.message });
-    } else {
-      setStatus({ kind: "success", message: `Case ${caseRow.name ?? `#${caseRow.id}`} gebucht.` });
-      setSelectedArticle(null);
-    }
+      if (error) {
+        setStatus({ kind: "error", message: error.message });
+      } else {
+        setStatus({ kind: "success", message: `Case ${caseRow.name ?? `#${caseRow.id}`} gebucht.` });
+        setSelectedArticle(null);
+        void logEvent("job_book_case", { job_id: jobId, case_id: caseRow.id });
+      }
     setActionLoading(false);
   },
   [company, jobId, supabase],
@@ -234,6 +237,7 @@ export function JobQuickBook({ jobId }: { jobId: number }) {
       setBookedEqIds((prev) => [...prev, ...bookedIds]);
       setArticleAmount(1);
       setSelectedArticle(null);
+      void logEvent("job_book_article_equipments", { job_id: jobId, article_id: selectedArticle.id, count });
     }
     setActionLoading(false);
   }, [selectedArticle, company, equipments, bookedEqIds, articleAmount, jobId, supabase]);

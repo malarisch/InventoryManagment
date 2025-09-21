@@ -9,6 +9,7 @@ import { fetchUserDisplayAdmin } from "@/lib/users/userDisplay.server";
 import { LocationCurrentEquipmentsList } from "@/components/locationCurrentEquipmentsList";
 import { HistoryCard } from "@/components/historyCard";
 import { DeleteWithUndo } from "@/components/forms/delete-with-undo";
+import { FileManager } from "@/components/files/file-manager";
 
 type LocationRow = Tables<"locations"> & { asset_tags?: { printed_code: string | null } | null };
 type EquipmentRow = Tables<"equipments"> & {
@@ -73,6 +74,9 @@ export default async function LocationDetailPage({ params }: { params: Promise<{
               <DeleteWithUndo table="locations" id={loc.id} payload={loc as Record<string, unknown>} redirectTo="/management/locations" />
             </div>
             <LocationEditForm location={loc} />
+            <div className="mt-6">
+              <FileManager table="locations" rowId={loc.id} initial={(loc as Record<string, unknown>).files} />
+            </div>
           </CardContent>
         </Card>
 
