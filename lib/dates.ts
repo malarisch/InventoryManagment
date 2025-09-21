@@ -1,3 +1,11 @@
+import { format } from "date-fns";
+import { de } from "date-fns/locale";
+import type { Locale } from "date-fns";
+
+const DATE_LOCALES: Record<string, Locale> = {
+  "de-DE": de,
+};
+
 export function safeParseDate(input?: string | null): Date | null {
   if (!input) return null;
   let s = String(input);
@@ -16,6 +24,10 @@ export function safeParseDate(input?: string | null): Date | null {
 export function formatDate(d?: Date | null, locale: string = 'de-DE'): string {
   if (!d) return '—';
   try {
+    const localeObj = DATE_LOCALES[locale];
+    if (localeObj) {
+      return format(d, 'dd.MM.yy', { locale: localeObj });
+    }
     return new Intl.DateTimeFormat(locale, {
       year: '2-digit',
       month: '2-digit',
@@ -29,6 +41,10 @@ export function formatDate(d?: Date | null, locale: string = 'de-DE'): string {
 export function formatDateTime(d?: Date | null, locale: string = 'de-DE'): string {
   if (!d) return '—';
   try {
+    const localeObj = DATE_LOCALES[locale];
+    if (localeObj) {
+      return format(d, 'dd.MM.yyyy HH:mm:ss', { locale: localeObj });
+    }
     return new Intl.DateTimeFormat(locale, {
       year: 'numeric',
       month: '2-digit',

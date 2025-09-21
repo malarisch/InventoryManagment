@@ -1,7 +1,6 @@
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { createClient } from "@/lib/supabase/server";
 import type { Tables } from "@/database.types";
-import Link from "next/link";
 import { JobBookedAssetsList } from "@/components/job-booked-assets.client";
 
 type Booked = Tables<"job_booked_assets"> & {

@@ -11,6 +11,7 @@ type HistoryRow = Tables<"history">;
 
 export type HistoryDisplayRow = {
   id: number;
+  table_name: string;
   created_at: string;
   change_made_by: string | null;
   op?: string | null;
@@ -67,16 +68,25 @@ function deepDiff(prevPayload: Record<string, unknown> | null, currPayload: Reco
   return changes;
 }
 
+function formatTableLabel(name: string): string {
+  return name
+    .split(/[_-]/g)
+    .filter(Boolean)
+    .map((part) => part.charAt(0).toUpperCase() + part.slice(1))
+    .join(' ');
+}
+
 export function HistoryLive({
-  table,
+  tables,
   dataId,
   initial,
 }: {
-  table: string;
+  tables: string[];
   dataId: number;
   initial: HistoryDisplayRow[];
 }) {
   const supabase = useMemo(() => createClient(), []);
+  const normalizedTables = useMemo(() => Array.from(new Set(tables)).sort(), [tables]);
   const [rows, setRows] = useState<HistoryDisplayRow[]>(() => initial);
 
   useEffect(() => {
@@ -85,14 +95,17 @@ export function HistoryLive({
       const { data: auth } = await supabase.auth.getUser();
       const currentUserId = auth.user?.id ?? null;
 
+      const channelTables = [...normalizedTables];
       const channel = supabase
-        .channel(`history-${table}-${dataId}`)
+        .channel(`history-${channelTables.join('-')}-${dataId}`)
         .on(
           'postgres_changes',
           { event: '*', schema: 'public', table: 'history', filter: `data_id=eq.${dataId}` },
           (payload) => {
             if (!mounted) return;
             const event = payload.eventType;
+            const tableName = ((payload.new as HistoryRow | null) ?? (payload.old as HistoryRow | null))?.table_name;
+            if (!tableName || !channelTables.includes(tableName)) return;
             setRows((prev) => {
               if (event === 'DELETE') {
                 const oldRow = payload.old as HistoryRow | null;
@@ -110,10 +123,11 @@ export function HistoryLive({
               const changes = deepDiff(prevPayload, payload);
               const disp: HistoryDisplayRow = {
                 id: newRow.id,
+                table_name: tableName,
                 created_at: newRow.created_at,
                 change_made_by: newRow.change_made_by,
                 op,
-                summary: describeHistoryEvent(table, op, payload),
+                summary: describeHistoryEvent(tableName, op, payload),
                 payload,
                 actorDisplay,
                 changes,
@@ -137,7 +151,7 @@ export function HistoryLive({
       mounted = false;
       void cleanupPromise;
     };
-  }, [supabase, table, dataId]);
+  }, [supabase, normalizedTables, dataId]);
 
   const previewKeys = ["id", "name", "article_id", "default_location", "asset_tag", "current_location", "company_id"] as const;
 
@@ -167,7 +181,12 @@ export function HistoryLive({
               <tr key={h.id} className="odd:bg-background even:bg-muted/20 align-top">
                 <td className="px-3 py-2 border-t whitespace-nowrap">{formatDateTime(safeParseDate(h.created_at))}</td>
                 <td className="px-3 py-2 border-t">{h.actorDisplay ?? "—"}</td>
-                <td className="px-3 py-2 border-t"><span className="inline-flex items-center rounded border px-2 py-0.5 text-xs capitalize">{h.op ?? 'update'}</span></td>
+                <td className="px-3 py-2 border-t">
+                  <div className="flex flex-col gap-1">
+                    <span className="inline-flex w-fit items-center rounded border px-2 py-0.5 text-xs capitalize">{h.op ?? 'update'}</span>
+                    <span className="text-[10px] uppercase tracking-wide text-muted-foreground">{formatTableLabel(h.table_name)}</span>
+                  </div>
+                </td>
                 <td className="px-3 py-2 border-t">
                   {h.summary ? (
                     <div className={`text-xs font-medium text-foreground${hasSecondary ? " mb-1" : ""}`}>

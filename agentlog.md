@@ -217,3 +217,7 @@ Next: Ensure future edits conform to documented standards.
 Task: Job-Fixes – Date Prefill, DatePicker, Quick-Book Search
 Files: app/management/jobs/[id]/page.tsx; components/forms/{job-edit-form,job-create-form,equipment-create-form,job-quick-book}.tsx; components/ui/{calendar,date-picker}.tsx; components/search/search-picker.tsx; components/jobTable.tsx; todos.md; package.json/package-lock.json
 Next: Monitor SearchPicker adoption across remaining search inputs; add tests around booking flows.
+2025-09-21 23:05 CEST
+Task: Job Booking Sync + History formatting
+Files: components/job-booked-assets{.tsx,.client.tsx}; components/forms/job-quick-book.tsx; components/history{Card,live}.tsx; lib/dates.ts; supabase/migrations/20250921221000_history_job_bookings_use_job_id.sql; app/management/jobs/[id]/page.tsx
+Next: Extend history coverage to additional related tables if needed; consider adding automated tests for realtime updates.

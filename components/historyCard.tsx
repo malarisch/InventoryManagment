@@ -38,14 +38,15 @@ const EXCLUDE_KEYS = new Set(['created_at', 'updated_at']);
 
 type HistoryRow = Tables<"history">;
 
-export async function HistoryCard({ table, dataId }: { table: string; dataId: number }) {
+export async function HistoryCard({ table, dataId, extraTables }: { table: string; dataId: number; extraTables?: string[] }) {
   const supabase = await createClient();
   const { data: auth } = await supabase.auth.getUser();
   const currentUserId = auth.user?.id ?? null;
+  const tables = Array.from(new Set([table, ...(extraTables ?? [])]));
   const { data, error } = await supabase
     .from("history")
     .select("*")
-    .eq("table_name", table)
+    .in("table_name", tables)
     .eq("data_id", dataId)
     .order("created_at", { ascending: false })
     .limit(50);
@@ -59,10 +60,11 @@ export async function HistoryCard({ table, dataId }: { table: string; dataId: nu
       const op = (payload as { _op?: string })._op;
       return {
         id: h.id,
+        table_name: h.table_name,
         created_at: h.created_at,
         change_made_by: h.change_made_by,
         op,
-        summary: describeHistoryEvent(table, op, payload),
+        summary: describeHistoryEvent(h.table_name, op, payload),
         payload,
         actorDisplay: actor ?? (h.change_made_by && h.change_made_by === currentUserId ? "dir" : null),
       };
@@ -96,7 +98,7 @@ export async function HistoryCard({ table, dataId }: { table: string; dataId: nu
         {error ? (
           <div className="text-sm text-red-600">Fehler beim Laden: {error.message}</div>
         ) : (
-          <HistoryLive table={table} dataId={dataId} initial={initial} />
+          <HistoryLive tables={tables} dataId={dataId} initial={initial} />
         )}
       </CardContent>
     </Card>

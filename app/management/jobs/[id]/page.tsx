@@ -73,7 +73,7 @@ export default async function JobDetailPage({ params }: { params: Promise<{ id: 
             <JobQuickBook jobId={id} />
           </CardContent>
         </Card>
-        <HistoryCard table="jobs" dataId={id} />
+        <HistoryCard table="jobs" dataId={id} extraTables={["job_booked_assets", "job_assets_on_job"]} />
       </div>
     </main>
   );

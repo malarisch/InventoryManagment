@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { createClient } from "@/lib/supabase/client";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
@@ -20,6 +20,83 @@ export function JobBookedAssetsList({ jobId, initial }: { jobId: number; initial
   const [rows, setRows] = useState<Booked[]>(() => initial);
   const [status, setStatus] = useState<string | null>(null);
   const [lastRemoved, setLastRemoved] = useState<Booked | null>(null);
+  const [loading, setLoading] = useState(false);
+
+  useEffect(() => {
+    let active = true;
+
+    async function loadLatest() {
+      setLoading(true);
+      const { data, error } = await supabase
+        .from("job_booked_assets")
+        .select("*, equipments:equipment_id(id, article_id, articles:article_id(name)), cases:case_id(id)")
+        .eq("job_id", jobId)
+        .order("created_at", { ascending: false });
+      if (!active) return;
+      if (!error && Array.isArray(data)) {
+        setRows(data as Booked[]);
+      }
+      setLoading(false);
+    }
+
+    void loadLatest();
+
+    const channel = supabase
+      .channel(`job-booked-assets-${jobId}`)
+      .on(
+        'postgres_changes',
+        { event: 'INSERT', schema: 'public', table: 'job_booked_assets', filter: `job_id=eq.${jobId}` },
+        async (payload) => {
+          const newRowId = (payload.new as { id?: number } | null)?.id;
+          if (!newRowId) return;
+          const { data } = await supabase
+            .from("job_booked_assets")
+            .select("*, equipments:equipment_id(id, article_id, articles:article_id(name)), cases:case_id(id)")
+            .eq("id", newRowId)
+            .limit(1)
+            .single();
+          if (!data) return;
+          setRows((prev) => {
+            const filtered = prev.filter((row) => row.id !== (data as Booked).id);
+            return [{ ...(data as Booked) }, ...filtered];
+          });
+        }
+      )
+      .on(
+        'postgres_changes',
+        { event: 'UPDATE', schema: 'public', table: 'job_booked_assets', filter: `job_id=eq.${jobId}` },
+        async (payload) => {
+          const updatedId = (payload.new as { id?: number } | null)?.id;
+          if (!updatedId) return;
+          const { data } = await supabase
+            .from("job_booked_assets")
+            .select("*, equipments:equipment_id(id, article_id, articles:article_id(name)), cases:case_id(id)")
+            .eq("id", updatedId)
+            .limit(1)
+            .single();
+          if (!data) return;
+          setRows((prev) => {
+            const rest = prev.filter((row) => row.id !== updatedId);
+            return [{ ...(data as Booked) }, ...rest];
+          });
+        }
+      )
+      .on(
+        'postgres_changes',
+        { event: 'DELETE', schema: 'public', table: 'job_booked_assets', filter: `job_id=eq.${jobId}` },
+        (payload) => {
+          const removedId = (payload.old as { id?: number } | null)?.id;
+          if (!removedId) return;
+          setRows((prev) => prev.filter((row) => row.id !== removedId));
+        }
+      )
+      .subscribe();
+
+    return () => {
+      active = false;
+      supabase.removeChannel(channel);
+    };
+  }, [supabase, jobId]);
 
   async function remove(id: number) {
     setStatus(null);
@@ -38,12 +115,17 @@ export function JobBookedAssetsList({ jobId, initial }: { jobId: number; initial
 
   async function undo() {
     if (!lastRemoved) return;
-    const payload: any = {
+    const payload: {
+      company_id: number;
+      job_id: number;
+      equipment_id?: number;
+      case_id?: number;
+    } = {
       company_id: lastRemoved.company_id,
       job_id: lastRemoved.job_id,
     };
-    if (lastRemoved.equipment_id) payload.equipment_id = lastRemoved.equipment_id;
-    if (lastRemoved.case_id) payload.case_id = lastRemoved.case_id;
+    if (typeof lastRemoved.equipment_id === 'number') payload.equipment_id = lastRemoved.equipment_id;
+    if (typeof lastRemoved.case_id === 'number') payload.case_id = lastRemoved.case_id;
     const { data, error } = await supabase
       .from("job_booked_assets")
       .insert(payload)
@@ -53,7 +135,10 @@ export function JobBookedAssetsList({ jobId, initial }: { jobId: number; initial
       setStatus(error.message);
       return;
     }
-    setRows((prev) => [{ ...(data as any) }, ...prev]);
+    setRows((prev) => {
+      const rest = prev.filter((row) => row.id !== (data as Booked).id);
+      return [{ ...(data as Booked) }, ...rest];
+    });
     setLastRemoved(null);
     setStatus("Wiederhergestellt.");
   }
@@ -98,12 +183,13 @@ export function JobBookedAssetsList({ jobId, initial }: { jobId: number; initial
           <div className="text-xs text-muted-foreground">Keine Cases gebucht.</div>
         )}
       </div>
-      {status && (
+      {(status || loading) && (
         <div className="md:col-span-2 text-xs text-muted-foreground flex items-center gap-2">
-          <span>{status}</span>
-          {lastRemoved && (
+          {loading ? <span>Lädt…</span> : null}
+          {status ? <span>{status}</span> : null}
+          {!loading && lastRemoved ? (
             <Button type="button" variant="link" className="h-auto p-0" onClick={undo}>Rückgängig</Button>
-          )}
+          ) : null}
         </div>
       )}
     </div>

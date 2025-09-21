@@ -158,19 +158,20 @@ export function JobQuickBook({ jobId }: { jobId: number }) {
       const { error } = await supabase
         .from("job_booked_assets")
         .insert({ job_id: jobId, company_id: company.id, equipment_id: equipment.id });
-      if (error) {
-        setStatus({ kind: "error", message: error.message });
-      } else {
-        setStatus({
-          kind: "success",
-          message: `Equipment ${equipment.asset_tags?.printed_code ?? `#${equipment.id}`} gebucht.`,
-        });
-        setBookedEqIds((prev) => [...prev, equipment.id]);
-      }
-      setActionLoading(false);
-    },
-    [company, jobId, supabase],
-  );
+    if (error) {
+      setStatus({ kind: "error", message: error.message });
+    } else {
+      setStatus({
+        kind: "success",
+        message: `Equipment ${equipment.asset_tags?.printed_code ?? `#${equipment.id}`} gebucht.`,
+      });
+      setBookedEqIds((prev) => [...prev, equipment.id]);
+      setSelectedArticle(null);
+    }
+    setActionLoading(false);
+  },
+  [company, jobId, supabase],
+);
 
   const handleCaseBooking = useCallback(
     async (caseRow: CaseRow) => {
@@ -182,15 +183,16 @@ export function JobQuickBook({ jobId }: { jobId: number }) {
       const { error } = await supabase
         .from("job_booked_assets")
         .insert({ job_id: jobId, company_id: company.id, case_id: caseRow.id });
-      if (error) {
-        setStatus({ kind: "error", message: error.message });
-      } else {
-        setStatus({ kind: "success", message: `Case ${caseRow.name ?? `#${caseRow.id}`} gebucht.` });
-      }
-      setActionLoading(false);
-    },
-    [company, jobId, supabase],
-  );
+    if (error) {
+      setStatus({ kind: "error", message: error.message });
+    } else {
+      setStatus({ kind: "success", message: `Case ${caseRow.name ?? `#${caseRow.id}`} gebucht.` });
+      setSelectedArticle(null);
+    }
+    setActionLoading(false);
+  },
+  [company, jobId, supabase],
+);
 
   const handleArticleBooking = useCallback(async () => {
     if (!selectedArticle) return;
@@ -231,6 +233,7 @@ export function JobQuickBook({ jobId }: { jobId: number }) {
       const bookedIds = slice.map((equipment) => equipment.id);
       setBookedEqIds((prev) => [...prev, ...bookedIds]);
       setArticleAmount(1);
+      setSelectedArticle(null);
     }
     setActionLoading(false);
   }, [selectedArticle, company, equipments, bookedEqIds, articleAmount, jobId, supabase]);
