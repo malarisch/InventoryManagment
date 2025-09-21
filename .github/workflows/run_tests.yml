@@ -38,6 +38,6 @@ jobs:
           path: eslint-results.xml
           retention-days: 5
           if-no-files-found: ignore
-          
-      - name : Run TypeScript Compiler
+
+      - name: Run TypeScript Compiler
         run: npx tsc --noEmit

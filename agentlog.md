@@ -249,3 +249,7 @@ Next: Run `supabase db push` to add `files` columns and `attachments` bucket; co
 - Changed env var to NEXT_PUBLIC_SUPABASE_ANON_KEY across code; updated .env and .env.example.
 - Added Playwright (playwright.config.ts, tests/e2e/home.spec.ts) and script `test:e2e`; first test passes.
 - Fixed lint issues (removed unused function in components/files/file-manager.ts; removed unused eslint-disable) and added TSDoc to supabase clients.
+2025-09-21 22:24 CEST — fix TypeScript build
+- Added `test:tsc` script and ran type checks; resolved errors across management header, company hook, company settings, calendar, history live, and auth user display.
+- Removed unused `components/dev/*` (react-buddy previews) and normalized Next.js 15 `searchParams` typing.
+- Type guards for PostgREST relation shapes (object vs array) and stringified company IDs for UI radios.
