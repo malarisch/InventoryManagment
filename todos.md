@@ -2,6 +2,7 @@
 Diese To-Do List enthält Aufgaben, die an der Software zu bearbeiten sind. Sobald eine Aufgabe bearbeited wurde soll diese hier in der Datei unten in die Done-List eingefügt und aus der To-Do list entfernt werden.
 
 ## To-Do
+- Kommentiere sämtlichen Code von dir im TSDoc Style. Auch komplexere Teile von Funktionen, deren Zweck nicht sofort ersichtlich ist.
 - Alle Objekte sollen Files bekommen können. Dazu in den jeweiligen tabellen ein files arry column anlegen als jsonb, in jedem objekt stehen name und beschreibung (beides opeitonal) und link sowie id aus dem supabase storage. Die Edit Seiten bekommen eine Dateiübersicht und ein File Upload (nicht die create seiten!) - 
 - Implementiere vernünftiges logging über Supabase Logflare
 - Implementiere Error Handling in der UI
