@@ -269,3 +269,5 @@ Next: Run `supabase db push` to add `files` columns and `attachments` bucket; co
 - Added Vitest config + Supabase seeding test (skips without service-role env).
 - Updated Playwright specs for new landing page and added authenticated dashboard flow with Supabase admin seeding helper.
 - Added npm scripts (`test:unit`) and ensured lint/type checks stay green.
+2025-09-22 00:30 CEST — CI integration setup
+- Added GitHub workflow to launch Supabase locally, export env vars, run Vitest and Playwright suites against Next.js dev server.

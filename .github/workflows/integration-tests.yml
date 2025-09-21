@@ -1,0 +1,98 @@
+name: Integration Tests
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+permissions:
+  contents: read
+
+jobs:
+  tests:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Use Node.js 20.x
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Install Supabase CLI
+        uses: supabase/setup-cli@v1
+
+      - name: Start Supabase stack
+        run: supabase start
+
+      - name: Export Supabase environment
+        run: |
+          node <<'NODE'
+          const fs = require('fs');
+          const statusPath = '.supabase/status.json';
+          if (!fs.existsSync(statusPath)) {
+            console.error('Supabase status file not found at', statusPath);
+            process.exit(1);
+          }
+          const status = JSON.parse(fs.readFileSync(statusPath, 'utf8'));
+          const api = status?.services?.api ?? {};
+          let restUrl = api.restUrl || api.apiUrl || api.url || api.endpoint || null;
+          const anonKey = api.anonKey || api.anon_key || api.anon || null;
+          const serviceRoleKey = api.serviceRoleKey || api.service_role_key || api.serviceRole || api.service_role || null;
+
+          if (!restUrl || !anonKey || !serviceRoleKey) {
+            console.error('Failed to read Supabase credentials from status.json:', api);
+            process.exit(1);
+          }
+
+          if (restUrl.endsWith('/rest/v1')) {
+            restUrl = restUrl.replace(/\/rest\/v1$/, '');
+          }
+
+          fs.appendFileSync(process.env.GITHUB_ENV, `NEXT_PUBLIC_SUPABASE_URL=${restUrl}\n`);
+          fs.appendFileSync(process.env.GITHUB_ENV, `NEXT_PUBLIC_SUPABASE_ANON_KEY=${anonKey}\n`);
+          fs.appendFileSync(process.env.GITHUB_ENV, `SUPABASE_SERVICE_ROLE_KEY=${serviceRoleKey}\n`);
+          NODE
+
+      - name: Create env file for Next.js
+        run: |
+          cat <<EOF > .env.local
+          NEXT_PUBLIC_SUPABASE_URL=${NEXT_PUBLIC_SUPABASE_URL}
+          NEXT_PUBLIC_SUPABASE_ANON_KEY=${NEXT_PUBLIC_SUPABASE_ANON_KEY}
+          SUPABASE_SERVICE_ROLE_KEY=${SUPABASE_SERVICE_ROLE_KEY}
+          EOF
+
+      - name: Wait for Supabase API
+        run: |
+          for i in {1..30}; do
+            if curl -sSf "${NEXT_PUBLIC_SUPABASE_URL}/rest/v1/?apikey=${NEXT_PUBLIC_SUPABASE_ANON_KEY}" >/dev/null; then
+              echo "Supabase API is ready"
+              exit 0
+            fi
+            echo "Waiting for Supabase API..."
+            sleep 5
+          done
+          echo "Supabase API did not become ready in time" >&2
+          exit 1
+
+      - name: Install Playwright browsers
+        run: npx playwright install --with-deps
+
+      - name: Run Vitest suite
+        run: npm run test:unit
+
+      - name: Run Playwright E2E tests
+        run: npm run test:e2e
+        env:
+          PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD: 1
+          PLAYWRIGHT_BASE_URL: http://127.0.0.1:3000
+          NEXT_PUBLIC_SUPABASE_URL: ${{ env.NEXT_PUBLIC_SUPABASE_URL }}
+          NEXT_PUBLIC_SUPABASE_ANON_KEY: ${{ env.NEXT_PUBLIC_SUPABASE_ANON_KEY }}
+          SUPABASE_SERVICE_ROLE_KEY: ${{ env.SUPABASE_SERVICE_ROLE_KEY }}
