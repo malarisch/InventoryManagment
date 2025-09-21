@@ -19,14 +19,14 @@ function pickFirstString(meta: Record<string, unknown>, keys: string[]): string 
 export async function fetchUserDisplay(supabase: SupabaseClient, id?: string | null): Promise<string | null> {
   if (!id) return null;
   try {
-    const { data } = await (supabase as any)
+    const { data } = await supabase
       .schema("auth")
       .from("users")
       .select("email, raw_user_meta_data")
       .eq("id", id)
-      .maybeSingle();
+      .maybeSingle<AuthUserRow>();
 
-    const row = (data as AuthUserRow | null) ?? null;
+    const row = data ?? null;
     if (!row) return null;
     const meta = (row.raw_user_meta_data ?? {}) as Record<string, unknown>;
     const name = pickFirstString(meta, ["name", "full_name", "user_name", "nickname"]);

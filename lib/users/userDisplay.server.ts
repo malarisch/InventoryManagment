@@ -28,13 +28,13 @@ function pickFirstString(meta: Record<string, unknown>, keys: string[]): string 
 export async function fetchUserDisplayAdmin(userId?: string | null): Promise<string | null> {
   if (!userId) return null;
   const admin = createAdminClient();
-  const { data, error } = await (admin as any)
+  const { data, error } = await admin
     .schema("auth")
     .from("users")
     .select("email, raw_user_meta_data")
     .eq("id", userId)
-    .maybeSingle();
-  const row = (data as AuthUserRow | null) ?? null;
+    .maybeSingle<AuthUserRow>();
+  const row = data ?? null;
   if (error || !row) return null;
   const meta = (row.raw_user_meta_data ?? {}) as Record<string, unknown>;
   const name = pickFirstString(meta, ["name", "full_name", "user_name", "nickname"]);

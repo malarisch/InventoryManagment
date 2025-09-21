@@ -2,17 +2,17 @@
 
 import { useEffect, useMemo, useState } from "react";
 import { createClient } from "@/lib/supabase/client";
-import type { Tables, Json } from "@/database.types";
+import type { Json } from "@/database.types";
+import type { CompanyRecord } from "@/lib/companies";
+import { normalizeCompanyRelation } from "@/lib/companies";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 
-type Company = Tables<"companies">;
-
 export function CompanySettingsForm() {
   const supabase = useMemo(() => createClient(), []);
-  const [company, setCompany] = useState<Company | null>(null);
+  const [company, setCompany] = useState<CompanyRecord | null>(null);
   const [name, setName] = useState("");
   const [description, setDescription] = useState("");
   const [metadataText, setMetadataText] = useState("{}");
@@ -34,22 +34,22 @@ export function CompanySettingsForm() {
         setLoading(false);
         return;
       }
+      type MembershipRow = { companies: CompanyRecord | CompanyRecord[] | null };
       const { data: membership, error: membershipError } = await supabase
         .from("users_companies")
         .select("companies(*)")
         .eq("user_id", userId)
         .order("created_at", { ascending: true })
         .limit(1)
-        .maybeSingle();
+        .maybeSingle<MembershipRow>();
 
       if (!active) return;
 
-      let targetCompany: Company | null = null;
+      let targetCompany: CompanyRecord | null = null;
       if (membershipError && membershipError.code !== "PGRST116") {
         setError(membershipError.message);
       } else if (membership?.companies) {
-        const comp = (membership as any).companies as unknown;
-        targetCompany = (Array.isArray(comp) ? comp[0] : comp) as Company | null;
+        targetCompany = normalizeCompanyRelation(membership.companies);
       }
 
       if (!targetCompany) {
@@ -59,11 +59,11 @@ export function CompanySettingsForm() {
           .eq("owner_user_id", userId)
           .order("created_at", { ascending: true })
           .limit(1)
-          .maybeSingle();
+          .maybeSingle<CompanyRecord>();
         if (ownedError && ownedError.code !== "PGRST116") {
           setError(ownedError.message);
         } else if (owned) {
-          targetCompany = owned as Company;
+          targetCompany = owned;
         }
       }
 

@@ -1,8 +1,9 @@
 import { useEffect, useState } from "react";
 import { createClient } from "@/lib/supabase/client";
-import type { Tables } from "@/database.types";
+import type { CompanyRecord } from "@/lib/companies";
+import { normalizeCompanyRelation } from "@/lib/companies";
 
-export type CompanyRecord = Tables<"companies">;
+export type { CompanyRecord } from "@/lib/companies";
 
 export function useCompany() {
   const [company, setCompany] = useState<CompanyRecord | null>(null);
@@ -32,23 +33,24 @@ export function useCompany() {
             .from("companies")
             .select("*")
             .eq("id", desiredId)
-            .maybeSingle();
+            .maybeSingle<CompanyRecord>();
           if (desiredError) {
             // ignore and fall through
           } else if (desired) {
-            setCompany(desired as CompanyRecord);
+            setCompany(desired);
             return;
           }
         }
 
         // Prefer the first company membership entry.
+        type MembershipRow = { companies: CompanyRecord | CompanyRecord[] | null };
         const { data, error } = await supabase
           .from("users_companies")
           .select("companies(*)")
           .eq("user_id", auth.user.id)
           .order("created_at", { ascending: true })
           .limit(1)
-          .maybeSingle();
+          .maybeSingle<MembershipRow>();
 
         if (error) {
           setError(error.message);
@@ -57,8 +59,7 @@ export function useCompany() {
         }
 
         if (data?.companies) {
-          const comp = (data as any).companies as unknown;
-          const picked = (Array.isArray(comp) ? comp[0] : comp) as CompanyRecord | undefined;
+          const picked = normalizeCompanyRelation(data.companies);
           if (picked) {
             setCompany(picked);
             if (typeof window !== "undefined" && !desiredId) {
@@ -75,13 +76,13 @@ export function useCompany() {
           .eq("owner_user_id", auth.user.id)
           .order("created_at", { ascending: true })
           .limit(1)
-          .maybeSingle();
+          .maybeSingle<CompanyRecord>();
 
         if (ownedError) {
           setError(ownedError.message);
           setCompany(null);
         } else {
-          setCompany((owned as CompanyRecord | null) ?? null);
+          setCompany(owned ?? null);
         }
       } finally {
         setLoading(false);

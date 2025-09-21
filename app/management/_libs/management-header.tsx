@@ -36,7 +36,8 @@ import {
   DropdownMenuRadioItem,
 } from "@/components/ui/dropdown-menu";
 import { createClient } from "@/lib/supabase/client";
-import type { Tables } from "@/database.types";
+import type { CompanyRecord } from "@/lib/companies";
+import { normalizeCompanyRelation } from "@/lib/companies";
 import { useRouter } from "next/navigation";
 
 type NavItem = {
@@ -149,12 +150,10 @@ function MobileDrawer({ items, onClose }: { items: NavItem[]; onClose: () => voi
   );
 }
 
-type Company = Tables<"companies">;
-
 function UserMenu() {
   const supabase = useMemo(() => createClient(), []);
   const router = useRouter();
-  const [companies, setCompanies] = useState<Company[]>([]);
+  const [companies, setCompanies] = useState<CompanyRecord[]>([]);
   const [selectedCompanyId, setSelectedCompanyId] = useState<string | null>(null);
   const [loadingCompanies, setLoadingCompanies] = useState(true);
 
@@ -175,20 +174,21 @@ function UserMenu() {
 
       const desired = (typeof window !== "undefined" && localStorage.getItem("active_company_id")) || null;
 
-      const list: Company[] = [];
+      const list: CompanyRecord[] = [];
+      type MembershipRow = { companies: CompanyRecord | CompanyRecord[] | null };
       const { data: memberships, error: mErr } = await supabase
         .from("users_companies")
         .select("companies(*)")
         .eq("user_id", userId)
-        .order("created_at", { ascending: true });
+        .order("created_at", { ascending: true })
+        .returns<MembershipRow[]>();
 
       if (mErr && mErr.code !== "PGRST116") {
         // ignore not found, but keep going to owned
       }
       if (memberships?.length) {
         for (const row of memberships) {
-          const comp = (row as any).companies as unknown;
-          const picked = (Array.isArray(comp) ? comp[0] : comp) as Company | undefined;
+          const picked = normalizeCompanyRelation(row.companies);
           if (picked) list.push(picked);
         }
       }
@@ -198,9 +198,10 @@ function UserMenu() {
         .from("companies")
         .select("*")
         .eq("owner_user_id", userId)
-        .order("created_at", { ascending: true });
+        .order("created_at", { ascending: true })
+        .returns<CompanyRecord[]>();
       if (!ownedErr && owned?.length) {
-        for (const c of owned as Company[]) {
+        for (const c of owned) {
           if (!list.find((x) => x.id === c.id)) list.push(c);
         }
       }
