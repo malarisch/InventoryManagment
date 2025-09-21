@@ -6,6 +6,8 @@ import type { Tables, Json } from "@/database.types";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
+import { safeParseDate } from "@/lib/dates";
+import { DatePicker } from "@/components/ui/date-picker";
 
 type Job = Tables<"jobs">;
 type Customer = Tables<"customers">;
@@ -15,8 +17,8 @@ export function JobEditForm({ job }: { job: Job }) {
   const [name, setName] = useState<string>(job.name ?? "");
   const [type, setType] = useState<string>(job.type ?? "");
   const [location, setLocation] = useState<string>(job.job_location ?? "");
-  const [startDate, setStartDate] = useState<string>(job.startdate ?? "");
-  const [endDate, setEndDate] = useState<string>(job.enddate ?? "");
+  const [startDate, setStartDate] = useState<string>(() => formatDateForInput(job.startdate));
+  const [endDate, setEndDate] = useState<string>(() => formatDateForInput(job.enddate));
   const [customerId, setCustomerId] = useState<number | "">(job.customer_id ?? "");
   const [metaText, setMetaText] = useState<string>(() => {
     try { return job.meta ? JSON.stringify(job.meta, null, 2) : "{}"; } catch { return "{}"; }
@@ -84,11 +86,11 @@ export function JobEditForm({ job }: { job: Job }) {
       <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
         <div className="grid gap-2">
           <Label htmlFor="startdate">Start</Label>
-          <Input id="startdate" type="date" value={startDate ?? ""} onChange={(e) => setStartDate(e.target.value)} />
+          <DatePicker id="startdate" name="startdate" value={startDate ?? ""} onChange={setStartDate} />
         </div>
         <div className="grid gap-2">
           <Label htmlFor="enddate">Ende</Label>
-          <Input id="enddate" type="date" value={endDate ?? ""} onChange={(e) => setEndDate(e.target.value)} />
+          <DatePicker id="enddate" name="enddate" value={endDate ?? ""} onChange={setEndDate} />
         </div>
       </div>
       <div className="grid gap-2">
@@ -127,3 +129,9 @@ export function JobEditForm({ job }: { job: Job }) {
   );
 }
 
+function formatDateForInput(value?: string | null): string {
+  const parsed = safeParseDate(value ?? null);
+  if (!parsed) return "";
+  const iso = parsed.toISOString();
+  return iso.slice(0, 10);
+}

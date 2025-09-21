@@ -2,7 +2,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { createClient } from "@/lib/supabase/server";
 import type { Tables } from "@/database.types";
 import Link from "next/link";
-import { safeParseDate, formatDate, formatDateTime } from "@/lib/dates";
+import { safeParseDate, formatDateTime } from "@/lib/dates";
 import { fallbackDisplayFromId } from "@/lib/userDisplay";
 import { fetchUserDisplayAdmin } from "@/lib/users/userDisplay.server";
 import { JobEditForm } from "@/components/forms/job-edit-form";
@@ -11,19 +11,7 @@ import { JobBookedAssetsCard } from "@/components/job-booked-assets";
 import { JobQuickBook } from "@/components/forms/job-quick-book";
 import { DeleteWithUndo } from "@/components/forms/delete-with-undo";
 
-type JobRow = Tables<"jobs"> & {
-  customers?: { id: number; company_name: string | null; forename: string | null; surname: string | null } | null;
-};
-
-function customerDisplay(c: JobRow["customers"] | null | undefined): string {
-  if (!c) return "—";
-  const company = c.company_name?.trim();
-  const fn = c.forename?.trim();
-  const sn = c.surname?.trim();
-  if (company) return company;
-  const person = [fn, sn].filter(Boolean).join(" ").trim();
-  return person || `#${c.id}`;
-}
+type JobRow = Tables<"jobs">;
 
 export default async function JobDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const { id: idParam } = await params;
@@ -33,7 +21,7 @@ export default async function JobDetailPage({ params }: { params: Promise<{ id: 
   const currentUserId = auth.user?.id ?? null;
   const { data, error } = await supabase
     .from("jobs")
-    .select("*, customers:customer_id(id,company_name,forename,surname)")
+    .select("*")
     .eq("id", id)
     .limit(1)
     .single();
@@ -50,6 +38,10 @@ export default async function JobDetailPage({ params }: { params: Promise<{ id: 
 
   const job = data as JobRow;
   const creator = await fetchUserDisplayAdmin(job.created_by ?? undefined);
+  const createdDisplay = formatDateTime(safeParseDate(job.created_at));
+  const creatorDisplay = creator ?? (job.created_by === currentUserId ? "Du" : fallbackDisplayFromId(job.created_by)) ?? "—";
+  const jobName = job.name?.trim();
+  const title = jobName && jobName.length > 0 ? jobName : `Job #${job.id}`;
 
   return (
     <main className="min-h-screen w-full flex flex-col items-center p-5">
@@ -59,18 +51,9 @@ export default async function JobDetailPage({ params }: { params: Promise<{ id: 
         </div>
         <Card>
           <CardHeader>
-            <CardTitle>Job #{job.id}</CardTitle>
+            <CardTitle>{title}</CardTitle>
             <CardDescription>
-              {job.name ?? "—"}
-              {" • Typ: "}{job.type ?? "—"}
-              {" • Kunde: "}{customerDisplay(job.customers)}
-              <br />
-              Zeitraum: {job.startdate ? formatDate(safeParseDate(job.startdate)) : "—"}
-              {" – "}
-              {job.enddate ? formatDate(safeParseDate(job.enddate)) : "—"}
-              {" • Ort: "}{job.job_location ?? "—"}
-              <br />
-              Erstellt am: {formatDateTime(safeParseDate(job.created_at))} {`• Erstellt von: ${creator ?? (job.created_by === currentUserId ? 'Du' : fallbackDisplayFromId(job.created_by)) ?? '—'}`}
+              Job-ID #{job.id} • Erstellt am {createdDisplay} • Erstellt von {creatorDisplay}
             </CardDescription>
           </CardHeader>
           <CardContent>

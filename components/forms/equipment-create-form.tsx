@@ -8,6 +8,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useRouter } from "next/navigation";
 import { useCompany } from "@/app/management/_libs/companyHook";
+import { DatePicker } from "@/components/ui/date-picker";
 
 type Article = Tables<"articles">;
 type Location = Tables<"locations">;
@@ -150,7 +151,7 @@ export function EquipmentCreateForm({ initialArticleId }: { initialArticleId?: n
       
       <div className="grid gap-2">
         <Label htmlFor="added">Im Lager seit</Label>
-        <Input id="added" type="date" value={addedAt} onChange={(e) => setAddedAt(e.target.value)} />
+        <DatePicker id="added" name="added" value={addedAt} onChange={setAddedAt} />
       </div>
       <div className="grid gap-2">
         <Label htmlFor="count">Anzahl</Label>

@@ -209,3 +209,11 @@ Next: Offene Lint-Fehler in Legacy-Komponenten adressieren.
 2025-09-20 09:50 CEST History Summaries
 History-UI zeigt nun pro Event kompakte Beschreibungen (Helper + UI-Update).
 Next: Optional weitere Tabellen um spezifische Texte erweitern.
+2025-09-21 18:41 CEST
+Task: Update AGENTS.md with Supabase style mandates
+Files: AGENTS.md
+Next: Ensure future edits conform to documented standards.
+2025-09-21 22:05 CEST
+Task: Job-Fixes – Date Prefill, DatePicker, Quick-Book Search
+Files: app/management/jobs/[id]/page.tsx; components/forms/{job-edit-form,job-create-form,equipment-create-form,job-quick-book}.tsx; components/ui/{calendar,date-picker}.tsx; components/search/search-picker.tsx; components/jobTable.tsx; todos.md; package.json/package-lock.json
+Next: Monitor SearchPicker adoption across remaining search inputs; add tests around booking flows.

@@ -4,10 +4,11 @@ import { useDeferredValue, useEffect, useMemo, useState } from "react";
 import { createClient } from "@/lib/supabase/client";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import type { Tables } from "@/database.types";
 import Link from "next/link";
 import { safeParseDate, formatDate } from "@/lib/dates";
+import { SearchPicker, type SearchItem } from "@/components/search/search-picker";
+import { useRouter } from "next/navigation";
 
 type JobRow = Tables<"jobs"> & {
   customers?: { id: number; company_name: string | null; forename: string | null; surname: string | null } | null;
@@ -30,6 +31,7 @@ function customerDisplay(c: JobRow["customers"] | null | undefined): string {
 
 export function JobTable({ pageSize = 10, className }: Props) {
   const supabase = useMemo(() => createClient(), []);
+  const router = useRouter();
   const [page, setPage] = useState(1);
   const [rows, setRows] = useState<JobRow[]>([]);
   const [count, setCount] = useState<number | null>(null);
@@ -95,6 +97,35 @@ export function JobTable({ pageSize = 10, className }: Props) {
   const canPrev = page > 1;
   const canNext = page < totalPages;
 
+  const jobSearchItems = useMemo<SearchItem<"job", JobRow>[]>(() => {
+    return rows.map((row, index) => {
+      const customer = customerDisplay(row.customers);
+      const matchers = [
+        { value: String(row.id), weight: 0 },
+        ...(row.name ? [{ value: row.name, weight: 5 }] : []),
+        ...(row.type ? [{ value: row.type, weight: 15 }] : []),
+        ...(row.job_location ? [{ value: row.job_location, weight: 20 }] : []),
+        ...(customer && customer !== "—" ? [{ value: customer, weight: 10 }] : []),
+      ];
+      const description = [
+        customer !== "—" ? customer : null,
+        row.job_location ?? null,
+      ]
+        .filter(Boolean)
+        .join(" • ");
+      return {
+        id: `job-${row.id}`,
+        category: "job" as const,
+        title: row.name ?? `Job #${row.id}`,
+        description: description.length > 0 ? description : undefined,
+        meta: `ID #${row.id}`,
+        priority: index,
+        matchers,
+        data: row,
+      } satisfies SearchItem<"job", JobRow>;
+    });
+  }, [rows]);
+
   return (
     <Card className={className}>
       <CardHeader>
@@ -103,13 +134,22 @@ export function JobTable({ pageSize = 10, className }: Props) {
       </CardHeader>
       <CardContent>
         <div className="mb-2 flex items-center gap-2">
-          <Input
-            placeholder="Suche (Name, Kunde, Ort)"
-            value={q}
-            onChange={(e) => {
+          <SearchPicker
+            items={jobSearchItems}
+            onSelect={(item) => {
+              setQ("");
               setPage(1);
-              setQ(e.target.value);
+              router.push(`/management/jobs/${(item.data as JobRow).id}`);
             }}
+            onQueryChange={(value) => {
+              setPage(1);
+              setQ(value);
+            }}
+            placeholder="Suche (Name, Kunde, Ort)"
+            buttonLabel={q}
+            categoryLabels={{ job: "Jobs" }}
+            resetOnSelect={false}
+            disabled={loading}
             className="w-64"
           />
           {q !== dq && <span className="text-xs text-muted-foreground">Sucht…</span>}

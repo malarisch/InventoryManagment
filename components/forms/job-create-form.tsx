@@ -8,6 +8,7 @@ import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { useRouter } from "next/navigation";
 import { useCompany } from "@/app/management/_libs/companyHook";
+import { DatePicker } from "@/components/ui/date-picker";
 
 type Customer = Tables<"customers">;
 
@@ -94,11 +95,11 @@ export function JobCreateForm() {
       <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
         <div className="grid gap-2">
           <Label htmlFor="startdate">Start</Label>
-          <Input id="startdate" type="date" value={startDate} onChange={(e) => setStartDate(e.target.value)} />
+          <DatePicker id="startdate" name="startdate" value={startDate} onChange={setStartDate} />
         </div>
         <div className="grid gap-2">
           <Label htmlFor="enddate">Ende</Label>
-          <Input id="enddate" type="date" value={endDate} onChange={(e) => setEndDate(e.target.value)} />
+          <DatePicker id="enddate" name="enddate" value={endDate} onChange={setEndDate} />
         </div>
       </div>
       <div className="grid gap-2">
@@ -134,4 +135,3 @@ export function JobCreateForm() {
     </form>
   );
 }
-
