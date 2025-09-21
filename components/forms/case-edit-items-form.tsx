@@ -160,9 +160,7 @@ export function CaseEditItemsForm({
             type="button"
             variant="outline"
             size="sm"
-            onClick={() => {
-              const selected = filtered.filter((e) => eqInCase.has(e.id) === false).slice(0, 0); // placeholder if needed
-            }}
+            onClick={() => {}}
             className="hidden"
           >Add Selected</Button>
         </div>

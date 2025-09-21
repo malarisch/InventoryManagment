@@ -75,7 +75,7 @@ export default async function EquipmentDetailPage({ params }: { params: Promise<
           </CardHeader>
           <CardContent>
             <div className="mb-4">
-              <DeleteWithUndo table="equipments" id={eq.id} payload={eq as any} redirectTo="/management/equipments" />
+              <DeleteWithUndo table="equipments" id={eq.id} payload={eq as Record<string, unknown>} redirectTo="/management/equipments" />
             </div>
             <EquipmentEditForm equipment={eq} />
           </CardContent>

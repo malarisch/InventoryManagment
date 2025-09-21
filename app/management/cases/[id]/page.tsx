@@ -3,12 +3,10 @@ import { createClient } from "@/lib/supabase/server";
 import type { Tables } from "@/database.types";
 import Link from "next/link";
 import { HistoryCard } from "@/components/historyCard";
-import { Button } from "@/components/ui/button";
 import { CaseEditItemsForm } from "@/components/forms/case-edit-items-form";
 import { DeleteWithUndo } from "@/components/forms/delete-with-undo";
 
 type CaseRow = Tables<"cases">;
-type Article = Tables<"articles">;
 
 export default async function CaseDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const { id: idParam } = await params;
@@ -33,14 +31,7 @@ export default async function CaseDetailPage({ params }: { params: Promise<{ id:
 
   const row = data as CaseRow;
 
-  let articles: Article[] = [];
-  const articleIds = Array.isArray(row.articles)
-    ? (row.articles as Array<{ article_id?: number }>).map((a) => a.article_id).filter((x): x is number => typeof x === "number")
-    : [];
-  if (articleIds.length) {
-    const { data: arts } = await supabase.from("articles").select("id,name").in("id", articleIds);
-    articles = (arts as Article[] | null) ?? [];
-  }
+  // Artikel-Namen werden im Edit-Formular clientseitig nachgeladen
 
   return (
     <main className="min-h-screen w-full flex flex-col items-center p-5">
@@ -51,19 +42,19 @@ export default async function CaseDetailPage({ params }: { params: Promise<{ id:
 
         <Card>
           <CardHeader>
-            <CardTitle>{(row as any).name ? String((row as any).name) : `Case #${row.id}`}</CardTitle>
+            <CardTitle>{row.name ?? `Case #${row.id}`}</CardTitle>
             <CardDescription>
               Case-Equipment: {row.case_equipment ? (
                 <Link className="underline-offset-2 hover:underline" href={`/management/equipments/${row.case_equipment}`}>#{row.case_equipment}</Link>
               ) : "—"}
-              {(row as any).description ? (<><br />{String((row as any).description)}</>) : null}
+              {row.description ? (<><br />{row.description}</>) : null}
             </CardDescription>
           </CardHeader>
           <CardContent>
             <div className="mb-4">
-              <DeleteWithUndo table="cases" id={row.id} payload={row as any} redirectTo="/management/cases" />
+              <DeleteWithUndo table="cases" id={row.id} payload={row as Record<string, unknown>} redirectTo="/management/cases" />
             </div>
-            <CaseEditItemsForm caseId={id} initialEquipments={row.equipments ?? []} initialArticles={(row.articles as any) ?? []} caseEquipmentId={row.case_equipment ?? null} initialName={(row as any).name ?? null} initialDescription={(row as any).description ?? null} />
+            <CaseEditItemsForm caseId={id} initialEquipments={row.equipments ?? []} initialArticles={(row.articles as unknown as Array<{ article_id?: number; amount?: number }>) ?? []} caseEquipmentId={row.case_equipment ?? null} initialName={row.name ?? null} initialDescription={row.description ?? null} />
           </CardContent>
         </Card>
 

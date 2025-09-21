@@ -71,7 +71,7 @@ export default async function CustomerDetailPage({ params }: { params: Promise<{
           </CardHeader>
           <CardContent>
             <div className="mb-4">
-              <DeleteWithUndo table="customers" id={cust.id} payload={cust as any} redirectTo="/management/customers" />
+              <DeleteWithUndo table="customers" id={cust.id} payload={cust as Record<string, unknown>} redirectTo="/management/customers" />
             </div>
             <CustomerEditForm customer={cust} />
           </CardContent>

@@ -8,7 +8,7 @@ import { useRouter } from "next/navigation";
 type Props = {
   table: string;
   id: number;
-  payload: Record<string, unknown>;
+  payload: unknown;
   redirectTo: string;
   label?: string;
 };
@@ -37,11 +37,20 @@ export function DeleteWithUndo({ table, id, payload, redirectTo, label = "Lösch
     setTimer(t);
   }
 
+  function isRecord(value: unknown): value is Record<string, unknown> {
+    return value !== null && typeof value === 'object' && !Array.isArray(value);
+  }
+
   async function onUndo() {
     if (timer) clearTimeout(timer);
     setBusy(true);
     setError(null);
-    const { error } = await supabase.from(table).insert(payload as any);
+    if (!isRecord(payload)) {
+      setBusy(false);
+      setError("Ungültige Wiederherstellungsdaten");
+      return;
+    }
+    const { error } = await supabase.from(table).insert(payload);
     setBusy(false);
     if (error) {
       setError(error.message);
@@ -68,4 +77,3 @@ export function DeleteWithUndo({ table, id, payload, redirectTo, label = "Lösch
     </div>
   );
 }
-

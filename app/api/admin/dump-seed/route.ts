@@ -74,12 +74,12 @@ export async function POST() {
       admin.from("history").select("*").order("id"),
       admin
         .schema("auth")
-        .from<{ id: string; email: string | null; raw_user_meta_data: unknown; created_at: string | null; updated_at: string | null; last_sign_in_at: string | null }>("users")
+        .from("users")
         .select("id, email, raw_user_meta_data, created_at, updated_at, last_sign_in_at")
         .order("id"),
       admin
         .schema("auth")
-        .from<Record<string, unknown>>("identities")
+        .from("identities")
         .select("*")
         .order("id"),
     ]);

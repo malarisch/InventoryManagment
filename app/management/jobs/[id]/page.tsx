@@ -58,7 +58,7 @@ export default async function JobDetailPage({ params }: { params: Promise<{ id: 
           </CardHeader>
           <CardContent>
             <div className="mb-4">
-              <DeleteWithUndo table="jobs" id={job.id} payload={job as any} redirectTo="/management/jobs" />
+              <DeleteWithUndo table="jobs" id={job.id} payload={job as Record<string, unknown>} redirectTo="/management/jobs" />
             </div>
             <JobEditForm job={job} />
           </CardContent>

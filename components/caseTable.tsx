@@ -4,7 +4,7 @@ import { useDeferredValue, useEffect, useMemo, useState } from "react";
 import { createClient } from "@/lib/supabase/client";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import type { Tables, Json } from "@/database.types";
+import type { Tables } from "@/database.types";
 import Link from "next/link";
 import { Input } from "@/components/ui/input";
 
@@ -115,7 +115,7 @@ export function CaseTable({ pageSize = 10 }: { pageSize?: number }) {
                     <td className="px-3 py-2 border-t">
                       <Link className="underline-offset-2 hover:underline" href={`/management/cases/${row.id}`}>{row.id}</Link>
                     </td>
-                    <td className="px-3 py-2 border-t">{(row as any).name ?? "—"}</td>
+                    <td className="px-3 py-2 border-t">{row.name ?? "—"}</td>
                     <td className="px-3 py-2 border-t">
                       {row.case_equipment ? (
                         <Link className="underline-offset-2 hover:underline" href={`/management/equipments/${row.case_equipment}`}>#{row.case_equipment}</Link>

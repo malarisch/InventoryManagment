@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useState } from "react";
 import { createClient } from "@/lib/supabase/client";
-import type { Tables } from "@/database.types";
+import type { Tables, Database, Json } from "@/database.types";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { useRouter } from "next/navigation";
@@ -76,7 +76,7 @@ export function CaseCreateForm() {
       const { data: auth } = await supabase.auth.getUser();
       const userId = auth.user?.id ?? null;
       if (!company || !userId) throw new Error("Fehlende Company oder Nutzer");
-      const payload: any = {
+      const payload: Database["public"]["Tables"]["cases"]["Insert"] = {
         case_equipment: caseEquipment === "" ? null : Number(caseEquipment),
         equipments: selectedIds.length ? selectedIds : null,
         name: name.trim() || null,
@@ -84,10 +84,10 @@ export function CaseCreateForm() {
         company_id: company.id,
         created_by: userId,
       };
-      if (articleItems.length) payload.articles = articleItems as any;
+      if (articleItems.length) payload.articles = articleItems as unknown as Json[];
       const { data, error } = await supabase
         .from("cases")
-        .insert(payload as any)
+        .insert(payload)
         .select("id")
         .single();
       if (error) throw error;

@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useState } from "react";
 import { createClient } from "@/lib/supabase/client";
-import type { Tables, Json } from "@/database.types";
+import type { Tables, Json, Database } from "@/database.types";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -67,7 +67,7 @@ export function EquipmentCreateForm({ initialArticleId }: { initialArticleId?: n
       if (mt.length) {
         try { metadata = JSON.parse(mt) as Json; } catch { throw new Error("Ungültiges JSON in Metadata"); }
       }
-      const base: any = {
+      const base: Database["public"]["Tables"]["equipments"]["Insert"] = {
         asset_tag: assetTagId === "" ? null : Number(assetTagId),
         article_id: articleId === "" ? null : Number(articleId),
         current_location: currentLocation === "" ? null : Number(currentLocation),
@@ -90,7 +90,7 @@ export function EquipmentCreateForm({ initialArticleId }: { initialArticleId?: n
         const id = (data as Tables<"equipments">).id;
         router.push(`/management/equipments/${id}`);
       } else {
-        const rows = Array.from({ length: count }, () => ({ ...base }));
+        const rows: Database["public"]["Tables"]["equipments"]["Insert"][] = Array.from({ length: count }, () => ({ ...base }));
         const { error } = await supabase.from("equipments").insert(rows);
         if (error) throw error;
         if (typeof initialArticleId === 'number') router.push(`/management/articles/${initialArticleId}`);

@@ -70,7 +70,7 @@ export default async function LocationDetailPage({ params }: { params: Promise<{
           </CardHeader>
           <CardContent>
             <div className="mb-4">
-              <DeleteWithUndo table="locations" id={loc.id} payload={loc as any} redirectTo="/management/locations" />
+              <DeleteWithUndo table="locations" id={loc.id} payload={loc as Record<string, unknown>} redirectTo="/management/locations" />
             </div>
             <LocationEditForm location={loc} />
           </CardContent>
