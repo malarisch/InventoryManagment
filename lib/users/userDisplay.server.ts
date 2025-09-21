@@ -8,6 +8,9 @@ type AuthUserRow = {
   raw_user_meta_data: unknown;
 };
 
+/**
+ * Return the first non-empty string value for any key in order.
+ */
 function pickFirstString(meta: Record<string, unknown>, keys: string[]): string | undefined {
   for (const key of keys) {
     const value = meta[key];
@@ -18,6 +21,10 @@ function pickFirstString(meta: Record<string, unknown>, keys: string[]): string 
   return undefined;
 }
 
+/**
+ * Server-side fetch for a friendly user display value based on auth.users.
+ * Prefers common name fields from `raw_user_meta_data`, falling back to email.
+ */
 export async function fetchUserDisplayAdmin(userId?: string | null): Promise<string | null> {
   if (!userId) return null;
   const admin = createAdminClient();
