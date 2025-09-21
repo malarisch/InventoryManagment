@@ -8,11 +8,12 @@ Diese To-Do List enthält Aufgaben, die an der Software zu bearbeiten sind. Soba
 - Räume das Repo auf - ungenutze Sachen entfernen, Dokumentation aktualisieren, etc.
 - Implementiere Tests
 - Räume deinen Code auf - modifiziere ggf. Komponenten, das sie reusable sind soweit wie möglich.
-- Implementiere Loading Screens
 - Überprüfe die Security Best Practices
 ### Fixes:
 
 ## Done
+- History: Kompakte Beschreibungen für Einträge (z.B. Case "Name" angelegt).
+- Loading Screens: Konsistente Fallbacks für Management-Listen, Details und Formulare (loading.tsx + Skeleton-Komponenten).
 - Dashboard unter /management/: responsive Übersicht mit Kennzahlen, kommenden Veranstaltungen und komprimierter Historientabelle.
 - Fix: Artikel-Detailseite zeigt nur noch einen "Equipment hinzufügen"-Button.
 - Übersicht von Jobs von Kunden (Liste in Kunden-Detail)

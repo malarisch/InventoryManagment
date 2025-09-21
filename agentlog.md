@@ -199,3 +199,13 @@ Hinweise
 
 - 2025-09-19 16:06 – Artikel Equipment Button Fix: nur noch ein Add-Button im Artikel-Detail (app/management/articles/[id]/page.tsx, components/articleEquipmentsTable.tsx, todos.md).
 - 2025-09-19 16:31 – Dashboard-Refresh: /management zeigt Kennzahlen, kommende Jobs und History-Tabelle (app/management/page.tsx); AGENTS.md um Context7-Regel ergänzt, todos.md aktualisiert. Nächster Schritt: Tests & File-Upload-Feature.
+2025-09-19 16:44 CEST Onboarding
+Captured project overview, conventions, and suggested commands in Serena memories for Next.js/Supabase stack.
+Next: ready for feature work.
+2025-09-19 17:11 CEST Loading Screens
+Skeleton-Komponenten + loading.tsx für Management-Listen/Details; Todos aktualisiert.
+Next: Offene Lint-Fehler in Legacy-Komponenten adressieren.
+
+2025-09-20 09:50 CEST History Summaries
+History-UI zeigt nun pro Event kompakte Beschreibungen (Helper + UI-Update).
+Next: Optional weitere Tabellen um spezifische Texte erweitern.

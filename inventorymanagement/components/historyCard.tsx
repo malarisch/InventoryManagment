@@ -3,6 +3,7 @@ import { createClient } from "@/lib/supabase/server";
 import type { Tables } from "@/database.types";
 import { fetchUserDisplayAdmin } from "@/lib/users/userDisplay.server";
 import { HistoryLive, type HistoryDisplayRow } from "@/components/history-live";
+import { describeHistoryEvent } from "@/lib/history/describe";
 
 function isObject(value: unknown): value is Record<string, unknown> {
   return value !== null && typeof value === 'object' && !Array.isArray(value);
@@ -54,14 +55,16 @@ export async function HistoryCard({ table, dataId }: { table: string; dataId: nu
   const base: HistoryDisplayRow[] = await Promise.all(
     rows.map(async (h) => {
       const actor = await fetchUserDisplayAdmin(h.change_made_by ?? undefined);
-      const op = (h.old_data as any)?._op as string | undefined;
+      const payload = isObject(h.old_data) ? (h.old_data as Record<string, unknown>) : {};
+      const op = (payload as { _op?: string })._op;
       return {
         id: h.id,
         created_at: h.created_at,
         change_made_by: h.change_made_by,
         op,
-        payload: (h.old_data as any) ?? {},
-        actorDisplay: actor ?? (h.change_made_by && h.change_made_by === currentUserId ? 'dir' : null),
+        summary: describeHistoryEvent(table, op, payload),
+        payload,
+        actorDisplay: actor ?? (h.change_made_by && h.change_made_by === currentUserId ? "dir" : null),
       };
     })
   );
@@ -76,8 +79,8 @@ export async function HistoryCard({ table, dataId }: { table: string; dataId: nu
     const changes: Array<{ key: string; from: unknown; to: unknown }> = [];
     for (const key of keys) {
       if (EXCLUDE_KEYS.has(lastSegment(key))) continue;
-      const a = (olderFlat as any)[key];
-      const b = (currFlat as any)[key];
+      const a = olderFlat[key];
+      const b = currFlat[key];
       if (JSON.stringify(a) !== JSON.stringify(b)) changes.push({ key, from: a, to: b });
     }
     return { ...row, changes };

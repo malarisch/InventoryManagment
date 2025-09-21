@@ -5,6 +5,7 @@ import type { Tables } from "@/database.types";
 import { createClient } from "@/lib/supabase/client";
 import { formatDateTime, safeParseDate } from "@/lib/dates";
 import { fallbackDisplayFromId } from "@/lib/userDisplay";
+import { describeHistoryEvent } from "@/lib/history/describe";
 
 type HistoryRow = Tables<"history">;
 
@@ -13,6 +14,7 @@ export type HistoryDisplayRow = {
   created_at: string;
   change_made_by: string | null;
   op?: string | null;
+  summary: string | null;
   payload: Record<string, unknown>;
   actorDisplay: string | null;
   changes?: Array<{ key: string; from: unknown; to: unknown }>;
@@ -56,8 +58,8 @@ function deepDiff(prevPayload: Record<string, unknown> | null, currPayload: Reco
   const changes: Array<{ key: string; from: unknown; to: unknown }> = [];
   for (const key of keys) {
     if (EXCLUDE_KEYS.has(lastSegment(key))) continue;
-    const a = (prevFlat as any)[key];
-    const b = (currFlat as any)[key];
+    const a = prevFlat[key];
+    const b = currFlat[key];
     if (JSON.stringify(a) !== JSON.stringify(b)) {
       changes.push({ key, from: a, to: b });
     }
@@ -90,7 +92,7 @@ export function HistoryLive({
           { event: '*', schema: 'public', table: 'history', filter: `data_id=eq.${dataId}` },
           (payload) => {
             if (!mounted) return;
-            const event = (payload as any).eventType as 'INSERT' | 'UPDATE' | 'DELETE';
+            const event = payload.eventType;
             setRows((prev) => {
               if (event === 'DELETE') {
                 const oldRow = payload.old as HistoryRow | null;
@@ -99,19 +101,20 @@ export function HistoryLive({
               }
               const newRow = payload.new as HistoryRow | null;
               if (!newRow) return prev;
-              const op = (newRow.old_data as any)?._op as string | undefined;
+              const payload = isObject(newRow.old_data) ? (newRow.old_data as Record<string, unknown>) : {};
+              const op = (payload as { _op?: string })._op;
               const actorDisplay = newRow.change_made_by && newRow.change_made_by === currentUserId
                 ? 'dir'
                 : fallbackDisplayFromId(newRow.change_made_by);
               const prevPayload = prev[0]?.payload ?? null;
-              const curr = (newRow.old_data as any) ?? {};
-              const changes = deepDiff(prevPayload, curr);
+              const changes = deepDiff(prevPayload, payload);
               const disp: HistoryDisplayRow = {
                 id: newRow.id,
                 created_at: newRow.created_at,
                 change_made_by: newRow.change_made_by,
                 op,
-                payload: (newRow.old_data as any) ?? {},
+                summary: describeHistoryEvent(table, op, payload),
+                payload,
                 actorDisplay,
                 changes,
               };
@@ -157,14 +160,20 @@ export function HistoryLive({
           ) : rows.map((h) => {
             const preview = previewKeys
               .filter((k) => Object.prototype.hasOwnProperty.call(h.payload, k))
-              .map((k) => `${k}: ${String((h.payload as any)[k])}`)
+              .map((k) => `${k}: ${String(h.payload[k])}`)
               .join(" • ");
+            const hasSecondary = (h.changes?.length ?? 0) > 0 || Boolean(preview);
             return (
               <tr key={h.id} className="odd:bg-background even:bg-muted/20 align-top">
                 <td className="px-3 py-2 border-t whitespace-nowrap">{formatDateTime(safeParseDate(h.created_at))}</td>
                 <td className="px-3 py-2 border-t">{h.actorDisplay ?? "—"}</td>
                 <td className="px-3 py-2 border-t"><span className="inline-flex items-center rounded border px-2 py-0.5 text-xs capitalize">{h.op ?? 'update'}</span></td>
                 <td className="px-3 py-2 border-t">
+                  {h.summary ? (
+                    <div className={`text-xs font-medium text-foreground${hasSecondary ? " mb-1" : ""}`}>
+                      {h.summary}
+                    </div>
+                  ) : null}
                   {h.changes && h.changes.length > 0 ? (
                     <div className="text-xs text-muted-foreground space-y-1">
                       {h.changes.map((c) => (
