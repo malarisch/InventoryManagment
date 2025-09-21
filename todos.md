@@ -5,7 +5,7 @@ Diese To-Do List enthält Aufgaben, die an der Software zu bearbeiten sind. Soba
 ## To-Do
 - Kommentiere sämtlichen Code von dir im TSDoc Style (fortlaufend; neue Module sind dokumentiert).
 - Räume das Repo auf - ungenutze Sachen entfernen, etc.
-- Implementiere Tests
+- Implementiere Tests - insbesondere auch für die UI! Nutze für die UI playwright Tests! Wenn du bestimmte Dinge nicht aus dem Code bzw. deinem Env getestet bekommst lege dafür ein User Todo in human-review-todos.md an! Du hast auch zugriff auf einen playwright mcp server.
 - Räume deinen Code auf - modifiziere ggf. Komponenten, das sie reusable sind soweit wie möglich.
 - Überprüfe die Security Best Practices - schaue dass die Supabase Referenzen eingehalten werden!
 
