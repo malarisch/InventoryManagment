@@ -1,0 +1,5 @@
+- TypeScript strict mode; Next.js App Router defaulting to Server Components, only add "use client" when necessary.
+- 2-space indentation, named exports preferred; route segments use kebab-case, components PascalCase, vars/functions camelCase.
+- Styling with Tailwind CSS; compose classes via `clsx` + `tailwind-merge`; shadcn/ui primitives under `components/ui`.
+- Keep queries scoped by `company_id` for RLS; owners retain full CRUD, members read via `users_companies`.
+- Supabase Auth metadata (`display_name`, `pronouns`) surfaces user info; cross-user reads via server-side admin client only.

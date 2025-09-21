@@ -1,0 +1,5 @@
+- Multi-tenant inventory management platform built with Next.js (App Router) and Supabase.
+- Key domains: companies, users_companies, articles, asset tags/templates, equipments, locations, cases, customers, jobs, job_* tables, and history audit trail; all scoped by company_id with RLS via users_companies membership.
+- Repo split: `inventorymanagement/` Next.js app, shared UI/components/lib; `supabase/` config and SQL migrations; root automation scripts and logs.
+- Uses Supabase Auth as source of truth; admin server client in `lib/supabase/admin.ts` handles cross-user lookups.
+- Seed dump available via `/management/company-settings` calling `/api/admin/dump-seed` to write `supabase/seed.sql` for tenant owners.
