@@ -245,3 +245,7 @@ Next: Optionally add a separate type-check job if needed.
 Task: Files feature + Logflare hooks
 Files: supabase/migrations/20250922004500_add_files_columns.sql; components/files/file-manager.tsx; lib/files.ts; app/management/*/[id]/page.tsx; lib/log.ts; components/forms/job-quick-book.tsx; todos.md
 Next: Run `supabase db push` to add `files` columns and `attachments` bucket; configure LOGFLARE_SOURCE/LOGFLARE_API_KEY to enable remote logging.
+2025-09-21 22:09 CEST — test/e2e + env cleanup
+- Changed env var to NEXT_PUBLIC_SUPABASE_ANON_KEY across code; updated .env and .env.example.
+- Added Playwright (playwright.config.ts, tests/e2e/home.spec.ts) and script `test:e2e`; first test passes.
+- Fixed lint issues (removed unused function in components/files/file-manager.ts; removed unused eslint-disable) and added TSDoc to supabase clients.

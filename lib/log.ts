@@ -8,7 +8,6 @@ export async function logEvent(event: string, payload?: Record<string, unknown>)
     const apiKey = process.env.LOGFLARE_API_KEY;
     const body = { event, payload, ts: new Date().toISOString() };
     if (!source || !apiKey) {
-      // eslint-disable-next-line no-console
       console.info("logEvent", body);
       return;
     }
@@ -25,4 +24,3 @@ export async function logEvent(event: string, payload?: Record<string, unknown>)
     // swallow
   }
 }
-

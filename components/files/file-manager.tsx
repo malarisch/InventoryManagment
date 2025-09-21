@@ -31,16 +31,6 @@ export function FileManager({
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  async function refresh() {
-    const { data } = await supabase
-      .from(table)
-      .select("files")
-      .eq("id", rowId)
-      .single();
-    const next = normalizeFileArray((data as { files?: unknown } | null)?.files);
-    setItems(next);
-  }
-
   async function uploadFile(file: File, name?: string, description?: string) {
     setBusy(true);
     setError(null);
@@ -133,4 +123,3 @@ function FileUpload({ onUpload, disabled }: { onUpload: (file: File, name?: stri
     </div>
   );
 }
-

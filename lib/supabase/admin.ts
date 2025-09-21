@@ -1,7 +1,10 @@
 import { createClient } from "@supabase/supabase-js";
 
-// Server-only: Supabase service role client for privileged operations.
-// Do NOT import this from client components.
+/**
+ * Server-only Supabase client using the service role key for privileged ops.
+ *
+ * Never import from client components. Sessions are not persisted.
+ */
 export function createAdminClient() {
   const url = process.env.NEXT_PUBLIC_SUPABASE_URL!;
   const serviceRole = process.env.SUPABASE_SERVICE_ROLE_KEY!;
@@ -12,4 +15,3 @@ export function createAdminClient() {
     auth: { persistSession: false, autoRefreshToken: false },
   });
 }
-

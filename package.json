@@ -17,6 +17,7 @@
     "build": "next build",
     "start": "next start",
     "lint": "eslint .",
+    "test:e2e": "playwright test",
     "supabase-gen-types": "supabase migrations up && supabase gen types typescript > ./types/supabase.ts"
   },
   "dependencies": {
@@ -49,6 +50,7 @@
     "eslint": "^9",
     "eslint-config-next": "15.3.1",
     "pg": "^8.16.3",
+    "@playwright/test": "^1.47.2",
     "postcss": "^8",
     "supabase": "^2.40.7",
     "tailwindcss": "^3.4.1",
