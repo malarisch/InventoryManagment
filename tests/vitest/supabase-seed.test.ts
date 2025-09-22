@@ -1,6 +1,7 @@
 import 'dotenv/config';
 import { afterAll, beforeAll, describe, expect, test } from "vitest";
 import { createAdminClient } from "@/lib/supabase/admin";
+import { createCleanupTracker, cleanupTestData } from "./utils/cleanup";
 
 /**
  * Environment variables required to run the Supabase seeding tests.
@@ -23,6 +24,7 @@ if (missingEnvVars.length > 0) {
 } else {
   describe("Supabase admin seeding", () => {
     const admin = createAdminClient();
+    const cleanup = createCleanupTracker();
 
     const timestamp = Date.now();
     const testEmail = `vitest+${timestamp}@example.com`;
@@ -51,6 +53,11 @@ if (missingEnvVars.length > 0) {
       createdUserId = createUserData.user?.id ?? null;
       expect(createdUserId).toBeTruthy();
 
+      // Track user for cleanup
+      if (createdUserId) {
+        cleanup.userIds.push(createdUserId);
+      }
+
       const { data: companyRow, error: companyError } = await admin
         .from("companies")
         .insert({
@@ -69,6 +76,11 @@ if (missingEnvVars.length > 0) {
       createdCompanyId = companyRow?.id ?? null;
       expect(createdCompanyId).toBeTruthy();
 
+      // Track company for cleanup
+      if (createdCompanyId) {
+        cleanup.companyIds.push(createdCompanyId);
+      }
+
       const { data: membershipRow, error: membershipError } = await admin
         .from("users_companies")
         .insert({
@@ -84,18 +96,16 @@ if (missingEnvVars.length > 0) {
 
       membershipRowId = membershipRow?.id ?? null;
       expect(membershipRowId).toBeTruthy();
+
+      // Track membership for cleanup
+      if (membershipRowId) {
+        cleanup.membershipIds.push(membershipRowId);
+      }
     }, 30_000);
 
     afterAll(async () => {
-      if (membershipRowId) {
-        await admin.from("users_companies").delete().eq("id", membershipRowId);
-      }
-      if (createdCompanyId) {
-        await admin.from("companies").delete().eq("id", createdCompanyId);
-      }
-      if (createdUserId) {
-        await admin.auth.admin.deleteUser(createdUserId);
-      }
+      // Use centralized cleanup utility
+      await cleanupTestData(cleanup);
     });
 
     test("created user is confirmed and retrievable", async () => {
