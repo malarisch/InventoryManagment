@@ -1,8 +1,14 @@
+// In this file, we define TypeScript types and interfaces for various metadata structures used in the inventory management system.
+// These types help ensure consistent data representation across the application.
+// Fields that are not set shall be inferred from higher entities in the hierarchy, e.g., Company defaults for Articles, Equipment, Locations, Cases, Customers, Jobs, Persons.
+
+// Note: All dimensions are in metric units (cm, kg, etc.) for consistency.
+
 
 type DimensionsCm = {
   width: number; // in cm
   height: number; // in cm
-  depth: number; // in cm
+  depth?: number; // in cm; optional for small Locations like shelves or desks.
 };
 type Price = {
   amount: number; // in the company's currency without Taxes
@@ -77,7 +83,6 @@ export interface Company {
   discountRate?: number;
   taxId?: string;
   vatId?: string;
-  internalNote?: string;
   preferredContactMethod?: "email" | "phone" | "mail";
   contactInfo?: contactInfo[];
   employees?: [Person[], ...{position: string}[]]; // Array of employees with their positions
@@ -101,14 +106,16 @@ export interface ArticleMetadata {
   image?: string;
   case: {
     is19Inch: boolean;
-    heightUnits: number; // in U
+    heightUnits: number; // in U for 19" Equipment. Only available if is19Inch is true.
     maxDeviceDepthCm?: number; // in cm
     hasLock?: boolean;
     innerDimensionsCm?: DimensionsCm;
     contentMaxWeightKg?: number; // in kg
     restrictedContentTypes?: string[]; // e.g., ["Electronics", "Cables"]; can also be used for expansion card slots!
   };
-  fitsInRestrictedCaseTypes?: string[]; // e.g., ["19-inch Rack", "Standard Shelf"]
+  fitsInRestrictedCaseTypes?: string[]; // e.g., "YAMAHA MINI Expansion Slot"
+  is19Inch: boolean;
+  heightUnits: number; // Height in Rack units. Only available if is19Inch is true.
   dimensionsCm?: DimensionsCm;
   weightKg?: number; // in kg
   connectivity?: string[]; // e.g., ["WiFi", "Bluetooth", "Ethernet"]
