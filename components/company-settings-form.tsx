@@ -4,6 +4,7 @@ import { useEffect, useMemo, useState } from "react";
 import { createClient } from "@/lib/supabase/client";
 import type { Json } from "@/database.types";
 import type { CompanyRecord } from "@/lib/companies";
+import type { adminCompanyMetadata } from "@/components/metadataTypes.types";
 import { defaultAdminCompanyMetadataDE, toPrettyJSON } from "@/lib/metadata/defaults";
 import { CompanyMetadataForm } from "@/components/forms/partials/company-metadata-form";
 import { buildAdminCompanyMetadata } from "@/lib/metadata/builders";
