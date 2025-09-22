@@ -2,6 +2,7 @@
 
 import { useMemo, useState } from "react";
 import { createClient } from "@/lib/supabase/client";
+import { defaultCustomerMetadataDE, toPrettyJSON } from "@/lib/metadata/defaults";
 import type { Tables, Json } from "@/database.types";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -21,7 +22,7 @@ export function CustomerCreateForm() {
   const [address, setAddress] = useState<string>("");
   const [postalCode, setPostalCode] = useState<string>("");
   const [country, setCountry] = useState<string>("");
-  const [metaText, setMetaText] = useState<string>("{}");
+  const [metaText, setMetaText] = useState<string>(() => toPrettyJSON(defaultCustomerMetadataDE));
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -123,4 +124,3 @@ export function CustomerCreateForm() {
     </form>
   );
 }
-

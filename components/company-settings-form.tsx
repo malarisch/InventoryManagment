@@ -4,6 +4,7 @@ import { useEffect, useMemo, useState } from "react";
 import { createClient } from "@/lib/supabase/client";
 import type { Json } from "@/database.types";
 import type { CompanyRecord } from "@/lib/companies";
+import { defaultAdminCompanyMetadataDE, toPrettyJSON } from "@/lib/metadata/defaults";
 import { normalizeCompanyRelation } from "@/lib/companies";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -72,9 +73,13 @@ export function CompanySettingsForm() {
         setName(targetCompany.name ?? "");
         setDescription(targetCompany.description ?? "");
         try {
-          setMetadataText(targetCompany.metadata ? JSON.stringify(targetCompany.metadata, null, 2) : "{}");
+          setMetadataText(
+            targetCompany.metadata
+              ? JSON.stringify(targetCompany.metadata, null, 2)
+              : toPrettyJSON(defaultAdminCompanyMetadataDE)
+          );
         } catch {
-          setMetadataText("{}");
+          setMetadataText(toPrettyJSON(defaultAdminCompanyMetadataDE));
         }
       } else if (!membershipError) {
         setError("Keine Company gefunden");

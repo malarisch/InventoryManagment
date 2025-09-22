@@ -3,7 +3,6 @@
 Diese To-Do List enthält Aufgaben, die an der Software zu bearbeiten sind. Sobald eine Aufgabe bearbeited wurde soll diese hier in der Datei unten in die Done-List eingefügt und aus der To-Do list entfernt werden.
 
 ## To-Do
-
 - Kommentiere sämtlichen Code von dir im TSDoc Style (fortlaufend; neue Module sind dokumentiert).
 - Implementiere Tests - insbesondere auch für die UI! Nutze für die UI playwright Tests! Wenn du bestimmte Dinge nicht aus dem Code bzw. deinem Env getestet bekommst lege dafür ein User Todo in human-review-todos.md an! Du hast auch zugriff auf einen playwright mcp server. Nutze insgesamt ein vitest Environment. Lass als erstes ein Test laufen, der einen Supabase Testuser anlegt, sowie eine Company für diesen. Dann weiter mit playwright Tests. Teste erstmal keinen Email versand oder so.
 - Räume deinen Code auf - modifiziere ggf. Komponenten, das sie reusable sind soweit wie möglich.
@@ -14,6 +13,7 @@ Diese To-Do List enthält Aufgaben, die an der Software zu bearbeiten sind. Soba
 
 
 ## Done
+- Metadata types + defaults: Added TSDoc to `components/metadataTypes.types.ts`. Introduced DACH defaults in `lib/metadata/defaults.ts` and prefilled metadata fields in create forms (company, equipment, customer, job). Company Settings now shows DACH defaults when metadata is empty.
 - Repo-Cleanup: Landingpage entschlackt, Tutorial-Komponenten entfernt und Dashboard-Helfer in `app/management/_libs/dashboard-utils.ts` ausgelagert.
 - Playwright E2E Setup (playwright.config.ts, Script `test:e2e`) + erster Test `tests/e2e/home.spec.ts` (Startseite sichtbar).
 - Supabase Env-Variablen vereinheitlicht: Nutzung von `NEXT_PUBLIC_SUPABASE_ANON_KEY` statt `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_OR_ANON_KEY` in Code und `.env(.example)`.

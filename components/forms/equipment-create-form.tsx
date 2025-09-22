@@ -9,6 +9,7 @@ import { Input } from "@/components/ui/input";
 import { useRouter } from "next/navigation";
 import { useCompany } from "@/app/management/_libs/companyHook";
 import { DatePicker } from "@/components/ui/date-picker";
+import { defaultEquipmentMetadataDE, toPrettyJSON } from "@/lib/metadata/defaults";
 
 type Article = Tables<"articles">;
 type Location = Tables<"locations">;
@@ -32,7 +33,7 @@ export function EquipmentCreateForm({ initialArticleId }: { initialArticleId?: n
     const day = String(d.getDate()).padStart(2, '0');
     return `${y}-${m}-${day}`;
   });
-  const [metaText, setMetaText] = useState<string>("{}");
+  const [metaText, setMetaText] = useState<string>(() => toPrettyJSON(defaultEquipmentMetadataDE));
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [count, setCount] = useState<number>(1);

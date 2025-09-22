@@ -2,6 +2,7 @@
 
 import { useMemo, useState } from "react";
 import { createClient } from "@/lib/supabase/client";
+import { defaultAdminCompanyMetadataDE, toPrettyJSON } from "@/lib/metadata/defaults";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
@@ -13,7 +14,7 @@ export function CompanyCreateForm() {
   const router = useRouter();
   const [name, setName] = useState("");
   const [description, setDescription] = useState("");
-  const [metadataText, setMetadataText] = useState("{}");
+  const [metadataText, setMetadataText] = useState(() => toPrettyJSON(defaultAdminCompanyMetadataDE));
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -72,4 +73,3 @@ export function CompanyCreateForm() {
     </form>
   );
 }
-

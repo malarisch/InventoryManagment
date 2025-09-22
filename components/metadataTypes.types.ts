@@ -1,72 +1,115 @@
-// In this file, we define TypeScript types and interfaces for various metadata structures used in the inventory management system.
-// These types help ensure consistent data representation across the application.
-// Fields that are not set shall be inferred from higher entities in the hierarchy, e.g., Company defaults for Articles, Equipment, Locations, Cases, Customers, Jobs, Persons.
+/**
+ * Type definitions for JSON metadata fields used across the app.
+ *
+ * The shapes model common attributes for companies, articles, equipment, cases,
+ * locations, customers, jobs and related entities. When a field is omitted on a
+ * lower-level record, the UI may infer sensible defaults from the company level
+ * (e.g. tax rate, currency, power specs).
+ *
+ * All measurements use metric units unless stated otherwise.
+ */
 
-// Note: All dimensions are in metric units (cm, kg, etc.) for consistency.
 
-
-type DimensionsCm = {
-  width: number; // in cm
-  height: number; // in cm
-  depth?: number; // in cm; optional for small Locations like shelves or desks.
+/** Dimensions (centimeters). */
+export type DimensionsCm = {
+  /** Width in centimeters. */
+  width: number;
+  /** Height in centimeters. */
+  height: number;
+  /** Depth in centimeters; optional for small places (shelf/desk). */
+  depth?: number;
 };
-type Price = {
-  amount: number; // in the company's currency without Taxes
-  grossNet: "gross" | "net"; // indicates if the amount is gross (with tax) or net (without tax)
-  currency: string; // ISO 4217 currency code, e.g., "USD", "EUR"
-  taxRate: number; // in percentage, e.g., 19 for 19%
-  discount?: number; // in percentage, e.g., 10 for 10%
+/** Monetary value in company currency. */
+export type Price = {
+  /** Amount in smallest relevant unit; tax inclusion per `grossNet`. */
+  amount: number;
+  /** Whether `amount` includes tax (gross) or not (net). */
+  grossNet: "gross" | "net";
+  /** ISO 4217 currency code (e.g., EUR, CHF). */
+  currency: string;
+  /** Tax rate in percent (e.g., 19 for 19%). */
+  taxRate: number;
+  /** Optional discount in percent. */
+  discount?: number;
 };
-type Power = {
-  maxPowerW?: number; // in Watts
+/** Electrical power characteristics. */
+export type Power = {
+  /** Maximum continuous power in watts. */
+  maxPowerW?: number;
+  /** Source/type of power. */
   powerType: "AC" | "DC" | "PoE" | "Battery" | "Other";
-  voltageRangeV?: string; // e.g., "100-240V"
-  frequencyHz?: string; // e.g., "50/60Hz"
-  powerConnectorType?: string; // e.g., "IEC C13", "NEMA 5-15"
+  /** Voltage range, e.g., "220–240V". */
+  voltageRangeV?: string;
+  /** Frequency, e.g., "50Hz" or "50/60Hz". */
+  frequencyHz?: string;
+  /** Connector type, e.g., "IEC C13". */
+  powerConnectorType?: string;
 };
-type contactInfo = {
+/** Contact method and address information. */
+export type ContactInfo = {
   name?: string;
   email?: string;
   phone?: string;
-  has_signal?: boolean; // for phone numbers
-  has_whatsapp?: boolean; // for phone numbers
-  has_telegram?: boolean; // for phone numbers
-  role?: string; // e.g., "Primary", "Billing", "Technical"
+  /** Whether this number supports Signal. */
+  has_signal?: boolean;
+  /** Whether this number supports WhatsApp. */
+  has_whatsapp?: boolean;
+  /** Whether this number supports Telegram. */
+  has_telegram?: boolean;
+  /** Role of this contact (Primary/Billing/Technical). */
+  role?: string;
   street?: string;
   city?: string;
   state?: string;
   zipCode?: string;
   country?: string;
-    notes?: string; // Additional notes about the contact method
-    website?: string; // e.g., personal or company website
+  /** Freeform notes. */
+  notes?: string;
+  /** Personal or company website. */
+  website?: string;
 };
-type Website = {
+/** Simple external link with description. */
+export type Website = {
   url: string;
-  description?: string; // e.g., "Company Homepage", "Portfolio"
+  /** e.g., "Company Homepage", "Portfolio". */
+  description?: string;
 };
 
+/** Individual person related to customers/jobs/companies. */
 export interface Person {
   firstName: string;
   lastName: string;
-  companyId?: number[]; // ID of the associated company
-  position?: string; // e.g., "Manager", "Technician"
-  pronouns?: string; // e.g., "he/him", "she/her", "they/them"
-  birthday?: string; // ISO date string
-  anrede?: string; // e.g., "Mr.", "Ms.", "Dr."
-  notes?: string; // Additional notes about the person
-  contactInfo?: contactInfo[]; // Array of contact information objects
+  /** Associated company IDs. */
+  companyId?: number[];
+  /** Job title/role. */
+  position?: string;
+  /** Preferred pronouns (e.g., "she/her"). */
+  pronouns?: string;
+  /** ISO-8601 date string. */
+  birthday?: string;
+  /** German salutation (e.g., "Herr", "Frau"), optional. */
+  anrede?: string;
+  /** Freeform notes about the person. */
+  notes?: string;
+  /** Contact methods. */
+  contactInfo?: ContactInfo[];
 }
 
+/** Company-level administrative metadata and defaults. */
 export interface adminCompanyMetadata {
   phone?: string;
   website?: string;
   logoUrl?: string;
-  contactInfo?: contactInfo[];
+  contactInfo?: ContactInfo[];
   standardData: {
-    taxRate: number; // in percentage, e.g., 19 for 19%
-    currency: string; // ISO 4217 currency code, e.g., "USD", "EUR"
-    defaultLocationId?: number; // ID of the default location for the company
-    power: Power; // Standard power specifications for the company
+    /** Default VAT/GST rate for the company. */
+    taxRate: number;
+    /** Default currency (ISO 4217). */
+    currency: string;
+    /** Default location ID for newly created records. */
+    defaultLocationId?: number;
+    /** Default power specs for equipment/locations. */
+    power: Power;
     person: Person;
   };
   customTypes: { articleTypes: string[], caseTypes: string[], locationTypes: string[] };
@@ -78,14 +121,19 @@ export interface adminCompanyMetadata {
   notes?: string;
 }
 
+/**
+ * Details for a business entity that may also appear in customer metadata.
+ * This is not the DB table; it models embedded JSON metadata only.
+ */
 export interface Company {
     name: string;
   discountRate?: number;
   taxId?: string;
   vatId?: string;
   preferredContactMethod?: "email" | "phone" | "mail";
-  contactInfo?: contactInfo[];
-  employees?: [Person[], ...{position: string}[]]; // Array of employees with their positions
+  contactInfo?: ContactInfo[];
+  /** Employees with optional positions; structure may evolve. */
+  employees?: [Person[], ...{position: string}[]];
   industry?: string; // e.g., "Retail", "Healthcare"
   businessType?: string; // e.g., "LLC", "Corporation", "Sole Proprietorship"
   establishedYear?: number;
@@ -95,8 +143,10 @@ export interface Company {
   notes?: string; // Additional notes about the company
 }
 
+/** Additional descriptors for an article (product). */
 export interface ArticleMetadata {
-    type: string; //should be one of the company customTypes.articleTypes
+    /** Custom article type string (company-defined). */
+    type: string;
   manufacturer?: string;
   model?: string;
   manufacturerPartNumber?: string; // Part Number (MPN)
@@ -105,8 +155,10 @@ export interface ArticleMetadata {
   canBeBookedWithoutStock?: boolean; // e.g., for consumables
   image?: string;
   case: {
+    /** Whether the case is 19" rack based. */
     is19Inch: boolean;
-    heightUnits: number; // in U for 19" Equipment. Only available if is19Inch is true.
+    /** Height in rack units (U) if rack-based. */
+    heightUnits: number;
     maxDeviceDepthCm?: number; // in cm
     hasLock?: boolean;
     innerDimensionsCm?: DimensionsCm;
@@ -114,19 +166,23 @@ export interface ArticleMetadata {
     restrictedContentTypes?: string[]; // e.g., ["Electronics", "Cables"]; can also be used for expansion card slots!
   };
   fitsInRestrictedCaseTypes?: string[]; // e.g., "YAMAHA MINI Expansion Slot"
+  /** Whether article itself is 19" rack mountable. */
   is19Inch: boolean;
-  heightUnits: number; // Height in Rack units. Only available if is19Inch is true.
+  /** Height in rack units (U) if rack-mountable. */
+  heightUnits: number;
   dimensionsCm?: DimensionsCm;
   weightKg?: number; // in kg
   connectivity?: string[]; // e.g., ["WiFi", "Bluetooth", "Ethernet"]
   interfaces?: string[]; // e.g., ["USB-C", "HDMI", "DisplayPort"]
   power: Power;
-  suppliers?: [(Company | Person), Price?, Website?][]; // Array of tuples with supplier (Company or Person) and price details
+  /** Array of supplier tuples with optional price and website. */
+  suppliers?: [(Company | Person), Price?, Website?][];
   dailyRentalRate?: Price; // in the company's currency
   notes?: string; // Additional notes about the article
 
 }
 
+/** Extra per-unit details for a physical equipment item. */
 export interface EquipmentMetadata extends ArticleMetadata {
   serialNumber?: string;
   purchaseDate?: string; // ISO date string
@@ -140,9 +196,12 @@ export interface EquipmentMetadata extends ArticleMetadata {
     notes?: string; // Additional notes about the equipment
 }
 
+/** Optional notes for a case object. */
 export interface CaseMetadata{
-    note?: string; // Additional notes about the case
+    /** Additional notes about the case. */
+    note?: string;
 }
+/** Environmental and capacity descriptors for a location. */
 export interface LocationMetadata {
   owner?: Company | Person; // Owner of the location
   isWorkshop?: boolean; //workshop locations can be used for repairs and maintenance
@@ -154,11 +213,14 @@ export interface LocationMetadata {
   dimensionsCm?: DimensionsCm; // overall dimensions of the location
 }
 
+/** Combined person/company fields for a customer entity. */
 export type CustomerMetadata = Person & Company & {
   preferredContactMethod?: "email" | "phone" | "mail";
   customerSince?: string; // ISO date string
   }
+/** Freeform job metadata stored under `jobs.meta`. */
 export interface JobMetadata {
+    /** Company-specific job type string. */
     type: string; //should be one of the company customTypes.jobTypes
   priority?: "low" | "medium" | "high" | "urgent";
   status?: "open" | "in-progress" | "on-hold" | "completed" | "cancelled";
@@ -172,6 +234,7 @@ export interface JobMetadata {
     notes?: string; // Additional notes about the job
 }
 export type codeType = "QR" | "Barcode" | "None";
+/** Prefix keys used for asset tag generation per entity type. */
 export interface asset_tag_prefixes {
     [key: string]: string; // e.g., "EQP": "Equipment", "ART": "Article"
     case: "CA";
@@ -183,6 +246,7 @@ export interface asset_tag_prefixes {
     equipment: "EQ";
     article: "AR";
 }
+/** Printing template settings for asset tags/labels. */
 export interface asset_tag_template_print {
     name: string; // Name of the tag template, e.g., "Standard Equipment Tag"
     description: string; // Description of the tag template

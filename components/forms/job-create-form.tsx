@@ -9,6 +9,7 @@ import { Button } from "@/components/ui/button";
 import { useRouter } from "next/navigation";
 import { useCompany } from "@/app/management/_libs/companyHook";
 import { DatePicker } from "@/components/ui/date-picker";
+import { defaultJobMetadataDE, toPrettyJSON } from "@/lib/metadata/defaults";
 
 type Customer = Tables<"customers">;
 
@@ -22,7 +23,7 @@ export function JobCreateForm() {
   const [startDate, setStartDate] = useState<string>("");
   const [endDate, setEndDate] = useState<string>("");
   const [customerId, setCustomerId] = useState<number | "">("");
-  const [metaText, setMetaText] = useState<string>("{}");
+  const [metaText, setMetaText] = useState<string>(() => toPrettyJSON(defaultJobMetadataDE));
   const [customers, setCustomers] = useState<Customer[]>([]);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
