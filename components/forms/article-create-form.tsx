@@ -8,6 +8,9 @@ import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { useRouter } from "next/navigation";
 import { useCompany } from "@/app/management/_libs/companyHook";
+import { ArticleMetadataForm } from "@/components/forms/partials/article-metadata-form";
+import { defaultArticleMetadataDE, toPrettyJSON } from "@/lib/metadata/defaults";
+import type { Json } from "@/database.types";
 
 type Location = Tables<"locations">;
 type AssetTag = Tables<"asset_tags">;
@@ -23,6 +26,9 @@ export function ArticleCreateForm() {
   const [assetTags, setAssetTags] = useState<AssetTag[]>([]);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [metaText, setMetaText] = useState<string>(() => toPrettyJSON(defaultArticleMetadataDE));
+  const [metaObj, setMetaObj] = useState(defaultArticleMetadataDE);
+  const [advanced, setAdvanced] = useState(false);
 
   useEffect(() => {
     let active = true;
@@ -51,6 +57,15 @@ export function ArticleCreateForm() {
         setSaving(false);
         return;
       }
+      let metadata: Json | null = null;
+      if (advanced) {
+        const mt = metaText.trim();
+        if (mt.length) {
+          try { metadata = JSON.parse(mt) as Json; } catch { throw new Error("Ungültiges JSON in Metadata"); }
+        }
+      } else {
+        metadata = metaObj as unknown as Json;
+      }
       const { data, error } = await supabase
         .from("articles")
         .insert({
@@ -59,6 +74,7 @@ export function ArticleCreateForm() {
           asset_tag: assetTagId === "" ? null : Number(assetTagId),
           company_id: company.id,
           created_by: userId,
+          metadata,
         })
         .select("id")
         .single();
@@ -107,6 +123,29 @@ export function ArticleCreateForm() {
           ))}
         </select>
       </div>
+      <div className="grid gap-3">
+        <div className="flex items-center justify-between">
+          <div className="text-sm font-medium">Artikel-Metadaten</div>
+          <label className="flex items-center gap-2 text-xs">
+            <input type="checkbox" checked={advanced} onChange={(e) => setAdvanced(e.target.checked)} />
+            Expertenmodus (JSON bearbeiten)
+          </label>
+        </div>
+        {advanced ? (
+          <div className="grid gap-2">
+            <Label htmlFor="metadata">Metadata (JSON)</Label>
+            <textarea
+              id="metadata"
+              className="min-h-[120px] w-full rounded-md border bg-background p-2 text-sm font-mono"
+              value={metaText}
+              onChange={(e) => setMetaText(e.target.value)}
+              spellCheck={false}
+            />
+          </div>
+        ) : (
+          <ArticleMetadataForm value={metaObj} onChange={setMetaObj} />
+        )}
+      </div>
       <div className="flex items-center gap-3">
         <Button type="submit" disabled={saving}>{saving ? "Erstellen…" : "Erstellen"}</Button>
         {error && <span className="text-sm text-red-600">{error}</span>}
@@ -114,4 +153,3 @@ export function ArticleCreateForm() {
     </form>
   );
 }
-

@@ -10,6 +10,7 @@ import { useRouter } from "next/navigation";
 import { useCompany } from "@/app/management/_libs/companyHook";
 import { DatePicker } from "@/components/ui/date-picker";
 import { defaultJobMetadataDE, toPrettyJSON } from "@/lib/metadata/defaults";
+import { JobMetadataForm } from "@/components/forms/partials/job-metadata-form";
 
 type Customer = Tables<"customers">;
 
@@ -25,6 +26,8 @@ export function JobCreateForm() {
   const [customerId, setCustomerId] = useState<number | "">("");
   const [metaText, setMetaText] = useState<string>(() => toPrettyJSON(defaultJobMetadataDE));
   const [customers, setCustomers] = useState<Customer[]>([]);
+  const [metaObj, setMetaObj] = useState(defaultJobMetadataDE);
+  const [advanced, setAdvanced] = useState(false);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -51,9 +54,13 @@ export function JobCreateForm() {
       const userId = auth.user?.id ?? null;
       if (!company || !userId) throw new Error("Fehlende Company oder Nutzer");
       let meta: Json | null = null;
-      const mt = metaText.trim();
-      if (mt.length) {
-        try { meta = JSON.parse(mt) as Json; } catch { throw new Error("Ungültiges JSON in Meta"); }
+      if (advanced) {
+        const mt = metaText.trim();
+        if (mt.length) {
+          try { meta = JSON.parse(mt) as Json; } catch { throw new Error("Ungültiges JSON in Meta"); }
+        }
+      } else {
+        meta = metaObj as unknown as Json;
       }
       const { data, error } = await supabase
         .from("jobs")
@@ -119,15 +126,28 @@ export function JobCreateForm() {
           ))}
         </select>
       </div>
-      <div className="grid gap-2">
-        <Label htmlFor="meta">Meta (JSON)</Label>
-        <textarea
-          id="meta"
-          className="min-h-[120px] w-full rounded-md border bg-background p-2 text-sm font-mono"
-          value={metaText}
-          onChange={(e) => setMetaText(e.target.value)}
-          spellCheck={false}
-        />
+      <div className="grid gap-3">
+        <div className="flex items-center justify-between">
+          <div className="text-sm font-medium">Job-Metadaten</div>
+          <label className="flex items-center gap-2 text-xs">
+            <input type="checkbox" checked={advanced} onChange={(e) => setAdvanced(e.target.checked)} />
+            Expertenmodus (JSON bearbeiten)
+          </label>
+        </div>
+        {advanced ? (
+          <div className="grid gap-2">
+            <Label htmlFor="meta">Meta (JSON)</Label>
+            <textarea
+              id="meta"
+              className="min-h-[120px] w-full rounded-md border bg-background p-2 text-sm font-mono"
+              value={metaText}
+              onChange={(e) => setMetaText(e.target.value)}
+              spellCheck={false}
+            />
+          </div>
+        ) : (
+          <JobMetadataForm value={metaObj} onChange={setMetaObj} />
+        )}
       </div>
       <div className="flex items-center gap-3">
         <Button type="submit" disabled={saving}>{saving ? "Erstellen…" : "Erstellen"}</Button>

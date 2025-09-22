@@ -5,6 +5,10 @@ import { createClient } from "@/lib/supabase/client";
 import type { Tables } from "@/database.types";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
+import type { Json } from "@/database.types";
+import { EquipmentMetadataForm } from "@/components/forms/partials/equipment-metadata-form";
+import { defaultEquipmentMetadataDE, toPrettyJSON } from "@/lib/metadata/defaults";
+import type { EquipmentMetadata } from "@/components/metadataTypes.types";
 
 type Equipment = Tables<"equipments">;
 type Article = Tables<"articles">;
@@ -23,6 +27,11 @@ export function EquipmentEditForm({ equipment }: { equipment: Equipment }) {
   const [saving, setSaving] = useState(false);
   const [message, setMessage] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [metaText, setMetaText] = useState<string>(() => {
+    try { return equipment.metadata ? JSON.stringify(equipment.metadata, null, 2) : toPrettyJSON(defaultEquipmentMetadataDE); } catch { return toPrettyJSON(defaultEquipmentMetadataDE); }
+  });
+  const [metaObj, setMetaObj] = useState<EquipmentMetadata>((equipment.metadata as unknown as EquipmentMetadata) ?? defaultEquipmentMetadataDE);
+  const [advanced, setAdvanced] = useState(false);
 
   useEffect(() => {
     let active = true;
@@ -46,12 +55,22 @@ export function EquipmentEditForm({ equipment }: { equipment: Equipment }) {
     setSaving(true);
     setMessage(null);
     setError(null);
+    let metadata: Json | null = null;
+    if (advanced) {
+      const mt = metaText.trim();
+      if (mt.length) {
+        try { metadata = JSON.parse(mt) as Json; } catch { setSaving(false); setError("Ungültiges JSON in Metadata"); return; }
+      }
+    } else {
+      metadata = metaObj as unknown as Json;
+    }
     const { error } = await supabase
       .from("equipments")
       .update({
         asset_tag: assetTagId === "" ? null : Number(assetTagId),
         article_id: articleId === "" ? null : Number(articleId),
         current_location: currentLocation === "" ? null : Number(currentLocation),
+        metadata,
       })
       .eq("id", equipment.id);
     if (error) {
@@ -79,6 +98,29 @@ export function EquipmentEditForm({ equipment }: { equipment: Equipment }) {
             </option>
           ))}
         </select>
+      </div>
+      <div className="grid gap-3">
+        <div className="flex items-center justify-between">
+          <div className="text-sm font-medium">Equipment-Metadaten</div>
+          <label className="flex items-center gap-2 text-xs">
+            <input type="checkbox" checked={advanced} onChange={(e) => setAdvanced(e.target.checked)} />
+            Expertenmodus (JSON bearbeiten)
+          </label>
+        </div>
+        {advanced ? (
+          <div className="grid gap-2">
+            <Label htmlFor="metadata">Metadata (JSON)</Label>
+            <textarea
+              id="metadata"
+              className="min-h-[120px] w-full rounded-md border bg-background p-2 text-sm font-mono"
+              value={metaText}
+              onChange={(e) => setMetaText(e.target.value)}
+              spellCheck={false}
+            />
+          </div>
+        ) : (
+          <EquipmentMetadataForm value={metaObj} onChange={setMetaObj} />
+        )}
       </div>
       <div className="grid gap-2">
         <Label htmlFor="article_id">Artikel</Label>

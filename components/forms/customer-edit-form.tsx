@@ -3,6 +3,10 @@
 import { useMemo, useState } from "react";
 import { createClient } from "@/lib/supabase/client";
 import type { Tables, Json } from "@/database.types";
+import { CustomerMetadataForm } from "@/components/forms/partials/customer-metadata-form";
+import { defaultCustomerMetadataDE, toPrettyJSON } from "@/lib/metadata/defaults";
+import { buildCustomerMetadata } from "@/lib/metadata/builders";
+import type { CustomerMetadata } from "@/components/metadataTypes.types";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
@@ -20,8 +24,10 @@ export function CustomerEditForm({ customer }: { customer: Customer }) {
   const [postalCode, setPostalCode] = useState<string>(customer.postal_code ?? "");
   const [country, setCountry] = useState<string>(customer.country ?? "");
   const [metaText, setMetaText] = useState<string>(() => {
-    try { return customer.metadata ? JSON.stringify(customer.metadata, null, 2) : "{}"; } catch { return "{}"; }
+    try { return customer.metadata ? JSON.stringify(customer.metadata, null, 2) : toPrettyJSON(defaultCustomerMetadataDE); } catch { return toPrettyJSON(defaultCustomerMetadataDE); }
   });
+  const [metaObj, setMetaObj] = useState<CustomerMetadata>((customer.metadata as unknown as CustomerMetadata) ?? defaultCustomerMetadataDE);
+  const [advanced, setAdvanced] = useState(false);
   const [saving, setSaving] = useState(false);
   const [message, setMessage] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -32,9 +38,13 @@ export function CustomerEditForm({ customer }: { customer: Customer }) {
     setMessage(null);
     setError(null);
     let metadata: Json | null = null;
-    const mt = metaText.trim();
-    if (mt.length) {
-      try { metadata = JSON.parse(mt) as Json; } catch { setSaving(false); setError("Ungültiges JSON in Metadata"); return; }
+    if (advanced) {
+      const mt = metaText.trim();
+      if (mt.length) {
+        try { metadata = JSON.parse(mt) as Json; } catch { setSaving(false); setError("Ungültiges JSON in Metadata"); return; }
+      }
+    } else {
+      metadata = buildCustomerMetadata(metaObj) as unknown as Json;
     }
     const { error } = await supabase
       .from("customers")
@@ -100,16 +110,28 @@ export function CustomerEditForm({ customer }: { customer: Customer }) {
         <Input id="country" value={country} onChange={(e) => setCountry(e.target.value)} />
       </div>
 
-      <div className="grid gap-2">
-        <Label htmlFor="metadata">Metadata (JSON)</Label>
-        <textarea
-          id="metadata"
-          className="min-h-[120px] w-full rounded-md border bg-background p-2 text-sm font-mono"
-          value={metaText}
-          onChange={(e) => setMetaText(e.target.value)}
-          spellCheck={false}
-        />
-        <p className="text-xs text-muted-foreground">Beispiel: {`{"note": "VIP Kunde"}`}</p>
+      <div className="grid gap-3">
+        <div className="flex items-center justify-between">
+          <div className="text-sm font-medium">Kunden-Metadaten</div>
+          <label className="flex items-center gap-2 text-xs">
+            <input type="checkbox" checked={advanced} onChange={(e) => setAdvanced(e.target.checked)} />
+            Expertenmodus (JSON bearbeiten)
+          </label>
+        </div>
+        {advanced ? (
+          <div className="grid gap-2">
+            <Label htmlFor="metadata">Metadata (JSON)</Label>
+            <textarea
+              id="metadata"
+              className="min-h-[120px] w-full rounded-md border bg-background p-2 text-sm font-mono"
+              value={metaText}
+              onChange={(e) => setMetaText(e.target.value)}
+              spellCheck={false}
+            />
+          </div>
+        ) : (
+          <CustomerMetadataForm value={metaObj} onChange={setMetaObj} />
+        )}
       </div>
 
       <div className="flex items-center gap-3">
@@ -120,4 +142,3 @@ export function CustomerEditForm({ customer }: { customer: Customer }) {
     </form>
   );
 }
-

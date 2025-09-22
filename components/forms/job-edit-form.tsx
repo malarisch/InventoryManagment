@@ -3,6 +3,9 @@
 import { useEffect, useMemo, useState } from "react";
 import { createClient } from "@/lib/supabase/client";
 import type { Tables, Json } from "@/database.types";
+import { JobMetadataForm } from "@/components/forms/partials/job-metadata-form";
+import { defaultJobMetadataDE, toPrettyJSON } from "@/lib/metadata/defaults";
+import type { JobMetadata } from "@/components/metadataTypes.types";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
@@ -21,8 +24,10 @@ export function JobEditForm({ job }: { job: Job }) {
   const [endDate, setEndDate] = useState<string>(() => formatDateForInput(job.enddate));
   const [customerId, setCustomerId] = useState<number | "">(job.customer_id ?? "");
   const [metaText, setMetaText] = useState<string>(() => {
-    try { return job.meta ? JSON.stringify(job.meta, null, 2) : "{}"; } catch { return "{}"; }
+    try { return job.meta ? JSON.stringify(job.meta, null, 2) : toPrettyJSON(defaultJobMetadataDE); } catch { return toPrettyJSON(defaultJobMetadataDE); }
   });
+  const [metaObj, setMetaObj] = useState<JobMetadata>((job.meta as unknown as JobMetadata) ?? defaultJobMetadataDE);
+  const [advanced, setAdvanced] = useState(false);
 
   const [customers, setCustomers] = useState<Customer[]>([]);
   const [saving, setSaving] = useState(false);
@@ -49,9 +54,13 @@ export function JobEditForm({ job }: { job: Job }) {
     setMessage(null);
     setError(null);
     let meta: Json | null = null;
-    const mt = metaText.trim();
-    if (mt.length) {
-      try { meta = JSON.parse(mt) as Json; } catch { setSaving(false); setError("Ungültiges JSON in Meta"); return; }
+    if (advanced) {
+      const mt = metaText.trim();
+      if (mt.length) {
+        try { meta = JSON.parse(mt) as Json; } catch { setSaving(false); setError("Ungültiges JSON in Meta"); return; }
+      }
+    } else {
+      meta = metaObj as unknown as Json;
     }
     const { error } = await supabase
       .from("jobs")
@@ -109,16 +118,28 @@ export function JobEditForm({ job }: { job: Job }) {
           ))}
         </select>
       </div>
-      <div className="grid gap-2">
-        <Label htmlFor="meta">Meta (JSON)</Label>
-        <textarea
-          id="meta"
-          className="min-h-[120px] w-full rounded-md border bg-background p-2 text-sm font-mono"
-          value={metaText}
-          onChange={(e) => setMetaText(e.target.value)}
-          spellCheck={false}
-        />
-        <p className="text-xs text-muted-foreground">Beispiel: {`{"note": "Backline prüfen"}`}</p>
+      <div className="grid gap-3">
+        <div className="flex items-center justify-between">
+          <div className="text-sm font-medium">Job-Metadaten</div>
+          <label className="flex items-center gap-2 text-xs">
+            <input type="checkbox" checked={advanced} onChange={(e) => setAdvanced(e.target.checked)} />
+            Expertenmodus (JSON bearbeiten)
+          </label>
+        </div>
+        {advanced ? (
+          <div className="grid gap-2">
+            <Label htmlFor="meta">Meta (JSON)</Label>
+            <textarea
+              id="meta"
+              className="min-h-[120px] w-full rounded-md border bg-background p-2 text-sm font-mono"
+              value={metaText}
+              onChange={(e) => setMetaText(e.target.value)}
+              spellCheck={false}
+            />
+          </div>
+        ) : (
+          <JobMetadataForm value={metaObj} onChange={setMetaObj} />
+        )}
       </div>
       <div className="flex items-center gap-3">
         <Button type="submit" disabled={saving}>{saving ? "Speichern…" : "Speichern"}</Button>

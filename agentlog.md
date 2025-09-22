@@ -289,3 +289,7 @@ Next: Run `supabase db push` to add `files` columns and `attachments` bucket; co
 - Added CustomerMetadataForm and EquipmentMetadataForm; integrated into create forms with Advanced JSON toggle.
 - Introduced lib/metadata/builders with unit tests (Vitest).
 - Lint, type-check and unit tests pass.
+2025-09-22 03:55 CEST — Article/Job typed metadata + inherit utils
+- Added Article/Job metadata partials with company-default placeholders; integrated into create+edit forms with Advanced JSON toggles.
+- Added inherit util to normalize company metadata; added unit tests.
+- Updated Equipment/Customer edit forms to use typed metadata as well.
