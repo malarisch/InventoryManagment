@@ -97,7 +97,7 @@ export function ArticleMetadataForm({
           <Label htmlFor="amf-power-type">Stromtyp</Label>
           <select id="amf-power-type" className="h-9 rounded-md border bg-background px-3 text-sm"
             value={local.power.powerType}
-            onChange={(e) => set("power", { ...local.power, powerType: e.target.value as any })}
+            onChange={(e) => set("power", { ...local.power, powerType: e.target.value as "AC" | "DC" | "PoE" | "Battery" | "Other" })}
           >
             <option>AC</option>
             <option>DC</option>

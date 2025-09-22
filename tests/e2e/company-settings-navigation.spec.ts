@@ -1,4 +1,4 @@
-import { test, expect } from '@playwright/test';
+import { test } from '@playwright/test';
 
 test.describe('Company Settings - UI Navigation Test', () => {
   test('should navigate to company settings and identify the newline issue', async ({ page }) => {

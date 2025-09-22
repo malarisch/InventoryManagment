@@ -3,6 +3,8 @@
 - Use this file to append brief summaries after major tasks.
 - Include date/time, task, key changes, and next steps.
 
+- 2025-09-22 15:30 – **RESOLVED: Company Settings Newline Bug**: Successfully identified and fixed the newline entry issue in custom company types fields. Root cause was `.filter(Boolean)` in onChange handlers removing empty strings, preventing newline preservation. Removed the problematic filter from all three custom type textareas. Verified fix with working Playwright tests showing proper multi-line text entry functionality.
+
 - 2025-09-22 15:30 – Company Settings Newline Investigation: Investigated reported issue with newline entry in custom company types fields. Found that entity forms (locations, cases, articles, customers) correctly use single-line Input components as designed per metadataTypes.types.ts and AGENTS.md. Company settings form already properly uses Textarea components for custom types. Created Playwright test (tests/e2e/company-settings-newlines.spec.ts) to verify newline functionality. The actual issue may need further investigation with a running test environment or user reproduction steps.
 
 - 2025-09-18 00:07 – Equipments Tabelle + Page: hinzugefügt components/equipmentTable.tsx und app/management/equipments/page.tsx; Paginierung, Join zu articles(name).
