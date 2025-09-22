@@ -22,8 +22,13 @@ jobs:
         with:
           node-version: 24
           cache: 'npm'
-      - name: "Move config_noseed.toml to supabase/config.toml"
-        run: mv supabase/config_noseed.toml supabase/config.toml
+      - name: "Move config_noseed.toml to supabase/config.toml (if present)"
+        run: |
+          if [ -f supabase/config_noseed.toml ]; then
+            mv supabase/config_noseed.toml supabase/config.toml
+          else
+            echo "No config_noseed.toml present, skipping"
+          fi
       - name: Install dependencies
         run: npm ci
       - name: Install Supabase CLI
@@ -65,8 +70,26 @@ jobs:
         run: npx playwright install --with-deps
       - name: Build Next.js app
         run: npm run build
-      - name: Start Next.js app
-        run: npm run start &
+      - name: Start Next.js app and wait for readiness
+        run: |
+          # Start Next.js in background and capture logs
+          npm run start > next.log 2>&1 &
+          NEXT_PID=$!
+          echo "Waiting for Next.js to respond on http://127.0.0.1:3000..."
+          for i in $(seq 1 60); do
+            if curl -sSf http://127.0.0.1:3000 >/dev/null 2>&1; then
+              echo "Next.js is up"
+              break
+            fi
+            echo "Waiting... ($i)"
+            sleep 2
+          done
+          if ! curl -sSf http://127.0.0.1:3000 >/dev/null 2>&1; then
+            echo "Next.js failed to start. Printing last 200 lines of next.log:" >&2
+            tail -n 200 next.log || true
+            kill $NEXT_PID || true
+            exit 1
+          fi
       - name: Run full test suite (lint, tsc, unit, e2e)
         env:
           PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD: 1

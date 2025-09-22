@@ -1,6 +1,17 @@
 "use client";
 
 import { useMemo, useState, useEffect } from "react";
+
+/**
+ * CompanyMetadataForm
+ *
+ * Renders the company metadata form, including custom type textareas for Locations, Cases, Articles.
+ * Handles fetching location data and updating metadata state.
+ *
+ * Props:
+ * - value: adminCompanyMetadata (current metadata object)
+ * - onChange: function to update metadata
+ */
 import type { adminCompanyMetadata, Person, ContactInfo } from "@/components/metadataTypes.types";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";

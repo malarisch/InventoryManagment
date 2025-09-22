@@ -1,11 +1,18 @@
 "use client";
 
 import { useMemo, useState } from "react";
+
+/**
+ * CompanyCreateForm
+ *
+ * Form for creating a new company. Handles metadata input (structured or advanced JSON),
+ * validates and submits to Supabase, and adds the user to the new company.
+ */
 import { createClient } from "@/lib/supabase/client";
 import { defaultAdminCompanyMetadataDE, toPrettyJSON } from "@/lib/metadata/defaults";
 import { CompanyMetadataForm } from "@/components/forms/partials/company-metadata-form";
 import { buildAdminCompanyMetadata } from "@/lib/metadata/builders";
-import type { Tables, Json } from "@/database.types";
+import type { Tables, Json as DBJson } from "@/database.types";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
@@ -27,14 +34,14 @@ export function CompanyCreateForm() {
     setSaving(true);
     setError(null);
     try {
-      let metadata: Json | null = null;
+  let metadata: DBJson | null = null;
       if (advanced) {
         const mt = metadataText.trim();
         if (mt.length) {
-          try { metadata = JSON.parse(mt) as Json; } catch { throw new Error("Ungültiges JSON in Metadata"); }
+          try { metadata = JSON.parse(mt) as DBJson; } catch { throw new Error("Ungültiges JSON in Metadata"); }
         }
       } else {
-        metadata = buildAdminCompanyMetadata(metaObj) as unknown as Json;
+        metadata = buildAdminCompanyMetadata(metaObj) as unknown as DBJson;
       }
       const { data: auth } = await supabase.auth.getUser();
       const userId = auth.user?.id;
