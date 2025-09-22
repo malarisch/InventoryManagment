@@ -1,3 +1,4 @@
+import 'dotenv/config';
 import { afterAll, beforeAll, describe, expect, test } from "vitest";
 import { createAdminClient } from "@/lib/supabase/admin";
 
