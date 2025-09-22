@@ -281,3 +281,11 @@ Next: Run `supabase db push` to add `files` columns and `attachments` bucket; co
 2025-09-22 03:05 CEST — AGENTS.md docs source update
 - Updated AGENTS.md to reference local Supabase docs in supabase_ai_docs/ and deprecate Serena/MCP reliance.
 - Reinforced rule to consult these docs before RLS, schema, auth, realtime, and functions; reminded to run supabase-gen-types after migrations.
+2025-09-22 03:22 CEST — Metadata types + defaults
+- Added TSDoc to components/metadataTypes.types.ts; created lib/metadata/defaults.ts with DACH presets.
+- Prefill metadata JSON in create forms (company, equipment, customer, job); Company Settings shows defaults when empty.
+- Updated todos.md and human-review-todos.md for typed subforms follow-up.
+2025-09-22 03:42 CEST — Typed metadata subforms + tests
+- Added CustomerMetadataForm and EquipmentMetadataForm; integrated into create forms with Advanced JSON toggle.
+- Introduced lib/metadata/builders with unit tests (Vitest).
+- Lint, type-check and unit tests pass.

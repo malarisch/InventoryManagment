@@ -10,6 +10,8 @@ import { useRouter } from "next/navigation";
 import { useCompany } from "@/app/management/_libs/companyHook";
 import { DatePicker } from "@/components/ui/date-picker";
 import { defaultEquipmentMetadataDE, toPrettyJSON } from "@/lib/metadata/defaults";
+import { EquipmentMetadataForm } from "@/components/forms/partials/equipment-metadata-form";
+import { buildEquipmentMetadata } from "@/lib/metadata/builders";
 
 type Article = Tables<"articles">;
 type Location = Tables<"locations">;
@@ -34,6 +36,8 @@ export function EquipmentCreateForm({ initialArticleId }: { initialArticleId?: n
     return `${y}-${m}-${day}`;
   });
   const [metaText, setMetaText] = useState<string>(() => toPrettyJSON(defaultEquipmentMetadataDE));
+  const [metaObj, setMetaObj] = useState(defaultEquipmentMetadataDE);
+  const [advanced, setAdvanced] = useState(false);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [count, setCount] = useState<number>(1);
@@ -64,9 +68,13 @@ export function EquipmentCreateForm({ initialArticleId }: { initialArticleId?: n
       const userId = auth.user?.id ?? null;
       if (!company || !userId) throw new Error("Fehlende Company oder Nutzer");
       let metadata: Json | null = null;
-      const mt = metaText.trim();
-      if (mt.length) {
-        try { metadata = JSON.parse(mt) as Json; } catch { throw new Error("Ungültiges JSON in Metadata"); }
+      if (advanced) {
+        const mt = metaText.trim();
+        if (mt.length) {
+          try { metadata = JSON.parse(mt) as Json; } catch { throw new Error("Ungültiges JSON in Metadata"); }
+        }
+      } else {
+        metadata = buildEquipmentMetadata(metaObj) as unknown as Json;
       }
       const base: Database["public"]["Tables"]["equipments"]["Insert"] = {
         asset_tag: assetTagId === "" ? null : Number(assetTagId),
@@ -158,15 +166,28 @@ export function EquipmentCreateForm({ initialArticleId }: { initialArticleId?: n
         <Label htmlFor="count">Anzahl</Label>
         <Input id="count" type="number" min={1} value={String(count)} onChange={(e) => setCount(Math.max(1, Number(e.target.value) || 1))} />
       </div>
-      <div className="grid gap-2">
-        <Label htmlFor="metadata">Metadata (JSON)</Label>
-        <textarea
-          id="metadata"
-          className="min-h-[120px] w-full rounded-md border bg-background p-2 text-sm font-mono"
-          value={metaText}
-          onChange={(e) => setMetaText(e.target.value)}
-          spellCheck={false}
-        />
+      <div className="grid gap-3">
+        <div className="flex items-center justify-between">
+          <div className="text-sm font-medium">Equipment-Metadaten</div>
+          <label className="flex items-center gap-2 text-xs">
+            <input type="checkbox" checked={advanced} onChange={(e) => setAdvanced(e.target.checked)} />
+            Expertenmodus (JSON bearbeiten)
+          </label>
+        </div>
+        {advanced ? (
+          <div className="grid gap-2">
+            <Label htmlFor="metadata">Metadata (JSON)</Label>
+            <textarea
+              id="metadata"
+              className="min-h-[120px] w-full rounded-md border bg-background p-2 text-sm font-mono"
+              value={metaText}
+              onChange={(e) => setMetaText(e.target.value)}
+              spellCheck={false}
+            />
+          </div>
+        ) : (
+          <EquipmentMetadataForm value={metaObj} onChange={setMetaObj} />
+        )}
       </div>
       <div className="flex items-center gap-3">
         <Button type="submit" disabled={saving}>{saving ? "Erstellen…" : "Erstellen"}</Button>
