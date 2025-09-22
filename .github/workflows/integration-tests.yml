@@ -36,39 +36,20 @@ jobs:
 
       - name: Export Supabase environment
         run: |
-          node <<'NODE'
-          const fs = require('node:fs');
-          const { execSync } = require('node:child_process');
-
-          let statusRaw;
-          try {
-            statusRaw = execSync('supabase status --json', { encoding: 'utf8' });
-          } catch (error) {
-            console.error('Failed to read Supabase status via CLI:', error.stderr?.toString() ?? error.message);
-            process.exit(1);
-          }
-
-          const status = JSON.parse(statusRaw);
-          const api = status?.services?.api ?? {};
-          const auth = status?.services?.auth ?? {};
-
-          let restUrl = api.url || api.restUrl || api.apiUrl || null;
-          const anonKey = auth.anonKey || auth.anon_key || api.anonKey || null;
-          const serviceRoleKey = auth.serviceRoleKey || auth.service_role_key || api.serviceRoleKey || null;
-
-          if (!restUrl || !anonKey || !serviceRoleKey) {
-            console.error('Missing Supabase credentials from status JSON:', { restUrl, anonKey: !!anonKey, serviceRoleKey: !!serviceRoleKey });
-            process.exit(1);
-          }
-
-          if (restUrl.endsWith('/rest/v1')) {
-            restUrl = restUrl.replace(/\/rest\/v1$/, '');
-          }
-
-          fs.appendFileSync(process.env.GITHUB_ENV, `NEXT_PUBLIC_SUPABASE_URL=${restUrl}\n`);
-          fs.appendFileSync(process.env.GITHUB_ENV, `NEXT_PUBLIC_SUPABASE_ANON_KEY=${anonKey}\n`);
-          fs.appendFileSync(process.env.GITHUB_ENV, `SUPABASE_SERVICE_ROLE_KEY=${serviceRoleKey}\n`);
-          NODE
+          supabase status -o env | grep '=' > supabase.env
+          if [ ! -s supabase.env ]; then
+            echo "Supabase env output is empty" >&2
+            cat supabase.env
+            exit 1
+          fi
+          set -a
+          . supabase.env
+          set +a
+          {
+            echo "NEXT_PUBLIC_SUPABASE_URL=${API_URL}"
+            echo "NEXT_PUBLIC_SUPABASE_ANON_KEY=${ANON_KEY}"
+            echo "SUPABASE_SERVICE_ROLE_KEY=${SERVICE_ROLE_KEY}"
+          } >> "$GITHUB_ENV"
 
       - name: Create env file for Next.js
         run: |

@@ -276,3 +276,5 @@ Next: Run `supabase db push` to add `files` columns and `attachments` bucket; co
 - Pinned GitHub Actions Supabase CLI install to `version: latest` to match updated config schema.
 2025-09-22 02:11 CEST — Supabase status retrieval fix
 - Updated CI workflow to query `supabase status --json` for API credentials instead of reading legacy status file.
+2025-09-22 02:15 CEST — Supabase env export alignment
+- Switched CI to parse `supabase status -o env` output and source it for API/anon/service keys.
