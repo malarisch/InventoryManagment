@@ -22,10 +22,10 @@ jobs:
         with:
           node-version: 20
           cache: 'npm'
-
+      - name: "Move config_noseed.toml to supabase/config.toml"
+        run: mv supabase/config_noseed.toml supabase/config.toml
       - name: Install dependencies
         run: npm ci
-
       - name: Install Supabase CLI
         uses: supabase/setup-cli@v1
         with:

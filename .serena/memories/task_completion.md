@@ -1,4 +1,0 @@
-- Run `npm run lint && npm run build` before shipping changes; add relevant tests (RTL/Vitest, Playwright) when behavior changes.
-- Include Supabase migrations for schema updates and document RLS/policy adjustments.
-- Append 2–5 line summary with date/time to `agentlog.md` after major work.
-- Commit changes using Conventional Commit messages (e.g., `feat:`, `fix:`) before handing off/PR.
