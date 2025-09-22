@@ -1,6 +1,12 @@
 import type { CustomerMetadata, EquipmentMetadata, adminCompanyMetadata } from "@/components/metadataTypes.types";
 import { defaultCustomerMetadataDE, defaultEquipmentMetadataDE, defaultAdminCompanyMetadataDE } from "@/lib/metadata/defaults";
 
+/**
+ * buildCustomerMetadata
+ *
+ * Merge provided partial customer metadata with project defaults.
+ * Ensures stable shape and default values for downstream storage.
+ */
 export function buildCustomerMetadata(input: Partial<CustomerMetadata>): CustomerMetadata {
   return {
     ...defaultCustomerMetadataDE,
@@ -12,6 +18,12 @@ export function buildCustomerMetadata(input: Partial<CustomerMetadata>): Custome
   } as CustomerMetadata;
 }
 
+/**
+ * buildEquipmentMetadata
+ *
+ * Merge provided partial equipment metadata with project defaults. Preserves nested
+ * structures like power and ensures typed return value.
+ */
 export function buildEquipmentMetadata(input: Partial<EquipmentMetadata>): EquipmentMetadata {
   return {
     ...defaultEquipmentMetadataDE,
@@ -23,6 +35,12 @@ export function buildEquipmentMetadata(input: Partial<EquipmentMetadata>): Equip
   } as EquipmentMetadata;
 }
 
+/**
+ * buildAdminCompanyMetadata
+ *
+ * Normalize and fill missing fields for company admin metadata using defaults.
+ * This function carefully merges nested `standardData` and `customTypes`.
+ */
 export function buildAdminCompanyMetadata(input: Partial<adminCompanyMetadata>): adminCompanyMetadata {
   const base = defaultAdminCompanyMetadataDE;
   const out: adminCompanyMetadata = {

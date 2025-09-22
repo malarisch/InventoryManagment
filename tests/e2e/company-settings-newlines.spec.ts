@@ -1,6 +1,7 @@
 import 'dotenv/config';
 import { test, expect } from '@playwright/test';
 import { createAdminClient } from "@/lib/supabase/admin";
+import type { SupabaseClient } from '@supabase/supabase-js';
 
 const requiredEnv = ["NEXT_PUBLIC_SUPABASE_URL", "NEXT_PUBLIC_SUPABASE_ANON_KEY", "SUPABASE_SERVICE_ROLE_KEY"] as const;
 const missing = requiredEnv.filter((key) => !process.env[key]);
@@ -8,8 +9,13 @@ const shouldSkip = missing.length > 0;
 
 test.describe('Company Settings - Custom Types Newline Entry', () => {
   test.skip(shouldSkip, `Supabase env vars missing: ${missing.join(", ")}`);
+  
+  // Configure this describe block to run sequentially to avoid data collisions
+  test.describe.configure({ mode: 'serial' });
 
-  const admin = createAdminClient();
+  // Don't construct the admin client at module-eval time (it throws if env missing).
+  // Create it during beforeAll so we only attempt it when the suite actually runs.
+  let admin: SupabaseClient | null = null;
   const timestamp = Date.now();
   const testEmail = `playwright+newlines+${timestamp}@example.com`;
   const testPassword = `PlaywrightTest-${timestamp}!`;
@@ -17,8 +23,16 @@ test.describe('Company Settings - Custom Types Newline Entry', () => {
 
   let userId: string | null = null;
   let companyId: number | null = null;
+  let membershipId: number | null = null;
 
   test.beforeAll(async () => {
+    // Create the admin client now that the test run is starting
+    admin = createAdminClient();
+    
+    // Debug environment variables
+    console.log('NEXT_PUBLIC_SUPABASE_URL:', process.env.NEXT_PUBLIC_SUPABASE_URL);
+    console.log('SUPABASE_SERVICE_ROLE_KEY length:', process.env.SUPABASE_SERVICE_ROLE_KEY?.length);
+
     // Create test user
     const { data: createUserData, error: createUserError } = await admin.auth.admin.createUser({
       email: testEmail,
@@ -48,45 +62,63 @@ test.describe('Company Settings - Custom Types Newline Entry', () => {
         },
       })
       .select("id")
-      .maybeSingle();
+      .single();
     if (companyError) {
       throw companyError;
     }
     companyId = companyRow?.id ?? null;
 
     // Create membership
-    const { error: membershipError } = await admin
+    const { data: membershipRow, error: membershipError } = await admin
       .from("users_companies")
-      .insert({ company_id: companyId!, user_id: userId! });
+      .insert({ company_id: companyId!, user_id: userId! })
+      .select("id")
+      .single();
     if (membershipError) {
       throw membershipError;
     }
+    membershipId = membershipRow?.id ?? null;
   });
 
   test.afterAll(async () => {
-    // Cleanup
-    if (companyId) {
-      await admin.from("users_companies").delete().eq("company_id", companyId);
-      await admin.from("companies").delete().eq("id", companyId);
-    }
-    if (userId) {
-      await admin.auth.admin.deleteUser(userId);
+    // Cleanup (best-effort)
+    if (admin) {
+      if (membershipId) {
+        await admin.from("users_companies").delete().eq("id", membershipId);
+      }
+      if (companyId) {
+        await admin.from("companies").delete().eq("id", companyId);
+      }
+      if (userId) {
+        await admin.auth.admin.deleteUser(userId);
+      }
     }
   });
 
   test.beforeEach(async ({ page }) => {
     // Login with test user
-    await page.goto('/auth/login');
-    await page.fill('#email', testEmail);
+    const resp = await page.goto('/auth/login', { waitUntil: 'networkidle' });
+    if (!resp || resp.status() >= 500) {
+      const status = resp ? resp.status() : 'no-response';
+      throw new Error(`Failed to load /auth/login (status: ${status}). Check dev server and Supabase env.`);
+    }
+
+    // Wait for the login form to appear and fail fast if it's not present
+    const emailLocator = page.locator('#email');
+    await expect(emailLocator).toBeVisible({ timeout: 5000 });
+    await emailLocator.fill(testEmail);
     await page.fill('#password', testPassword);
     await page.click('button[type="submit"]');
-    
+
     // Wait for redirect to management area
-    await page.waitForURL('**/management**');
-    
+    await page.waitForURL('**/management**', { timeout: 10000 });
+
     // Navigate to company settings
-    await page.goto('/management/company-settings');
-    await page.waitForLoadState('networkidle');
+    const resp2 = await page.goto('/management/company-settings', { waitUntil: 'networkidle' });
+    if (!resp2 || resp2.status() >= 500) {
+      const status = resp2 ? resp2.status() : 'no-response';
+      throw new Error(`Failed to load /management/company-settings (status: ${status}).`);
+    }
   });
 
   test('should allow newline entry in custom article types', async ({ page }) => {

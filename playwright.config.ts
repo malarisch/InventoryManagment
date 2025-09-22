@@ -5,13 +5,13 @@ export default defineConfig({
   timeout: 30_000,
   fullyParallel: true,
   use: {
-    baseURL: "http://localhost:3001",
+    baseURL: "http://localhost:3005",
     trace: "on-first-retry",
   },
   reporter: [["list"]],
   webServer: {
-    command: "npm run dev",
-    port: 3001,
+    command: "PORT=3005 npm run dev",
+    port: 3005,
     timeout: 120_000,
     reuseExistingServer: true,
   },

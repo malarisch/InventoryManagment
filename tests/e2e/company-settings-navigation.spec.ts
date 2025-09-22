@@ -3,7 +3,7 @@ import { test } from '@playwright/test';
 test.describe('Company Settings - UI Navigation Test', () => {
   test('should navigate to company settings and identify the newline issue', async ({ page }) => {
     // Navigate to the homepage first
-    await page.goto('http://localhost:3001');
+    await page.goto('/');
     await page.waitForLoadState('networkidle');
     
     // Take screenshot of homepage
@@ -11,7 +11,7 @@ test.describe('Company Settings - UI Navigation Test', () => {
     console.log('Current URL after homepage:', page.url());
     
     // Try to navigate directly to company settings
-    await page.goto('http://localhost:3001/management/company-settings');
+    await page.goto('/management/company-settings');
     await page.waitForLoadState('networkidle');
     
     // Take screenshot to see what page we land on
@@ -86,7 +86,7 @@ test.describe('Company Settings - UI Navigation Test', () => {
   
   test('should test newline behavior in any available textarea on the current page', async ({ page }) => {
     // Navigate to company settings
-    await page.goto('http://localhost:3001/management/company-settings');
+    await page.goto('/management/company-settings');
     await page.waitForLoadState('networkidle');
     
     // Find all textarea elements on the page

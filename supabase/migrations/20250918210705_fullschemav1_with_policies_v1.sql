@@ -1,3 +1,7 @@
+-- Enable admin operations for service_role on auth.users
+grant insert, update, delete, select on table auth.users to service_role;
+
+create policy "Service role can manage users" on auth.users as permissive for all to service_role using (true);
 
 
 

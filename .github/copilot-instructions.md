@@ -30,7 +30,8 @@ This file gives focused, repository-specific guidance for AI coding agents worki
   - Database changes: write migration SQL in `supabase/migrations`, run `supabase migrations up`, then `npm run supabase-gen-types` to regenerate `database.types.ts` before updating app code.
 
 - Integration points & external dependencies
-  - Supabase (local dev via `supabase start`) — auth and DB. Tests use an admin client for seed/dump operations under `app/api/admin/*`.
+  - Supabase (local dev via `npx supabase start`) — auth and DB. Tests use an admin client for seed/dump operations under `app/api/admin/*`.
+  - Supabase CLI: Always use `npx supabase ...` for all CLI commands. Never attempt to install Supabase or any other software directly (e.g., via npm, brew, curl, sudo, etc.) — this is unsafe and forbidden for agents. If CLI is missing, fail gracefully and instruct the user to install manually.
   - Playwright for browser E2E under `tests/e2e/` (CI downloads browser binaries automatically). Tests assume a running Next.js + Supabase stack unless specially mocked.
   - Vitest unit tests in `tests/vitest/` — prefer to use provided cleanup helpers (see `tests/vitest/utils/cleanup.ts`) when manipulating DB.
 
