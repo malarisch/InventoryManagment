@@ -35,6 +35,8 @@ export function CustomerCreateForm() {
     setSaving(true);
     setError(null);
     try {
+      console.log('Form submission - state values:', { forename, surname, email, type, companyName });
+      
       const { data: auth } = await supabase.auth.getUser();
       const userId = auth.user?.id ?? null;
       if (!company || !userId) throw new Error("Fehlende Company oder Nutzer");
@@ -47,26 +49,31 @@ export function CustomerCreateForm() {
       } else {
         metadata = buildCustomerMetadata(metaObj) as unknown as Json;
       }
+      
+      const insertData = {
+        type: type.trim() || null,
+        company_name: companyName.trim() || null,
+        forename: forename.trim() || null,
+        surname: surname.trim() || null,
+        email: email.trim() || null,
+        address: address.trim() || null,
+        postal_code: postalCode.trim() || null,
+        country: country.trim() || null,
+        metadata,
+        company_id: company.id,
+        created_by: userId,
+      };
+      console.log('Data being inserted:', insertData);
+      
       const { data, error } = await supabase
         .from("customers")
-        .insert({
-          type: type.trim() || null,
-          company_name: companyName.trim() || null,
-          forename: forename.trim() || null,
-          surname: surname.trim() || null,
-          email: email.trim() || null,
-          address: address.trim() || null,
-          postal_code: postalCode.trim() || null,
-          country: country.trim() || null,
-          metadata,
-          company_id: company.id,
-          created_by: userId,
-        })
-        .select("id")
+        .insert(insertData)
+        .select("*")
         .single();
       if (error) throw error;
-      const id = (data as Tables<"customers">).id;
-      router.push(`/management/customers/${id}`);
+      const customer = (data as Tables<"customers">);
+      console.log('Customer created:', customer);
+      router.push(`/management/customers/${customer.id}`);
     } catch (e: unknown) {
       setError(e instanceof Error ? e.message : String(e));
       setSaving(false);
@@ -78,42 +85,42 @@ export function CustomerCreateForm() {
       <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
         <div className="grid gap-2">
           <Label htmlFor="type">Typ</Label>
-          <Input id="type" value={type} onChange={(e) => setType(e.target.value)} placeholder="Firma/Privat/..." />
+          <Input id="type" name="type" value={type} onChange={(e) => setType(e.target.value)} placeholder="Firma/Privat/..." />
         </div>
         <div className="grid gap-2">
           <Label htmlFor="email">E-Mail</Label>
-          <Input id="email" type="email" value={email} onChange={(e) => setEmail(e.target.value)} placeholder="mail@example.com" />
+          <Input id="email" name="email" type="email" value={email} onChange={(e) => setEmail(e.target.value)} placeholder="mail@example.com" />
         </div>
       </div>
       <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
         <div className="grid gap-2">
           <Label htmlFor="company_name">Firma</Label>
-          <Input id="company_name" value={companyName} onChange={(e) => setCompanyName(e.target.value)} placeholder="Firmenname" />
+          <Input id="company_name" name="company_name" value={companyName} onChange={(e) => setCompanyName(e.target.value)} placeholder="Firmenname" />
         </div>
         <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
           <div className="grid gap-2">
             <Label htmlFor="forename">Vorname</Label>
-            <Input id="forename" value={forename} onChange={(e) => setForename(e.target.value)} />
+            <Input id="forename" name="forename" value={forename} onChange={(e) => setForename(e.target.value)} />
           </div>
           <div className="grid gap-2">
             <Label htmlFor="surname">Nachname</Label>
-            <Input id="surname" value={surname} onChange={(e) => setSurname(e.target.value)} />
+            <Input id="surname" name="surname" value={surname} onChange={(e) => setSurname(e.target.value)} />
           </div>
         </div>
       </div>
       <div className="grid grid-cols-1 gap-2 sm:grid-cols-3">
         <div className="grid gap-2 sm:col-span-2">
           <Label htmlFor="address">Adresse</Label>
-          <Input id="address" value={address} onChange={(e) => setAddress(e.target.value)} placeholder="Straße Hausnr, Stadt" />
+          <Input id="address" name="address" value={address} onChange={(e) => setAddress(e.target.value)} placeholder="Straße Hausnr, Stadt" />
         </div>
         <div className="grid gap-2">
           <Label htmlFor="postal_code">PLZ</Label>
-          <Input id="postal_code" value={postalCode} onChange={(e) => setPostalCode(e.target.value)} />
+          <Input id="postal_code" name="postal_code" value={postalCode} onChange={(e) => setPostalCode(e.target.value)} />
         </div>
       </div>
       <div className="grid gap-2">
         <Label htmlFor="country">Land</Label>
-        <Input id="country" value={country} onChange={(e) => setCountry(e.target.value)} />
+        <Input id="country" name="country" value={country} onChange={(e) => setCountry(e.target.value)} />
       </div>
       <div className="grid gap-3">
         <div className="flex items-center justify-between">

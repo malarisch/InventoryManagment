@@ -27,9 +27,19 @@ SUPABASE_ENV=$($SUPABASE_CMD status -o env 2>/dev/null)
 # Extract each variable separately to avoid contamination
 API_URL=$(echo "$SUPABASE_ENV" | grep '^API_URL=' | head -1 | cut -d'=' -f2 | tr -d '"')
 ANON_KEY=$(echo "$SUPABASE_ENV" | grep '^ANON_KEY=' | head -1 | cut -d'=' -f2 | tr -d '"')
-SERVICE_ROLE_KEY=$(echo "$SUPABASE_ENV" | grep '^SERVICE_ROLE_KEY=' | head -1 | cut -d'=' -f2 | tr -d '"')
+SERVICE_ROLE_KEY=$(echo "$SUPABASE_ENV" | grep '^SERVICE_ROLE_KEY=' | head -1 | cut -d'=' -f2- | tr -d '"' | tr -d '\n')
+S3_ACCESS_KEY_ID=$(echo "$SUPABASE_ENV" | grep '^S3_PROTOCOL_ACCESS_KEY_ID=' | head -1 | cut -d'=' -f2 | tr -d '"')
+S3_SECRET_ACCESS_KEY=$(echo "$SUPABASE_ENV" | grep '^S3_PROTOCOL_ACCESS_KEY_SECRET=' | head -1 | cut -d'=' -f2 | tr -d '"')
+S3_REGION=$(echo "$SUPABASE_ENV" | grep '^S3_PROTOCOL_REGION=' | head -1 | cut -d'=' -f2 | tr -d '"')
+STORAGE_S3_URL=$(echo "$SUPABASE_ENV" | grep '^STORAGE_S3_URL=' | head -1 | cut -d'=' -f2 | tr -d '"')
 
 # Output in Next.js format
 echo "NEXT_PUBLIC_SUPABASE_URL=\"${API_URL}\""
 echo "NEXT_PUBLIC_SUPABASE_ANON_KEY=\"${ANON_KEY}\""
 echo "SUPABASE_SERVICE_ROLE_KEY=\"${SERVICE_ROLE_KEY}\""
+echo ""
+echo "# S3 Storage Configuration"
+echo "S3_ACCESS_KEY_ID=\"${S3_ACCESS_KEY_ID}\""
+echo "S3_SECRET_ACCESS_KEY=\"${S3_SECRET_ACCESS_KEY}\""
+echo "S3_REGION=\"${S3_REGION}\""
+echo "NEXT_PUBLIC_STORAGE_S3_URL=\"${STORAGE_S3_URL}\""

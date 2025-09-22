@@ -43,6 +43,7 @@ export default async function CustomerDetailPage({ params }: { params: Promise<{
   }
 
   const cust = data as Customer;
+  console.log('Customer detail page - customer data:', JSON.stringify(cust, null, 2));
   const creator = await fetchUserDisplayAdmin(cust.created_by ?? undefined);
 
   const { data: jobsData } = await supabase

@@ -56,7 +56,7 @@ export default async function ArticleDetailPage({ params }: { params: Promise<{ 
         </div>
         <Card>
           <CardHeader>
-            <CardTitle>Artikel #{article.id}</CardTitle>
+            <CardTitle>{article.name || `Artikel #${article.id}`}</CardTitle>
             <CardDescription>
               Default Location: {article.default_location ? (
                 <Link className="underline-offset-2 hover:underline" href={`/management/locations/${article.default_location}`}>

@@ -14,6 +14,7 @@ import { Button } from "@/components/ui/button";
 type Customer = Tables<"customers">;
 
 export function CustomerEditForm({ customer }: { customer: Customer }) {
+  console.log('CustomerEditForm received customer:', JSON.stringify(customer, null, 2));
   const supabase = useMemo(() => createClient(), []);
   const [type, setType] = useState<string>(customer.type ?? "");
   const [companyName, setCompanyName] = useState<string>(customer.company_name ?? "");

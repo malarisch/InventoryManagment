@@ -41,6 +41,7 @@ export type Database = {
           created_at: string
           created_by: string | null
           default_location: number | null
+          files: Json | null
           id: number
           metadata: Json | null
           name: string
@@ -51,6 +52,7 @@ export type Database = {
           created_at?: string
           created_by?: string | null
           default_location?: number | null
+          files?: Json | null
           id?: number
           metadata?: Json | null
           name?: string
@@ -61,6 +63,7 @@ export type Database = {
           created_at?: string
           created_by?: string | null
           default_location?: number | null
+          files?: Json | null
           id?: number
           metadata?: Json | null
           name?: string
@@ -169,6 +172,7 @@ export type Database = {
           created_by: string | null
           description: string | null
           equipments: number[] | null
+          files: Json | null
           id: number
           name: string | null
         }
@@ -181,6 +185,7 @@ export type Database = {
           created_by?: string | null
           description?: string | null
           equipments?: number[] | null
+          files?: Json | null
           id?: number
           name?: string | null
         }
@@ -193,6 +198,7 @@ export type Database = {
           created_by?: string | null
           description?: string | null
           equipments?: number[] | null
+          files?: Json | null
           id?: number
           name?: string | null
         }
@@ -256,6 +262,7 @@ export type Database = {
           created_at: string
           created_by: string | null
           email: string | null
+          files: Json | null
           forename: string | null
           id: number
           metadata: Json | null
@@ -271,6 +278,7 @@ export type Database = {
           created_at?: string
           created_by?: string | null
           email?: string | null
+          files?: Json | null
           forename?: string | null
           id?: number
           metadata?: Json | null
@@ -286,6 +294,7 @@ export type Database = {
           created_at?: string
           created_by?: string | null
           email?: string | null
+          files?: Json | null
           forename?: string | null
           id?: number
           metadata?: Json | null
@@ -312,6 +321,7 @@ export type Database = {
           created_at: string
           created_by: string
           current_location: number | null
+          files: Json | null
           id: number
           metadata: Json | null
         }
@@ -323,6 +333,7 @@ export type Database = {
           created_at?: string
           created_by?: string
           current_location?: number | null
+          files?: Json | null
           id?: number
           metadata?: Json | null
         }
@@ -334,6 +345,7 @@ export type Database = {
           created_at?: string
           created_by?: string
           current_location?: number | null
+          files?: Json | null
           id?: number
           metadata?: Json | null
         }
@@ -531,6 +543,7 @@ export type Database = {
           created_by: string | null
           customer_id: number | null
           enddate: string | null
+          files: Json | null
           id: number
           job_location: string | null
           meta: Json | null
@@ -544,6 +557,7 @@ export type Database = {
           created_by?: string | null
           customer_id?: number | null
           enddate?: string | null
+          files?: Json | null
           id?: number
           job_location?: string | null
           meta?: Json | null
@@ -557,6 +571,7 @@ export type Database = {
           created_by?: string | null
           customer_id?: number | null
           enddate?: string | null
+          files?: Json | null
           id?: number
           job_location?: string | null
           meta?: Json | null
@@ -588,6 +603,7 @@ export type Database = {
           created_at: string
           created_by: string
           description: string | null
+          files: Json | null
           id: number
           name: string
         }
@@ -597,6 +613,7 @@ export type Database = {
           created_at?: string
           created_by?: string
           description?: string | null
+          files?: Json | null
           id?: number
           name: string
         }
@@ -606,6 +623,7 @@ export type Database = {
           created_at?: string
           created_by?: string
           description?: string | null
+          files?: Json | null
           id?: number
           name?: string
         }
