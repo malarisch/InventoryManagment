@@ -36,6 +36,19 @@
 - Next.js: default Server Components; add `"use client"` only when required.
 - Styling: Tailwind CSS; use `clsx` and `tailwind-merge` for class composition.
 
+### Supabase AI Docs (Source of Truth)
+- Use the local docs in `supabase_ai_docs/` as the authoritative reference for Supabase-related work. Do not rely on Serena/MCP content.
+- Before writing or reviewing any of the following, open the matching doc:
+  - RLS policies: `supabase_ai_docs/database_rls_policies.md`
+  - Declarative schema + migrations: `supabase_ai_docs/declarative_database_schema.md`
+  - Database functions: `supabase_ai_docs/database_functions.md`
+  - Next.js + Supabase Auth (SSR/CSR): `supabase_ai_docs/nextjs-supabase-auth-rules.md`
+  - Realtime usage and patterns: `supabase_ai_docs/supabase_realtime_rules.md`
+  - Edge Functions: `supabase_ai_docs/edge-functions.md`
+  - General style and conventions: `supabase_ai_docs/style_and_conventions.md`
+- When AGENTS.md and a doc disagree, follow the doc in `supabase_ai_docs/` and add a short note to `agentlog.md`.
+- After schema changes, follow the project rule to run `npm run supabase-gen-types` and update `database.types.ts` before writing app code.
+
 ## Testing Guidelines
 - Add when needed: RTL + Vitest/Jest for UI/logic; Playwright for E2E.
 - Name tests `*.test.ts(x)` colocated or under `__tests__/`.

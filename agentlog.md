@@ -278,3 +278,6 @@ Next: Run `supabase db push` to add `files` columns and `attachments` bucket; co
 - Updated CI workflow to query `supabase status --json` for API credentials instead of reading legacy status file.
 2025-09-22 02:15 CEST — Supabase env export alignment
 - Switched CI to parse `supabase status -o env` output and source it for API/anon/service keys.
+2025-09-22 03:05 CEST — AGENTS.md docs source update
+- Updated AGENTS.md to reference local Supabase docs in supabase_ai_docs/ and deprecate Serena/MCP reliance.
+- Reinforced rule to consult these docs before RLS, schema, auth, realtime, and functions; reminded to run supabase-gen-types after migrations.
