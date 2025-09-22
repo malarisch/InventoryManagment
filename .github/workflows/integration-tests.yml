@@ -59,22 +59,12 @@ jobs:
           SUPABASE_SERVICE_ROLE_KEY=${SUPABASE_SERVICE_ROLE_KEY}
           EOF
 
-      - name: Wait for Supabase API
-        run: |
-          for i in {1..30}; do
-            if curl -sSf "${NEXT_PUBLIC_SUPABASE_URL}/rest/v1/?apikey=${NEXT_PUBLIC_SUPABASE_ANON_KEY}" >/dev/null; then
-              echo "Supabase API is ready"
-              exit 0
-            fi
-            echo "Waiting for Supabase API..."
-            sleep 5
-          done
-          echo "Supabase API did not become ready in time" >&2
-          exit 1
-
       - name: Install Playwright browsers
         run: npx playwright install --with-deps
-
+      - name: Build Next.js app
+        run: npm run build
+      - name: Start Next.js app
+        run: npm run start &
       - name: Run Vitest suite
         run: npm run test:unit
 
