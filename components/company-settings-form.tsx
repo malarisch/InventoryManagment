@@ -5,6 +5,8 @@ import { createClient } from "@/lib/supabase/client";
 import type { Json } from "@/database.types";
 import type { CompanyRecord } from "@/lib/companies";
 import { defaultAdminCompanyMetadataDE, toPrettyJSON } from "@/lib/metadata/defaults";
+import { CompanyMetadataForm } from "@/components/forms/partials/company-metadata-form";
+import { buildAdminCompanyMetadata } from "@/lib/metadata/builders";
 import { normalizeCompanyRelation } from "@/lib/companies";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -17,6 +19,8 @@ export function CompanySettingsForm() {
   const [name, setName] = useState("");
   const [description, setDescription] = useState("");
   const [metadataText, setMetadataText] = useState("{}");
+  const [metaObj, setMetaObj] = useState(defaultAdminCompanyMetadataDE);
+  const [advanced, setAdvanced] = useState(false);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -78,8 +82,10 @@ export function CompanySettingsForm() {
               ? JSON.stringify(targetCompany.metadata, null, 2)
               : toPrettyJSON(defaultAdminCompanyMetadataDE)
           );
+          setMetaObj((targetCompany.metadata as unknown as typeof defaultAdminCompanyMetadataDE) ?? defaultAdminCompanyMetadataDE);
         } catch {
           setMetadataText(toPrettyJSON(defaultAdminCompanyMetadataDE));
+          setMetaObj(defaultAdminCompanyMetadataDE);
         }
       } else if (!membershipError) {
         setError("Keine Company gefunden");
@@ -97,14 +103,18 @@ export function CompanySettingsForm() {
     setError(null);
     setMessage(null);
     let metadata: Json | null = null;
-    if (metadataText.trim().length) {
-      try {
-        metadata = JSON.parse(metadataText) as Json;
-      } catch {
-        setSaving(false);
-        setError("Ungültiges JSON in Metadata");
-        return;
+    if (advanced) {
+      if (metadataText.trim().length) {
+        try {
+          metadata = JSON.parse(metadataText) as Json;
+        } catch {
+          setSaving(false);
+          setError("Ungültiges JSON in Metadata");
+          return;
+        }
       }
+    } else {
+      metadata = buildAdminCompanyMetadata(metaObj) as unknown as Json;
     }
     const { error } = await supabase
       .from("companies")
@@ -153,16 +163,28 @@ export function CompanySettingsForm() {
               <Label htmlFor="description">Beschreibung</Label>
               <Input id="description" value={description} onChange={(e) => setDescription(e.target.value)} />
             </div>
-            <div className="grid gap-2">
-              <Label htmlFor="metadata">Metadata (JSON)</Label>
-              <textarea
-                id="metadata"
-                className="min-h-[140px] w-full rounded-md border bg-background p-2 text-sm font-mono"
-                value={metadataText}
-                onChange={(e) => setMetadataText(e.target.value)}
-                spellCheck={false}
-              />
-              <p className="text-xs text-muted-foreground">Beispiel: {`{"branding": {"primaryColor": "#22c55e"}}`}</p>
+            <div className="grid gap-3">
+              <div className="flex items-center justify-between">
+                <div className="text-sm font-medium">Company-Metadaten</div>
+                <label className="flex items-center gap-2 text-xs">
+                  <input type="checkbox" checked={advanced} onChange={(e) => setAdvanced(e.target.checked)} />
+                  Expertenmodus (JSON bearbeiten)
+                </label>
+              </div>
+              {advanced ? (
+                <div className="grid gap-2">
+                  <Label htmlFor="metadata">Metadata (JSON)</Label>
+                  <textarea
+                    id="metadata"
+                    className="min-h-[140px] w-full rounded-md border bg-background p-2 text-sm font-mono"
+                    value={metadataText}
+                    onChange={(e) => setMetadataText(e.target.value)}
+                    spellCheck={false}
+                  />
+                </div>
+              ) : (
+                <CompanyMetadataForm value={metaObj} onChange={setMetaObj} />
+              )}
             </div>
             <div className="flex items-center gap-3">
               <Button type="submit" disabled={saving}>{saving ? "Speichern…" : "Speichern"}</Button>

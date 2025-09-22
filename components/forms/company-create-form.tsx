@@ -3,6 +3,9 @@
 import { useMemo, useState } from "react";
 import { createClient } from "@/lib/supabase/client";
 import { defaultAdminCompanyMetadataDE, toPrettyJSON } from "@/lib/metadata/defaults";
+import { CompanyMetadataForm } from "@/components/forms/partials/company-metadata-form";
+import { buildAdminCompanyMetadata } from "@/lib/metadata/builders";
+import type { Json } from "@/database.types";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
@@ -15,6 +18,8 @@ export function CompanyCreateForm() {
   const [name, setName] = useState("");
   const [description, setDescription] = useState("");
   const [metadataText, setMetadataText] = useState(() => toPrettyJSON(defaultAdminCompanyMetadataDE));
+  const [metaObj, setMetaObj] = useState(defaultAdminCompanyMetadataDE);
+  const [advanced, setAdvanced] = useState(false);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -24,9 +29,13 @@ export function CompanyCreateForm() {
     setError(null);
     try {
       let metadata: Json | null = null;
-      const mt = metadataText.trim();
-      if (mt.length) {
-        try { metadata = JSON.parse(mt) as Json; } catch { throw new Error("Ungültiges JSON in Metadata"); }
+      if (advanced) {
+        const mt = metadataText.trim();
+        if (mt.length) {
+          try { metadata = JSON.parse(mt) as Json; } catch { throw new Error("Ungültiges JSON in Metadata"); }
+        }
+      } else {
+        metadata = buildAdminCompanyMetadata(metaObj) as unknown as Json;
       }
       const { data: auth } = await supabase.auth.getUser();
       const userId = auth.user?.id;
@@ -56,15 +65,28 @@ export function CompanyCreateForm() {
         <Label htmlFor="description">Beschreibung</Label>
         <Input id="description" value={description} onChange={(e) => setDescription(e.target.value)} />
       </div>
-      <div className="grid gap-2">
-        <Label htmlFor="metadata">Metadata (JSON)</Label>
-        <textarea
-          id="metadata"
-          className="min-h-[120px] w-full rounded-md border bg-background p-2 text-sm font-mono"
-          value={metadataText}
-          onChange={(e) => setMetadataText(e.target.value)}
-          spellCheck={false}
-        />
+      <div className="grid gap-3">
+        <div className="flex items-center justify-between">
+          <div className="text-sm font-medium">Company-Metadaten</div>
+          <label className="flex items-center gap-2 text-xs">
+            <input type="checkbox" checked={advanced} onChange={(e) => setAdvanced(e.target.checked)} />
+            Expertenmodus (JSON bearbeiten)
+          </label>
+        </div>
+        {advanced ? (
+          <div className="grid gap-2">
+            <Label htmlFor="metadata">Metadata (JSON)</Label>
+            <textarea
+              id="metadata"
+              className="min-h-[120px] w-full rounded-md border bg-background p-2 text-sm font-mono"
+              value={metadataText}
+              onChange={(e) => setMetadataText(e.target.value)}
+              spellCheck={false}
+            />
+          </div>
+        ) : (
+          <CompanyMetadataForm value={metaObj} onChange={setMetaObj} />
+        )}
       </div>
       <div className="flex items-center gap-3">
         <Button type="submit" disabled={saving}>{saving ? "Erstellen…" : "Erstellen"}</Button>
