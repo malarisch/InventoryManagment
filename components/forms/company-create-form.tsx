@@ -5,11 +5,10 @@ import { createClient } from "@/lib/supabase/client";
 import { defaultAdminCompanyMetadataDE, toPrettyJSON } from "@/lib/metadata/defaults";
 import { CompanyMetadataForm } from "@/components/forms/partials/company-metadata-form";
 import { buildAdminCompanyMetadata } from "@/lib/metadata/builders";
-import type { Json } from "@/database.types";
+import type { Tables, Json } from "@/database.types";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
-import type { Tables, Json } from "@/database.types";
 import { useRouter } from "next/navigation";
 
 export function CompanyCreateForm() {

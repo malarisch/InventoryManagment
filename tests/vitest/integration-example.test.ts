@@ -10,14 +10,11 @@ import { afterAll, beforeAll, describe, expect, test } from "vitest";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { createCleanupTracker, cleanupTestData, createTestUser, createTestCompany } from "./utils/cleanup";
 
-const REQUIRED_ENV_VARS = ["NEXT_PUBLIC_SUPABASE_URL", "SUPABASE_SERVICE_ROLE_KEY"] as const;
-const missingEnvVars = REQUIRED_ENV_VARS.filter((key) => !process.env[key]);
-
-if (missingEnvVars.length > 0) {
-  describe.skip("Integration test example", () => {
-    test.skip("requires Supabase env vars", () => {
-      throw new Error(`Missing required Supabase env vars: ${missingEnvVars.join(", ")}`);
-    });
+// Integration example is opt-in. Set RUN_INTEGRATION_TESTS=true to run these tests
+const RUN_INTEGRATION = (process.env.RUN_INTEGRATION_TESTS || process.env.RUN_INTEGRATION || "false").toLowerCase();
+if (RUN_INTEGRATION !== "true" && RUN_INTEGRATION !== "1") {
+  describe.skip("Integration test example (skipped)", () => {
+    test.skip("set RUN_INTEGRATION_TESTS=1 to run integration tests", () => {});
   });
 } else {
   describe("Integration test example with comprehensive cleanup", () => {

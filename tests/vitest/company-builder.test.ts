@@ -10,7 +10,7 @@ describe("buildAdminCompanyMetadata", () => {
   });
 
   it("uppercases currency and keeps numeric tax", () => {
-    const out = buildAdminCompanyMetadata({ standardData: { currency: "eur", taxRate: 19 } as unknown as typeof defaultAdminCompanyMetadataDE });
+  const out = buildAdminCompanyMetadata({ standardData: { currency: "eur", taxRate: 19 } } as unknown as typeof defaultAdminCompanyMetadataDE);
     expect(out.standardData.currency).toBe("EUR");
     expect(out.standardData.taxRate).toBe(19);
   });
