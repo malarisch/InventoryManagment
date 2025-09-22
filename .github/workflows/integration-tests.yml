@@ -15,12 +15,12 @@ jobs:
 
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
 
-      - name: Use Node.js 20.x
-        uses: actions/setup-node@v4
+      - name: Use Node.js 24.x
+        uses: actions/setup-node@v5
         with:
-          node-version: 20
+          node-version: 24
           cache: 'npm'
       - name: "Move config_noseed.toml to supabase/config.toml"
         run: mv supabase/config_noseed.toml supabase/config.toml
