@@ -1,18 +1,104 @@
+import 'dotenv/config';
 import { test, expect } from '@playwright/test';
+import { createAdminClient } from "@/lib/supabase/admin";
+
+const requiredEnv = ["NEXT_PUBLIC_SUPABASE_URL", "NEXT_PUBLIC_SUPABASE_ANON_KEY", "SUPABASE_SERVICE_ROLE_KEY"] as const;
+const missing = requiredEnv.filter((key) => !process.env[key]);
+const shouldSkip = missing.length > 0;
 
 test.describe('Company Settings - Custom Types Newline Entry', () => {
+  test.skip(shouldSkip, `Supabase env vars missing: ${missing.join(", ")}`);
+
+  const admin = createAdminClient();
+  const timestamp = Date.now();
+  const testEmail = `playwright+newlines+${timestamp}@example.com`;
+  const testPassword = `PlaywrightTest-${timestamp}!`;
+  const companyName = `Newlines Test Co ${timestamp}`;
+
+  let userId: string | null = null;
+  let companyId: number | null = null;
+
+  test.beforeAll(async () => {
+    // Create test user
+    const { data: createUserData, error: createUserError } = await admin.auth.admin.createUser({
+      email: testEmail,
+      password: testPassword,
+      email_confirm: true,
+    });
+    if (createUserError) {
+      throw createUserError;
+    }
+    userId = createUserData.user?.id ?? null;
+
+    // Create test company
+    const { data: companyRow, error: companyError } = await admin
+      .from("companies")
+      .insert({
+        name: companyName,
+        description: "Playwright newlines test company",
+        owner_user_id: userId,
+        metadata: { 
+          seededBy: "playwright", 
+          timestamp,
+          customTypes: {
+            articleTypes: ["Initial Article Type"],
+            caseTypes: ["Initial Case Type"],
+            locationTypes: ["Initial Location Type"]
+          }
+        },
+      })
+      .select("id")
+      .maybeSingle();
+    if (companyError) {
+      throw companyError;
+    }
+    companyId = companyRow?.id ?? null;
+
+    // Create membership
+    const { error: membershipError } = await admin
+      .from("users_companies")
+      .insert({ company_id: companyId!, user_id: userId! });
+    if (membershipError) {
+      throw membershipError;
+    }
+  });
+
+  test.afterAll(async () => {
+    // Cleanup
+    if (companyId) {
+      await admin.from("users_companies").delete().eq("company_id", companyId);
+      await admin.from("companies").delete().eq("id", companyId);
+    }
+    if (userId) {
+      await admin.auth.admin.deleteUser(userId);
+    }
+  });
+
   test.beforeEach(async ({ page }) => {
-    // Navigate to the application and ensure we're logged in
-    await page.goto('http://localhost:3001');
+    // Login with test user
+    await page.goto('/auth/login');
+    await page.fill('#email', testEmail);
+    await page.fill('#password', testPassword);
+    await page.click('button[type="submit"]');
     
-    // This test assumes user is already logged in or we'll need to implement login flow
-    // For now, let's try to navigate directly to company settings
-    await page.goto('http://localhost:3001/management/company-settings');
+    // Wait for redirect to management area
+    await page.waitForURL('**/management**');
+    
+    // Navigate to company settings
+    await page.goto('/management/company-settings');
+    await page.waitForLoadState('networkidle');
   });
 
   test('should allow newline entry in custom article types', async ({ page }) => {
     // Wait for the page to load
     await page.waitForLoadState('networkidle');
+    
+    // Take a screenshot to see what's on the page
+    await page.screenshot({ path: 'debug-page.png', fullPage: true });
+    
+    // Check what's actually on the page
+    console.log('Page title:', await page.title());
+    console.log('Current URL:', page.url());
     
     // Find the article types textarea
     const articleTypesTextarea = page.locator('#cmf-article-types');

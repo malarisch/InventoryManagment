@@ -82,7 +82,7 @@ export function CompanySettingsForm() {
               ? JSON.stringify(targetCompany.metadata, null, 2)
               : toPrettyJSON(defaultAdminCompanyMetadataDE)
           );
-          setMetaObj((targetCompany.metadata as unknown as typeof defaultAdminCompanyMetadataDE) ?? defaultAdminCompanyMetadataDE);
+          setMetaObj(buildAdminCompanyMetadata(targetCompany.metadata as unknown as Partial<adminCompanyMetadata> ?? {}));
         } catch {
           setMetadataText(toPrettyJSON(defaultAdminCompanyMetadataDE));
           setMetaObj(defaultAdminCompanyMetadataDE);
