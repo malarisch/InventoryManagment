@@ -274,3 +274,5 @@ Next: Run `supabase db push` to add `files` columns and `attachments` bucket; co
 2025-09-22 01:05 CEST — Supabase CLI compatibility
 - Trimmed unsupported keys from `supabase/config.toml` (removed network restrictions/web3, normalized migrations block).
 - Pinned GitHub Actions Supabase CLI install to `version: latest` to match updated config schema.
+2025-09-22 02:11 CEST — Supabase status retrieval fix
+- Updated CI workflow to query `supabase status --json` for API credentials instead of reading legacy status file.

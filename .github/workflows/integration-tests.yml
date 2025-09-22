@@ -37,20 +37,27 @@ jobs:
       - name: Export Supabase environment
         run: |
           node <<'NODE'
-          const fs = require('fs');
-          const statusPath = '.supabase/status.json';
-          if (!fs.existsSync(statusPath)) {
-            console.error('Supabase status file not found at', statusPath);
+          const fs = require('node:fs');
+          const { execSync } = require('node:child_process');
+
+          let statusRaw;
+          try {
+            statusRaw = execSync('supabase status --json', { encoding: 'utf8' });
+          } catch (error) {
+            console.error('Failed to read Supabase status via CLI:', error.stderr?.toString() ?? error.message);
             process.exit(1);
           }
-          const status = JSON.parse(fs.readFileSync(statusPath, 'utf8'));
+
+          const status = JSON.parse(statusRaw);
           const api = status?.services?.api ?? {};
-          let restUrl = api.restUrl || api.apiUrl || api.url || api.endpoint || null;
-          const anonKey = api.anonKey || api.anon_key || api.anon || null;
-          const serviceRoleKey = api.serviceRoleKey || api.service_role_key || api.serviceRole || api.service_role || null;
+          const auth = status?.services?.auth ?? {};
+
+          let restUrl = api.url || api.restUrl || api.apiUrl || null;
+          const anonKey = auth.anonKey || auth.anon_key || api.anonKey || null;
+          const serviceRoleKey = auth.serviceRoleKey || auth.service_role_key || api.serviceRoleKey || null;
 
           if (!restUrl || !anonKey || !serviceRoleKey) {
-            console.error('Failed to read Supabase credentials from status.json:', api);
+            console.error('Missing Supabase credentials from status JSON:', { restUrl, anonKey: !!anonKey, serviceRoleKey: !!serviceRoleKey });
             process.exit(1);
           }
 
