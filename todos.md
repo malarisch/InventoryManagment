@@ -3,6 +3,7 @@
 Diese To-Do List enthält Aufgaben, die an der Software zu bearbeiten sind. Sobald eine Aufgabe bearbeited wurde soll diese hier in der Datei unten in die Done-List eingefügt und aus der To-Do list entfernt werden.
 
 ## To-Do
+
 - Kommentiere sämtlichen Code von dir im TSDoc Style (fortlaufend; neue Module sind dokumentiert).
 - Implementiere Tests - insbesondere auch für die UI! Nutze für die UI playwright Tests! Wenn du bestimmte Dinge nicht aus dem Code bzw. deinem Env getestet bekommst lege dafür ein User Todo in human-review-todos.md an! Du hast auch zugriff auf einen playwright mcp server. Nutze insgesamt ein vitest Environment. Lass als erstes ein Test laufen, der einen Supabase Testuser anlegt, sowie eine Company für diesen. Dann weiter mit playwright Tests. Teste erstmal keinen Email versand oder so.
 - Räume deinen Code auf - modifiziere ggf. Komponenten, das sie reusable sind soweit wie möglich.
