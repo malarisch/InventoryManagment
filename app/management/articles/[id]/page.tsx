@@ -12,6 +12,7 @@ import { safeParseDate, formatDateTime } from "@/lib/dates";
 import { fallbackDisplayFromId } from "@/lib/userDisplay";
 import { fetchUserDisplayAdmin } from "@/lib/users/userDisplay.server";
 import { FileManager } from "@/components/files/file-manager";
+import { AssetTagCreateForm } from "@/components/forms/asset-tag-create-form";
 
 type ArticleRow = Tables<"articles"> & {
   locations?: { name: string } | null;
@@ -72,9 +73,18 @@ export default async function ArticleDetailPage({ params }: { params: Promise<{ 
           <CardContent>
             <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
               <DeleteWithUndo table="articles" id={article.id} payload={article as Record<string, unknown>} redirectTo="/management/articles" />
-              <Button asChild variant="secondary">
-                <Link href={`/management/equipments/new?articleId=${article.id}`}>Equipment hinzufügen</Link>
-              </Button>
+              <div className="flex items-center gap-2">
+                {!article.asset_tag && (
+                  <AssetTagCreateForm 
+                    item={{ id: article.id, name: article.name || `Artikel #${article.id}` }} 
+                    table="articles" 
+                    companyId={article.company_id} 
+                  />
+                )}
+                <Button asChild variant="secondary">
+                  <Link href={`/management/equipments/new?articleId=${article.id}`}>Equipment hinzufügen</Link>
+                </Button>
+              </div>
             </div>
             <ArticleEditForm article={article} />
             <div className="mt-6">

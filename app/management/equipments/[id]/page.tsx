@@ -9,6 +9,7 @@ import { fetchUserDisplayAdmin } from "@/lib/users/userDisplay.server";
 import { HistoryCard } from "@/components/historyCard";
 import { DeleteWithUndo } from "@/components/forms/delete-with-undo";
 import { FileManager } from "@/components/files/file-manager";
+import { AssetTagCreateForm } from "@/components/forms/asset-tag-create-form";
 
 type EquipmentRow = Tables<"equipments"> & {
   articles?: { name: string } | null;
@@ -75,8 +76,15 @@ export default async function EquipmentDetailPage({ params }: { params: Promise<
             </CardDescription>
           </CardHeader>
           <CardContent>
-            <div className="mb-4">
+            <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
               <DeleteWithUndo table="equipments" id={eq.id} payload={eq as Record<string, unknown>} redirectTo="/management/equipments" />
+              {!eq.asset_tag && (
+                <AssetTagCreateForm 
+                  item={{ id: eq.id, name: eq.articles?.name || `Equipment #${eq.id}` }} 
+                  table="equipments" 
+                  companyId={eq.company_id} 
+                />
+              )}
             </div>
             <EquipmentEditForm equipment={eq} />
             <div className="mt-6">

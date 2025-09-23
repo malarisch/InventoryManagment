@@ -10,6 +10,7 @@ import { LocationCurrentEquipmentsList } from "@/components/locationCurrentEquip
 import { HistoryCard } from "@/components/historyCard";
 import { DeleteWithUndo } from "@/components/forms/delete-with-undo";
 import { FileManager } from "@/components/files/file-manager";
+import { AssetTagCreateForm } from "@/components/forms/asset-tag-create-form";
 
 type LocationRow = Tables<"locations"> & { asset_tags?: { printed_code: string | null } | null };
 type EquipmentRow = Tables<"equipments"> & {
@@ -70,8 +71,15 @@ export default async function LocationDetailPage({ params }: { params: Promise<{
             </CardDescription>
           </CardHeader>
           <CardContent>
-            <div className="mb-4">
+            <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
               <DeleteWithUndo table="locations" id={loc.id} payload={loc as Record<string, unknown>} redirectTo="/management/locations" />
+              {!loc.asset_tag && (
+                <AssetTagCreateForm 
+                  item={{ id: loc.id, name: loc.name || `Standort #${loc.id}` }} 
+                  table="locations" 
+                  companyId={loc.company_id} 
+                />
+              )}
             </div>
             <LocationEditForm location={loc} />
             <div className="mt-6">
