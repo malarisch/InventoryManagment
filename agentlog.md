@@ -3,6 +3,8 @@
 - Use this file to append brief summaries after major tasks.
 - Include date/time, task, key changes, and next steps.
 
+**2025-09-24 22:45** - Added public file functionality to FileManager component. Extended FileEntry type with public flag, added UI controls for making files public/private with badges and toggle buttons, implemented file movement between buckets. Files can now be marked as public for logos and other assets. Ready for company logo implementation next.
+
 **2024-12-19 11:30** - Fixed critical UI bugs identified in test analysis. Fixed Jobs form FormData error (React.FormEvent typing), Equipment detail page null power error (buildEquipmentMetadata null safety), and test CSS selector syntax. All components tested and working. Commit: 840a657
 
 - 2025-01-05 00:34 CEST — **Enhanced Copilot Instructions**: Updated `.github/copilot-instructions.md` from 61 to 142 lines with comprehensive codebase analysis. Added DataTable pattern documentation, metadata form dual-mode conventions, Supabase client usage patterns, and authentication workflow. Covered key architectural decisions: generic components, metadata builders, company tenancy, form state management. Next: agent workflow validation against new guidelines.

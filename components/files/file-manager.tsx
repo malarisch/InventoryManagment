@@ -46,7 +46,7 @@ export function FileManager({
       const usePublicBucket = isPublic || isFilePublic;
       const bucket = usePublicBucket ? "public-assets" : "private-attachments";
       const path = usePublicBucket
-        ? `${table}/${rowId}/${Date.now()}_${safeName}`
+        ? `${companyId}/${table}/${rowId}/${Date.now()}_${safeName}`
         : `${companyId}/${table}/${rowId}/${Date.now()}_${safeName}`;
       const { error: upErr } = await supabase.storage.from(bucket).upload(path, file, { upsert: false });
       if (upErr) throw upErr;
@@ -117,7 +117,7 @@ export function FileManager({
         // Need to move file between buckets
         const fileName = item.id.split('/').pop() || 'file';
         newPath = willBePublic
-          ? `${table}/${rowId}/${Date.now()}_${fileName}`
+          ? `${companyId}/${table}/${rowId}/${Date.now()}_${fileName}`
           : `${companyId}/${table}/${rowId}/${Date.now()}_${fileName}`;
         
         // Download from old location
