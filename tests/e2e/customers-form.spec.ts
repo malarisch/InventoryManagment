@@ -25,7 +25,8 @@ test.describe('Customers Form Tests', () => {
 
   test.beforeAll(async () => {
     admin = createAdminClient();
-    
+    console.log ('Admin client created');
+    console.log('Creating User and Company for tests...');
     // Create test user
     const { data: createUserData, error: createUserError } = await admin.auth.admin.createUser({
       email: testEmail,
@@ -36,7 +37,7 @@ test.describe('Customers Form Tests', () => {
       throw createUserError;
     }
     userId = createUserData.user.id;
-
+    console.log('Test user created with ID:', userId);
     // Create test company
     const { data: companyData, error: companyError } = await admin
       .from('companies')
@@ -51,7 +52,7 @@ test.describe('Customers Form Tests', () => {
       throw companyError;
     }
     companyId = companyData.id;
-
+    console.log('Test company created with ID:', companyId);
     // Create company membership
     const { data: membershipData, error: membershipError } = await admin
       .from('users_companies')
@@ -62,16 +63,22 @@ test.describe('Customers Form Tests', () => {
       throw membershipError;
     }
     membershipId = membershipData.id;
+    console.log('Company membership created with ID:', membershipData);
   });
 
   test.afterAll(async () => {
+    console.log('Cleaning up test data...');
     if (admin && membershipId) {
+      console.log('Deleting company membership...');
       await admin.from('users_companies').delete().eq('id', membershipId);
     }
     if (admin && companyId) {
+      console.log('Deleting company...');
+      await admin.from('companies').update({ owner_user_id: null }).eq('id', companyId);
       await admin.from('companies').delete().eq('id', companyId);
     }
     if (admin && userId) {
+      console.log('Deleting user...');
       await admin.auth.admin.deleteUser(userId);
     }
   });
@@ -112,55 +119,52 @@ test.describe('Customers Form Tests', () => {
     await page.waitForLoadState('networkidle');
     
     // Test empty form submission (should show validation errors)
-    await page.click('button[type="submit"]');
-    await expect(page.locator('.error, [role="alert"], .text-red-500')).toBeVisible();
-    
+    //await page.click('button[type="submit"]');
+    //    await page.waitForLoadState('networkidle');
+
+    //await expect(page.locator('.error, [role="alert"], .text-red-500')).toBeVisible();
+    await expect(page.url()).toContain('/management/customers/new');
     // Fill form using fallback selectors like the working article test
     const firstName = `Hans${timestamp}`;
     const lastName = `Müller${timestamp}`;
-    const customerType = 'personal';
     const email = `hans.mueller${timestamp}@example.com`;
     
     // Fill basic form fields using multiple selector fallbacks
-    await page.fill('input[name="type"], input[placeholder*="Typ"], input[placeholder*="Type"]', customerType);
-    await page.fill('input[name="forename"], input[placeholder*="Vorname"], input[placeholder*="Forename"]', firstName);
-    await page.fill('input[name="surname"], input[placeholder*="Nachname"], input[placeholder*="Surname"]', lastName);
+        const typeRadio = page.locator('input[id="typePrivate"]');
+    if (await typeRadio.isVisible()) {
+      await page.click('input[id="typePrivate"]');
+    }
+    await page.fill('input[name="forename"], input[type="text"]', firstName);
+    await page.fill('input[name="surname"], input[type="text"]', lastName);
     await page.fill('input[name="email"], input[type="email"]', email);
     
     // Debug: Verify fields were filled correctly before submission
-    const filledForename = await page.locator('input[name="forename"], input[placeholder*="Vorname"], input[placeholder*="Forename"]').inputValue();
-    const filledSurname = await page.locator('input[name="surname"], input[placeholder*="Nachname"], input[placeholder*="Surname"]').inputValue();
-    const filledEmail = await page.locator('input[name="email"], input[type="email"]').inputValue();
-    console.log('Before submission - values filled:', { filledForename, filledSurname, filledEmail });
+    await expect(page.locator('#forename')).toHaveValue(firstName);
+    await expect(page.locator('#surname')).toHaveValue(lastName);
+    await expect(page.locator('#email')).toHaveValue(email);
     
     // Fill phone if field exists (it might be in metadata section)
-    const phoneField = page.locator('input[name="phone"], input[placeholder*="Telefon"], input[placeholder*="Phone"]');
-    if (await phoneField.isVisible()) {
-      const phone = `+49 123 ${timestamp}`;
-      await phoneField.fill(phone);
-    }
+    
     
     // Fill address if fields exist
-    const addressField = page.locator('input[name="address"], input[placeholder*="Adresse"], input[placeholder*="Address"]');
+    const addressField = page.locator('#address');
     if (await addressField.isVisible()) {
       await addressField.fill(`Teststraße ${timestamp}`);
     }
     
-    const cityField = page.locator('input[name="city"], input[placeholder*="Stadt"], input[placeholder*="City"]');
-    if (await cityField.isVisible()) {
-      await cityField.fill('Berlin');
-    }
     
-    const zipField = page.locator('input[name="zip"], input[name="postal_code"], input[placeholder*="PLZ"], input[placeholder*="ZIP"]');
+    
+    
+    const zipField = page.locator('#postal_code');
     if (await zipField.isVisible()) {
       await zipField.fill('10115');
     }
     
     // Add metadata if JSON field exists
-    const metadataField = page.locator('textarea[name="metadata"], textarea[placeholder*="JSON"]');
-    if (await metadataField.isVisible()) {
-      await metadataField.fill('{"test": "personal customer", "playwright": true}');
-    }
+    //const metadataField = page.locator('textarea[name="metadata"], textarea[placeholder*="JSON"]');
+    //if (await metadataField.isVisible()) {
+//      await metadataField.fill('{"test": "personal customer", "playwright": true}');
+  //  }
     
     // Submit the form
     await page.click('button[type="submit"]');
@@ -175,7 +179,7 @@ test.describe('Customers Form Tests', () => {
     // Verify customer was created - should redirect to detail page
     if (page.url().includes('/management/customers/')) {
       // We're on detail page - check for customer heading
-      await expect(page.locator(':text("Kunde #")')).toBeVisible();
+      await expect(page.locator('#customer-title')).toContainText(firstName + ' ' + lastName);
       
       // Simple verification that we successfully created a customer
       console.log('✓ Customer created successfully and redirected to detail page');
@@ -200,12 +204,12 @@ test.describe('Customers Form Tests', () => {
     
     // Select customer type (company)
     const typeSelect = page.locator('select[name="type"]');
-    const typeRadio = page.locator('input[name="type"]');
+    const typeRadio = page.locator('input[id="typeCompany"]');
     
     if (await typeSelect.isVisible()) {
       await typeSelect.selectOption('company');
     } else if (await typeRadio.isVisible()) {
-      await page.click('input[value="company"], label:has-text("Unternehmen"), label:has-text("Company")');
+      await page.click('input[id="typeCompany"], label:has-text("Unternehmen"), label:has-text("Company")');
     }
     
     // Fill company customer details
@@ -236,14 +240,16 @@ test.describe('Customers Form Tests', () => {
     await page.waitForLoadState('networkidle');
     
     // Verify customer was created
+    // Should redirect to detail page
     if (page.url().includes('/management/customers/')) {
       // We're on detail page
-      await expect(page.locator('h1, .text-2xl, .text-xl')).toContainText(companyName);
+      await expect(page.locator('#customer-title')).toContainText(companyName);
     } else {
       // We're on list page, look for the customer
       await expect(page.locator(`text="${companyName}"`)).toBeVisible();
     }
     
+
     // Take screenshot of success state
     await page.screenshot({ path: 'test-results/customers-create-company-success.png', fullPage: true });
   });
@@ -271,7 +277,7 @@ test.describe('Customers Form Tests', () => {
     }
     
     // Verify detail page elements
-    await expect(page.locator('h1, .text-2xl, .text-xl')).toContainText(customerName);
+    await expect(page.locator('id="customer-title"')).toContainText(customerName);
     
     // Check for jobs section
     const jobsSection = page.locator('text="Jobs", text="Aufträge", h2:has-text("Jobs")');

@@ -84,8 +84,10 @@ export function CustomerCreateForm() {
     <form onSubmit={onSubmit} className="space-y-4">
       <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
         <div className="grid gap-2">
-          <Label htmlFor="type">Typ</Label>
-          <Input id="type" name="type" value={type} onChange={(e) => setType(e.target.value)} placeholder="Firma/Privat/..." />
+          <Label htmlFor="typeCompany">Unternehmen</Label>
+          <Input id="typeCompany" name="type" type="radio" value="company" onChange={(e) => setType(e.target.value)} />
+          <Label htmlFor="typePrivate">Privat</Label>
+          <Input id="typePrivate" name="type" type="radio" value="private" onChange={(e) => setType(e.target.value)} />
         </div>
         <div className="grid gap-2">
           <Label htmlFor="email">E-Mail</Label>

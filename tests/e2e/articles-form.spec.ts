@@ -174,10 +174,10 @@ test.describe('Articles Form Tests', () => {
     }
     
     // Verify detail page elements
-    await expect(page.locator('h1, .text-2xl, .text-xl')).toContainText(articleName);
+    await expect(page.locator('h1, .text-2xl, .text-xl, .font-semibold.leading-none.tracking-tight').first()).toContainText(articleName);
     
     // Check for equipment section/button
-    const equipmentSection = page.locator('text="Equipment", text="Ausrüstung", text="Equipments"');
+    const equipmentSection = page.getByText('Equipments dieses Artikels');
     await expect(equipmentSection).toBeVisible();
     
     // Check for edit functionality

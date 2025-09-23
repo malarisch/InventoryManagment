@@ -131,12 +131,12 @@ test.describe('Management Dashboard Tests', () => {
     await page.waitForLoadState('networkidle');
     
     // Test navigation to articles
-    const articlesLink = page.locator('a[href="/management/articles"], nav a:has-text("Artikel")');
+    const articlesLink = page.locator('a[href="/management/articles"]').first();
     if (await articlesLink.isVisible()) {
       await articlesLink.click();
-      await page.waitForLoadState('networkidle');
-      await expect(page.url()).toContain('/articles');
-      await expect(page.locator('h1')).toContainText(/Artikel/);
+      await page.waitForURL('**/management/articles');
+      await expect(page.url()).toContain('/management/articles');
+      await expect(page.locator('h1')).toContainText(/Articles?/i);
       
       // Go back to dashboard
       await page.goto('/management');
@@ -144,11 +144,11 @@ test.describe('Management Dashboard Tests', () => {
     }
     
     // Test navigation to equipment
-    const equipmentLink = page.locator('a[href="/management/equipments"], nav a:has-text("Equipment")');
+    const equipmentLink = page.locator('nav a[href="/management/equipments"]').first();
     if (await equipmentLink.isVisible()) {
       await equipmentLink.click();
-      await page.waitForLoadState('networkidle');
-      await expect(page.url()).toContain('/equipments');
+      await page.waitForURL('**/management/equipments');
+      await expect(page.url()).toContain('/management/equipments');
       
       // Go back to dashboard
       await page.goto('/management');
@@ -156,11 +156,11 @@ test.describe('Management Dashboard Tests', () => {
     }
     
     // Test navigation to customers
-    const customersLink = page.locator('a[href="/management/customers"], nav a:has-text("Kunden")');
+    const customersLink = page.locator('nav a[href="/management/customers"]').first();
     if (await customersLink.isVisible()) {
       await customersLink.click();
-      await page.waitForLoadState('networkidle');
-      await expect(page.url()).toContain('/customers');
+      await page.waitForURL('**/management/customers');
+      await expect(page.url()).toContain('/management/customers');
       
       // Go back to dashboard
       await page.goto('/management');
@@ -168,11 +168,11 @@ test.describe('Management Dashboard Tests', () => {
     }
     
     // Test navigation to jobs
-    const jobsLink = page.locator('a[href="/management/jobs"], nav a:has-text("Jobs")');
+    const jobsLink = page.locator('nav a[href="/management/jobs"]').first();
     if (await jobsLink.isVisible()) {
       await jobsLink.click();
-      await page.waitForLoadState('networkidle');
-      await expect(page.url()).toContain('/jobs');
+      await page.waitForURL('**/management/jobs');
+      await expect(page.url()).toContain('/management/jobs');
       
       // Go back to dashboard
       await page.goto('/management');

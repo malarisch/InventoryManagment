@@ -192,19 +192,19 @@ test.describe('Equipment Form Tests', () => {
     
     // Look for "Add Equipment" button on article detail page
     const addEquipmentButton = page.locator(
-      'a[href*="/equipments/new"], button:has-text("Equipment hinzufügen"), button:has-text("Neues Equipment")'
+      'a[href*="/management/equipments/new"], button:has-text("Equipment hinzufügen"), button:has-text("Neues Equipment")'
     );
     
     if (await addEquipmentButton.isVisible()) {
       await addEquipmentButton.click();
-      await page.waitForLoadState('networkidle');
+      await page.waitForURL('**/management/equipments/new*');
       
       // Verify we're on equipment creation page with article pre-selected
-      await expect(page.url()).toContain('/equipments/new');
+      await expect(page.url()).toContain('/management/equipments/new');
       
-      // The article should be pre-selected
-      const articleName = page.locator(`text="Test Article for Equipment ${timestamp}"`);
-      await expect(articleName).toBeVisible();
+      // The article should be pre-selected in the dropdown
+      const articleCombobox = page.locator('select[role="combobox"], select');
+      await expect(articleCombobox.filter({ hasText: `Test Article for Equipment ${timestamp}` })).toBeVisible();
       
       // Take screenshot
       await page.screenshot({ path: 'test-results/equipments-create-from-article.png', fullPage: true });

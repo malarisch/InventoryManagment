@@ -62,9 +62,9 @@ export default async function CustomerDetailPage({ params }: { params: Promise<{
         </div>
         <Card>
           <CardHeader>
-            <CardTitle>Kunde #{cust.id}</CardTitle>
+            <CardTitle id="customer-title">{displayName(cust)}</CardTitle>
             <CardDescription>
-              {displayName(cust)} {cust.type ? `• ${cust.type}` : ""}
+              #{cust.id} {cust.type ? `• ${cust.type}` : ""}
               <br />
               E-Mail: {cust.email ?? "—"} • Adresse: {cust.address ?? "—"}{cust.postal_code ? `, ${cust.postal_code}` : ""}{cust.country ? `, ${cust.country}` : ""}
               <br />
