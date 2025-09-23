@@ -2,14 +2,9 @@
 
 Diese To-Do List enthält Aufgaben, die an der Software zu bearbeiten sind. Sobald eine Aufgabe bearbeited wurde soll diese hier in der Datei unten in die Done-List eingefügt und aus der To-Do list entfernt werden. Denk daran für alles, was du tust, auch Tests zu implementieren! Vor dem Committen Tests ausführen und checken ob alles läuft, wenn nicht erst alles fixen und dann committen. Für jedes Todo ein Commit. Speichere so viel wie möglich in deine Memories, damit du schneller darauf zugreifen kannst.
 
-## Done
-# To-Do List
-
-Diese To-Do List enthält Aufgaben, die an der Software zu bearbeiten sind. Sobald eine Aufgabe bearbeited wurde soll diese hier in der Datei unten in die Done-List eingefügt und aus der To-Do list entfernt werden. Denk daran für alles, was du tust, auch Tests zu implementieren! Vor dem Committen Tests ausführen und checken ob alles läuft, wenn nicht erst alles fixen und dann committen. Für jedes Todo ein Commit. Speichere so viel wie möglich in deine Memories, damit du schneller darauf zugreifen kannst.
-
 ## To-Do
 - Es fehlen überall immer mal wieder beschriebene Metadaten Felder. Die Supplyer bei Artikeln fehlen, Preise, etc. etc.
-- Implementiere einen Kameramodus. Dieser ist für Smartphones optimiert und scannt asset tags. Wenn das ding einfach "nur so" offen ist, öffne die Detailseite des Assets. Es soll sonst noch weitere Modi geben:
+- Implementiere einen Kameramodus. Dieser ist für Smartphones optimiert und scannt asset tags. Weitere Modi:
   - Equipments und Cases an eine Location "stellen" - also ein Knopf auf der Location seite den Scanner öffnet und alle folgenden gescannten Equipments und Artikel bekommen diese Location als aktuellen Standort.
   - Gleiches prinzip, aber A) einmal um Assets zu einem Job zu buchen und B) beim Packen auch in den Job zu kommissionieren. Dafür existiert die zweite Tabelle.
 - Die Company Settings soll ein Upload Feld für Dateien bekommen. Pro Datei einstellbar ob öffentlich oder nicht. "Copy" button für ggf. öffentlichen Link. 
@@ -20,10 +15,14 @@ Diese To-Do List enthält Aufgaben, die an der Software zu bearbeiten sind. Soba
 
 
 ### Fixes
-Die Suchfunktion tuts nicht. Außerdem soll sie im "Apple Spotlight Stil" als floating modal geöffnet werden. Aus dem Modal klicken schließt sie. Update bei jedem Buchstaben.
-Die Titel im Tabellenheader auf dem Dashboard stimmen nicht. Außerdem wird nur angezeigt, dass etwas in einer Tabelle passiert ist, aber nicht was. Das Diff Ergebnis, fehlt.
+
 
 ## Done
+- **Globale Apple Spotlight-style Suche implementiert**: Cmd+K öffnet floating Modal mit Echtzeit-Suche über alle Entitäten (Artikel, Kunden, Equipment, Jobs, Locations, Cases). Ersetzt die kaputte Header-Suche.
+- **Dashboard Historie mit Diff-Anzeige**: ExpandableHistoryTable zeigt jetzt echte Änderungen (vorher/nachher) statt nur basic summaries. Feld-für-Feld Diff-Darstellung beim Aufklappen.
+- **Kamera Asset-Tag Scanner**: QR/Barcode Scanner Modal für mobile Geräte. Scannt Asset-Tags und navigiert automatisch zu gefundenen Items (Equipments, Articles, Locations). Blitz-Support, Kamera-Wechsel, Erfolgs-/Fehlermeldungen.
+- **Fix: Dashboard Table Header**: Die Titel im Tabellenheader auf dem Dashboard stimmen jetzt mit den angezeigten Daten überein.
+- **Fix: Global Search**: Die Suchfunktion produziert keine 400 Bad Request Fehler mehr, wenn man mehr als einen Buchstaben eingibt.
 - Räume deinen Code auf - modifiziere ggf. Komponenten, das sie reusable sind soweit wie möglich.
 - Räume das UI auf - nutze den Platz auf großen bildschirmen besser, finde "spannende" design Entscheidungen und finde andere Lösungen für sie. Das UI soll sich so intuitiv wie möglich bedienen, sowohl auf Desktop als auch mobile. Check das explizit indem du mit vitest Screenshots anlegst und dir anschaust.
 - Lege einen API Endpunkt an, der den im Asset Template definierten SVG Prototypen aus dem Bucket zieht und die entsprechenden Werte einsetzt und danach das SVG zurückgibt. Implementiere auch Renderfunktionen als lossless Bitmaps mit fest definierter Auflösung. Filetypes nur PNG, BMP und GIF.

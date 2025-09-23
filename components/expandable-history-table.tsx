@@ -43,6 +43,9 @@ export function ExpandableHistoryTable({ historyEntries }: ExpandableHistoryTabl
           <thead className="sticky top-0 bg-muted/60 backdrop-blur">
             <tr>
               <th className="px-3 py-2 text-left text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+                Aktion
+              </th>
+              <th className="px-3 py-2 text-left text-xs font-semibold uppercase tracking-wide text-muted-foreground">
                 Zeitpunkt
               </th>
               <th className="px-3 py-2 text-left text-xs font-semibold uppercase tracking-wide text-muted-foreground">
@@ -50,9 +53,6 @@ export function ExpandableHistoryTable({ historyEntries }: ExpandableHistoryTabl
               </th>
               <th className="px-3 py-2 text-left text-xs font-semibold uppercase tracking-wide text-muted-foreground">
                 Datensatz
-              </th>
-              <th className="px-3 py-2 text-left text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-                Aktion
               </th>
               <th className="px-3 py-2 text-left text-xs font-semibold uppercase tracking-wide text-muted-foreground">
                 Details

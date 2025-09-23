@@ -84,12 +84,12 @@ export function GlobalSearchModal({
         locationsResponse,
         casesResponse
       ] = await Promise.all([
-        // Articles: search name and description
+        // Articles: search name
         supabase
           .from('articles')
-          .select('id, name, description')
+          .select('id, name')
           .eq('company_id', company.id)
-          .or(`name.ilike.%${trimmedQuery}%,description.ilike.%${trimmedQuery}%`),
+          .ilike('name', `%${trimmedQuery}%`),
           
         // Customers: search forename, surname, company name
         supabase
@@ -136,7 +136,6 @@ export function GlobalSearchModal({
             id: item.id,
             type: 'articles',
             title: item.name || `Artikel #${item.id}`,
-            description: item.description,
             url: `/management/articles/${item.id}`
           });
         });
