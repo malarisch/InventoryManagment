@@ -3,6 +3,8 @@
 - Use this file to append brief summaries after major tasks.
 - Include date/time, task, key changes, and next steps.
 
+- 2025-09-23 19:35 – **Extended Customer Tests with Full Lifecycle (Create/Edit/Delete)**: Erweiterte bestehende Customer Create Tests um Edit/Update/Delete Funktionalität anstatt separate Edit Tests zu schreiben. Nach Customer Creation: Reload → Edit → Update → Delete → 404 Check. Entfernte redundante Metadatenfelder (Vorname/Nachname für Privat, Firma für Unternehmen) da diese bereits als Hauptdatenbankfelder existieren. Alle 6/6 Customer Tests laufen erfolgreich durch mit vollständigem Customer Lifecycle für Private und Company Kunden. Files: tests/e2e/customers-form.spec.ts, components/forms/partials/customer-metadata-form.tsx, components/metadataTypes.types.ts.
+
 - 2025-01-04 23:52 – **FIXED: Playwright E2E Test Suite**: Resolved all failing Playwright tests that were broken by previous AI changes. Key fixes: (1) Fixed malformed JWT service role key by properly parsing `npx supabase status -o env` output (316→164 chars), (2) Updated playwright.config.ts to use port 3005 to avoid conflicts, (3) Replaced hardcoded localhost:3001 URLs with relative paths, (4) Made company-settings-newlines tests run serially to prevent parallel execution conflicts. All 11 E2E tests now passing. Fixed files: scripts/write-supabase-env.sh, playwright.config.ts, tests/e2e/company-settings-navigation.spec.ts, tests/e2e/company-settings-newlines.spec.ts. Commit: dc98661.
 
 - 2025-09-22 15:30 – **RESOLVED: Company Settings Newline Bug**: Successfully identified and fixed the newline entry issue in custom company types fields. Root cause was `.filter(Boolean)` in onChange handlers removing empty strings, preventing newline preservation. Removed the problematic filter from all three custom type textareas. Verified fix with working Playwright tests showing proper multi-line text entry functionality.
@@ -287,6 +289,12 @@ Next: Run `supabase db push` to add `files` columns and `attachments` bucket; co
 2025-09-22 03:05 CEST — AGENTS.md docs source update
 - Updated AGENTS.md to reference local Supabase docs in supabase_ai_docs/ and deprecate Serena/MCP reliance.
 - Reinforced rule to consult these docs before RLS, schema, auth, realtime, and functions; reminded to run supabase-gen-types after migrations.
+2025-09-23 19:25 CEST — Customer form validation + conditional metadata
+- FIXED customer form validation bug: Added type-based validation (company requires company_name, private requires forename+surname) and conditional field display.
+- Enhanced CustomerMetadataForm with conditional field display based on customerType prop (company shows business fields, private shows personal fields).
+- Updated both customer-create-form.tsx and customer-edit-form.tsx to pass customerType to metadata component.
+- All 6/6 customer E2E tests now passing. Form prevents empty submissions and shows only relevant fields based on customer type.
+
 2025-09-22 03:22 CEST — Metadata types + defaults
 - Added TSDoc to components/metadataTypes.types.ts; created lib/metadata/defaults.ts with DACH presets.
 - Prefill metadata JSON in create forms (company, equipment, customer, job); Company Settings shows defaults when empty.

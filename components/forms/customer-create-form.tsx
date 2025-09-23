@@ -30,10 +30,38 @@ export function CustomerCreateForm() {
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
+  // Validation function
+  function validateForm(): string | null {
+    if (!type) {
+      return "Bitte wählen Sie einen Typ aus (Unternehmen oder Privat)";
+    }
+    
+    if (type === "company") {
+      if (!companyName.trim()) {
+        return "Firmenname ist für Unternehmen erforderlich";
+      }
+    } else if (type === "private") {
+      if (!forename.trim() || !surname.trim()) {
+        return "Vor- und Nachname sind für Privatkunden erforderlich";
+      }
+    }
+    
+    return null;
+  }
+
   async function onSubmit(e: React.FormEvent) {
     e.preventDefault();
     setSaving(true);
     setError(null);
+    
+    // Validate form
+    const validationError = validateForm();
+    if (validationError) {
+      setError(validationError);
+      setSaving(false);
+      return;
+    }
+    
     try {
       console.log('Form submission - state values:', { forename, surname, email, type, companyName });
       
@@ -82,73 +110,154 @@ export function CustomerCreateForm() {
 
   return (
     <form onSubmit={onSubmit} className="space-y-4">
-      <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
-        <div className="grid gap-2">
-          <Label htmlFor="typeCompany">Unternehmen</Label>
-          <Input id="typeCompany" name="type" type="radio" value="company" onChange={(e) => setType(e.target.value)} />
-          <Label htmlFor="typePrivate">Privat</Label>
-          <Input id="typePrivate" name="type" type="radio" value="private" onChange={(e) => setType(e.target.value)} />
-        </div>
-        <div className="grid gap-2">
-          <Label htmlFor="email">E-Mail</Label>
-          <Input id="email" name="email" type="email" value={email} onChange={(e) => setEmail(e.target.value)} placeholder="mail@example.com" />
-        </div>
-      </div>
-      <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
-        <div className="grid gap-2">
-          <Label htmlFor="company_name">Firma</Label>
-          <Input id="company_name" name="company_name" value={companyName} onChange={(e) => setCompanyName(e.target.value)} placeholder="Firmenname" />
-        </div>
-        <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
-          <div className="grid gap-2">
-            <Label htmlFor="forename">Vorname</Label>
-            <Input id="forename" name="forename" value={forename} onChange={(e) => setForename(e.target.value)} />
-          </div>
-          <div className="grid gap-2">
-            <Label htmlFor="surname">Nachname</Label>
-            <Input id="surname" name="surname" value={surname} onChange={(e) => setSurname(e.target.value)} />
-          </div>
-        </div>
-      </div>
-      <div className="grid grid-cols-1 gap-2 sm:grid-cols-3">
-        <div className="grid gap-2 sm:col-span-2">
-          <Label htmlFor="address">Adresse</Label>
-          <Input id="address" name="address" value={address} onChange={(e) => setAddress(e.target.value)} placeholder="Straße Hausnr, Stadt" />
-        </div>
-        <div className="grid gap-2">
-          <Label htmlFor="postal_code">PLZ</Label>
-          <Input id="postal_code" name="postal_code" value={postalCode} onChange={(e) => setPostalCode(e.target.value)} />
-        </div>
-      </div>
-      <div className="grid gap-2">
-        <Label htmlFor="country">Land</Label>
-        <Input id="country" name="country" value={country} onChange={(e) => setCountry(e.target.value)} />
-      </div>
+      {/* Customer Type Selection */}
       <div className="grid gap-3">
-        <div className="flex items-center justify-between">
-          <div className="text-sm font-medium">Kunden-Metadaten</div>
-          <label className="flex items-center gap-2 text-xs">
-            <input type="checkbox" checked={advanced} onChange={(e) => setAdvanced(e.target.checked)} />
-            Expertenmodus (JSON bearbeiten)
+        <Label className="text-base font-medium">Typ *</Label>
+        <div className="flex space-x-4">
+          <label className="flex items-center space-x-2">
+            <input
+              type="radio"
+              value="company"
+              checked={type === "company"}
+              onChange={(e) => setType(e.target.value)}
+              className="w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 focus:ring-blue-500"
+            />
+            <span>Unternehmen</span>
+          </label>
+          <label className="flex items-center space-x-2">
+            <input
+              type="radio"
+              value="private"
+              checked={type === "private"}
+              onChange={(e) => setType(e.target.value)}
+              className="w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 focus:ring-blue-500"
+            />
+            <span>Privat</span>
           </label>
         </div>
-        {advanced ? (
+      </div>
+
+      {/* Conditional Fields based on Type */}
+      {type === "company" && (
+        <div className="grid gap-2">
+          <Label htmlFor="company_name">Firmenname *</Label>
+          <Input 
+            id="company_name" 
+            name="company_name" 
+            value={companyName} 
+            onChange={(e) => setCompanyName(e.target.value)} 
+            placeholder="Firmenname" 
+          />
+        </div>
+      )}
+
+      {type === "private" && (
+        <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
           <div className="grid gap-2">
-            <Label htmlFor="metadata">Metadata (JSON)</Label>
-            <textarea
-              id="metadata"
-              className="min-h-[120px] w-full rounded-md border bg-background p-2 text-sm font-mono"
-              value={metaText}
-              onChange={(e) => setMetaText(e.target.value)}
-              spellCheck={false}
+            <Label htmlFor="forename">Vorname *</Label>
+            <Input 
+              id="forename" 
+              name="forename" 
+              value={forename} 
+              onChange={(e) => setForename(e.target.value)} 
+              placeholder="Vorname"
             />
           </div>
-        ) : (
-          <CustomerMetadataForm value={metaObj} onChange={setMetaObj} />
-        )}
-      </div>
+          <div className="grid gap-2">
+            <Label htmlFor="surname">Nachname *</Label>
+            <Input 
+              id="surname" 
+              name="surname" 
+              value={surname} 
+              onChange={(e) => setSurname(e.target.value)} 
+              placeholder="Nachname"
+            />
+          </div>
+        </div>
+      )}
+
+      {/* Common Fields - only show if type is selected */}
+      {type && (
+        <>
+          <div className="grid gap-2">
+            <Label htmlFor="email">E-Mail</Label>
+            <Input 
+              id="email" 
+              name="email" 
+              type="email" 
+              value={email} 
+              onChange={(e) => setEmail(e.target.value)} 
+              placeholder="mail@example.com" 
+            />
+          </div>
+
+          <div className="grid grid-cols-1 gap-2 sm:grid-cols-3">
+            <div className="grid gap-2 sm:col-span-2">
+              <Label htmlFor="address">Adresse</Label>
+              <Input 
+                id="address" 
+                name="address" 
+                value={address} 
+                onChange={(e) => setAddress(e.target.value)} 
+                placeholder="Straße Hausnr, Stadt" 
+              />
+            </div>
+            <div className="grid gap-2">
+              <Label htmlFor="postal_code">PLZ</Label>
+              <Input 
+                id="postal_code" 
+                name="postal_code" 
+                value={postalCode} 
+                onChange={(e) => setPostalCode(e.target.value)} 
+              />
+            </div>
+          </div>
+
+          <div className="grid gap-2">
+            <Label htmlFor="country">Land</Label>
+            <Input 
+              id="country" 
+              name="country" 
+              value={country} 
+              onChange={(e) => setCountry(e.target.value)} 
+            />
+          </div>
+
+          {/* Metadata Section */}
+          <div className="grid gap-3">
+            <div className="flex items-center justify-between">
+              <div className="text-sm font-medium">Kunden-Metadaten</div>
+              <label className="flex items-center gap-2 text-xs">
+                <input type="checkbox" checked={advanced} onChange={(e) => setAdvanced(e.target.checked)} />
+                Expertenmodus (JSON bearbeiten)
+              </label>
+            </div>
+            {advanced ? (
+              <div className="grid gap-2">
+                <Label htmlFor="metadata">Metadata (JSON)</Label>
+                <textarea
+                  id="metadata"
+                  className="min-h-[120px] w-full rounded-md border bg-background p-2 text-sm font-mono"
+                  value={metaText}
+                  onChange={(e) => setMetaText(e.target.value)}
+                  spellCheck={false}
+                />
+              </div>
+            ) : (
+              <CustomerMetadataForm 
+                value={metaObj} 
+                onChange={setMetaObj} 
+              />
+            )}
+          </div>
+        </>
+      )}
+
+      {/* Submit Section */}
       <div className="flex items-center gap-3">
-        <Button type="submit" disabled={saving}>{saving ? "Erstellen…" : "Erstellen"}</Button>
+        <Button type="submit" disabled={saving || !type}>
+          {saving ? "Erstellen…" : "Erstellen"}
+        </Button>
         {error && <span className="text-sm text-red-600">{error}</span>}
       </div>
     </form>
