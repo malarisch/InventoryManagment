@@ -25,8 +25,8 @@ export function CustomerMetadataForm({
 
   return (
     <div className="grid gap-6 rounded-md border p-4">
-      {/* Personal Information - always show for private, optional for company */}
-      {(customerType === "private" || customerType === "company") && (
+      {/* Personal Information - only for private customers */}
+      {customerType === "private" && (
         <>
           <h3 className="text-lg font-medium">Persönliche Informationen</h3>
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
@@ -38,13 +38,31 @@ export function CustomerMetadataForm({
               <Label htmlFor="cmf-pro">Pronomen</Label>
               <Input id="cmf-pro" value={local.pronouns ?? ""} onChange={(e) => set("pronouns", e.target.value)} />
             </div>
-            {/* Birthday only for private customers */}
-            {customerType === "private" && (
-              <div className="grid gap-1.5">
-                <Label htmlFor="cmf-birthday">Geburtstag</Label>
-                <Input id="cmf-birthday" type="date" value={local.birthday ?? ""} onChange={(e) => set("birthday", e.target.value)} />
-              </div>
-            )}
+            <div className="grid gap-1.5">
+              <Label htmlFor="cmf-birthday">Geburtstag</Label>
+              <Input id="cmf-birthday" type="date" value={local.birthday ?? ""} onChange={(e) => set("birthday", e.target.value)} />
+            </div>
+            <div className="grid gap-1.5">
+              <Label htmlFor="cmf-position">Position</Label>
+              <Input id="cmf-position" value={local.position ?? ""} onChange={(e) => set("position", e.target.value)} />
+            </div>
+          </div>
+        </>
+      )}
+
+      {/* Contact Person Information - only for company customers */}
+      {customerType === "company" && (
+        <>
+          <h3 className="text-lg font-medium">Ansprechpartner</h3>
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+            <div className="grid gap-1.5">
+              <Label htmlFor="cmf-anrede">Anrede</Label>
+              <Input id="cmf-anrede" value={local.anrede ?? ""} onChange={(e) => set("anrede", e.target.value)} />
+            </div>
+            <div className="grid gap-1.5">
+              <Label htmlFor="cmf-pro">Pronomen</Label>
+              <Input id="cmf-pro" value={local.pronouns ?? ""} onChange={(e) => set("pronouns", e.target.value)} />
+            </div>
             <div className="grid gap-1.5">
               <Label htmlFor="cmf-position">Position</Label>
               <Input id="cmf-position" value={local.position ?? ""} onChange={(e) => set("position", e.target.value)} />
