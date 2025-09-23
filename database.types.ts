@@ -130,6 +130,7 @@ export type Database = {
           created_at: string
           created_by: string | null
           id: number
+          nfc_tag_id: number | null
           printed_applied: boolean
           printed_code: string | null
           printed_template: number | null
@@ -139,6 +140,7 @@ export type Database = {
           created_at?: string
           created_by?: string | null
           id?: number
+          nfc_tag_id?: number | null
           printed_applied?: boolean
           printed_code?: string | null
           printed_template?: number | null
@@ -148,6 +150,7 @@ export type Database = {
           created_at?: string
           created_by?: string | null
           id?: number
+          nfc_tag_id?: number | null
           printed_applied?: boolean
           printed_code?: string | null
           printed_template?: number | null
@@ -158,6 +161,13 @@ export type Database = {
             columns: ["company_id"]
             isOneToOne: false
             referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "asset_tags_nfc_tag_id_fkey"
+            columns: ["nfc_tag_id"]
+            isOneToOne: false
+            referencedRelation: "nfc_tags"
             referencedColumns: ["id"]
           },
         ]
@@ -230,6 +240,7 @@ export type Database = {
         Row: {
           created_at: string
           description: string | null
+          files: Json | null
           id: number
           metadata: Json | null
           name: string
@@ -238,6 +249,7 @@ export type Database = {
         Insert: {
           created_at?: string
           description?: string | null
+          files?: Json | null
           id?: number
           metadata?: Json | null
           name: string
@@ -246,6 +258,7 @@ export type Database = {
         Update: {
           created_at?: string
           description?: string | null
+          files?: Json | null
           id?: number
           metadata?: Json | null
           name?: string
@@ -644,6 +657,38 @@ export type Database = {
           },
         ]
       }
+      nfc_tags: {
+        Row: {
+          company_id: number
+          created_at: string
+          created_by: string | null
+          id: number
+          tag_id: string
+        }
+        Insert: {
+          company_id: number
+          created_at?: string
+          created_by?: string | null
+          id?: number
+          tag_id: string
+        }
+        Update: {
+          company_id?: number
+          created_at?: string
+          created_by?: string | null
+          id?: number
+          tag_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "nfc_tags_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       users_companies: {
         Row: {
           company_id: number
@@ -678,13 +723,9 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
-      company_ids_current_user: {
-        Args: Record<PropertyKey, never>
-        Returns: number[]
-      }
-      owned_company_ids_current_user: {
-        Args: Record<PropertyKey, never>
-        Returns: number[]
+      is_company_member: {
+        Args: { p_company_id: number }
+        Returns: boolean
       }
     }
     Enums: {

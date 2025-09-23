@@ -54,3 +54,6 @@ yarn-error.log*
 *.tsbuildinfo
 next-env.d.ts
 supabase/seed.sql
+supabase/seed.sql
+
+seed.sql

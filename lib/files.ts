@@ -6,12 +6,14 @@
  * - link: public URL to the file
  * - name: optional human-friendly display name
  * - description: optional short description
+ * - public: whether the file is publicly accessible (for logos, etc.)
  */
 export type FileEntry = {
   id: string;
   link: string;
   name?: string | null;
   description?: string | null;
+  public?: boolean;
 };
 
 /** Type guard to validate a potential FileEntry at runtime. */

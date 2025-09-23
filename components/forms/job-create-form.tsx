@@ -55,12 +55,10 @@ export function JobCreateForm() {
       const userId = auth.user?.id ?? null;
       if (!company || !userId) throw new Error("Fehlende Company oder Nutzer");
       
-      // Get form data - this works with automation unlike React state
-      const formData = new FormData(e.currentTarget);
-      const formName = formData.get("name") as string;
-      const formType = formData.get("type") as string;
-      const formJobLocation = formData.get("job_location") as string;
-      const formCustomerId = formData.get("customer_id") as string;
+      const formName = name;
+      const formType = type;
+      const formJobLocation = location;
+      const formCustomerId = customerId;
 
       const formStartDate = startDate || null;
       const formEndDate = endDate || null;

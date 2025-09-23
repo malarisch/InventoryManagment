@@ -21,7 +21,7 @@
     "test:unit": "vitest run",
     "test:tsc": "tsc --noEmit",
     "test": "npm run lint && npm run test:tsc && npm run test:unit && npm run test:e2e",
-    "supabase-gen-types": "supabase migrations up && supabase gen types typescript > ./types/supabase.ts"
+    "supabase-gen-types": "supabase migrations up && supabase gen types typescript --local > ./database.types.ts"
   },
   "supabase:write-env": "supabase gen types typescript > .env.local",
   "dependencies": {
@@ -33,6 +33,7 @@
     "@radix-ui/react-slot": "^1.2.2",
     "@supabase/ssr": "latest",
     "@supabase/supabase-js": "latest",
+    "@tanstack/react-table": "^8.21.3",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
     "date-fns": "^4.1.0",
