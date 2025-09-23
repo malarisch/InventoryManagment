@@ -283,8 +283,8 @@ export default async function ManagementHomePage() {
                   </thead>
                   <tbody>
                     {historyEntries.map((entry) => (
-                      <Collapsible key={entry.id}>
-                        <tr className="border-t border-border/60 even:bg-muted/30">
+                      <Collapsible key={`row-${entry.id}`}>
+                        <tr key={`main-${entry.id}`} className="border-t border-border/60 even:bg-muted/30">
                           <td className="px-3 py-2 align-top text-xs">
                             <CollapsibleTrigger asChild>
                               <button className="flex items-center space-x-1">
@@ -315,7 +315,7 @@ export default async function ManagementHomePage() {
                           <td className="px-3 py-2 align-top text-xs">{entry.actorDisplay}</td>
                         </tr>
                         <CollapsibleContent asChild>
-                          <tr className="bg-muted/20">
+                          <tr key={`expanded-${entry.id}`} className="bg-muted/20">
                             <td colSpan={6} className="p-4">
                               <pre className="text-xs overflow-auto">{JSON.stringify(entry.summary, null, 2)}</pre>
                             </td>

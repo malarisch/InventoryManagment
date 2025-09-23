@@ -59,6 +59,7 @@ const iconMap: Record<string, ComponentType<SVGProps<SVGSVGElement>>> = {
 
 export function Header({ items }: { items: NavItem[] }) {
   const [open, setOpen] = useState(false);
+  const router = useRouter();
 
   return (
     <header className="sticky top-0 z-30 w-full border-b bg-background/80 backdrop-blur supports-[backdrop-filter]:bg-background/60">

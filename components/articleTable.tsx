@@ -1,9 +1,7 @@
 'use client';
 
-import { createClient } from '@/lib/supabase/client';
 import { Button } from '@/components/ui/button';
 import type { Tables } from '@/database.types';
-import { useMemo } from 'react';
 import Link from 'next/link';
 import { Pencil } from 'lucide-react';
 import { DataTable } from '@/components/data-table';
@@ -21,7 +19,6 @@ type Props = {
 };
 
 export function ArticleTable({ pageSize = 10, className }: Props) {
-  const supabase = useMemo(() => createClient(), []);
 
   const columns = [
     { key: 'id', label: 'ID', render: (row: ArticleRow) => <Link className="underline-offset-2 hover:underline" href={`/management/articles/${row.id}`}>{row.id}</Link> },

@@ -70,7 +70,7 @@ export function DataTable<T extends { id: number }>(
         setRows([]);
         setCount(0);
       } else {
-        setRows((data as T[]) ?? []);
+  setRows(((data as unknown) as T[]) ?? []);
         setCount(typeof count === 'number' ? count : 0);
       }
       setLoading(false);
@@ -79,7 +79,7 @@ export function DataTable<T extends { id: number }>(
     return () => {
       isActive = false;
     };
-  }, [page, pageSize, dq, supabase, tableName, searchableFields]);
+  }, [page, pageSize, dq, supabase, tableName, searchableFields, select]);
 
   const totalPages = useMemo(() => {
     if (!count || count <= 0) return 1;
@@ -144,7 +144,7 @@ export function DataTable<T extends { id: number }>(
                   <tr key={row.id} className="border-b hover:bg-muted/50">
                     {columns.map((col) => (
                       <td key={col.key} className="px-4 py-3 align-top">
-                        {col.render ? col.render(row) : (row as any)[col.key]}
+                        {col.render ? col.render(row) : (row as unknown as Record<string, unknown>)[col.key] as React.ReactNode}
                       </td>
                     ))}
                     <td className="px-4 py-3 align-top">

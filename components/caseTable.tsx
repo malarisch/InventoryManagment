@@ -1,6 +1,5 @@
 'use client';
 
-import { useMemo } from 'react';
 import { Button } from '@/components/ui/button';
 import type { Tables } from '@/database.types';
 import Link from 'next/link';

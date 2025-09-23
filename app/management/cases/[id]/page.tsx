@@ -57,7 +57,7 @@ export default async function CaseDetailPage({ params }: { params: Promise<{ id:
             </div>
             <CaseEditItemsForm caseId={id} initialEquipments={row.equipments ?? []} initialArticles={(row.articles as unknown as Array<{ article_id?: number; amount?: number }>) ?? []} caseEquipmentId={row.case_equipment ?? null} initialName={row.name ?? null} initialDescription={row.description ?? null} />
             <div className="mt-6">
-              <FileManager table="cases" rowId={row.id} companyId={row.company_id} isPublic={false} initial={(row as Record<string, unknown>).files} />
+              <FileManager table="cases" rowId={row.id} companyId={row.company_id ?? undefined} isPublic={false} initial={(row as Record<string, unknown>).files} />
             </div>
           </CardContent>
         </Card>

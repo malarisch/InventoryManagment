@@ -11,8 +11,8 @@ import { useCompany } from "@/app/management/_libs/companyHook";
 import { DatePicker } from "@/components/ui/date-picker";
 import { defaultEquipmentMetadataDE, toPrettyJSON } from "@/lib/metadata/defaults";
 import { EquipmentMetadataForm } from "@/components/forms/partials/equipment-metadata-form";
+import type { EquipmentMetadata } from "@/components/metadataTypes.types";
 import { buildEquipmentMetadata } from "@/lib/metadata/builders";
-
 type Article = Tables<"articles">;
 type Location = Tables<"locations">;
 type AssetTag = Tables<"asset_tags">;
@@ -74,7 +74,7 @@ export function EquipmentCreateForm({ initialArticleId }: { initialArticleId?: n
           try { metadata = JSON.parse(mt) as Json; } catch { throw new Error("Ungültiges JSON in Metadata"); }
         }
       } else {
-        metadata = buildEquipmentMetadata(metaObj) as unknown as Json;
+  metadata = buildEquipmentMetadata(metaObj) as unknown as Json;
       }
       const base: Database["public"]["Tables"]["equipments"]["Insert"] = {
         asset_tag: assetTagId === "" ? null : Number(assetTagId),
@@ -186,7 +186,7 @@ export function EquipmentCreateForm({ initialArticleId }: { initialArticleId?: n
             />
           </div>
         ) : (
-          <EquipmentMetadataForm value={metaObj} onChange={setMetaObj} />
+          <EquipmentMetadataForm value={metaObj} onChange={v => setMetaObj(buildEquipmentMetadata(v))} />
         )}
       </div>
       <div className="flex items-center gap-3">

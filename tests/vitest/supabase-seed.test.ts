@@ -58,9 +58,20 @@ if (missingEnvVars.length > 0) {
         cleanup.userIds.push(createdUserId);
       }
 
+      // Work around potential sequence desyncs by explicitly picking a fresh ID
+      const { data: maxRow } = await admin
+        .from("companies")
+        .select("id")
+        .order("id", { ascending: false })
+        .limit(1)
+        .maybeSingle();
+
+      const nextId = (maxRow?.id ?? 0) + 1;
+
       const { data: companyRow, error: companyError } = await admin
         .from("companies")
         .insert({
+          id: nextId,
           name: testCompanyName,
           description: "Vitest seeded tenant",
           owner_user_id: createdUserId,
@@ -81,9 +92,20 @@ if (missingEnvVars.length > 0) {
         cleanup.companyIds.push(createdCompanyId);
       }
 
+      // Work around potential sequence desyncs on users_companies as well
+      const { data: maxMembershipRow } = await admin
+        .from("users_companies")
+        .select("id")
+        .order("id", { ascending: false })
+        .limit(1)
+        .maybeSingle();
+
+      const nextMembershipId = (maxMembershipRow?.id ?? 0) + 1;
+
       const { data: membershipRow, error: membershipError } = await admin
         .from("users_companies")
         .insert({
+          id: nextMembershipId,
           company_id: createdCompanyId!,
           user_id: createdUserId!,
         })

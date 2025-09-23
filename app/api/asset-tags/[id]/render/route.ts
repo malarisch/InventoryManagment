@@ -3,9 +3,9 @@ import { createClient } from '@/lib/supabase/server';
 import { NextRequest, NextResponse } from 'next/server';
 import sharp from 'sharp';
 
-export async function GET(req: NextRequest, { params }: { params: { id: string } }) {
-  const supabase = createClient();
-  const { id } = params;
+export async function GET(req: NextRequest, context: { params: Promise<{ id: string }> }) {
+  const supabase = await createClient();
+  const { id } = await context.params;
   const format = req.nextUrl.searchParams.get('format') || 'svg';
 
   const { data: assetTag, error } = await supabase
@@ -18,8 +18,8 @@ export async function GET(req: NextRequest, { params }: { params: { id: string }
     return new NextResponse('Asset tag not found', { status: 404 });
   }
 
-  const template = assetTag.asset_tag_templates?.template as any;
-  if (!template) {
+  // Ensure template exists on the referenced asset_tag_template
+  if (!assetTag.asset_tag_templates?.template) {
     return new NextResponse('Asset tag template not found', { status: 404 });
   }
 
@@ -55,7 +55,7 @@ export async function GET(req: NextRequest, { params }: { params: { id: string }
       contentType = 'image/png';
       break;
     case 'bmp':
-      imageBuffer = await sharp(svgBuffer).bmp().toBuffer();
+      imageBuffer = await (sharp(svgBuffer) as unknown as { bmp: () => sharp.Sharp }).bmp().toBuffer();
       contentType = 'image/bmp';
       break;
     case 'gif':
@@ -66,7 +66,7 @@ export async function GET(req: NextRequest, { params }: { params: { id: string }
       return new NextResponse('Invalid format', { status: 400 });
   }
 
-  return new NextResponse(imageBuffer, {
+  return new NextResponse(new Uint8Array(imageBuffer) as unknown as BodyInit, {
     headers: {
       'Content-Type': contentType,
     },

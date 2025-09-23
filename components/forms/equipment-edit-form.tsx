@@ -9,6 +9,7 @@ import type { Json } from "@/database.types";
 import { EquipmentMetadataForm } from "@/components/forms/partials/equipment-metadata-form";
 import { defaultEquipmentMetadataDE, toPrettyJSON } from "@/lib/metadata/defaults";
 import type { EquipmentMetadata } from "@/components/metadataTypes.types";
+import { buildEquipmentMetadata } from "@/lib/metadata/builders";
 
 type Equipment = Tables<"equipments">;
 type Article = Tables<"articles">;
@@ -30,7 +31,7 @@ export function EquipmentEditForm({ equipment }: { equipment: Equipment }) {
   const [metaText, setMetaText] = useState<string>(() => {
     try { return equipment.metadata ? JSON.stringify(equipment.metadata, null, 2) : toPrettyJSON(defaultEquipmentMetadataDE); } catch { return toPrettyJSON(defaultEquipmentMetadataDE); }
   });
-  const [metaObj, setMetaObj] = useState<EquipmentMetadata>((equipment.metadata as unknown as EquipmentMetadata) ?? defaultEquipmentMetadataDE);
+  const [metaObj, setMetaObj] = useState<EquipmentMetadata>(buildEquipmentMetadata(equipment.metadata as unknown as EquipmentMetadata));
   const [advanced, setAdvanced] = useState(false);
 
   useEffect(() => {
@@ -119,7 +120,7 @@ export function EquipmentEditForm({ equipment }: { equipment: Equipment }) {
             />
           </div>
         ) : (
-          <EquipmentMetadataForm value={metaObj} onChange={setMetaObj} />
+          <EquipmentMetadataForm value={metaObj} onChange={v => setMetaObj(buildEquipmentMetadata(v))} />
         )}
       </div>
       <div className="grid gap-2">

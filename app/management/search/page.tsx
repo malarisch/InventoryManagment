@@ -7,10 +7,15 @@ import { createClient } from '@/lib/supabase/client';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import Link from 'next/link';
 
+type SearchResultType = 'articles' | 'customers' | 'equipments' | 'jobs' | 'locations' | 'cases';
+
+type Base = { id: number } & Record<string, unknown>;
+type Result = Base & { type: SearchResultType };
+
 export default function SearchPage() {
   const searchParams = useSearchParams();
   const query = searchParams.get('q') || '';
-  const [results, setResults] = useState<any[]>([]);
+  const [results, setResults] = useState<Result[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const supabase = createClient();
@@ -35,18 +40,19 @@ export default function SearchPage() {
           supabase.from('cases').select('*').textSearch('name', query, { type: 'websearch' }),
         ]);
 
-        const allResults = [
-          ...(articles.data || []).map((r) => ({ ...r, type: 'articles' })),
-          ...(customers.data || []).map((r) => ({ ...r, type: 'customers' })),
-          ...(equipments.data || []).map((r) => ({ ...r, type: 'equipments' })),
-          ...(jobs.data || []).map((r) => ({ ...r, type: 'jobs' })),
-          ...(locations.data || []).map((r) => ({ ...r, type: 'locations' })),
-          ...(cases.data || []).map((r) => ({ ...r, type: 'cases' })),
+        const allResults: Result[] = [
+          ...((articles.data || []) as Base[]).map((r) => ({ ...r, type: 'articles' as const })),
+          ...((customers.data || []) as Base[]).map((r) => ({ ...r, type: 'customers' as const })),
+          ...((equipments.data || []) as Base[]).map((r) => ({ ...r, type: 'equipments' as const })),
+          ...((jobs.data || []) as Base[]).map((r) => ({ ...r, type: 'jobs' as const })),
+          ...((locations.data || []) as Base[]).map((r) => ({ ...r, type: 'locations' as const })),
+          ...((cases.data || []) as Base[]).map((r) => ({ ...r, type: 'cases' as const })),
         ];
 
         setResults(allResults);
-      } catch (e: any) {
-        setError(e.message);
+      } catch (e) {
+        const msg = e instanceof Error ? e.message : 'Unbekannter Fehler';
+        setError(msg);
       }
 
       setLoading(false);
@@ -57,7 +63,7 @@ export default function SearchPage() {
 
   return (
     <div className="p-4">
-      <h1 className="text-2xl font-bold mb-4">Search Results for "{query}"</h1>
+  <h1 className="text-2xl font-bold mb-4">Search Results for &quot;{query}&quot;</h1>
 
       {loading && <p>Loading...</p>}
       {error && <p className="text-red-500">{error}</p>}
@@ -68,7 +74,7 @@ export default function SearchPage() {
             <CardHeader>
               <CardTitle>
                 <Link href={`/management/${result.type}/${result.id}`}>
-                  {result.name || result.forename || `ID: ${result.id}`}
+                  {String((result as Record<string, unknown>).name ?? (result as Record<string, unknown>).forename ?? `ID: ${result.id}`)}
                 </Link>
               </CardTitle>
             </CardHeader>
