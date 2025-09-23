@@ -16,6 +16,7 @@ interface HistoryEntry {
   op: string | null;
   href: string | null;
   actorDisplay: string;
+  changes?: Array<{ key: string; from: unknown; to: unknown }>;
 }
 
 interface ExpandableHistoryTableProps {
@@ -102,7 +103,42 @@ export function ExpandableHistoryTable({ historyEntries }: ExpandableHistoryTabl
                   {isExpanded && (
                     <tr className="bg-muted/20">
                       <td colSpan={6} className="p-4">
-                        <pre className="text-xs overflow-auto">{JSON.stringify(entry.summary, null, 2)}</pre>
+                        {entry.changes && entry.changes.length > 0 ? (
+                          <div className="space-y-3">
+                            <h4 className="text-sm font-semibold text-foreground">Änderungen:</h4>
+                            <div className="grid gap-2">
+                              {entry.changes.map((change, index) => (
+                                <div key={index} className="rounded-md border bg-background p-3">
+                                  <div className="font-medium text-xs text-muted-foreground mb-2">
+                                    Feld: <span className="font-mono text-foreground">{change.key}</span>
+                                  </div>
+                                  <div className="grid gap-1 text-xs">
+                                    <div className="flex items-start gap-2">
+                                      <span className="text-destructive font-medium min-w-0">Vorher:</span>
+                                      <span className="font-mono bg-destructive/10 px-1 rounded text-foreground break-all">
+                                        {change.from === null ? "null" : change.from === undefined ? "undefined" : String(change.from)}
+                                      </span>
+                                    </div>
+                                    <div className="flex items-start gap-2">
+                                      <span className="text-green-600 font-medium min-w-0">Nachher:</span>
+                                      <span className="font-mono bg-green-100 dark:bg-green-900/20 px-1 rounded text-foreground break-all">
+                                        {change.to === null ? "null" : change.to === undefined ? "undefined" : String(change.to)}
+                                      </span>
+                                    </div>
+                                  </div>
+                                </div>
+                              ))}
+                            </div>
+                          </div>
+                        ) : entry.op === "UPDATE" ? (
+                          <div className="text-xs text-muted-foreground">
+                            Keine spezifischen Änderungen verfügbar.
+                          </div>
+                        ) : (
+                          <div className="text-xs text-muted-foreground">
+                            {entry.op === "INSERT" ? "Neuer Datensatz erstellt." : "Datensatz gelöscht."}
+                          </div>
+                        )}
                       </td>
                     </tr>
                   )}

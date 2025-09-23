@@ -3,7 +3,6 @@
 import Link from "next/link";
 import { useEffect, useMemo, useState, type ComponentType, type SVGProps } from "react";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import { ThemeSwitcher } from "@/components/theme-switcher";
 import {
   Menu,
@@ -38,6 +37,8 @@ import {
 import { createClient } from "@/lib/supabase/client";
 import type { CompanyRecord } from "@/lib/companies";
 import { normalizeCompanyRelation } from "@/lib/companies";
+import { GlobalSearchModal } from "@/components/search/global-search-modal";
+import { useGlobalSearch } from "@/components/search/use-global-search";
 import { useRouter } from "next/navigation";
 
 type NavItem = {
@@ -59,57 +60,60 @@ const iconMap: Record<string, ComponentType<SVGProps<SVGSVGElement>>> = {
 
 export function Header({ items }: { items: NavItem[] }) {
   const [open, setOpen] = useState(false);
-  const router = useRouter();
+  const { isOpen: searchOpen, openSearch, closeSearch } = useGlobalSearch();
 
   return (
-    <header className="sticky top-0 z-30 w-full border-b bg-background/80 backdrop-blur supports-[backdrop-filter]:bg-background/60">
-      <div className="flex h-14 items-center gap-3 px-3 md:px-5">
-        <Button
-          variant="ghost"
-          size="icon"
-          className="md:hidden"
-          aria-label="Open navigation"
-          onClick={() => setOpen(true)}
-        >
-          <Menu className="h-5 w-5" />
-        </Button>
-
-        <div className="flex items-center gap-2 text-sm text-muted-foreground">
-          <span className="hidden sm:inline">Inventory</span>
-          <span className="hidden sm:inline">/</span>
-          <span className="font-medium text-foreground">Management</span>
-        </div>
-
-        <div className="ml-auto flex items-center gap-2">
-          <div className="hidden sm:flex items-center gap-2">
-            <div className="relative">
-              <Search className="absolute left-2.5 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-              <Input
-                className="w-[180px] pl-8"
-                placeholder="Search…"
-                aria-label="Search"
-                onKeyDown={(e) => {
-                  if (e.key === 'Enter') {
-                    const q = e.currentTarget.value;
-                    router.push(`/management/search?q=${q}`);
-                  }
-                }}
-              />
-            </div>
-          </div>
-          <Button variant="ghost" size="icon" className="hidden sm:inline-flex" aria-label="Notifications">
-            <Bell className="h-5 w-5 text-muted-foreground" />
+    <>
+      <header className="sticky top-0 z-30 w-full border-b bg-background/80 backdrop-blur supports-[backdrop-filter]:bg-background/60">
+        <div className="flex h-14 items-center gap-3 px-3 md:px-5">
+          <Button
+            variant="ghost"
+            size="icon"
+            className="md:hidden"
+            aria-label="Open navigation"
+            onClick={() => setOpen(true)}
+          >
+            <Menu className="h-5 w-5" />
           </Button>
-          <ThemeSwitcher />
-          <UserMenu />
-        </div>
-      </div>
 
-      {/* Mobile drawer */}
-      {open ? (
-        <MobileDrawer items={items} onClose={() => setOpen(false)} />
-      ) : null}
-    </header>
+          <div className="flex items-center gap-2 text-sm text-muted-foreground">
+            <span className="hidden sm:inline">Inventory</span>
+            <span className="hidden sm:inline">/</span>
+            <span className="font-medium text-foreground">Management</span>
+          </div>
+
+          <div className="ml-auto flex items-center gap-2">
+            <div className="hidden sm:flex items-center gap-2">
+              <div className="relative">
+                <Search className="absolute left-2.5 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+                <button
+                  onClick={openSearch}
+                  className="flex items-center w-[220px] h-9 pl-8 pr-3 bg-background border border-input rounded-md text-sm text-muted-foreground hover:bg-accent hover:text-accent-foreground transition-colors"
+                >
+                  <span className="flex-1 text-left">Alles durchsuchen...</span>
+                  <kbd className="pointer-events-none h-5 select-none items-center gap-1 rounded border bg-muted px-1.5 font-mono text-[10px] font-medium opacity-100 sm:flex">
+                    <span className="text-xs">⌘</span>K
+                  </kbd>
+                </button>
+              </div>
+            </div>
+            <Button variant="ghost" size="icon" className="hidden sm:inline-flex" aria-label="Notifications">
+              <Bell className="h-5 w-5 text-muted-foreground" />
+            </Button>
+            <ThemeSwitcher />
+            <UserMenu />
+          </div>
+        </div>
+
+        {/* Mobile drawer */}
+        {open ? (
+          <MobileDrawer items={items} onClose={() => setOpen(false)} />
+        ) : null}
+      </header>
+      
+      {/* Global Search Modal */}
+      <GlobalSearchModal isOpen={searchOpen} onClose={closeSearch} />
+    </>
   );
 }
 

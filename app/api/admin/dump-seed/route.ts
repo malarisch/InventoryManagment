@@ -122,12 +122,12 @@ export async function POST() {
     sql += "COMMIT;\n";
 
     // Write to repo root supabase/seed.sql (Next app lives in ./inventorymanagement)
-    const outDir = path.join(process.cwd(), "..", "supabase");
+    const outDir = path.join(process.cwd(), ".", "supabase");
     const outPath = path.join(outDir, "seed.sql");
     await fs.mkdir(outDir, { recursive: true });
     await fs.writeFile(outPath, sql, "utf8");
 
-    return NextResponse.json({ ok: true, path: "../supabase/seed.sql", bytes: Buffer.byteLength(sql) });
+    return NextResponse.json({ ok: true, path: "./supabase/seed.sql", bytes: Buffer.byteLength(sql) });
   } catch (e: unknown) {
     const message = e instanceof Error ? e.message : String(e);
     return NextResponse.json({ error: message }, { status: 500 });

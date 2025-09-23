@@ -311,3 +311,10 @@ Next: Run `supabase db push` to add `files` columns and `attachments` bucket; co
 - Added Article/Job metadata partials with company-default placeholders; integrated into create+edit forms with Advanced JSON toggles.
 - Added inherit util to normalize company metadata; added unit tests.
 - Updated Equipment/Customer edit forms to use typed metadata as well.
+
+2025-09-22 06:30 CEST — Camera-based QR Asset Tag Scanning
+- Implemented QrScannerModal with qr-scanner library for real-time camera scanning of asset tags.
+- Added scanning functionality to Articles, Equipments, and Locations pages with asset tag lookup.
+- Created useQrScanner hook and integrated modal with custom overlay design (no shadcn Dialog dependency).
+- Mobile-friendly interface with flash toggle, camera switching, success/error feedback, and auto-navigation to found items.
+- Builds successfully, ready for field testing on mobile devices.

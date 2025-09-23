@@ -118,7 +118,7 @@ export default async function ManagementHomePage() {
     if (display) actorMap.set(id, display);
   }
 
-  const historyEntries = historyRows.map((row) => {
+  const historyEntries = historyRows.map((row, index) => {
     const payload = isRecord(row.old_data) ? (row.old_data as Record<string, unknown>) : {};
     const op = typeof payload["_op"] === "string" ? (payload["_op"] as string) : null;
     const hrefBase = TABLE_ROUTES[row.table_name];
@@ -128,6 +128,32 @@ export default async function ManagementHomePage() {
         : row.change_made_by
         ? actorMap.get(row.change_made_by) ?? (fallbackDisplayFromId(row.change_made_by) ?? "Unbekannt")
         : "System";
+
+    // Find previous version for diff calculation (only for UPDATE operations)
+    const changes: Array<{ key: string; from: unknown; to: unknown }> = [];
+    if (op === "UPDATE") {
+      // Look for previous entry for the same table and data_id
+      const previousEntry = historyRows
+        .slice(index + 1) // Look at older entries
+        .find(r => r.table_name === row.table_name && r.data_id === row.data_id);
+      
+      if (previousEntry) {
+        const previousPayload = isRecord(previousEntry.old_data) ? (previousEntry.old_data as Record<string, unknown>) : {};
+        const currentPayload = payload;
+        
+        // Calculate shallow diff
+        const allKeys = new Set([...Object.keys(previousPayload), ...Object.keys(currentPayload)]);
+        for (const key of allKeys) {
+          if (key === "_op" || key === "created_at" || key === "updated_at") continue;
+          const oldValue = previousPayload[key];
+          const newValue = currentPayload[key];
+          if (JSON.stringify(oldValue) !== JSON.stringify(newValue)) {
+            changes.push({ key, from: oldValue, to: newValue });
+          }
+        }
+      }
+    }
+
     return {
       id: row.id,
       createdAt: row.created_at,
@@ -138,6 +164,7 @@ export default async function ManagementHomePage() {
       op,
       href: hrefBase ? `${hrefBase}/${row.data_id}` : null,
       actorDisplay,
+      changes,
     };
   });
 
