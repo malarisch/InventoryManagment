@@ -77,7 +77,7 @@ export default async function CustomerDetailPage({ params }: { params: Promise<{
             </div>
             <CustomerEditForm customer={cust} />
             <div className="mt-6">
-              <FileManager table="customers" rowId={cust.id} initial={(cust as Record<string, unknown>).files} />
+              <FileManager table="customers" rowId={cust.id} companyId={cust.company_id} isPublic={false} initial={(cust as Record<string, unknown>).files} />
             </div>
           </CardContent>
         </Card>

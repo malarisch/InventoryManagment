@@ -21,6 +21,7 @@ const navItems: NavItem[] = [
   { label: "Cases", href: "/management/cases", icon: "archive" },
   { label: "Jobs", href: "/management/jobs", icon: "briefcase" },
   { label: "Settings", href: "/management/company-settings", icon: "settings" },
+  { label: "Asset Tag Templates", href: "/management/asset-tag-templates/new", icon: "file-plus" },
 ];
 
 export default function ManagementLayout({

@@ -18,11 +18,15 @@ import { normalizeFileArray } from "@/lib/files";
 export function FileManager({
   table,
   rowId,
+  companyId,
+  isPublic,
   initial,
   className,
 }: {
   table: string;
   rowId: number;
+  companyId?: number;
+  isPublic?: boolean;
   initial?: unknown;
   className?: string;
 }) {
@@ -36,11 +40,24 @@ export function FileManager({
     setError(null);
     try {
       const safeName = file.name.replace(/[^\w\.-]+/g, "_");
-      const path = `${table}/${rowId}/${Date.now()}_${safeName}`;
-      const { error: upErr } = await supabase.storage.from("attachments").upload(path, file, { upsert: false });
+      const bucket = isPublic ? "public-assets" : "private-attachments";
+      const path = isPublic
+        ? `${table}/${rowId}/${Date.now()}_${safeName}`
+        : `${companyId}/${table}/${rowId}/${Date.now()}_${safeName}`;
+      const { error: upErr } = await supabase.storage.from(bucket).upload(path, file, { upsert: false });
       if (upErr) throw upErr;
-      const { data: urlData } = supabase.storage.from("attachments").getPublicUrl(path);
-      const entry: FileEntry = { id: path, link: urlData.publicUrl, name: name?.trim() || null, description: description?.trim() || null };
+
+      let publicUrl = '';
+      if (isPublic) {
+        const { data } = supabase.storage.from(bucket).getPublicUrl(path);
+        publicUrl = data.publicUrl;
+      } else {
+        const { data, error } = await supabase.storage.from(bucket).createSignedUrl(path, 60 * 60 * 24 * 365 * 10); // 10 years
+        if (error) throw error;
+        publicUrl = data.signedUrl;
+      }
+
+      const entry: FileEntry = { id: path, link: publicUrl, name: name?.trim() || null, description: description?.trim() || null };
       const next = [...items, entry];
       const { error: upRowErr } = await supabase
         .from(table)

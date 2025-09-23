@@ -80,7 +80,7 @@ export default async function EquipmentDetailPage({ params }: { params: Promise<
             </div>
             <EquipmentEditForm equipment={eq} />
             <div className="mt-6">
-              <FileManager table="equipments" rowId={eq.id} initial={(eq as Record<string, unknown>).files} />
+              <FileManager table="equipments" rowId={eq.id} companyId={eq.company_id} isPublic={false} initial={(eq as Record<string, unknown>).files} />
             </div>
           </CardContent>
         </Card>

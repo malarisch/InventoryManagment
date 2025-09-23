@@ -16,6 +16,8 @@ import {
   jobCustomerDisplay,
   type JobCustomer,
 } from "@/app/management/_libs/dashboard-utils";
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
+import { ChevronDown, PlusCircle, Pencil, Trash2 } from "lucide-react";
 
 /**
  * Jobs row enriched with the optional customer relation for dashboard usage.
@@ -142,20 +144,20 @@ export default async function ManagementHomePage() {
   });
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4">
       <div>
-        <h1 className="text-2xl font-semibold">Dashboard</h1>
-        <p className="text-sm text-muted-foreground">
+        <h1 className="text-3xl font-bold tracking-tight">Dashboard</h1>
+        <p className="text-muted-foreground">
           Überblick über kommende Einsätze und die letzten Änderungen deiner Companies.
         </p>
       </div>
 
-      <section className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+      <section className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
         {stats.map((stat) => (
           <Card key={stat.key}>
             <CardHeader className="pb-2">
               <CardDescription>{stat.label}</CardDescription>
-              <CardTitle className="text-3xl font-semibold tracking-tight">
+              <CardTitle className="text-4xl font-bold">
                 {stat.error ? "—" : stat.value.toLocaleString("de-DE")}
               </CardTitle>
             </CardHeader>
@@ -170,8 +172,8 @@ export default async function ManagementHomePage() {
         ))}
       </section>
 
-      <div className="grid gap-6 lg:grid-cols-3">
-        <Card className="lg:col-span-2">
+      <div className="grid gap-6 lg:grid-cols-5">
+        <Card className="lg:col-span-3">
           <CardHeader className="pb-3">
             <CardTitle>Kommende Veranstaltungen</CardTitle>
             <CardDescription>Termine aus deinen Jobs mit Start oder Ende in der Zukunft.</CardDescription>
@@ -197,14 +199,14 @@ export default async function ManagementHomePage() {
                   >
                     <div className="flex flex-wrap items-center justify-between gap-3">
                       <div>
-                        <p className="text-sm font-medium text-foreground">
+                        <p className="font-semibold text-foreground">
                           {job.name?.trim() || `Job #${job.id}`}
                         </p>
-                        <p className="text-xs text-muted-foreground">{jobCustomerDisplay(job.customers)}</p>
+                        <p className="text-sm text-muted-foreground">{jobCustomerDisplay(job.customers)}</p>
                       </div>
                       {job.type ? <Badge variant="secondary">{job.type}</Badge> : null}
                     </div>
-                    <dl className="mt-3 grid gap-2 text-xs sm:grid-cols-2">
+                    <dl className="mt-3 grid gap-2 text-sm sm:grid-cols-2">
                       <div className="flex flex-col gap-0.5">
                         <dt className="font-medium text-muted-foreground">Zeitraum</dt>
                         <dd className="text-foreground">{formatJobPeriod(job)}</dd>
@@ -221,7 +223,7 @@ export default async function ManagementHomePage() {
           </CardContent>
         </Card>
 
-        <Card>
+        <Card className="lg:col-span-2">
           <CardHeader className="pb-3">
             <CardTitle>Schnellzugriffe</CardTitle>
             <CardDescription>Arbeite direkt in den wichtigsten Bereichen weiter.</CardDescription>
@@ -233,8 +235,8 @@ export default async function ManagementHomePage() {
                 href={link.href}
                 className="block rounded-md border border-border/60 bg-background px-3 py-3 transition hover:border-primary hover:bg-accent/20"
               >
-                <div className="text-sm font-medium text-foreground">{link.label}</div>
-                <div className="text-xs text-muted-foreground">{link.description}</div>
+                <div className="font-semibold text-foreground">{link.label}</div>
+                <div className="text-sm text-muted-foreground">{link.description}</div>
               </Link>
             ))}
           </CardContent>
@@ -281,30 +283,47 @@ export default async function ManagementHomePage() {
                   </thead>
                   <tbody>
                     {historyEntries.map((entry) => (
-                      <tr key={entry.id} className="border-t border-border/60 even:bg-muted/30">
-                        <td className="px-3 py-2 align-top text-xs text-muted-foreground">
-                          {formatDateTime(safeParseDate(entry.createdAt))}
-                        </td>
-                        <td className="px-3 py-2 align-top text-xs">{entry.tableLabel}</td>
-                        <td className="px-3 py-2 align-top text-xs">
-                          {entry.href ? (
-                            <Link className="underline underline-offset-4" href={entry.href}>
-                              #{entry.dataId}
-                            </Link>
-                          ) : (
-                            <>#{entry.dataId}</>
-                          )}
-                        </td>
-                        <td className="px-3 py-2 align-top text-xs">
-                          <Badge variant="outline" className="uppercase">
-                            {entry.op ? entry.op.toUpperCase() : "UPDATE"}
-                          </Badge>
-                        </td>
-                        <td className="px-3 py-2 align-top text-xs text-muted-foreground">
-                          {entry.summary}
-                        </td>
-                        <td className="px-3 py-2 align-top text-xs">{entry.actorDisplay}</td>
-                      </tr>
+                      <Collapsible asChild key={entry.id}>
+                        <>
+                          <tr className="border-t border-border/60 even:bg-muted/30">
+                            <td className="px-3 py-2 align-top text-xs">
+                              <CollapsibleTrigger asChild>
+                                <button className="flex items-center space-x-1">
+                                  <Badge variant="outline" className="uppercase">
+                                    {entry.op === 'INSERT' ? <PlusCircle className="w-4 h-4 mr-1" /> : entry.op === 'DELETE' ? <Trash2 className="w-4 h-4 mr-1" /> : <Pencil className="w-4 h-4 mr-1" />}
+                                    {entry.op ? entry.op.toUpperCase() : "UPDATE"}
+                                  </Badge>
+                                  <ChevronDown className="w-4 h-4" />
+                                </button>
+                              </CollapsibleTrigger>
+                            </td>
+                            <td className="px-3 py-2 align-top text-xs text-muted-foreground">
+                              {formatDateTime(safeParseDate(entry.createdAt))}
+                            </td>
+                            <td className="px-3 py-2 align-top text-xs">{entry.tableLabel}</td>
+                            <td className="px-3 py-2 align-top text-xs">
+                              {entry.href ? (
+                                <Link className="underline underline-offset-4" href={entry.href}>
+                                  #{entry.dataId}
+                                </Link>
+                              ) : (
+                                <>#{entry.dataId}</>
+                              )}
+                            </td>
+                            <td className="px-3 py-2 align-top text-xs text-muted-foreground">
+                              {entry.summary}
+                            </td>
+                            <td className="px-3 py-2 align-top text-xs">{entry.actorDisplay}</td>
+                          </tr>
+                          <CollapsibleContent asChild>
+                            <tr className="bg-muted/20">
+                              <td colSpan={6} className="p-4">
+                                <pre className="text-xs overflow-auto">{JSON.stringify(entry.summary, null, 2)}</pre>
+                              </td>
+                            </tr>
+                          </CollapsibleContent>
+                        </>
+                      </Collapsible>
                     ))}
                   </tbody>
                 </table>
