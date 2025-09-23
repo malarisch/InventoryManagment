@@ -7,6 +7,8 @@
 
 **2025-09-24 23:25** - Fixed RLS policy violation for public file uploads. Added missing RLS policies for public-assets bucket (company member management + public read access). Fixed path structure to include company_id for both public and private files. Public file uploads now work properly without security violations.
 
+**2025-09-24 23:45** - Implemented company logo display in header. Created getCompanyLogo helper to extract logos from company files, updated CompanyNameHeader component to show logo when available, configured Next.js image domains for Supabase storage. Logo appears in sidebar header replacing placeholder when public file with "logo" in name/description exists.
+
 **2024-12-19 11:30** - Fixed critical UI bugs identified in test analysis. Fixed Jobs form FormData error (React.FormEvent typing), Equipment detail page null power error (buildEquipmentMetadata null safety), and test CSS selector syntax. All components tested and working. Commit: 840a657
 
 - 2025-01-05 00:34 CEST — **Enhanced Copilot Instructions**: Updated `.github/copilot-instructions.md` from 61 to 142 lines with comprehensive codebase analysis. Added DataTable pattern documentation, metadata form dual-mode conventions, Supabase client usage patterns, and authentication workflow. Covered key architectural decisions: generic components, metadata builders, company tenancy, form state management. Next: agent workflow validation against new guidelines.

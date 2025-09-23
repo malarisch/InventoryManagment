@@ -6,7 +6,7 @@ import { getCompanyLogo } from "@/lib/company-logo";
 
 export function CompanyNameHeader() {
   const { company } = useCompany();
-  const logoUrl = company?.files ? getCompanyLogo(company.files) : null;
+  const logoUrl = company ? getCompanyLogo(company) : null;
 
   return (
     <div className="flex h-14 items-center gap-2 border-b px-4">
