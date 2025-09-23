@@ -8,11 +8,20 @@ Diese To-Do List enthält Aufgaben, die an der Software zu bearbeiten sind. Soba
 Diese To-Do List enthält Aufgaben, die an der Software zu bearbeiten sind. Sobald eine Aufgabe bearbeited wurde soll diese hier in der Datei unten in die Done-List eingefügt und aus der To-Do list entfernt werden. Denk daran für alles, was du tust, auch Tests zu implementieren! Vor dem Committen Tests ausführen und checken ob alles läuft, wenn nicht erst alles fixen und dann committen. Für jedes Todo ein Commit. Speichere so viel wie möglich in deine Memories, damit du schneller darauf zugreifen kannst.
 
 ## To-Do
-
+- Es fehlen überall immer mal wieder beschriebene Metadaten Felder. Die Supplyer bei Artikeln fehlen, Preise, etc. etc.
+- Implementiere einen Kameramodus. Dieser ist für Smartphones optimiert und scannt asset tags. Wenn das ding einfach "nur so" offen ist, öffne die Detailseite des Assets. Es soll sonst noch weitere Modi geben:
+  - Equipments und Cases an eine Location "stellen" - also ein Knopf auf der Location seite den Scanner öffnet und alle folgenden gescannten Equipments und Artikel bekommen diese Location als aktuellen Standort.
+  - Gleiches prinzip, aber A) einmal um Assets zu einem Job zu buchen und B) beim Packen auch in den Job zu kommissionieren. Dafür existiert die zweite Tabelle.
+- Die Company Settings soll ein Upload Feld für Dateien bekommen. Pro Datei einstellbar ob öffentlich oder nicht. "Copy" button für ggf. öffentlichen Link. 
+- Company logo oben Links beim Namen in der UI anzeigen. Wenn nicht gesetzt Fallback auf so wie es aktuell ist.
+- Schaue wie du den Screen Space besser ausnutzen kannst auf Desktop mit hoher Auflösung.
+- Equipments und Cases sollen wartungslogs bekommen. In dem Zuge implementiere das Konzept "Werkstatt" - locations können gemäß der Typendefiniton eine Werkstatt sein. Füge einen "Werkstatt todo hinzufügen" hinzu. Erstelle eine Werkstattübersicht. Da werden alle Todos angezeigt, sowie Equipments, die sich in der Werkstatt befinden. Also ähnlich wie das Dashboard, nur auf Equipmentwartung sepzialisiert!
+- Jobs sollen eine Preisübersicht bekommen, anhand der zu ihnen gebuchten Assets. Ebenso Gewicht und Truckspace. Berechnet an den Werten der eingebuchten Assets.
 
 
 ### Fixes
-
+Die Suchfunktion tuts nicht. Außerdem soll sie im "Apple Spotlight Stil" als floating modal geöffnet werden. Aus dem Modal klicken schließt sie. Update bei jedem Buchstaben.
+Die Titel im Tabellenheader auf dem Dashboard stimmen nicht. Außerdem wird nur angezeigt, dass etwas in einer Tabelle passiert ist, aber nicht was. Das Diff Ergebnis, fehlt.
 
 ## Done
 - Räume deinen Code auf - modifiziere ggf. Komponenten, das sie reusable sind soweit wie möglich.
