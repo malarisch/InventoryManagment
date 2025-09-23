@@ -31,10 +31,13 @@ export function EquipmentMetadataForm({
   }, [company]);
 
   useEffect(() => setLocal(value), [value]);
-  useEffect(() => onChange(local), [local, onChange]);
 
   function set<K extends keyof EquipmentMetadata>(key: K, v: EquipmentMetadata[K]) {
-    setLocal((s) => ({ ...s, [key]: v }));
+    setLocal((s) => {
+      const updated = { ...s, [key]: v };
+      onChange(updated);
+      return updated;
+    });
   }
 
   return (

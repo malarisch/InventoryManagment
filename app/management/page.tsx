@@ -314,7 +314,7 @@ export default async function ManagementHomePage() {
                           </td>
                           <td className="px-3 py-2 align-top text-xs">{entry.actorDisplay}</td>
                         </tr>
-                        <CollapsibleContent asChild>
+                        <CollapsibleContent>
                           <tr key={`expanded-${entry.id}`} className="bg-muted/20">
                             <td colSpan={6} className="p-4">
                               <pre className="text-xs overflow-auto">{JSON.stringify(entry.summary, null, 2)}</pre>

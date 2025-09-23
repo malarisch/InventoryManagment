@@ -266,7 +266,7 @@ test.describe('Management Dashboard Tests', () => {
     await page.waitForLoadState('networkidle');
     
     const testArticleName = `History Test Article ${timestamp}`;
-    await page.fill('input[name="name"], input[placeholder*="Name"]', testArticleName);
+  await page.fill('input#name', testArticleName);
     await page.click('button[type="submit"]');
     await page.waitForLoadState('networkidle');
     

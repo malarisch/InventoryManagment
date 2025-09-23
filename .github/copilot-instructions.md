@@ -1,60 +1,168 @@
-## InventoryManagment — Copilot instructions (concise)
+## InventoryManagment — Copilot instructions (comprehensive)
 
-This file gives focused, repository-specific guidance for AI coding agents working in InventoryManagment. Keep entries short and factual; prefer local files as sources of truth.
+This file provides focused, repository-specific guidance for AI coding agents working in InventoryManagment. Keep entries actionable and factual; prefer local files as sources of truth.
 
-- Project layout (big picture)
-  - Next.js (App Router) TypeScript app in the repo root. Primary app code lives under `app/`, shared UI under `components/`, and utilities under `lib/`.
-  - `supabase/` contains local Supabase config, SQL migrations and seed files. `database.types.ts` is the canonical DB types file generated from the schema.
-  - Tenancy model: `companies` is the tenant boundary; all business tables have `company_id` and RLS policies rely on `users_companies` membership. See `AGENTS.md` and `supabase_ai_docs/` for RLS rules.
+### Project Architecture & Layout
 
-- Key files to consult before changing behavior
-  - `database.types.ts` — authoritative DB types (run `npm run supabase-gen-types` after migrations).
-  - `supabase/` folder — migrations and seeds. Update migrations, then regenerate types.
-  - `components/forms/partials/company-metadata-form.tsx` — UI handling for company custom types (textareas). Important for newline/list behavior.
-  - `components/*-create-form.tsx` — many create/edit forms parse JSON meta and cast to DB `Json`.
-  - `lib/supabase/*` — Supabase clients (admin vs client) and helpers — use server admin client only from server routes.
+**Core Structure:**
+- Next.js 15.5.3 (App Router) TypeScript app in the repo root. Primary app code lives under `app/`, shared UI under `components/`, and utilities under `lib/`.
+- `supabase/` contains local Supabase config, SQL migrations and seed files. `database.types.ts` is the canonical DB types file generated from the schema.
+- Tenancy model: `companies` is the tenant boundary; all business tables have `company_id` and RLS policies rely on `users_companies` membership. See `AGENTS.md` and `supabase_ai_docs/` for RLS rules.
 
-- Build / test / dev workflows (practical commands)
-  - Install: `npm install`
-  - Dev server: `npm run dev` (Next dev on :3000)
-  - Build: `npm run build`; Start: `npm run start`
-  - Lint + typecheck: `npm run lint` and `npm run test:tsc`
-  - Unit tests: `npm run test:unit` (Vitest)
-  - E2E tests: `npm run test:e2e` (Playwright). CI downloads Playwright browsers during runs.
-  - Full CI/local test run (what CI runs): `npm run test` → lint → tsc → vitest → playwright
+**Component Patterns:**
+- **Generic DataTable:** `components/data-table.tsx` is the standardized table component used across all entity tables. Takes TypeScript generics, accepts `columns`, `searchableFields`, and `renderRowActions`. Provides consistent search, pagination, and row actions.
+- **Entity Tables:** All `*Table.tsx` files (`articleTable.tsx`, `equipmentTable.tsx`, `customerTable.tsx`, etc.) follow the same pattern: define column configuration, specify searchable fields, implement row actions (view/edit/delete).
+- **Form Architecture:** Create/edit forms follow a dual-mode pattern: structured metadata UI vs "Advanced (JSON)" textarea toggle. All use metadata builders from `lib/metadata/builders.ts` and default values from `lib/metadata/defaults.ts`.
 
-- Patterns & conventions the agent should follow
-  - TypeScript-first: prefer explicit types. Many files import `Json` from `database.types.ts`; avoid creating a conflicting global `Json` name (alias imports if needed). Example fix: `import type { Json as DBJson } from '@/database.types'`.
-  - Use Next.js server components by default; only add `"use client"` when component needs client state or hooks (many form components are client components).
-  - Metadata fields are JSON blobs stored in `*_metadata` columns; forms offer an "Advanced (JSON)" textarea or structured UI. When converting structured objects to DB metadata, cast using `as unknown as Json` to satisfy types.
-  - Database changes: write migration SQL in `supabase/migrations`, run `supabase migrations up`, then `npm run supabase-gen-types` to regenerate `database.types.ts` before updating app code.
+### Key Files & Dependencies
 
-- Integration points & external dependencies
-  - Supabase (local dev via `npx supabase start`) — auth and DB. Tests use an admin client for seed/dump operations under `app/api/admin/*`.
-  - Supabase CLI: Always use `npx supabase ...` for all CLI commands. Never attempt to install Supabase or any other software directly (e.g., via npm, brew, curl, sudo, etc.) — this is unsafe and forbidden for agents. If CLI is missing, fail gracefully and instruct the user to install manually.
-  - Playwright for browser E2E under `tests/e2e/` (CI downloads browser binaries automatically). Tests assume a running Next.js + Supabase stack unless specially mocked.
-  - Vitest unit tests in `tests/vitest/` — prefer to use provided cleanup helpers (see `tests/vitest/utils/cleanup.ts`) when manipulating DB.
+**Critical Files to Consult Before Changes:**
+- `database.types.ts` — authoritative DB types (run `npm run supabase-gen-types` after migrations).
+- `supabase/` folder — migrations and seeds. Update migrations, then regenerate types.
+- `components/metadataTypes.types.ts` — TypeScript definitions for all metadata shapes.
+- `lib/metadata/{defaults,builders}.ts` — metadata default values and merge functions.
+- `lib/supabase/{client,server,admin}.ts` — Supabase client patterns (see Authentication section).
+- `supabase_ai_docs/` — authoritative Supabase implementation rules (RLS, auth, style).
 
-- Troubleshooting tips / frequent pitfalls
-  - Duplicate `Json` type errors during `next build` may occur if multiple ambient or conflicting declarations exist; alias imports locally to fix quickly.
-  - Newlines missing in company metadata lists were caused by `.filter(Boolean)` on textarea input arrays — preserve empty strings when storing line-based lists.
-  - When adding endpoints that use the Supabase admin client, ensure the secret `SUPABASE_SERVICE_ROLE_KEY` is only used server-side and relevant checks (owner-only) are in place.
+**Metadata & Form System:**
+- All entities use JSON `*_metadata` columns with typed interfaces from `metadataTypes.types.ts`.
+- Forms provide both structured UI (via `*MetadataForm` partials) and raw JSON textarea ("Advanced" mode).
+- Metadata builders (`buildCustomerMetadata`, `buildEquipmentMetadata`, etc.) merge partial input with project defaults.
+- Company-level defaults cascade to individual entities (tax rates, currencies, power specs).
 
-- Example snippets (safe, copyable patterns)
-  - Parse advanced JSON safely in client forms:
-    const mt = metadataText.trim();
-    let metadata: DBJson | null = null;
-    if (mt.length) { try { metadata = JSON.parse(mt) as DBJson; } catch { throw new Error('Invalid JSON'); } }
+### Build, Test & Development Workflows
 
-  - Regenerate DB types after migration:
-    npm run supabase-gen-types
+**Commands:**
+- Install: `npm install`
+- Dev server: `npm run dev` (Next dev on :3000)
+- Build: `npm run build`; Start: `npm run start`
+- Lint + typecheck: `npm run lint` and `npm run test:tsc`
+- Unit tests: `npm run test:unit` (Vitest)
+- E2E tests: `npm run test:e2e` (Playwright). CI downloads Playwright browsers during runs.
+- Full CI/local test run (what CI runs): `npm run test` → lint → tsc → vitest → playwright
 
-- Where to update this doc
-  - Keep this file short. If a longer explanation is needed, add it to `AGENTS.md` or a `supabase_ai_docs/*` file and reference it here.
+**Database Workflow:**
+1. Write migration SQL in `supabase/migrations/`
+2. Run `npx supabase db reset` or `npx supabase migrations up`
+3. Run `npm run supabase-gen-types` to update `database.types.ts`
+4. Update app code with new types
 
-- Memories and Agent State (optional guidance)
-  - Agents should persist short-lived, relevant observations (e.g., migration notes, completed tasks, CI quirks) to `agentlog.md` or `human-review-todos.md` as appropriate.
-  - Before running broad searches, consult `agentlog.md` and `todos.md` to avoid duplicating work. Append new short entries to `agentlog.md` after substantial changes (2-4 lines: date/time, task, files touched, next step).
-  - For longer-term knowledge, create/update entries in `supabase_ai_docs/*` and reference them from this doc.
+### Authentication & Supabase Patterns
 
-If anything here is unclear or you'd like more examples (CI workflow, Playwright auth, or DB cleanup patterns), tell me which area to expand and I'll iterate. 
+**CRITICAL:** Always follow `supabase_ai_docs/nextjs-supabase-auth-rules.md` exactly. Never use deprecated `auth-helpers-nextjs` patterns.
+
+**Client Types:**
+- **Browser Client:** `lib/supabase/client.ts` — use in client components, returns fresh instance per call
+- **Server Client:** `lib/supabase/server.ts` — use in server components/routes, bound to request cookies
+- **Admin Client:** `lib/supabase/admin.ts` — server-only, uses `SUPABASE_SERVICE_ROLE_KEY`, for privileged operations
+
+**Usage Patterns:**
+- Server components: `const supabase = await createClient(); const { data: auth } = await supabase.auth.getUser();`
+- Client components: `const supabase = useMemo(() => createClient(), []);`
+- User display server-side: `await fetchUserDisplayAdmin(userId)` (from `lib/users/userDisplay.server.ts`)
+- Admin operations: Only in API routes under `app/api/admin/`, require owner-level checks
+
+### TypeScript & Styling Conventions
+
+**Type Safety:**
+- TypeScript strict mode enabled. Prefer explicit types over `any`.
+- Many files import `Json` from `database.types.ts` — avoid creating conflicting global `Json` types. Use `import type { Json as DBJson }` if needed.
+- Metadata casting pattern: `metadata = metaObj as unknown as Json` when storing structured objects.
+
+**Component Architecture:**
+- Default to Server Components; only add `"use client"` when component needs client state or hooks.
+- Form components are typically client components due to state management.
+- Use shadcn/ui primitives from `components/ui/` for consistent styling.
+- Styling: Tailwind CSS with `clsx` and `tailwind-merge` for class composition.
+
+### Integration Points & External Dependencies
+
+**Supabase:**
+- Local dev via `npx supabase start` (never install Supabase CLI via agents)
+- Tests use admin client for seed/dump operations under `app/api/admin/*`
+- Always use `npx supabase ...` for CLI commands — never attempt direct installation
+
+**Testing:**
+- Playwright for browser E2E under `tests/e2e/` (CI downloads browser binaries automatically)
+- Tests assume running Next.js + Supabase stack unless specially mocked
+- Vitest unit tests in `tests/vitest/` — use provided cleanup helpers from `tests/vitest/utils/cleanup.ts`
+
+### Common Patterns & Code Examples
+
+**Metadata Form Pattern:**
+```typescript
+// Client component with dual mode (structured vs JSON)
+const [metaText, setMetaText] = useState(() => toPrettyJSON(defaultEquipmentMetadataDE));
+const [metaObj, setMetaObj] = useState(defaultEquipmentMetadataDE);
+const [advanced, setAdvanced] = useState(false);
+
+// In form submission:
+let metadata: Json | null = null;
+if (advanced) {
+  const mt = metaText.trim();
+  if (mt.length) {
+    try { metadata = JSON.parse(mt) as Json; } catch { throw new Error("Invalid JSON"); }
+  }
+} else {
+  metadata = buildEquipmentMetadata(metaObj) as unknown as Json;
+}
+```
+
+**DataTable Implementation:**
+```typescript
+// Define columns with proper typing
+const columns: ColumnDef<Equipment>[] = [
+  { accessorKey: "id", header: "ID" },
+  { accessorKey: "name", header: "Name" },
+  // ... more columns
+];
+
+// Use generic DataTable
+<DataTable
+  data={equipments}
+  columns={columns}
+  searchableFields={["name", "description"]}
+  renderRowActions={(equipment) => (
+    <DropdownMenu>
+      <DropdownMenuTrigger asChild><Button variant="ghost">⋯</Button></DropdownMenuTrigger>
+      <DropdownMenuContent>
+        <DropdownMenuItem asChild><Link href={`/management/equipments/${equipment.id}`}>View</Link></DropdownMenuItem>
+      </DropdownMenuContent>
+    </DropdownMenu>
+  )}
+/>
+```
+
+### Troubleshooting & Common Pitfalls
+
+**Type Issues:**
+- Duplicate `Json` type errors during `next build` — alias imports locally to fix
+- Metadata type mismatches — ensure builders from `lib/metadata/builders.ts` are used consistently
+
+**Data Issues:**
+- Newlines missing in company metadata lists — preserve empty strings when storing line-based lists (avoid `.filter(Boolean)`)
+- RLS policy failures — ensure all queries include/derive `company_id` and user has proper membership
+
+**Auth Issues:**
+- Random logouts — follow `supabase_ai_docs/nextjs-supabase-auth-rules.md` exactly
+- Admin operations in client code — move to API routes under `app/api/admin/`
+
+### Agent Workflow & State Management
+
+**Before Starting Work:**
+- Consult `todos.md` and `agentlog.md` to understand current project state
+- Read relevant `supabase_ai_docs/` files for Supabase-related changes
+- After schema changes, always run `npm run supabase-gen-types` before writing code
+
+**After Completing Tasks:**
+- Append 2-4 line summary to `agentlog.md` (date/time, task, files touched, next step)
+- Create git commit capturing changes
+- Update `human-review-todos.md` for items requiring user review
+
+**Documentation Hierarchy:**
+- This file: concise, actionable guidance
+- `AGENTS.md`: comprehensive project rules and domain model
+- `supabase_ai_docs/`: authoritative Supabase implementation rules
+- Add new patterns here; move detailed explanations to appropriate docs
+
+If anything here is unclear or you need examples for specific patterns (auth flows, testing, metadata handling), ask for clarification on that specific area. 
