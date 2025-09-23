@@ -11,7 +11,6 @@ import { useCompany } from "@/app/management/_libs/companyHook";
 import { DatePicker } from "@/components/ui/date-picker";
 import { defaultEquipmentMetadataDE, toPrettyJSON } from "@/lib/metadata/defaults";
 import { EquipmentMetadataForm } from "@/components/forms/partials/equipment-metadata-form";
-import type { EquipmentMetadata } from "@/components/metadataTypes.types";
 import { buildEquipmentMetadata } from "@/lib/metadata/builders";
 type Article = Tables<"articles">;
 type Location = Tables<"locations">;

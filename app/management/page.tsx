@@ -2,7 +2,6 @@ import Link from "next/link";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { createClient } from "@/lib/supabase/server";
-import { formatDateTime, safeParseDate } from "@/lib/dates";
 import { fallbackDisplayFromId } from "@/lib/userDisplay";
 import { fetchUserDisplayAdmin } from "@/lib/users/userDisplay.server";
 import type { Tables } from "@/database.types";
@@ -16,8 +15,7 @@ import {
   jobCustomerDisplay,
   type JobCustomer,
 } from "@/app/management/_libs/dashboard-utils";
-import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
-import { ChevronDown, PlusCircle, Pencil, Trash2 } from "lucide-react";
+import { ExpandableHistoryTable } from "@/components/expandable-history-table";
 
 /**
  * Jobs row enriched with the optional customer relation for dashboard usage.
@@ -256,77 +254,7 @@ export default async function ManagementHomePage() {
               Noch keine Aktivitäten vorhanden.
             </div>
           ) : (
-            <div className="overflow-hidden rounded-md border">
-              <div className="max-h-96 overflow-auto">
-                <table className="w-full min-w-[680px] border-collapse text-sm">
-                  <thead className="sticky top-0 bg-muted/60 backdrop-blur">
-                    <tr>
-                      <th className="px-3 py-2 text-left text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-                        Zeitpunkt
-                      </th>
-                      <th className="px-3 py-2 text-left text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-                        Bereich
-                      </th>
-                      <th className="px-3 py-2 text-left text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-                        Datensatz
-                      </th>
-                      <th className="px-3 py-2 text-left text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-                        Aktion
-                      </th>
-                      <th className="px-3 py-2 text-left text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-                        Details
-                      </th>
-                      <th className="px-3 py-2 text-left text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-                        Nutzer
-                      </th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {historyEntries.map((entry) => (
-                      <Collapsible key={`row-${entry.id}`}>
-                        <tr key={`main-${entry.id}`} className="border-t border-border/60 even:bg-muted/30">
-                          <td className="px-3 py-2 align-top text-xs">
-                            <CollapsibleTrigger asChild>
-                              <button className="flex items-center space-x-1">
-                                <Badge variant="outline" className="uppercase">
-                                  {entry.op === 'INSERT' ? <PlusCircle className="w-4 h-4 mr-1" /> : entry.op === 'DELETE' ? <Trash2 className="w-4 h-4 mr-1" /> : <Pencil className="w-4 h-4 mr-1" />}
-                                  {entry.op ? entry.op.toUpperCase() : "UPDATE"}
-                                </Badge>
-                                <ChevronDown className="w-4 h-4" />
-                              </button>
-                            </CollapsibleTrigger>
-                          </td>
-                          <td className="px-3 py-2 align-top text-xs text-muted-foreground">
-                            {formatDateTime(safeParseDate(entry.createdAt))}
-                          </td>
-                          <td className="px-3 py-2 align-top text-xs">{entry.tableLabel}</td>
-                          <td className="px-3 py-2 align-top text-xs">
-                            {entry.href ? (
-                              <Link className="underline underline-offset-4" href={entry.href}>
-                                #{entry.dataId}
-                              </Link>
-                            ) : (
-                              <>#{entry.dataId}</>
-                            )}
-                          </td>
-                          <td className="px-3 py-2 align-top text-xs text-muted-foreground">
-                            {entry.summary}
-                          </td>
-                          <td className="px-3 py-2 align-top text-xs">{entry.actorDisplay}</td>
-                        </tr>
-                        <CollapsibleContent>
-                          <tr key={`expanded-${entry.id}`} className="bg-muted/20">
-                            <td colSpan={6} className="p-4">
-                              <pre className="text-xs overflow-auto">{JSON.stringify(entry.summary, null, 2)}</pre>
-                            </td>
-                          </tr>
-                        </CollapsibleContent>
-                      </Collapsible>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-            </div>
+            <ExpandableHistoryTable historyEntries={historyEntries} />
           )}
         </CardContent>
       </Card>

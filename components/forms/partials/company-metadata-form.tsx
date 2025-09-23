@@ -144,21 +144,21 @@ export function CompanyMetadataForm({
           <Textarea id="cmf-article-types" className="min-h-[80px] w-full rounded-md border bg-background p-2 text-sm"
             placeholder="Jeder Typ in einer neuen Zeile"
             value={value.customTypes.articleTypes.join("\n")}
-            onChange={(e) => set("customTypes", { ...value.customTypes, articleTypes: e.target.value.split("\n").map(s => s.trim()) })} />
+            onChange={(e) => set("customTypes", { ...value.customTypes, articleTypes: e.target.value.split("\n").map(s => s.trim()).filter(s => s.length > 0) })} />
         </div>
         <div className="grid gap-1.5">
           <Label htmlFor="cmf-case-types">Case-Typen</Label>
           <Textarea id="cmf-case-types" className="min-h-[80px] w-full rounded-md border bg-background p-2 text-sm"
             placeholder="Jeder Typ in einer neuen Zeile"
             value={value.customTypes.caseTypes.join("\n")}
-            onChange={(e) => set("customTypes", { ...value.customTypes, caseTypes: e.target.value.split("\n").map(s => s.trim()) })} />
+            onChange={(e) => set("customTypes", { ...value.customTypes, caseTypes: e.target.value.split("\n").map(s => s.trim()).filter(s => s.length > 0) })} />
         </div>
         <div className="grid gap-1.5">
           <Label htmlFor="cmf-location-types">Location-Typen</Label>
           <Textarea id="cmf-location-types" className="min-h-[80px] w-full rounded-md border bg-background p-2 text-sm"
             placeholder="Jeder Typ in einer neuen Zeile"
             value={value.customTypes.locationTypes.join("\n")}
-            onChange={(e) => set("customTypes", { ...value.customTypes, locationTypes: e.target.value.split("\n").map(s => s.trim()) })} />
+            onChange={(e) => set("customTypes", { ...value.customTypes, locationTypes: e.target.value.split("\n").map(s => s.trim()).filter(s => s.length > 0) })} />
         </div>
       </div>
 

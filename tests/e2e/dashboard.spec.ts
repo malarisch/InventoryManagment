@@ -300,7 +300,7 @@ test.describe('Management Dashboard Tests', () => {
     await expect(page.locator('h1, .text-2xl, .text-xl')).toBeVisible();
     
     // Check for empty state messages or placeholders
-    const emptyStates = page.locator('.empty-state, .no-data, text="Keine", text="No data"');
+    const emptyStates = page.locator('.empty-state, .no-data, :text("Keine"), :text("No data")');
     if (await emptyStates.first().isVisible()) {
       await expect(emptyStates.first()).toBeVisible();
     }

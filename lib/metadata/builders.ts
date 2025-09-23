@@ -25,13 +25,15 @@ export function buildCustomerMetadata(input: Partial<CustomerMetadata>): Custome
  * structures like power and ensures typed return value.
  */
 export function buildEquipmentMetadata(input: Partial<EquipmentMetadata>): EquipmentMetadata {
+  // Handle null input
+  const safeInput = input || {};
   return {
     ...defaultEquipmentMetadataDE,
-    ...input,
-    power: { ...defaultEquipmentMetadataDE.power, ...(input.power ?? {}) },
-    is19Inch: input.is19Inch ?? defaultEquipmentMetadataDE.is19Inch,
-    heightUnits: input.heightUnits ?? defaultEquipmentMetadataDE.heightUnits,
-    type: input.type ?? defaultEquipmentMetadataDE.type,
+    ...safeInput,
+    power: { ...defaultEquipmentMetadataDE.power, ...(safeInput.power || {}) },
+    is19Inch: safeInput.is19Inch ?? defaultEquipmentMetadataDE.is19Inch,
+    heightUnits: safeInput.heightUnits ?? defaultEquipmentMetadataDE.heightUnits,
+    type: safeInput.type ?? defaultEquipmentMetadataDE.type,
   } as EquipmentMetadata;
 }
 

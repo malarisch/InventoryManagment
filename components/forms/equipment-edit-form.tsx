@@ -33,6 +33,36 @@ export function EquipmentEditForm({ equipment }: { equipment: Equipment }) {
   });
   const [metaObj, setMetaObj] = useState<EquipmentMetadata>(buildEquipmentMetadata(equipment.metadata as unknown as EquipmentMetadata));
   const [advanced, setAdvanced] = useState(false);
+  
+  // Keep track of the previous advanced state to detect changes
+  const [prevAdvanced, setPrevAdvanced] = useState(false);
+
+  // Synchronize metadata between structured and JSON modes
+  useEffect(() => {
+    if (advanced !== prevAdvanced) {
+      // Mode has changed
+      if (advanced) {
+        // Switching to advanced mode: convert metaObj to JSON
+        try {
+          setMetaText(JSON.stringify(metaObj, null, 2));
+        } catch (error) {
+          console.error("Error converting metadata to JSON:", error);
+        }
+      } else {
+        // Switching to structured mode: parse metaText to metaObj
+        try {
+          if (metaText.trim()) {
+            const parsed = JSON.parse(metaText);
+            setMetaObj(buildEquipmentMetadata(parsed));
+          }
+        } catch (error) {
+          console.error("Error parsing JSON metadata:", error);
+          // Keep existing metaObj if JSON is invalid
+        }
+      }
+      setPrevAdvanced(advanced);
+    }
+  }, [advanced, metaObj, metaText, prevAdvanced]);
 
   useEffect(() => {
     let active = true;

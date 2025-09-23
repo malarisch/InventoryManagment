@@ -45,17 +45,18 @@ export function JobCreateForm() {
     return () => { active = false; };
   }, [supabase]);
 
-  async function onSubmit(e: React.FormEvent) {
+  async function onSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
     setSaving(true);
     setError(null);
+    
     try {
       const { data: auth } = await supabase.auth.getUser();
       const userId = auth.user?.id ?? null;
       if (!company || !userId) throw new Error("Fehlende Company oder Nutzer");
       
       // Get form data - this works with automation unlike React state
-      const formData = new FormData(e.currentTarget as HTMLFormElement);
+      const formData = new FormData(e.currentTarget);
       const formName = formData.get("name") as string;
       const formType = formData.get("type") as string;
       const formJobLocation = formData.get("job_location") as string;
