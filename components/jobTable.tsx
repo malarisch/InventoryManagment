@@ -1,22 +1,15 @@
-"use client";
+'use client';
 
-import { useDeferredValue, useEffect, useMemo, useState } from "react";
-import { createClient } from "@/lib/supabase/client";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import type { Tables } from "@/database.types";
-import Link from "next/link";
-import { safeParseDate, formatDate } from "@/lib/dates";
-import { SearchPicker, type SearchItem } from "@/components/search/search-picker";
-import { useRouter } from "next/navigation";
+import { useMemo } from 'react';
+import { Button } from '@/components/ui/button';
+import type { Tables } from '@/database.types';
+import Link from 'next/link';
+import { Pencil } from 'lucide-react';
+import { DataTable } from '@/components/data-table';
+import { safeParseDate, formatDate } from '@/lib/dates';
 
 type JobRow = Tables<"jobs"> & {
   customers?: { id: number; company_name: string | null; forename: string | null; surname: string | null } | null;
-};
-
-type Props = {
-  pageSize?: number;
-  className?: string;
 };
 
 function customerDisplay(c: JobRow["customers"] | null | undefined): string {
@@ -29,225 +22,52 @@ function customerDisplay(c: JobRow["customers"] | null | undefined): string {
   return person || `#${c.id}`;
 }
 
+type Props = {
+  pageSize?: number;
+  className?: string;
+};
+
 export function JobTable({ pageSize = 10, className }: Props) {
-  const supabase = useMemo(() => createClient(), []);
-  const router = useRouter();
-  const [page, setPage] = useState(1);
-  const [rows, setRows] = useState<JobRow[]>([]);
-  const [count, setCount] = useState<number | null>(null);
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-  const [q, setQ] = useState("");
-  const dq = useDeferredValue(q);
+  const columns = [
+    { key: 'id', label: 'ID', render: (row: JobRow) => <Link className="underline-offset-2 hover:underline" href={`/management/jobs/${row.id}`}>{row.id}</Link> },
+    { key: 'name', label: 'Name', render: (row: JobRow) => <Link className="underline-offset-2 hover:underline" href={`/management/jobs/${row.id}`}>{row.name ?? "—"}</Link> },
+    { key: 'type', label: 'Typ', render: (row: JobRow) => row.type ?? "—" },
+    { key: 'customer_id', label: 'Kunde', render: (row: JobRow) => (
+        row.customers?.id ? (
+          <Link className="underline-offset-2 hover:underline" href={`/management/customers/${row.customers.id}`}>
+            {customerDisplay(row.customers)}
+          </Link>
+        ) : customerDisplay(row.customers)
+      ) },
+    { key: 'startdate', label: 'Zeitraum', render: (row: JobRow) => (
+        <>{row.startdate ? formatDate(safeParseDate(row.startdate)) : "—"}
+        {" – "}
+        {row.enddate ? formatDate(safeParseDate(row.enddate)) : "—"}</>
+      ) },
+    { key: 'job_location', label: 'Ort', render: (row: JobRow) => row.job_location ?? "—" },
+  ];
 
-  useEffect(() => {
-    let isActive = true;
-    async function load() {
-      setLoading(true);
-      setError(null);
-      const from = (page - 1) * pageSize;
-      const to = from + pageSize - 1;
-      let query = supabase
-        .from("jobs")
-        .select("*, customers:customer_id(id,company_name,forename,surname)", { count: "exact" })
-        .order("created_at", { ascending: false });
-
-      const search = dq.trim();
-      if (search.length > 0) {
-        const like = `*${search}*`;
-        const filters = [
-          `name.ilike.${like}`,
-          `type.ilike.${like}`,
-          `job_location.ilike.${like}`,
-          `customers.company_name.ilike.${like}`,
-          `customers.forename.ilike.${like}`,
-          `customers.surname.ilike.${like}`,
-        ];
-        const numeric = Number(search);
-        if (!Number.isNaN(numeric)) {
-          filters.push(`id.eq.${numeric}`);
-          filters.push(`customer_id.eq.${numeric}`);
-        }
-        query = query.or(filters.join(","));
-      }
-
-      const { data, error, count } = await query.range(from, to);
-      if (!isActive) return;
-      if (error) {
-        setError(error.message);
-        setRows([]);
-        setCount(0);
-      } else {
-        setRows((data as JobRow[]) ?? []);
-        setCount(typeof count === "number" ? count : 0);
-      }
-      setLoading(false);
-    }
-    load();
-    return () => {
-      isActive = false;
-    };
-  }, [page, pageSize, dq, supabase]);
-
-  const totalPages = useMemo(() => {
-    if (!count || count <= 0) return 1;
-    return Math.max(1, Math.ceil(count / pageSize));
-  }, [count, pageSize]);
-
-  const canPrev = page > 1;
-  const canNext = page < totalPages;
-
-  const jobSearchItems = useMemo<SearchItem<"job", JobRow>[]>(() => {
-    return rows.map((row, index) => {
-      const customer = customerDisplay(row.customers);
-      const matchers = [
-        { value: String(row.id), weight: 0 },
-        ...(row.name ? [{ value: row.name, weight: 5 }] : []),
-        ...(row.type ? [{ value: row.type, weight: 15 }] : []),
-        ...(row.job_location ? [{ value: row.job_location, weight: 20 }] : []),
-        ...(customer && customer !== "—" ? [{ value: customer, weight: 10 }] : []),
-      ];
-      const description = [
-        customer !== "—" ? customer : null,
-        row.job_location ?? null,
-      ]
-        .filter(Boolean)
-        .join(" • ");
-      return {
-        id: `job-${row.id}`,
-        category: "job" as const,
-        title: row.name ?? `Job #${row.id}`,
-        description: description.length > 0 ? description : undefined,
-        meta: `ID #${row.id}`,
-        priority: index,
-        matchers,
-        data: row,
-      } satisfies SearchItem<"job", JobRow>;
-    });
-  }, [rows]);
+  const renderRowActions = (row: JobRow) => (
+    <Button asChild variant="ghost" size="icon">
+      <Link href={`/management/jobs/${row.id}`}><Pencil className="w-4 h-4" /></Link>
+    </Button>
+  );
 
   return (
-    <Card className={className}>
-      <CardHeader>
-        <CardTitle>Jobs</CardTitle>
-        <CardDescription>{count ?? 0} total</CardDescription>
-      </CardHeader>
-      <CardContent>
-        <div className="mb-2 flex items-center gap-2">
-          <SearchPicker
-            items={jobSearchItems}
-            onSelect={(item) => {
-              setQ("");
-              setPage(1);
-              router.push(`/management/jobs/${(item.data as JobRow).id}`);
-            }}
-            onQueryChange={(value) => {
-              setPage(1);
-              setQ(value);
-            }}
-            placeholder="Suche (Name, Kunde, Ort)"
-            buttonLabel={q}
-            categoryLabels={{ job: "Jobs" }}
-            resetOnSelect={false}
-            disabled={loading}
-            className="w-64"
-          />
-          {q !== dq && <span className="text-xs text-muted-foreground">Sucht…</span>}
-        </div>
-        <div className="overflow-x-auto border rounded-md">
-          <table className="w-full border-collapse text-sm">
-            <thead className="bg-muted/50">
-              <tr>
-                <th className="text-left font-medium px-3 py-2 border-b">ID</th>
-                <th className="text-left font-medium px-3 py-2 border-b">Name</th>
-                <th className="text-left font-medium px-3 py-2 border-b">Typ</th>
-                <th className="text-left font-medium px-3 py-2 border-b">Kunde</th>
-                <th className="text-left font-medium px-3 py-2 border-b">Zeitraum</th>
-                <th className="text-left font-medium px-3 py-2 border-b">Ort</th>
-                <th className="text-left font-medium px-3 py-2 border-b">Aktionen</th>
-              </tr>
-            </thead>
-            <tbody>
-              {loading && rows.length === 0 && (
-                <tr>
-                  <td className="px-3 py-3 text-muted-foreground" colSpan={6}>
-                    Lädt…
-                  </td>
-                </tr>
-              )}
-              {!loading && error && (
-                <tr>
-                  <td className="px-3 py-3 text-red-600" colSpan={6}>
-                    Fehler beim Laden: {error}
-                  </td>
-                </tr>
-              )}
-              {!loading && !error && rows.length === 0 && (
-                <tr>
-                  <td className="px-3 py-3 text-muted-foreground" colSpan={6}>
-                    Keine Jobs gefunden.
-                  </td>
-                </tr>
-              )}
-              {!loading && !error &&
-                rows.map((row) => (
-                  <tr key={row.id} className="odd:bg-background even:bg-muted/20">
-                    <td className="px-3 py-2 border-t align-top">
-                      <Link className="underline-offset-2 hover:underline" href={`/management/jobs/${row.id}`}>{row.id}</Link>
-                    </td>
-                    <td className="px-3 py-2 border-t align-top">
-                      <Link className="underline-offset-2 hover:underline" href={`/management/jobs/${row.id}`}>{row.name ?? "—"}</Link>
-                    </td>
-                    <td className="px-3 py-2 border-t align-top">{row.type ?? "—"}</td>
-                    <td className="px-3 py-2 border-t align-top">
-                      {row.customers?.id ? (
-                        <Link className="underline-offset-2 hover:underline" href={`/management/customers/${row.customers.id}`}>
-                          {customerDisplay(row.customers)}
-                        </Link>
-                      ) : customerDisplay(row.customers)}
-                    </td>
-                    <td className="px-3 py-2 border-t align-top">
-                      {row.startdate ? formatDate(safeParseDate(row.startdate)) : "—"}
-                      {" – "}
-                      {row.enddate ? formatDate(safeParseDate(row.enddate)) : "—"}
-                    </td>
-                    <td className="px-3 py-2 border-t align-top">{row.job_location ?? "—"}</td>
-                    <td className="px-3 py-2 border-t align-top">
-                      <Button asChild variant="outline" size="sm">
-                        <Link href={`/management/jobs/${row.id}`}>Bearbeiten</Link>
-                      </Button>
-                    </td>
-                  </tr>
-                ))}
-            </tbody>
-          </table>
-        </div>
-
-        <div className="mt-3 flex items-center justify-between gap-3">
-          <div className="text-xs text-muted-foreground">
-            Seite {page} von {totalPages}
-            {typeof count === "number" && <span> • {count} Einträge</span>}
-          </div>
-          <div className="flex items-center gap-2">
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => setPage((p) => Math.max(1, p - 1))}
-              disabled={!canPrev || loading}
-            >
-              Zurück
-            </Button>
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => setPage((p) => (canNext ? p + 1 : p))}
-              disabled={!canNext || loading}
-            >
-              Weiter
-            </Button>
-          </div>
-        </div>
-      </CardContent>
-    </Card>
+    <DataTable<JobRow>
+      tableName="jobs"
+      columns={columns}
+      renderRowActions={renderRowActions}
+      pageSize={pageSize}
+      className={className}
+      searchableFields={[
+        { field: 'id', type: 'number' },
+        { field: 'name', type: 'text' },
+        { field: 'type', type: 'text' },
+        { field: 'job_location', type: 'text' },
+        { field: 'customer_id', type: 'number' },
+      ]}
+      select="*, customers:customer_id(id,company_name,forename,surname)"
+    />
   );
 }

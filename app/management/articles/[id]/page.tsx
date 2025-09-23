@@ -8,6 +8,7 @@ import { DeleteWithUndo } from "@/components/forms/delete-with-undo";
 import { HistoryCard } from "@/components/historyCard";
  
 import { ArticleEquipmentsTable } from "@/components/articleEquipmentsTable";
+import { AssetTagCreateForm } from "@/components/forms/asset-tag-create-form";
 import { safeParseDate, formatDateTime } from "@/lib/dates";
 import { fallbackDisplayFromId } from "@/lib/userDisplay";
 import { fetchUserDisplayAdmin } from "@/lib/users/userDisplay.server";

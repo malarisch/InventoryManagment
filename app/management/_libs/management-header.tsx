@@ -87,6 +87,12 @@ export function Header({ items }: { items: NavItem[] }) {
                 className="w-[180px] pl-8"
                 placeholder="Search…"
                 aria-label="Search"
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter') {
+                    const q = e.currentTarget.value;
+                    router.push(`/management/search?q=${q}`);
+                  }
+                }}
               />
             </div>
           </div>

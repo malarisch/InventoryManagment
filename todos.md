@@ -3,6 +3,30 @@
 Diese To-Do List enthält Aufgaben, die an der Software zu bearbeiten sind. Sobald eine Aufgabe bearbeited wurde soll diese hier in der Datei unten in die Done-List eingefügt und aus der To-Do list entfernt werden. Denk daran für alles, was du tust, auch Tests zu implementieren! Vor dem Committen Tests ausführen und checken ob alles läuft, wenn nicht erst alles fixen und dann committen. Für jedes Todo ein Commit. Speichere so viel wie möglich in deine Memories, damit du schneller darauf zugreifen kannst.
 
 ## Done
+# To-Do List
+
+Diese To-Do List enthält Aufgaben, die an der Software zu bearbeiten sind. Sobald eine Aufgabe bearbeited wurde soll diese hier in der Datei unten in die Done-List eingefügt und aus der To-Do list entfernt werden. Denk daran für alles, was du tust, auch Tests zu implementieren! Vor dem Committen Tests ausführen und checken ob alles läuft, wenn nicht erst alles fixen und dann committen. Für jedes Todo ein Commit. Speichere so viel wie möglich in deine Memories, damit du schneller darauf zugreifen kannst.
+
+## To-Do
+
+
+
+### Fixes
+
+
+## Done
+- Räume deinen Code auf - modifiziere ggf. Komponenten, das sie reusable sind soweit wie möglich.
+- Räume das UI auf - nutze den Platz auf großen bildschirmen besser, finde "spannende" design Entscheidungen und finde andere Lösungen für sie. Das UI soll sich so intuitiv wie möglich bedienen, sowohl auf Desktop als auch mobile. Check das explizit indem du mit vitest Screenshots anlegst und dir anschaust.
+- Lege einen API Endpunkt an, der den im Asset Template definierten SVG Prototypen aus dem Bucket zieht und die entsprechenden Werte einsetzt und danach das SVG zurückgibt. Implementiere auch Renderfunktionen als lossless Bitmaps mit fest definierter Auflösung. Filetypes nur PNG, BMP und GIF.
+- Lege ein rudimentäres Formular an, welches sich als Modal öffnet wenn man auf den neuen Knopf dafür auf der Detailseit klickt,  wo Asset Tags für das Item angelegt werden können. Prefille die ID daten gemäß den Regeln im Template.
+- Implementiere die globale Suche über das Feld oben Rechts. Dort soll man ALLES suchen können.
+- Implementiere RLS Policies für die S3 Bucket. Derzeit können keine Dateien hochgeladen werden weil "new row violates row-level security policy". Update den File Manager, sodass es für jede company einen Ordner im privaten S3 Bucket gibt. Auf den Inhalt dürfen nur user zugreifen, die Member der Company sind. Außerdem nutze zwei Buckets - einen public, einen nicht public. Im Public kommen wirklich öffentliche Assets, wie Logo der Firma und sowas. In den Privaten die ganzen Attachments.
+- Validate RLS policies comprehensively against `users_companies` membership for all tables (articles, equipments, locations, cases, customers, jobs, job_* tables, history). Create Vitest for that.
+- Implementiere eine weitere Asset Tag art in der Datenbank und im Datenbank Schema - NFC Tags.
+- Lege ein rudimentäres Forumular an um Asset Tag Templates zu erstellen. Es muss ALLE parameter aus der Typendefinition enthalten! Außerdem braucht die Company dann Standardfelder für welches Template für jedes Asset Type.
+- Lege einen API Endpunkt an, der den im Asset Template definierten SVG Prototypen aus dem Bucket zieht und die entsprechenden Werte einsetzt und danach das SVG zurückgibt. Implementiere auch Renderfunktionen als lossless Bitmaps mit fest definierter Auflösung. Filetypes nur PNG, BMP und GIF.
+- Lege ein rudimentäres Formular an, welches sich als Modal öffnet wenn man auf den neuen Knopf dafür auf der Detailseit klickt,  wo Asset Tags für das Item angelegt werden können. Prefille die ID daten gemäß den Regeln im Template.
+- Implementiere die globale Suche über das Feld oben Rechts. Dort soll man ALLES suchen können.
 - Implementiere RLS Policies für die S3 Bucket. Derzeit können keine Dateien hochgeladen werden weil "new row violates row-level security policy". Update den File Manager, sodass es für jede company einen Ordner im privaten S3 Bucket gibt. Auf den Inhalt dürfen nur user zugreifen, die Member der Company sind. Außerdem nutze zwei Buckets - einen public, einen nicht public. Im Public kommen wirklich öffentliche Assets, wie Logo der Firma und sowas. In den Privaten die ganzen Attachments.
 - Validate RLS policies comprehensively against `users_companies` membership for all tables (articles, equipments, locations, cases, customers, jobs, job_* tables, history). Create Vitest for that.
 - Implementiere eine weitere Asset Tag art in der Datenbank und im Datenbank Schema - NFC Tags.

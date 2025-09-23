@@ -8,6 +8,7 @@ import { fallbackDisplayFromId } from "@/lib/userDisplay";
 import { fetchUserDisplayAdmin } from "@/lib/users/userDisplay.server";
 import { HistoryCard } from "@/components/historyCard";
 import { DeleteWithUndo } from "@/components/forms/delete-with-undo";
+import { AssetTagCreateForm } from "@/components/forms/asset-tag-create-form";
 import { FileManager } from "@/components/files/file-manager";
 
 type EquipmentRow = Tables<"equipments"> & {
