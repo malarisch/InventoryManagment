@@ -10,10 +10,20 @@ export async function GET(req: NextRequest, context: { params: Promise<{ id: str
     const { id } = await context.params;
     const format = req.nextUrl.searchParams.get('format') || 'svg';
 
-    // Fetch asset tag + template via FK
+    // Fetch asset tag + template + referencing entities (equipment, article, location)
+    // Reverse FKs: equipments.asset_tag, articles.asset_tag, locations.asset_tag
     const { data: assetTag, error: tagError } = await supabase
       .from('asset_tags')
-      .select('id, printed_code, printed_template, asset_tag_templates:asset_tag_templates!printed_template(template)')
+      .select(`
+        id,
+        printed_code,
+        printed_template,
+        asset_tag_templates:asset_tag_templates!printed_template(template),
+        equipments:equipments_asset_tag_fkey(id, metadata, articles(id, name), locations(name)),
+        articles:articles_asset_tag_fkey(id, name),
+        locations:locations_asset_tag_fkey(id, name),
+        cases:cases_asset_tag_fkey(id, case_equipment)
+      `)
       .eq('id', id)
       .maybeSingle();
 
@@ -30,30 +40,44 @@ export async function GET(req: NextRequest, context: { params: Promise<{ id: str
       return new NextResponse('Asset tag template not found', { status: 404 });
     }
 
-    // Optional related entities (do not force inner joins)
-    const { data: equipmentData, error: equipError } = await supabase
-      .from('equipments')
-      .select('id, metadata, articles(name), locations(name)')
-      .eq('asset_tag', id)
-      .maybeSingle();
-    if (equipError) {
-      console.warn('equipment lookup failed (continuing):', equipError.message);
+    interface AssetTagJoined {
+      id: number;
+      printed_code: string;
+      printed_template?: number;
+      asset_tag_templates?: { template?: AssetTagTemplate };
+      equipments?: Array<{
+        id: number;
+        metadata: unknown;
+        articles?: { id?: number; name?: string } | null;
+        locations?: { name?: string } | null;
+      }>;
+      articles?: Array<{ id: number; name?: string }>;
+      locations?: Array<{ id: number; name?: string }>;
+      cases?: Array<{ id: number; case_equipment?: number | null }>;
     }
 
-    let equipment: { name?: string } | null = null;
-    let article: { name?: string } | null = null;
-    let location: { name?: string } | null = null;
-
-    if (equipmentData) {
-      equipment = { name: (equipmentData.metadata as { name?: string } | null)?.name || `Equipment ${equipmentData.id}` };
-      const artRaw = (equipmentData as unknown as { articles?: { name?: string } | { name?: string }[] }).articles;
-      if (artRaw) article = Array.isArray(artRaw) ? artRaw[0] : artRaw;
-      const locRaw = (equipmentData as unknown as { locations?: { name?: string } | { name?: string }[] }).locations;
-      if (locRaw) location = Array.isArray(locRaw) ? locRaw[0] : locRaw;
+    const joined = assetTag as AssetTagJoined;
+    const equipmentRow = joined.equipments?.[0];
+    let articleRow = joined.articles?.[0] || null;
+    const locationRow = joined.locations?.[0] || null;
+    // If no direct article but equipment has an article reference, synthesize articleRow
+    if (!articleRow && equipmentRow?.articles) {
+      // Synthesize minimal article object from equipment's related article
+      articleRow = { id: equipmentRow.articles.id ?? 0, name: equipmentRow.articles.name };
     }
+
+    // Derive friendly equipment name similar to previous logic
+    let equipment: { name: string } | null = null;
+    if (equipmentRow) {
+      const metaName = (equipmentRow.metadata as { name?: string } | null)?.name;
+      equipment = { name: metaName || `${equipmentRow.articles?.name || 'Equipment'} #${equipmentRow.id}` };
+    }
+  const article = articleRow ? { name: articleRow.name } : null;
+  // cases currently unused in placeholder generation, but could be extended
+    const location = locationRow ? { name: locationRow.name } : null;
 
     const placeholderData = getAssetTagPlaceholders(assetTag, equipment, article, location);
-  const svgText = await generateSVG(templateJson, placeholderData);
+    const svgText = await generateSVG(templateJson, placeholderData);
 
     if (format === 'svg') {
       return new NextResponse(svgText, { headers: { 'Content-Type': 'image/svg+xml' } });

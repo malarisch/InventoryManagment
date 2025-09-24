@@ -41,6 +41,7 @@ export function AssetTagTemplatePreview({ template, editable = false, onElements
     let cancelled = false;
     (async () => {
       const svg = await generateSVG(template, previewData);
+      console.log('Generated SVG:', svg);
       if (!cancelled) setSvgContent(svg);
     })();
     return () => { cancelled = true; };
