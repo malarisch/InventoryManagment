@@ -2,6 +2,7 @@
 2025-09-24: Implemented canvas-based asset tag template preview (`template-preview.tsx`) now rendering SVG via generator and added draggable overlay for element positioning. Wired editable preview into create and edit forms. Ran tsc (no errors). Next: consider adding tests/E2E for drag interactions.
 # 2025-09-24 01:05 – Added unit test for automatic asset tag creation helper (createAndAttachAssetTag). Introduced `tests/vitest/asset-tag-auto-create.test.ts` with Supabase client mock validating prefix assembly and entity update. All vitest tests passing (10 passed, 1 skipped). Next: add documentation for asset tag auto-creation & preview embedding.
 2025-09-24 01:12 – Updated E2E equipment form tests to reliably select the specific created article by id (helper `selectTestArticle`) instead of brittle index-based selection. File: tests/e2e/equipment-form.spec.ts. Prevents intermittent failures when option order changes.
+2025-09-24 01:20 – Fixed job detail title not updating after edits by adding router.refresh() in JobEditForm submit handler; added E2E test verifying rename reflects in heading. Files: components/forms/job-edit-form.tsx, tests/e2e/jobs-form.spec.ts.
 # Agent Activity Log
 
 - Use this file to append brief summaries after major tasks.
