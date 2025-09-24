@@ -106,6 +106,45 @@ test.describe('Equipment Form Tests', () => {
     await page.waitForURL('/management**');
   }
 
+    // Select the known test article reliably by its id (value attribute) or visible text fallback
+    async function selectTestArticle(page: import('@playwright/test').Page) {
+      if (!testArticleId) throw new Error('testArticleId not initialized');
+      const articleSelect = page.locator('select[name="article_id"], select[name="articleId"]');
+      if (await articleSelect.isVisible()) {
+        const value = String(testArticleId);
+        // Wait a bit for options to populate if SSR latency
+        for (let attempt = 0; attempt < 4; attempt++) {
+          const optionCount = await articleSelect.locator(`option[value="${value}"]`).count();
+          if (optionCount > 0) {
+            await articleSelect.selectOption(value);
+            return;
+          }
+          await page.waitForTimeout(150 * (attempt + 1));
+        }
+        // Fallback: select by text content
+        const label = `Test Article for Equipment ${timestamp}`;
+        const textOption = articleSelect.locator('option').filter({ hasText: label });
+        if (await textOption.count() > 0) {
+          const attrVal = await textOption.first().getAttribute('value');
+          if (attrVal) {
+            await articleSelect.selectOption(attrVal);
+            return;
+          }
+        }
+        throw new Error('Unable to locate test article option in select');
+      } else {
+        // Future variant: searchable picker
+        const pickerTrigger = page.locator('input[placeholder*="Artikel"], button:has-text("Artikel")');
+        if (await pickerTrigger.isVisible()) {
+          await pickerTrigger.click();
+          await page.waitForTimeout(300);
+          await page.locator(`text="Test Article for Equipment ${timestamp}"`).first().click();
+          return;
+        }
+        throw new Error('No article select element found');
+      }
+    }
+
   test('should display equipments list page correctly', async ({ page }) => {
     await loginUser(page);
     
@@ -137,18 +176,7 @@ test.describe('Equipment Form Tests', () => {
     await expect(page.locator('.error, [role="alert"], .text-red-500')).toBeVisible();
     
     // Fill out the form - select article
-    const articleSelect = page.locator('select[name="article_id"], select[name="articleId"]');
-    if (await articleSelect.isVisible()) {
-      await articleSelect.selectOption({ index: 1 }); // Select first non-empty option
-    } else {
-      // Look for article picker/search
-      const articlePicker = page.locator('input[placeholder*="Artikel"], button:has-text("Artikel")');
-      if (await articlePicker.isVisible()) {
-        await articlePicker.click();
-        await page.waitForTimeout(500);
-        await page.click('.article-option:first-child, [data-testid="article-option"]:first-child');
-      }
-    }
+      await selectTestArticle(page);
     
     // Fill serial number if exists
     const serialField = page.locator('input[name="serial_number"], input[placeholder*="Seriennummer"], input[placeholder*="Serial"]');
@@ -219,10 +247,7 @@ test.describe('Equipment Form Tests', () => {
     await page.waitForLoadState('networkidle');
     
     // Select article and create equipment
-    const articleSelect = page.locator('select[name="article_id"], select[name="articleId"]');
-    if (await articleSelect.isVisible()) {
-      await articleSelect.selectOption({ index: 1 });
-    }
+      await selectTestArticle(page);
     
     await page.click('button[type="submit"]');
     await page.waitForLoadState('networkidle');
@@ -291,10 +316,7 @@ test.describe('Equipment Form Tests', () => {
     await page.waitForLoadState('networkidle');
     
     // Select article
-    const articleSelect = page.locator('select[name="article_id"], select[name="articleId"]');
-    if (await articleSelect.isVisible()) {
-      await articleSelect.selectOption({ index: 1 });
-    }
+      await selectTestArticle(page);
     
     // Select location if field exists
     const locationSelect = page.locator('select[name="current_location"], select[name="location"]');
