@@ -7,7 +7,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Badge } from '@/components/ui/badge';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { AssetTagTemplateCreateForm } from '@/components/forms/asset-tag-template-create-form';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { AssetTagTemplatePreview } from '@/components/asset-tag-templates/template-preview';
 import Link from 'next/link';
 import { AssetTagTemplate } from '@/components/asset-tag-templates/types';
@@ -219,9 +219,7 @@ export function AssetTagTemplatesSection() {
               <DialogHeader>
                 <DialogTitle>{previewTemplate.name || 'Template Preview'}</DialogTitle>
               </DialogHeader>
-              <div className="py-4">
-                <AssetTagTemplatePreview template={previewTemplate} />
-              </div>
+              <AssetTagTemplatePreview template={previewTemplate} />
             </DialogContent>
           </Dialog>
         )}

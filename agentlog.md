@@ -1,3 +1,4 @@
+2025-09-24: Implemented canvas-based asset tag template preview (`template-preview.tsx`) now rendering SVG via generator and added draggable overlay for element positioning. Wired editable preview into create and edit forms. Ran tsc (no errors). Next: consider adding tests/E2E for drag interactions.
 # Agent Activity Log
 
 - Use this file to append brief summaries after major tasks.

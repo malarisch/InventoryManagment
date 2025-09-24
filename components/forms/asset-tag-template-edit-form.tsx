@@ -10,7 +10,7 @@ import { Input } from '@/components/ui/input';
 import { createClient } from '@/lib/supabase/client';
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { AssetTagTemplate } from '@/components/asset-tag-templates/types';
+import { AssetTagTemplate, AssetTagTemplateElement } from '@/components/asset-tag-templates/types';
 import { useEffect } from 'react';
 
 const formSchema = z.object({
@@ -260,7 +260,11 @@ export function AssetTagTemplateEditForm({ templateId }: AssetTagTemplateEditFor
         </Button>
       </div>
 
-      <AssetTagTemplatePreview template={form.watch()} />
+      <AssetTagTemplatePreview 
+        template={form.watch()} 
+        editable 
+        onElementsChange={(els: AssetTagTemplateElement[]) => form.setValue('elements', els, { shouldDirty: true, shouldTouch: true })}
+      />
 
       <Button type="submit" disabled={isLoading}>
         {isLoading ? 'Updating...' : 'Update Template'}

@@ -1,3 +1,5 @@
+import QRCode from 'qrcode'
+
 import type { AssetTagTemplate } from '@/components/asset-tag-templates/types';
 
 export interface PlaceholderData {
@@ -52,9 +54,11 @@ export function generateSVG(template: AssetTagTemplate, placeholderData: Placeho
         break;
       
       case 'qrcode':
+
+        const qr = await QRCode.toDataURL(value, { errorCorrectionLevel: 'M', margin: 3, width: size });
         // For now, just show placeholder text - full QR code generation would need a library
         svg += `<rect x="${x}" y="${y}" width="${size}" height="${size}" fill="none" stroke="${color}" stroke-width="1"/>`;
-        svg += `<text x="${x + size/2}" y="${y + size/2 + 3}" font-size="8" fill="${color}" text-anchor="middle">QR</text>`;
+        svg += `<Image src="${qr}" alt="alt" width="${size}" height="${size}" x="${x}" y="${y}" font-size="8" fill="${color}" text-anchor="middle">QR failed</Image>`;
         break;
       
       case 'barcode':

@@ -11,7 +11,7 @@ import { createClient } from '@/lib/supabase/client';
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 // Using simple inputs instead of shadcn form/select for now
-import { AssetTagTemplate } from '@/components/asset-tag-templates/types';
+import { AssetTagTemplate, AssetTagTemplateElement } from '@/components/asset-tag-templates/types';
 
 const formSchema = z.object({
   // Basic info
@@ -311,8 +311,12 @@ export function AssetTagTemplateCreateForm() {
         </Button>
       </div>
 
-      {/* Template Preview */}
-      <AssetTagTemplatePreview template={form.watch()} />
+      {/* Template Preview (interactive) */}
+      <AssetTagTemplatePreview 
+        template={form.watch()} 
+        editable 
+        onElementsChange={(els: AssetTagTemplateElement[]) => form.setValue('elements', els, { shouldDirty: true, shouldTouch: true })}
+      />
 
       <Button type="submit" disabled={isLoading}>
         {isLoading ? 'Creating...' : 'Create Template'}
