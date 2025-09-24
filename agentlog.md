@@ -324,3 +324,5 @@ Next: Run `supabase db push` to add `files` columns and `attachments` bucket; co
 - Created useQrScanner hook and integrated modal with custom overlay design (no shadcn Dialog dependency).
 - Mobile-friendly interface with flash toggle, camera switching, success/error feedback, and auto-navigation to found items.
 - Builds successfully, ready for field testing on mobile devices.
+
+**2025-09-24 01:40 CET** - Complete Asset Tag Template System Overhaul. Fixed broken template creation (now saves to database), added missing foreign key constraint (asset_tags.printed_template → asset_tag_templates.id), moved template management to company settings as requested, fixed asset tag table query using correct relationship. Live tested via Playwright: user creation, authentication, multi-element template creation (text + QR code). Template "Equipment Label v2" successfully created and verified in database. All original issues resolved.

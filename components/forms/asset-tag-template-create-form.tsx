@@ -6,6 +6,9 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import { createClient } from '@/lib/supabase/client';
+import { useState } from 'react';
+import { useRouter } from 'next/navigation';
 // Using simple inputs instead of shadcn form/select for now
 import { AssetTagTemplate } from '@/components/asset-tag-templates/types';
 
@@ -22,6 +25,11 @@ const formSchema = z.object({
 });
 
 export function AssetTagTemplateCreateForm() {
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const router = useRouter();
+  const supabase = createClient();
+
   const form = useForm<AssetTagTemplate>({
     resolver: zodResolver(formSchema),
     defaultValues: {
@@ -37,12 +45,68 @@ export function AssetTagTemplateCreateForm() {
     name: 'elements',
   });
 
-  const onSubmit = (values: AssetTagTemplate) => {
-    console.log(values);
+  const onSubmit = async (values: AssetTagTemplate) => {
+    setIsLoading(true);
+    setError(null);
+    
+    try {
+      // Get current user
+      const { data: { user }, error: userError } = await supabase.auth.getUser();
+      if (userError || !user) {
+        throw new Error('User not authenticated');
+      }
+
+      // Get user's company
+      const { data: userCompany, error: companyError } = await supabase
+        .from('users_companies')
+        .select('company_id')
+        .eq('user_id', user.id)
+        .single();
+
+      if (companyError || !userCompany) {
+        throw new Error('No company found for user');
+      }
+
+      // Create template
+      const { data, error: insertError } = await supabase
+        .from('asset_tag_templates')
+        .insert({
+          template: {
+            name: values.name,
+            width: values.width,
+            height: values.height,
+            elements: values.elements
+          },
+          company_id: userCompany.company_id,
+          created_by: user.id
+        })
+        .select()
+        .single();
+
+      if (insertError) {
+        throw insertError;
+      }
+
+      console.log('Template created successfully:', data);
+      // Redirect to company settings or show success message
+      router.push('/management/company-settings?tab=templates');
+      
+    } catch (err) {
+      console.error('Error creating template:', err);
+      setError(err instanceof Error ? err.message : 'Failed to create template');
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   return (
     <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
+      {error && (
+        <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded">
+          {error}
+        </div>
+      )}
+      
       <div>
         <label className="block text-sm font-medium mb-1">Name</label>
         <Input placeholder="My Template" {...form.register('name')} />
@@ -61,7 +125,7 @@ export function AssetTagTemplateCreateForm() {
       <div>
         <h3 className="text-lg font-medium">Elements</h3>
         {fields.map((f, index) => (
-          <div key={f.id} className="flex items-end gap-4">
+          <div key={f.id} className="flex items-end gap-4 mb-4">
             <div>
               <label className="block text-sm font-medium mb-1">Type</label>
               <select className="border rounded px-2 py-2" {...form.register(`elements.${index}.type` as const)}>
@@ -92,7 +156,9 @@ export function AssetTagTemplateCreateForm() {
         </Button>
       </div>
 
-      <Button type="submit">Create Template</Button>
+      <Button type="submit" disabled={isLoading}>
+        {isLoading ? 'Creating...' : 'Create Template'}
+      </Button>
     </form>
   );
 }

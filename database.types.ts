@@ -170,6 +170,13 @@ export type Database = {
             referencedRelation: "nfc_tags"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "asset_tags_printed_template_fkey"
+            columns: ["printed_template"]
+            isOneToOne: false
+            referencedRelation: "asset_tag_templates"
+            referencedColumns: ["id"]
+          },
         ]
       }
       cases: {

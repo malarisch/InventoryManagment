@@ -8,7 +8,7 @@ import { MoreHorizontal, Eye, Edit, Trash2 } from "lucide-react";
 import Link from "next/link";
 
 type AssetTagRow = Tables<"asset_tags"> & {
-  asset_tag_templates?: { 
+  printed_template_relation?: { 
     id: number;
     template: { name: string } | null; 
   } | null;
@@ -52,7 +52,7 @@ export function AssetTagTable({ pageSize = 10, className }: Props) {
       key: "printed_template", 
       label: "Template",
       render: (row: AssetTagRow) => {
-        const template = row.asset_tag_templates;
+        const template = row.printed_template_relation;
         return template?.template?.name || "—";
       }
     },
@@ -153,7 +153,7 @@ export function AssetTagTable({ pageSize = 10, className }: Props) {
       ]}
       select={`
         *, 
-        asset_tag_templates:printed_template(id, template),
+        printed_template_relation:asset_tag_templates!printed_template(id, template),
         articles:articles!asset_tag(id, name),
         equipments:equipments!asset_tag(id, articles(name)),
         locations:locations!asset_tag(id, name)
