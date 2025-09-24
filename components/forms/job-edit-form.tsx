@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
+import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 import type { Tables, Json } from "@/database.types";
 import { JobMetadataForm } from "@/components/forms/partials/job-metadata-form";
@@ -17,6 +18,7 @@ type Customer = Tables<"customers">;
 
 export function JobEditForm({ job }: { job: Job }) {
   const supabase = useMemo(() => createClient(), []);
+  const router = useRouter();
   const [name, setName] = useState<string>(job.name ?? "");
   const [type, setType] = useState<string>(job.type ?? "");
   const [location, setLocation] = useState<string>(job.job_location ?? "");
@@ -74,7 +76,13 @@ export function JobEditForm({ job }: { job: Job }) {
         meta,
       })
       .eq("id", job.id);
-    if (error) setError(error.message); else setMessage("Gespeichert.");
+    if (error) {
+      setError(error.message);
+    } else {
+      setMessage("Gespeichert.");
+      // Refresh server components (job detail title) so updated name appears
+      try { router.refresh(); } catch { /* ignore */ }
+    }
     setSaving(false);
   }
 

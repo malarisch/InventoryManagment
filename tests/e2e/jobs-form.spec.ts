@@ -127,6 +127,32 @@ test.describe('Jobs Form Tests', () => {
     await page.screenshot({ path: 'test-results/jobs-list-desktop.png', fullPage: true });
   });
 
+  test('should update job name and refresh heading', async ({ page }) => {
+    await loginUser(page);
+    // Create a new job first
+    await page.goto('/management/jobs/new');
+    await page.waitForLoadState('networkidle');
+    const originalName = `Rename Job ${timestamp}`;
+    await page.fill('input[id="name"]', originalName);
+    await page.click('button[type="submit"]');
+    await page.waitForLoadState('networkidle');
+    // Ensure we are on detail page
+    if (!page.url().includes('/management/jobs/')) {
+      await page.goto('/management/jobs');
+      await page.waitForLoadState('networkidle');
+      await page.click(`text="${originalName}"`);
+      await page.waitForLoadState('networkidle');
+    }
+    // Edit the name
+    const newName = `${originalName} Updated`;
+    await page.fill('form input#name', newName);
+    await page.click('form button[type="submit"]');
+    await page.waitForTimeout(300); // allow router.refresh to complete
+    // Assert heading updated (covers various heading selectors)
+    await expect(page.locator('h1, .text-2xl, .text-xl, .font-semibold.leading-none.tracking-tight')).toContainText(newName);
+    await page.screenshot({ path: 'test-results/jobs-rename-success.png', fullPage: true });
+  });
+
   test('should create new job with form validation', async ({ page }) => {
     await loginUser(page);
     
