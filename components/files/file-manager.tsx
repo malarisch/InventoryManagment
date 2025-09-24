@@ -7,7 +7,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Badge } from "@/components/ui/badge";
-import { Globe, Lock } from "lucide-react";
+import { ClipboardCopy, Globe, Lock } from "lucide-react";
 import type { FileEntry } from "@/lib/files";
 import { normalizeFileArray } from "@/lib/files";
 
@@ -25,6 +25,7 @@ export function FileManager({
   isPublic,
   initial,
   className,
+  showTitle = true
 }: {
   table: string;
   rowId: number;
@@ -32,6 +33,7 @@ export function FileManager({
   isPublic?: boolean;
   initial?: unknown;
   className?: string;
+  showTitle?: boolean;
 }) {
   const supabase = useMemo(() => createClient(), []);
   const [items, setItems] = useState<FileEntry[]>(() => normalizeFileArray(initial));
@@ -173,7 +175,9 @@ export function FileManager({
 
   return (
     <div className={className}>
-      <div className="mb-2 text-sm font-medium">Dateien</div>
+      {showTitle && (
+        <div className="mb-2 text-sm font-medium">Dateien</div>
+      )}
       {items.length === 0 ? (
         <div className="text-xs text-muted-foreground mb-2">Keine Dateien vorhanden.</div>
       ) : (
@@ -210,6 +214,19 @@ export function FileManager({
                   ) : null}
                 </div>
                 <div className="flex gap-2">
+                  {f.public ? (
+                  
+                  <Button
+                
+                
+                    type="button" 
+                    variant="outline" 
+                    size="sm" 
+                    onClick={() => {navigator.clipboard.writeText(f.link)}} 
+                    disabled={busy}
+                    title="Link Kopieren"
+                    ><ClipboardCopy className="w-4 h-4" /></Button>
+                  ) : null}
                   <Button 
                     type="button" 
                     variant="outline" 

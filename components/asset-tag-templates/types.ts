@@ -1,11 +1,12 @@
 
 export type AssetTagTemplateElement = {
-  type: 'text' | 'qrcode' | 'barcode';
+  type: 'text' | 'qrcode' | 'barcode' | 'image';
   x: number;
   y: number;
-  value: string;
-  size?: number; // Font size for text or size for codes
-  color?: string; // Color override for this element
+  value: string; // text, placeholder, or image URL for type=image
+  size?: number; // Font size OR square size / width
+  height?: number; // optional height for images (falls back to size if omitted)
+  color?: string; // Color override (ignored for image except maybe tint future)
 };
 
 export type AssetTagTemplate = {

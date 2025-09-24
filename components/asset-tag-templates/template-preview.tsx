@@ -27,7 +27,6 @@ export function AssetTagTemplatePreview({ template, editable = false, onElements
     equipment_name: 'Camera Sony FX6',
     article_name: 'Professional Camera',
     location_name: 'Studio A',
-    current_date: new Date().toLocaleDateString(),
   }), []);
 
   const widthPx = template.tagWidthMm * MM_TO_PX;
@@ -36,8 +35,16 @@ export function AssetTagTemplatePreview({ template, editable = false, onElements
 
   const elements: AssetTagTemplateElement[] = useMemo(()=> template.elements || [], [template.elements]);
 
-  // Generate the SVG string via existing generator (single source of truth)
-  const svgContent = useMemo(() => generateSVG(template, previewData), [template, previewData]);
+  // Async generated SVG string
+  const [svgContent, setSvgContent] = useState<string>('');
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      const svg = await generateSVG(template, previewData);
+      if (!cancelled) setSvgContent(svg);
+    })();
+    return () => { cancelled = true; };
+  }, [template, previewData]);
 
   // Draw the SVG onto the base canvas
   useEffect(() => {
@@ -72,6 +79,9 @@ export function AssetTagTemplatePreview({ template, editable = false, onElements
       return { w: size, h: size };
     } else if (el.type === 'barcode') {
       return { w: size * 2, h: size * 0.6 + 10 };
+    } else if (el.type === 'image') {
+      const h = el.height || size;
+      return { w: size, h };
     }
     return { w: size, h: size };
   }, [template.textSizePt]);
@@ -141,8 +151,8 @@ export function AssetTagTemplatePreview({ template, editable = false, onElements
       const newElements = [...elements];
       const el = { ...newElements[dragIndex] };
       // Convert px back to mm (subtract margin first)
-      el.x = (x - dragOffset.current.dx - marginPx) / MM_TO_PX;
-      el.y = (y - dragOffset.current.dy - marginPx) / MM_TO_PX;
+  el.x = parseFloat(((x - dragOffset.current.dx - marginPx) / MM_TO_PX).toFixed(2));
+  el.y = parseFloat(((y - dragOffset.current.dy - marginPx) / MM_TO_PX).toFixed(2));
       // Keep within bounds
       el.x = Math.max(0, Math.min(el.x, template.tagWidthMm));
       el.y = Math.max(0, Math.min(el.y, template.tagHeightMm));
@@ -194,7 +204,6 @@ export function AssetTagTemplatePreview({ template, editable = false, onElements
           <li><code>{'{{equipment_name}}'}</code> → {previewData.equipment_name}</li>
           <li><code>{'{{article_name}}'}</code> → {previewData.article_name}</li>
           <li><code>{'{{location_name}}'}</code> → {previewData.location_name}</li>
-          <li><code>{'{{current_date}}'}</code> → {previewData.current_date}</li>
         </ul>
       </div>
     </div>

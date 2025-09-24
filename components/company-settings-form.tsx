@@ -13,7 +13,6 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
-import { FileManager } from "@/components/files/file-manager";
 
 export function CompanySettingsForm() {
   const supabase = useMemo(() => createClient(), []);
@@ -198,16 +197,7 @@ export function CompanySettingsForm() {
           <div className="text-sm text-red-600">Keine Company gefunden.</div>
         )}
         
-        {company && (
-          <div className="mt-4 border-t pt-4">
-            <FileManager
-              table="companies"
-              rowId={company.id}
-              companyId={company.id}
-              initial={company.files}
-            />
-          </div>
-        )}
+        
         
         <div className="mt-4 border-t pt-4">
           <div className="flex items-center justify-between gap-3">
@@ -221,5 +211,6 @@ export function CompanySettingsForm() {
         </div>
       </CardContent>
     </Card>
+    
   );
 }

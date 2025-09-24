@@ -1,4 +1,4 @@
-import QRCode from 'qrcode'
+import QRCode from 'qrcode';
 
 import type { AssetTagTemplate } from '@/components/asset-tag-templates/types';
 
@@ -9,7 +9,7 @@ export interface PlaceholderData {
 /**
  * Generates SVG from asset tag template definition
  */
-export function generateSVG(template: AssetTagTemplate, placeholderData: PlaceholderData = {}): string {
+export async function generateSVG(template: AssetTagTemplate, placeholderData: PlaceholderData = {}): Promise<string> {
   const { tagWidthMm, tagHeightMm, marginMm, backgroundColor, borderColor, borderWidthMm, textColor, isMonochrome } = template;
   
   // Convert mm to pixels (approximate 3.779527559 pixels per mm at 96 DPI)
@@ -36,7 +36,8 @@ export function generateSVG(template: AssetTagTemplate, placeholderData: Placeho
   }
 
   // Elements
-  template.elements?.forEach(element => {
+  if (template.elements) {
+    for (const element of template.elements) {
     const x = (element.x || 0) * mmToPx + margin;
     const y = (element.y || 0) * mmToPx + margin;
     const size = element.size || template.textSizePt || 12;
@@ -48,28 +49,38 @@ export function generateSVG(template: AssetTagTemplate, placeholderData: Placeho
       value = value.replace(new RegExp(`\\{${key}\\}`, 'g'), replacement);
     });
 
-    switch (element.type) {
-      case 'text':
-        svg += `<text x="${x}" y="${y}" font-size="${size}" fill="${color}" font-family="Arial, sans-serif">${escapeXml(value)}</text>`;
-        break;
-      
-      case 'qrcode':
-
-        const qr = await QRCode.toDataURL(value, { errorCorrectionLevel: 'M', margin: 3, width: size });
-        // For now, just show placeholder text - full QR code generation would need a library
-        svg += `<rect x="${x}" y="${y}" width="${size}" height="${size}" fill="none" stroke="${color}" stroke-width="1"/>`;
-        svg += `<Image src="${qr}" alt="alt" width="${size}" height="${size}" x="${x}" y="${y}" font-size="8" fill="${color}" text-anchor="middle">QR failed</Image>`;
-        break;
-      
-      case 'barcode':
-        // For now, just show placeholder - full barcode generation would need a library
-        const barcodeWidth = size * 2;
-        const barcodeHeight = size * 0.6;
-        svg += `<rect x="${x}" y="${y}" width="${barcodeWidth}" height="${barcodeHeight}" fill="none" stroke="${color}" stroke-width="1"/>`;
-        svg += `<text x="${x + barcodeWidth/2}" y="${y + barcodeHeight + 10}" font-size="8" fill="${color}" text-anchor="middle">${escapeXml(value)}</text>`;
-        break;
+      switch (element.type) {
+        case 'text': {
+          svg += `<text x="${x}" y="${y}" font-size="${size}" fill="${color}" color="${color}" font-family="Arial, sans-serif">${escapeXml(value)}</text>`;
+          break;
+        }
+        case 'qrcode': {
+          try {
+            const qr = await QRCode.toDataURL(value || '');
+            svg += `<image href="${qr}" x="${x}" y="${y}" width="${size}" height="${size}" />`;
+          } catch {
+            svg += `<rect x="${x}" y="${y}" width="${size*mmToPx}" height="${size*mmToPx}" fill="none" stroke="${color}" stroke-width="1"/>`;
+            svg += `<text x="${x + size/2}" y="${y + size/2}" font-size="8" fill="${color}" text-anchor="middle">QR</text>`;
+          }
+          break;
+        }
+        case 'image': {
+          // Basic external image embedding (value expected to be URL)
+          const h = (element.height || size);
+          svg += `<image href="${escapeXml(value)}" x="${x}" y="${y}" width="${size}" height="${h}" preserveAspectRatio="xMidYMid meet" />`;
+          break;
+        }
+        case 'barcode': {
+          // Placeholder barcode representation (stub)
+            const barcodeWidth = size * 2;
+            const barcodeHeight = size * 0.6;
+            svg += `<rect x="${x}" y="${y}" width="${barcodeWidth}" height="${barcodeHeight}" fill="none" stroke="${color}" stroke-width="1"/>`;
+            svg += `<text x="${x + barcodeWidth/2}" y="${y + barcodeHeight + 10}" font-size="8" fill="${color}" text-anchor="middle">${escapeXml(value)}</text>`;
+            break;
+        }
+      }
     }
-  });
+  }
 
   svg += '</svg>';
   

@@ -53,7 +53,7 @@ export async function GET(req: NextRequest, context: { params: Promise<{ id: str
     }
 
     const placeholderData = getAssetTagPlaceholders(assetTag, equipment, article, location);
-    const svgText = generateSVG(templateJson, placeholderData);
+  const svgText = await generateSVG(templateJson, placeholderData);
 
     if (format === 'svg') {
       return new NextResponse(svgText, { headers: { 'Content-Type': 'image/svg+xml' } });
