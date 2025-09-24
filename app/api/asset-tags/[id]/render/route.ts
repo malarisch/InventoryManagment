@@ -2,15 +2,21 @@
 import { createClient } from '@/lib/supabase/server';
 import { NextRequest, NextResponse } from 'next/server';
 import sharp from 'sharp';
+import { generateSVG, getAssetTagPlaceholders } from '@/lib/asset-tags/svg-generator';
+import type { AssetTagTemplate } from '@/components/asset-tag-templates/types';
 
 export async function GET(req: NextRequest, context: { params: Promise<{ id: string }> }) {
   const supabase = await createClient();
   const { id } = await context.params;
   const format = req.nextUrl.searchParams.get('format') || 'svg';
 
+  // Get asset tag with template and related data for placeholders
   const { data: assetTag, error } = await supabase
     .from('asset_tags')
-    .select('*, asset_tag_templates(*)')
+    .select(`
+      *,
+      asset_tag_templates(*)
+    `)
     .eq('id', id)
     .single();
 
@@ -18,23 +24,52 @@ export async function GET(req: NextRequest, context: { params: Promise<{ id: str
     return new NextResponse('Asset tag not found', { status: 404 });
   }
 
-  // Ensure template exists on the referenced asset_tag_template
+  // Ensure template exists with template data
   if (!assetTag.asset_tag_templates?.template) {
     return new NextResponse('Asset tag template not found', { status: 404 });
   }
 
-  const { data: svgData, error: svgError } = await supabase.storage
-    .from('public-assets')
-    .download(`asset-tag-prototypes/${assetTag.printed_template}.svg`);
+  // Get related equipment/article/location for placeholders
+  let equipment: { name?: string } | null = null;
+  let article: { name?: string } | null = null;
+  let location: { name?: string } | null = null;
 
-  if (svgError || !svgData) {
-    return new NextResponse('SVG prototype not found', { status: 404 });
+  // If this asset tag is linked to equipment, fetch that data
+  const { data: equipmentData } = await supabase
+    .from('equipments')
+    .select(`
+      id,
+      metadata,
+      articles!inner(name),
+      locations(name)
+    `)
+    .eq('asset_tag', id)
+    .single();
+
+  if (equipmentData) {
+    equipment = { name: (equipmentData.metadata as { name?: string } | null)?.name || `Equipment ${equipmentData.id}` };
+    
+    // Handle articles array or object
+    const articlesData = equipmentData.articles;
+    if (Array.isArray(articlesData) && articlesData.length > 0) {
+      article = articlesData[0];
+    } else if (articlesData && !Array.isArray(articlesData)) {
+      article = articlesData as { name?: string };
+    }
+    
+    // Handle locations array or object  
+    const locationsData = equipmentData.locations;
+    if (Array.isArray(locationsData) && locationsData.length > 0) {
+      location = locationsData[0] as { name?: string };
+    } else if (locationsData && !Array.isArray(locationsData)) {
+      location = locationsData as { name?: string };
+    }
   }
 
-  let svgText = await svgData.text();
-
-  // Replace placeholders
-  svgText = svgText.replace('{{printed_code}}', assetTag.printed_code || '');
+  const template = assetTag.asset_tag_templates.template as AssetTagTemplate;
+  const placeholderData = getAssetTagPlaceholders(assetTag, equipment, article, location);
+  
+  const svgText = generateSVG(template, placeholderData);
 
   if (format === 'svg') {
     return new NextResponse(svgText, {
