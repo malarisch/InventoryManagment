@@ -40,9 +40,32 @@ export function AssetTagTemplatePreview({ template, editable = false, onElements
   useEffect(() => {
     let cancelled = false;
     (async () => {
-      const svg = await generateSVG(template, previewData);
-      console.log('Generated SVG:', svg);
-      if (!cancelled) setSvgContent(svg);
+      try {
+        // Call server route for image-embedded preview (avoids CORS issues)
+        const res = await fetch('/api/asset-tag-templates/preview', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ template, placeholderData: previewData })
+        });
+        if (res.ok) {
+          const data = await res.json();
+            if (!cancelled && data.svg) {
+              setSvgContent(data.svg);
+              return;
+            }
+        } else {
+          console.warn('Preview API returned non-ok status; falling back to client generation');
+        }
+      } catch (e) {
+        console.warn('Preview API failed; falling back to client generation', e);
+      }
+      // Fallback: client-side (will not embed cross-origin images)
+      try {
+        const fallbackSvg = await generateSVG(template, previewData);
+        if (!cancelled) setSvgContent(fallbackSvg);
+      } catch (e) {
+        console.error('Client-side fallback preview generation failed', e);
+      }
     })();
     return () => { cancelled = true; };
   }, [template, previewData]);

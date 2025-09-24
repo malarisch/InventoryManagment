@@ -9,7 +9,11 @@ export interface PlaceholderData {
 /**
  * Generates SVG from asset tag template definition
  */
-export async function generateSVG(template: AssetTagTemplate, placeholderData: PlaceholderData = {}): Promise<string> {
+export async function generateSVG(
+  template: AssetTagTemplate,
+  placeholderData: PlaceholderData = {},
+  opts: { embedImages?: boolean } = {}
+): Promise<string> {
   const { tagWidthMm, tagHeightMm, marginMm, backgroundColor, borderColor, borderWidthMm, textColor, isMonochrome } = template;
   
   // Convert mm to pixels (approximate 3.779527559 pixels per mm at 96 DPI)
@@ -37,7 +41,7 @@ export async function generateSVG(template: AssetTagTemplate, placeholderData: P
 
   // Elements
   if (template.elements) {
-    for (const element of template.elements) {
+  for (const element of template.elements) {
     const x = (element.x || 0) * mmToPx + margin;
     const y = (element.y || 0) * mmToPx + margin;
     const size = element.size || template.textSizePt || 12;
@@ -65,9 +69,37 @@ export async function generateSVG(template: AssetTagTemplate, placeholderData: P
           break;
         }
         case 'image': {
-          // Basic external image embedding (value expected to be URL)
           const h = (element.height || size);
-          svg += `<image href="${escapeXml(value)}" x="${x}" y="${y}" width="${size}" height="${h}" preserveAspectRatio="xMidYMid meet" />`;
+          let href = value;
+          if (opts.embedImages && value) {
+            try {
+              // Only attempt for http(s) or / paths
+              if (/^(https?:\/\/|\/)/i.test(value)) {
+                // NOTE: Relative paths ('/') cannot be fetched server-side without absolute origin; skip embedding for those.
+                if (value.startsWith('/')) {
+                  // leave as-is (client will load it since same-origin); no embedding
+                } else {
+                  const res = await fetch(value);
+                  if (res.ok) {
+                    if (typeof window === 'undefined') {
+                      // Server environment: use arrayBuffer + Buffer
+                      const ab = await res.arrayBuffer();
+                      const mime = res.headers.get('content-type') || 'image/png';
+                      const b64 = Buffer.from(ab).toString('base64');
+                      href = `data:${mime};base64,${b64}`;
+                    } else {
+                      const blob = await res.blob();
+                      const dataUrl = await blobToDataUrl(blob);
+                      href = dataUrl;
+                    }
+                  }
+                }
+              }
+            } catch (e) {
+              console.warn('Image embed failed, falling back to direct href', e);
+            }
+          }
+          svg += `<image href="${escapeXml(href)}" x="${x}" y="${y}" width="${size}" height="${h}" preserveAspectRatio="xMidYMid meet" />`;
           break;
         }
         case 'barcode': {
@@ -86,6 +118,18 @@ export async function generateSVG(template: AssetTagTemplate, placeholderData: P
   
   return svg;
 }
+
+  async function blobToDataUrl(blob: Blob): Promise<string> {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        if (typeof reader.result === 'string') resolve(reader.result);
+        else reject(new Error('Failed to convert blob to data URL'));
+      };
+      reader.onerror = reject;
+      reader.readAsDataURL(blob);
+    });
+  }
 
 /**
  * Escapes XML special characters
