@@ -1,4 +1,4 @@
-const { createAdminClient } = require('./lib/supabase/admin');
+
 
 async function createTestUser() {
   const adminClient = createAdminClient();

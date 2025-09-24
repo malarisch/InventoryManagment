@@ -1,3 +1,7 @@
 {
-  "folderTrust": true
+  "security": {
+    "folderTrust": {
+      "enabled": true
+    }
+  }
 }

@@ -2,6 +2,9 @@
 
 This file provides focused, repository-specific guidance for AI coding agents working in InventoryManagment. Keep entries actionable and factual; prefer local files as sources of truth.
 
+**Domain Context:**
+Multi-tenant inventory management system for equipment rental/event companies. Tracks articles (product definitions), equipment instances, locations, jobs, customers, and asset tags. Core workflows: equipment location tracking, job asset booking/commissioning, asset tagging with printable labels, and company file management.
+
 ### Project Architecture & Layout
 
 **Core Structure:**
@@ -30,22 +33,41 @@ This file provides focused, repository-specific guidance for AI coding agents wo
 - Metadata builders (`buildCustomerMetadata`, `buildEquipmentMetadata`, etc.) merge partial input with project defaults.
 - Company-level defaults cascade to individual entities (tax rates, currencies, power specs).
 
+**File Management & Asset Tags:**
+- Company files stored in Supabase storage with public/private buckets: `/company_id/filename`
+- `components/files/FileManager.tsx` handles uploads, public/private toggles, and file listing
+- Asset tag templates in `components/asset-tag-templates/` with SVG generation from JSON templates
+- Company logos displayed in header when public file contains "logo" in name/description
+
 ### Build, Test & Development Workflows
 
 **Commands:**
 - Install: `npm install`
-- Dev server: `npm run dev` (Next dev on :3000)
-- Build: `npm run build`; Start: `npm run start`
+- Dev server: `npm run dev` (Next dev on :3000) — **NEVER run in agent terminal!** Use `isBackground=true` only. Dev server doesn't self-exit and will block the agent indefinitely.
+- Build: `npm run build`; Start: `npm run start` — **WARNING:** Building may crash running dev server
 - Lint + typecheck: `npm run lint` and `npm run test:tsc`
 - Unit tests: `npm run test:unit` (Vitest)
 - E2E tests: `npm run test:e2e` (Playwright). CI downloads Playwright browsers during runs.
 - Full CI/local test run (what CI runs): `npm run test` → lint → tsc → vitest → playwright
 
+**CRITICAL Development Rules:**
+- **Always test your implementations!** Use Playwright E2E tests to verify features actually work in the browser
+- **Check TypeScript compilation** with `npm run test:tsc` before claiming code is ready
+- **Never assume the dev server is running** — user typically starts it. Only start if explicitly needed with `isBackground=true`
+
 **Database Workflow:**
-1. Write migration SQL in `supabase/migrations/`
-2. Run `npx supabase db reset` or `npx supabase migrations up`
-3. Run `npm run supabase-gen-types` to update `database.types.ts`
-4. Update app code with new types
+1. Start Supabase: `npx supabase start` (requires Docker)
+2. Write migration SQL in `supabase/migrations/`
+3. Run `npx supabase db reset` or `npx supabase migrations up`
+4. Run `npm run supabase-gen-types` to update `database.types.ts`
+5. **Always verify TypeScript compilation** after schema changes: `npm run test:tsc`
+6. Update app code with new types
+
+**Verification & Testing Workflow:**
+- **After ANY implementation:** Run `npm run test:tsc` to ensure TypeScript compiles
+- **For UI changes:** Write and run Playwright E2E tests to verify functionality
+- **For database changes:** Test queries manually using database tools or admin client
+- **Never claim "ready for production"** without actual testing verification
 
 ### Authentication & Supabase Patterns
 
@@ -84,8 +106,16 @@ This file provides focused, repository-specific guidance for AI coding agents wo
 
 **Testing:**
 - Playwright for browser E2E under `tests/e2e/` (CI downloads browser binaries automatically)
+- **MANDATORY:** Write E2E tests for any UI functionality before claiming it works
 - Tests assume running Next.js + Supabase stack unless specially mocked
 - Vitest unit tests in `tests/vitest/` — use provided cleanup helpers from `tests/vitest/utils/cleanup.ts`
+- **Use memory tools** to save debugging insights and test patterns for reuse
+
+**Debugging Principles:**
+- **Never assume root cause** — investigate with tools: browser DevTools, database queries, logs
+- **Use systematic debugging:** Check network requests, console errors, database state
+- **Verify with tools:** Use database client, Playwright traces, terminal output analysis
+- **Document findings** in memory tools for future reference
 
 ### Common Patterns & Code Examples
 
@@ -134,6 +164,12 @@ const columns: ColumnDef<Equipment>[] = [
 ```
 
 ### Troubleshooting & Common Pitfalls
+
+**Development & Testing Issues:**
+- **Incomplete implementations:** Always run `npm run test:tsc` and write E2E tests before claiming code works
+- **Dev server blocking:** Never run `npm run dev` without `isBackground=true` — it blocks indefinitely
+- **Build vs dev conflicts:** `npm run build` can crash running dev server; warn user before building
+- **Assumption debugging:** Always investigate systematically — check logs, database state, network requests
 
 **Type Issues:**
 - Duplicate `Json` type errors during `next build` — alias imports locally to fix

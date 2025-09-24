@@ -1,3 +1,4 @@
+import 'dotenv/config';
 import { test, expect } from "@playwright/test";
 import { createAdminClient } from "@/lib/supabase/admin";
 

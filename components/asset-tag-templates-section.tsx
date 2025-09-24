@@ -7,29 +7,24 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Badge } from '@/components/ui/badge';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { AssetTagTemplateCreateForm } from '@/components/forms/asset-tag-template-create-form';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
+import { AssetTagTemplatePreview } from '@/components/asset-tag-templates/template-preview';
+import Link from 'next/link';
+import { AssetTagTemplate } from '@/components/asset-tag-templates/types';
 import { MoreHorizontal, Plus, Eye, Edit, Trash2 } from 'lucide-react';
 
-type AssetTagTemplate = {
+type AssetTagTemplateFromDB = {
   id: number;
   created_at: string;
-  template: {
-    name: string;
-    width: number;
-    height: number;
-    elements: Array<{
-      type: 'text' | 'qrcode' | 'barcode';
-      x: number;
-      y: number;
-      value: string;
-    }>;
-  } | null;
+  template: AssetTagTemplate | null;
 };
 
 export function AssetTagTemplatesSection() {
-  const [templates, setTemplates] = useState<AssetTagTemplate[]>([]);
+  const [templates, setTemplates] = useState<AssetTagTemplateFromDB[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [showCreateForm, setShowCreateForm] = useState(false);
+  const [previewTemplate, setPreviewTemplate] = useState<AssetTagTemplate | null>(null);
   const supabase = createClient();
 
   const loadTemplates = useCallback(async () => {
@@ -56,7 +51,7 @@ export function AssetTagTemplatesSection() {
       // Load templates
       const { data, error: templatesError } = await supabase
         .from('asset_tag_templates')
-        .select('*')
+        .select('id, created_at, template')
         .eq('company_id', userCompany.company_id)
         .order('created_at', { ascending: false });
 
@@ -162,7 +157,7 @@ export function AssetTagTemplatesSection() {
                     <div className="text-sm text-gray-600 space-y-1">
                       <div>
                         <strong>Size:</strong> {template.template ? 
-                          `${template.template.width}×${template.template.height}mm` : 
+                          `${template.template.tagWidthMm}×${template.template.tagHeightMm}mm` : 
                           '—'
                         }
                       </div>
@@ -191,13 +186,17 @@ export function AssetTagTemplatesSection() {
                       </Button>
                     </DropdownMenuTrigger>
                     <DropdownMenuContent align="end">
-                      <DropdownMenuItem>
-                        <Eye className="mr-2 h-4 w-4" />
-                        Preview
-                      </DropdownMenuItem>
-                      <DropdownMenuItem>
-                        <Edit className="mr-2 h-4 w-4" />
-                        Edit
+                      {template.template && (
+                        <DropdownMenuItem onSelect={() => setPreviewTemplate(template.template)}>
+                          <Eye className="mr-2 h-4 w-4" />
+                          Preview
+                        </DropdownMenuItem>
+                      )}
+                      <DropdownMenuItem asChild>
+                        <Link href={`/management/asset-tag-templates/${template.id}/edit`}>
+                          <Edit className="mr-2 h-4 w-4" />
+                          Edit
+                        </Link>
                       </DropdownMenuItem>
                       <DropdownMenuItem 
                         className="text-red-600"
@@ -212,6 +211,19 @@ export function AssetTagTemplatesSection() {
               </div>
             ))}
           </div>
+        )}
+
+        {previewTemplate && (
+          <Dialog open onOpenChange={() => setPreviewTemplate(null)}>
+            <DialogContent className="max-w-3xl">
+              <DialogHeader>
+                <DialogTitle>{previewTemplate.name || 'Template Preview'}</DialogTitle>
+              </DialogHeader>
+              <div className="py-4">
+                <AssetTagTemplatePreview template={previewTemplate} />
+              </div>
+            </DialogContent>
+          </Dialog>
         )}
       </CardContent>
     </Card>

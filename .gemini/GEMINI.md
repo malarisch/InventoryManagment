@@ -1,238 +1,204 @@
-# Repository Guidelines
-> Always follow the Supabase-official SQL and coding standards documented here; treat them as mandatory for every change.
+## InventoryManagment — Copilot instructions (comprehensive)
 
-## Project Structure & Module Organization
-- `inventorymanagement/`: Next.js (App Router) app in TypeScript.
-  - `app/`: routes, layouts, and pages.
-  - `components/`, `components/ui/`: shared UI and shadcn/ui primitives.
-  - `lib/`: utilities (e.g., `lib/supabase/{client,server}.ts`).
-  - Config: `next.config.ts`, `tailwind.config.ts`, `eslint.config.mjs`, `tsconfig.json`.
-- `supabase/`: local config and SQL migrations (`migrations/*.sql`).
-- Domain model (all business tables include a `company_id` FK and enforce RLS through `users_companies` membership):
-  - `companies`: tenant boundary with `name`, `description`, optional `metadata`, and `owner_user_id` (FK to `auth.users`). Members listed in `users_companies` get read access; owners retain full CRUD rights.
-  - `users_companies`: join table between `auth.users` and `companies`; owners can manage rows, members can list co-workers. All downstream RLS checks reference this table.
-  - `articles`: product definitions scoped to a company; columns include `name`, `metadata`, optional `default_location` (FK `locations.id`), optional `asset_tag` (FK `asset_tags.id`), `created_by` (FK `auth.users.id`), and timestamps.
-  - `asset_tag_templates`: JSON templates for printing asset labels; ties to `company_id` and optional `created_by`. Once an applied `asset_tags.printed_template` references a template, update/delete is blocked via dedicated RLS policies.
-  - `asset_tags`: generated labels with `printed_code`, optional `printed_template` reference, `printed_applied` flag, `company_id`, and optional `created_by`. Referenced by `articles`, `equipments`, and `locations`.
-  - `equipments`: physical inventory linked to an `article_id`, optional `asset_tag`, optional `current_location` (FK `locations.id`), `has_asset_sticker`, `added_to_inventory_at`, `metadata`, `created_by`, and `company_id`.
-  - `locations`: canonical place names per company with `name`, optional `description`, optional `asset_tag`, `created_by`, and timestamps.
-  - `cases`: groupings of gear with optional `case_equipment` (FK `equipments.id`), an array of contained equipment IDs, `company_id`, and `created_by`.
-  - `customers`: contact records (`type`, personal/company details, address fields, `metadata`) tied to `company_id` and optional `created_by`.
-  - `jobs`: scheduled work linked to `company_id`, optional `customer_id`, optional `created_by`, scheduling fields, `name`, `type`, `job_location`, and `meta` JSON.
-  - `job_booked_assets` and `job_assets_on_job`: materialized reservations/assignments of equipment or cases to jobs; columns include `job_id`, optional `equipment_id`/`case_id`, `company_id`, optional `created_by`, and timestamps.
-  - `history`: append-only audit trail storing `table_name`, `data_id`, `old_data`, optional `change_made_by`, and `company_id`; readable to company members.
+This file provides focused, repository-specific guidance for AI coding agents working in InventoryManagment. Keep entries actionable and factual; prefer local files as sources of truth.
 
-## Build, Test, and Development Commands
-- Install: `cd inventorymanagement && npm install`.
-- Dev: `npm run dev` (http://localhost:3000).
-- Build/Start: `npm run build` then `npm run start`.
-- Lint: `npm run lint` (Next.js + TypeScript rules).
-- Supabase: `supabase start`; reset/apply migrations with `supabase db reset`; create migration: `supabase migration new <name>`.
+**Domain Context:**
+Multi-tenant inventory management system for equipment rental/event companies. Tracks articles (product definitions), equipment instances, locations, jobs, customers, and asset tags. Core workflows: equipment location tracking, job asset booking/commissioning, asset tagging with printable labels, and company file management.
 
-## Supabase Coding Style (Mandatory)
-- Mirrors Supabase's recommended application conventions; do not deviate.
-- TypeScript strict; 2-space indent; named exports preferred.
-- Names: PascalCase components, camelCase vars/functions, kebab-case route segments.
-- Next.js: default Server Components; add `"use client"` only when required.
-- Styling: Tailwind CSS; use `clsx` and `tailwind-merge` for class composition.
+### Project Architecture & Layout
 
-### Supabase AI Docs (Source of Truth)
-- Use the local docs in `supabase_ai_docs/` as the authoritative reference for Supabase-related work. Do not rely on other AI tools content.
-- Before writing or reviewing any of the following, open the matching doc:
-  - RLS policies: `supabase_ai_docs/database_rls_policies.md`
-  - Declarative schema + migrations: `supabase_ai_docs/declarative_database_schema.md`
-  - Database functions: `supabase_ai_docs/database_functions.md`
-  - Next.js + Supabase Auth (SSR/CSR): `supabase_ai_docs/nextjs-supabase-auth-rules.md`
-  - Realtime usage and patterns: `supabase_ai_docs/supabase_realtime_rules.md`
-  - Edge Functions: `supabase_ai_docs/edge-functions.md`
-  - General style and conventions: `supabase_ai_docs/style_and_conventions.md`
-- When GEMINI.md and a doc disagree, follow the doc in `supabase_ai_docs/`.
-- After schema changes, follow the project rule to run `npm run supabase-gen-types` and update `database.types.ts` before writing app code.
+**Core Structure:**
+- Next.js 15.5.3 (App Router) TypeScript app in the repo root. Primary app code lives under `app/`, shared UI under `components/`, and utilities under `lib/`.
+- `supabase/` contains local Supabase config, SQL migrations and seed files. `database.types.ts` is the canonical DB types file generated from the schema.
+- Tenancy model: `companies` is the tenant boundary; all business tables have `company_id` and RLS policies rely on `users_companies` membership. See `AGENTS.md` and `supabase_ai_docs/` for RLS rules.
 
-## Testing Guidelines
-- Add when needed: RTL + Vitest/Jest for UI/logic; Playwright for E2E.
-- Name tests `*.test.ts(x)` colocated or under `__tests__/`.
-- Cover: auth flows, Supabase queries, and location assignment flows (`equipments.current_location`, related history snapshots).
+**Component Patterns:**
+- **Generic DataTable:** `components/data-table.tsx` is the standardized table component used across all entity tables. Takes TypeScript generics, accepts `columns`, `searchableFields`, and `renderRowActions`. Provides consistent search, pagination, and row actions.
+- **Entity Tables:** All `*Table.tsx` files (`articleTable.tsx`, `equipmentTable.tsx`, `customerTable.tsx`, etc.) follow the same pattern: define column configuration, specify searchable fields, implement row actions (view/edit/delete).
+- **Form Architecture:** Create/edit forms follow a dual-mode pattern: structured metadata UI vs "Advanced (JSON)" textarea toggle. All use metadata builders from `lib/metadata/builders.ts` and default values from `lib/metadata/defaults.ts`.
 
-## Commit & Pull Request Guidelines
-- Commits: Conventional Commits (`feat:`, `fix:`, `chore:`, `refactor:`). Small and focused.
-- PRs: clear description, linked issues, screenshots for UI changes.
-- Before PR: `npm run lint && npm run build`; include migrations for schema changes and note RLS/policy updates.
+### Key Files & Dependencies
 
-## Security & Configuration Tips
-- Secrets live in `inventorymanagement/.env.local` (see `.env.example`). Do not commit secrets.
-- Required env: `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_ANON_KEY`.
-- RLS on tables: enforced per-company. Ensure queries always include/derive `company_id` and that policies restrict access to users who own the company.
+**Critical Files to Consult Before Changes:**
+- `database.types.ts` — authoritative DB types (run `npm run supabase-gen-types` after migrations).
+- `supabase/` folder — migrations and seeds. Update migrations, then regenerate types.
+- `components/metadataTypes.types.ts` — TypeScript definitions for all metadata shapes.
+- `lib/metadata/{defaults,builders}.ts` — metadata default values and merge functions.
+- `lib/supabase/{client,server,admin}.ts` — Supabase client patterns (see Authentication section).
+- `supabase_ai_docs/` — authoritative Supabase implementation rules (RLS, auth, style).
 
-### User Management & Privacy
-- Nutze Supabase Auth als Quelle der Wahrheit:
-  - Anzeigename/Pronomen als `user_metadata` Felder (`display_name`, `pronouns`).
-  - Email/Passwort über `supabase.auth.updateUser` verwalten (E-Mail-Bestätigung beachten).
-- Für serverseitige Anzeige anderer Nutzer (z. B. "Erstellt von") verwende den Admin-Client (`lib/supabase/admin.ts`) und lese `auth.users` (nur serverseitig!).
-- Profilpflege in der App unter `/management/settings`.
+**Metadata & Form System:**
+- All entities use JSON `*_metadata` columns with typed interfaces from `metadataTypes.types.ts`.
+- Forms provide both structured UI (via `*MetadataForm` partials) and raw JSON textarea ("Advanced" mode).
+- Metadata builders (`buildCustomerMetadata`, `buildEquipmentMetadata`, etc.) merge partial input with project defaults.
+- Company-level defaults cascade to individual entities (tax rates, currencies, power specs).
 
-### Seed Dump
-- Button in `/management/company-settings` erzeugt via API (`POST /api/admin/dump-seed`) eine `supabase/seed.sql` mit Daten aus `auth.users`, `auth.identities` und allen `public`-Tabellen (FK-Reihenfolge, `truncate ... restart identity cascade` + `insert`).
-- Server-seitig wird der Admin-Client (`SUPABASE_SERVICE_ROLE_KEY`) genutzt, nur für authentifizierte Owner einer Company.
+**File Management & Asset Tags:**
+- Company files stored in Supabase storage with public/private buckets: `/company_id/filename`
+- `components/files/FileManager.tsx` handles uploads, public/private toggles, and file listing
+- Asset tag templates in `components/asset-tag-templates/` with SVG generation from JSON templates
+- Company logos displayed in header when public file contains "logo" in name/description
 
-## Gemini Workflow & Logging
-- Whenever you are planning to implement a feature you have heared about in the `todos.md`, read it again to make sure you have the correct understanding of what the user wants. When writing to it read it first so you don't overwrite any changes made by the user while you were working. The same is true for `human-review-todos.md`.
-- When doing database schema updates, update the run_seed api call if necessary, then run `npm run supabase-gen-types` to apply the migration and update the database.types.ts BEFORE writing any additional code.
-- Always use Context7 for external library usage (writing, updating, or reviewing code) before making changes.
-- When unsure if changes in the repo are accidential while commiting, do NOT revert them. Instead, add a Human Review Todo to `human-review-todos.md`. Do not modify the files you are unsure about! Its more likely they are edits made by the user.
+### Build, Test & Development Workflows
 
+**Commands:**
+- Install: `npm install`
+- Dev server: `npm run dev` (Next dev on :3000) — **NEVER run in agent terminal!** Use `isBackground=true` only. Dev server doesn't self-exit and will block the agent indefinitely.
+- Build: `npm run build`; Start: `npm run start` — **WARNING:** Building may crash running dev server
+- Lint + typecheck: `npm run lint` and `npm run test:tsc`
+- Unit tests: `npm run test:unit` (Vitest)
+- E2E tests: `npm run test:e2e` (Playwright). CI downloads Playwright browsers during runs.
+- Full CI/local test run (what CI runs): `npm run test` → lint → tsc → vitest → playwright
 
+**CRITICAL Development Rules:**
+- **Always test your implementations!** Use Playwright E2E tests to verify features actually work in the browser
+- **Check TypeScript compilation** with `npm run test:tsc` before claiming code is ready
+- **Never assume the dev server is running** — user typically starts it. Only start if explicitly needed with `isBackground=true`
 
+**Database Workflow:**
+1. Start Supabase: `npx supabase start` (requires Docker)
+2. Write migration SQL in `supabase/migrations/`
+3. Run `npx supabase db reset` or `npx supabase migrations up`
+4. Run `npm run supabase-gen-types` to update `database.types.ts`
+5. **Always verify TypeScript compilation** after schema changes: `npm run test:tsc`
+6. Update app code with new types
 
+**Verification & Testing Workflow:**
+- **After ANY implementation:** Run `npm run test:tsc` to ensure TypeScript compiles
+- **For UI changes:** Write and run Playwright E2E tests to verify functionality
+- **For database changes:** Test queries manually using database tools or admin client
+- **Never claim "ready for production"** without actual testing verification
 
-# Postgres SQL Style Guide
+### Authentication & Supabase Patterns
 
-This section captures the official Supabase SQL writing guidelines and is non-optional.
+**CRITICAL:** Always follow `supabase_ai_docs/nextjs-supabase-auth-rules.md` exactly. Never use deprecated `auth-helpers-nextjs` patterns.
 
-## General
+**Client Types:**
+- **Browser Client:** `lib/supabase/client.ts` — use in client components, returns fresh instance per call
+- **Server Client:** `lib/supabase/server.ts` — use in server components/routes, bound to request cookies
+- **Admin Client:** `lib/supabase/admin.ts` — server-only, uses `SUPABASE_SERVICE_ROLE_KEY`, for privileged operations
 
-- Use lowercase for SQL reserved words to maintain consistency and readability.
-- Employ consistent, descriptive identifiers for tables, columns, and other database objects.
-- Use white space and indentation to enhance the readability of your code.
-- Store dates in ISO 8601 format (`yyyy-mm-ddThh:mm:ss.sssss`).
-- Include comments for complex logic, using '/* ... */' for block comments and '--' for line comments.
+**Usage Patterns:**
+- Server components: `const supabase = await createClient(); const { data: auth } = await supabase.auth.getUser();`
+- Client components: `const supabase = useMemo(() => createClient(), []);`
+- User display server-side: `await fetchUserDisplayAdmin(userId)` (from `lib/users/userDisplay.server.ts`)
+- Admin operations: Only in API routes under `app/api/admin/`, require owner-level checks
 
-## Naming Conventions
+### TypeScript & Styling Conventions
 
-- Avoid SQL reserved words and ensure names are unique and under 63 characters.
-- Use snake_case for tables and columns.
-- Prefer plurals for table names
-- Prefer singular names for columns.
+**Type Safety:**
+- TypeScript strict mode enabled. Prefer explicit types over `any`.
+- Many files import `Json` from `database.types.ts` — avoid creating conflicting global `Json` types. Use `import type { Json as DBJson }` if needed.
+- Metadata casting pattern: `metadata = metaObj as unknown as Json` when storing structured objects.
 
-## Tables
+**Component Architecture:**
+- Default to Server Components; only add `"use client"` when component needs client state or hooks.
+- Form components are typically client components due to state management.
+- Use shadcn/ui primitives from `components/ui/` for consistent styling.
+- Styling: Tailwind CSS with `clsx` and `tailwind-merge` for class composition.
 
-- Avoid prefixes like 'tbl_' and ensure no table name matches any of its column names.
-- Always add an `id` column of type `identity generated always` unless otherwise specified.
-- Create all tables in the `public` schema unless otherwise specified.
-- Always add the schema to SQL queries for clarity.
-- Always add a comment to describe what the table does. The comment can be up to 1024 characters.
+### Integration Points & External Dependencies
 
-## Columns
+**Supabase:**
+- Local dev via `npx supabase start` (never install Supabase CLI via agents)
+- Tests use admin client for seed/dump operations under `app/api/admin/*`
+- Always use `npx supabase ...` for CLI commands — never attempt direct installation
 
-- Use singular names and avoid generic names like 'id'.
-- For references to foreign tables, use the singular of the table name with the `_id` suffix. For example `user_id` to reference the `users` table
-- Always use lowercase except in cases involving acronyms or when readability would be enhanced by an exception.
+**Testing:**
+- Playwright for browser E2E under `tests/e2e/` (CI downloads browser binaries automatically)
+- **MANDATORY:** Write E2E tests for any UI functionality before claiming it works
+- Tests assume running Next.js + Supabase stack unless specially mocked
+- Vitest unit tests in `tests/vitest/` — use provided cleanup helpers from `tests/vitest/utils/cleanup.ts`
+- **Use memory tools** to save debugging insights and test patterns for reuse
 
-## Functions
+**Debugging Principles:**
+- **Never assume root cause** — investigate with tools: browser DevTools, database queries, logs
+- **Use systematic debugging:** Check network requests, console errors, database state
+- **Verify with tools:** Use database client, Playwright traces, terminal output analysis
+- **Document findings** in memory tools for future reference
 
-- Default to `security invoker`; only use `security definer` with a documented justification.
-- Always set `search_path = ''` inside functions and reference objects with fully qualified names (e.g., `public.table_name`).
-- Specify parameter and return types explicitly, and choose the correct volatility (`immutable`, `stable`, or `volatile`).
-- Minimize side effects; prefer returning data unless the function backs a trigger or intentional mutation.
-- When authoring trigger functions, include the matching `create trigger` statement alongside the function definition.
+### Common Patterns & Code Examples
 
-#### Examples:
+**Metadata Form Pattern:**
+```typescript
+// Client component with dual mode (structured vs JSON)
+const [metaText, setMetaText] = useState(() => toPrettyJSON(defaultEquipmentMetadataDE));
+const [metaObj, setMetaObj] = useState(defaultEquipmentMetadataDE);
+const [advanced, setAdvanced] = useState(false);
 
-```sql
-create table books (
-  id bigint generated always as identity primary key,
-  title text not null,
-  author_id bigint references authors (id)
-);
-comment on table books is 'A list of all the books in the library.';
+// In form submission:
+let metadata: Json | null = null;
+if (advanced) {
+  const mt = metaText.trim();
+  if (mt.length) {
+    try { metadata = JSON.parse(mt) as Json; } catch { throw new Error("Invalid JSON"); }
+  }
+} else {
+  metadata = buildEquipmentMetadata(metaObj) as unknown as Json;
+}
 ```
 
+**DataTable Implementation:**
+```typescript
+// Define columns with proper typing
+const columns: ColumnDef<Equipment>[] = [
+  { accessorKey: "id", header: "ID" },
+  { accessorKey: "name", header: "Name" },
+  // ... more columns
+];
 
-## Queries
-
-- When the query is shorter keep it on just a few lines. As it gets larger start adding newlines for readability
-- Add spaces for readability.
-
-Smaller queries:
-
-
-```sql
-select *
-from employees
-where end_date is null;
-
-update employees
-set end_date = '2023-12-31'
-where employee_id = 1001;
+// Use generic DataTable
+<DataTable
+  data={equipments}
+  columns={columns}
+  searchableFields={["name", "description"]}
+  renderRowActions={(equipment) => (
+    <DropdownMenu>
+      <DropdownMenuTrigger asChild><Button variant="ghost">⋯</Button></DropdownMenuTrigger>
+      <DropdownMenuContent>
+        <DropdownMenuItem asChild><Link href={`/management/equipments/${equipment.id}`}>View</Link></DropdownMenuItem>
+      </DropdownMenuContent>
+    </DropdownMenu>
+  )}
+/>
 ```
 
-Larger queries:
+### Troubleshooting & Common Pitfalls
 
-```sql
-select
-  first_name,
-  last_name
-from
-  employees
-where
-  start_date between '2021-01-01' and '2021-12-31'
-and
-  status = 'employed';
-```
+**Development & Testing Issues:**
+- **Incomplete implementations:** Always run `npm run test:tsc` and write E2E tests before claiming code works
+- **Dev server blocking:** Never run `npm run dev` without `isBackground=true` — it blocks indefinitely
+- **Build vs dev conflicts:** `npm run build` can crash running dev server; warn user before building
+- **Assumption debugging:** Always investigate systematically — check logs, database state, network requests
 
+**Type Issues:**
+- Duplicate `Json` type errors during `next build` — alias imports locally to fix
+- Metadata type mismatches — ensure builders from `lib/metadata/builders.ts` are used consistently
 
-### Joins and Subqueries
+**Data Issues:**
+- Newlines missing in company metadata lists — preserve empty strings when storing line-based lists (avoid `.filter(Boolean)`)
+- RLS policy failures — ensure all queries include/derive `company_id` and user has proper membership
 
-- Format joins and subqueries for clarity, aligning them with related SQL clauses.
-- Prefer full table names when referencing tables. This helps for readability.
+**Auth Issues:**
+- Random logouts — follow `supabase_ai_docs/nextjs-supabase-auth-rules.md` exactly
+- Admin operations in client code — move to API routes under `app/api/admin/`
 
-```sql
-select
-  employees.employee_name,
-  departments.department_name
-from
-  employees
-join
-  departments on employees.department_id = departments.department_id
-where
-  employees.start_date > '2022-01-01';
-```
+### Agent Workflow & State Management
 
-## Aliases
+**Before Starting Work:**
+- Consult `todos.md` and `agentlog.md` to understand current project state
+- Read relevant `supabase_ai_docs/` files for Supabase-related changes
+- After schema changes, always run `npm run supabase-gen-types` before writing code
 
-- Use meaningful aliases that reflect the data or transformation applied, and always include the 'as' keyword for clarity.
+**After Completing Tasks:**
+- Append 2-4 line summary to `agentlog.md` (date/time, task, files touched, next step)
+- Create git commit capturing changes
+- Update `human-review-todos.md` for items requiring user review
 
-```sql
-select count(*) as total_employees
-from employees
-where end_date is null;
-```
+**Documentation Hierarchy:**
+- This file: concise, actionable guidance
+- `AGENTS.md`: comprehensive project rules and domain model
+- `supabase_ai_docs/`: authoritative Supabase implementation rules
+- Add new patterns here; move detailed explanations to appropriate docs
 
-
-## Complex queries and CTEs
-
-- If a query is extremely complex, prefer a CTE.
-- Make sure the CTE is clear and linear. Prefer readability over performance.
-- Add comments to each block.
-
-```sql
-with department_employees as (
-  -- Get all employees and their departments
-  select
-    employees.department_id,
-    employees.first_name,
-    employees.last_name,
-    departments.department_name
-  from
-    employees
-  join
-    departments on employees.department_id = departments.department_id
-),
-employee_counts as (
-  -- Count how many employees in each department
-  select
-    department_name,
-    count(*) as num_employees
-  from
-    department_employees
-  group by
-    department_name
-)
-select
-  department_name,
-  num_employees
-from
-  employee_counts
-order by
-  department_name;
-```
+If anything here is unclear or you need examples for specific patterns (auth flows, testing, metadata handling), ask for clarification on that specific area. 

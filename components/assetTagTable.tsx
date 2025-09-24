@@ -109,7 +109,7 @@ export function AssetTagTable({ pageSize = 10, className }: Props) {
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end">
         <DropdownMenuItem asChild>
-          <Link href={`/management/asset-tags/${row.id}`} className="flex items-center">
+          <Link href={`/api/asset-tags/${row.id}/render`} className="flex items-center">
             <Eye className="mr-2 h-4 w-4" />
             Anzeigen
           </Link>
