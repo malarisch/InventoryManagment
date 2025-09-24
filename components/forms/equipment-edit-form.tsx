@@ -10,6 +10,7 @@ import { EquipmentMetadataForm } from "@/components/forms/partials/equipment-met
 import { defaultEquipmentMetadataDE, toPrettyJSON } from "@/lib/metadata/defaults";
 import type { EquipmentMetadata } from "@/components/metadataTypes.types";
 import { buildEquipmentMetadata } from "@/lib/metadata/builders";
+import Link from "next/link";
 
 type Equipment = Tables<"equipments">;
 type Article = Tables<"articles">;
@@ -181,8 +182,17 @@ export function EquipmentEditForm({ equipment }: { equipment: Equipment }) {
           ))}
         </select>
       </div>
-      <div className="flex items-center gap-3">
+      <div className="flex flex-wrap items-center gap-3">
         <Button type="submit" disabled={saving}>{saving ? "Speichern…" : "Speichern"}</Button>
+        {equipment.asset_tag && (
+          <Link
+            href={`/api/asset-tags/${equipment.asset_tag}/render?format=svg`}
+            target="_blank"
+            className="text-sm underline underline-offset-2 text-blue-600 hover:text-blue-800"
+          >
+            Asset Tag anzeigen
+          </Link>
+        )}
         {message && <span className="text-sm text-green-600">{message}</span>}
         {error && <span className="text-sm text-red-600">{error}</span>}
       </div>

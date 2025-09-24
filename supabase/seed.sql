@@ -88,10 +88,15 @@ insert into public.asset_tags (id, created_at, created_by, printed_code, printed
 (8, '2025-09-24T20:32:57.711148+00:00', '4891b73c-3a01-40eb-b3c4-eaa5b4067e68', 'Texttextprnt', 6, false, 1, NULL),
 (9, '2025-09-24T21:28:41.461376+00:00', '4891b73c-3a01-40eb-b3c4-eaa5b4067e68', '{printed_code}', 6, false, 1, NULL);
 
+select setval(pg_get_serial_sequence('public.asset_tags','id'), (select max(id) from public.asset_tags));
+
 truncate table public.locations restart identity cascade;
 insert into public.locations (id, created_at, created_by, name, description, company_id, asset_tag, files) values
 (1, '2025-09-19T01:00:01.934098+00:00', '4891b73c-3a01-40eb-b3c4-eaa5b4067e68', 'Regal 1', 'Regal 1 Location', 1, NULL, NULL),
 (2, '2025-09-19T01:00:30.617282+00:00', '4891b73c-3a01-40eb-b3c4-eaa5b4067e68', 'Regal 2', 'Regal 2 Locaition', 1, NULL, NULL);
+
+-- Ensure sequence is advanced past the max inserted id to avoid duplicate key on next identity insert
+select setval(pg_get_serial_sequence('public.locations','id'), (select max(id) from public.locations));
 
 truncate table public.articles restart identity cascade;
 insert into public.articles (id, created_at, name, metadata, created_by, default_location, company_id, asset_tag, files) values
@@ -112,6 +117,8 @@ insert into public.articles (id, created_at, name, metadata, created_by, default
 (18, '2025-09-24T17:19:43.400933+00:00', 'Test Article for Files 1758734368099', '{"case":{"is19Inch":false,"heightUnits":0},"type":"","power":{"powerType":"AC","frequencyHz":"50Hz","voltageRangeV":"220-240V","powerConnectorType":"IEC C13"},"is19Inch":false,"heightUnits":0}'::jsonb, '20462cbc-3609-48d1-be56-b8513d6a0df7', NULL, 47, NULL, NULL),
 (19, '2025-09-23T21:43:46.627304+00:00', 'Nexo PS15', '{"case":{"is19Inch":false,"heightUnits":0},"type":"Lautsprecher","model":"PS15","power":{"powerType":"Other","frequencyHz":"50Hz","voltageRangeV":"220-240V","powerConnectorType":"IEC C13"},"is19Inch":false,"weightKg":25,"heightUnits":0,"manufacturer":"Nexo"}'::jsonb, '4891b73c-3a01-40eb-b3c4-eaa5b4067e68', NULL, 1, 9, NULL),
 (21, '2025-09-24T17:21:55.75112+00:00', 'History Test Article 1758734498495', '{"case":{"is19Inch":false,"heightUnits":0},"type":"","power":{"powerType":"AC","frequencyHz":"50Hz","voltageRangeV":"220-240V","powerConnectorType":"IEC C13"},"is19Inch":false,"heightUnits":0}'::jsonb, '666fc13d-6aac-43ab-bd22-4f1e61987394', NULL, 61, NULL, NULL);
+
+select setval(pg_get_serial_sequence('public.articles','id'), (select max(id) from public.articles));
 
 truncate table public.customers restart identity cascade;
 insert into public.customers (id, created_at, company_id, created_by, type, forename, surname, company_name, address, postal_code, country, email, metadata, files) values

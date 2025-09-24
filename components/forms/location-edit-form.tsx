@@ -6,6 +6,7 @@ import type { Tables } from "@/database.types";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
+import Link from "next/link";
 
 type Location = Tables<"locations">;
 type AssetTag = Tables<"asset_tags">;
@@ -83,8 +84,17 @@ export function LocationEditForm({ location }: { location: Location }) {
           ))}
         </select>
       </div>
-      <div className="flex items-center gap-3">
+      <div className="flex flex-wrap items-center gap-3">
         <Button type="submit" disabled={saving}>{saving ? "Speichern…" : "Speichern"}</Button>
+        {location.asset_tag && (
+          <Link
+            href={`/api/asset-tags/${location.asset_tag}/render?format=svg`}
+            target="_blank"
+            className="text-sm underline underline-offset-2 text-blue-600 hover:text-blue-800"
+          >
+            Asset Tag anzeigen
+          </Link>
+        )}
         {message && <span className="text-sm text-green-600">{message}</span>}
         {error && <span className="text-sm text-red-600">{error}</span>}
       </div>

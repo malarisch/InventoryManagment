@@ -148,17 +148,35 @@ function escapeXml(text: string): string {
  */
 export function getAssetTagPlaceholders(
   assetTag: { printed_code?: string | null }, 
-  equipment?: { name?: string } | null, 
+  equipment?: { name?: string, id?: number } | null, 
+  
   article?: { name?: string } | null, 
-  location?: { name?: string } | null
+  location?: { name?: string } | null,
+  caseeq?: { name?: string } | null
+  
 ): PlaceholderData {
   console.log('Generating placeholders with:', { assetTag, equipment, article, location });
+  let safeName = 'Unknown';
+  if (equipment?.name) {
+    safeName = equipment.name;
+  } else if (equipment?.id && article?.name) {
+    safeName = `${article.name} #${equipment.id}`;
+  } else if (article?.name) {
+    safeName = article.name;
+  } else if (location?.name) {
+    safeName = location.name;
+  } else if (caseeq?.name) {
+    safeName = caseeq.name;
+  }
   return {
     printed_code: assetTag.printed_code || '',
-    equipment_name: equipment?.name || article?.name || '',
+    equipment_name: equipment?.name || '',
     article_name: article?.name || '',
     location_name: location?.name || '',
+    case_name: caseeq?.name || '',
     current_date: new Date().toLocaleDateString(),
+    safe_name: safeName
+
     // Add more placeholders as needed
   };
 }

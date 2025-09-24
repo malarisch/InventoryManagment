@@ -49,6 +49,17 @@ export default async function CaseDetailPage({ params }: { params: Promise<{ id:
                 <Link className="underline-offset-2 hover:underline" href={`/management/equipments/${row.case_equipment}`}>#{row.case_equipment}</Link>
               ) : "—"}
               {row.description ? (<><br />{row.description}</>) : null}
+              {row.asset_tag ? (
+                <div className="mt-2">
+                  <Link
+                    href={`/api/asset-tags/${row.asset_tag}/render?format=svg`}
+                    target="_blank"
+                    className="text-sm underline underline-offset-2 text-blue-600 hover:text-blue-800"
+                  >
+                    Asset Tag anzeigen
+                  </Link>
+                </div>
+              ) : null}
             </CardDescription>
           </CardHeader>
           <CardContent>

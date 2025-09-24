@@ -22,7 +22,8 @@ export async function GET(req: NextRequest, context: { params: Promise<{ id: str
         equipments:equipments_asset_tag_fkey(id, metadata, articles(id, name), locations(name)),
         articles:articles_asset_tag_fkey(id, name),
         locations:locations_asset_tag_fkey(id, name),
-        cases:cases_asset_tag_fkey(id, case_equipment)
+        cases:cases_asset_tag_fkey(id, name)
+      )
       `)
       .eq('id', id)
       .maybeSingle();
@@ -53,10 +54,10 @@ export async function GET(req: NextRequest, context: { params: Promise<{ id: str
       }>;
       articles?: Array<{ id: number; name?: string }>;
       locations?: Array<{ id: number; name?: string }>;
-      cases?: Array<{ id: number; case_equipment?: number | null }>;
+      cases?: Array<{ id: number; name?: string }>;
     }
 
-    const joined = assetTag as AssetTagJoined;
+    const joined = assetTag as unknown as AssetTagJoined;
     const equipmentRow = joined.equipments?.[0];
     let articleRow = joined.articles?.[0] || null;
     const locationRow = joined.locations?.[0] || null;
@@ -76,7 +77,7 @@ export async function GET(req: NextRequest, context: { params: Promise<{ id: str
   // cases currently unused in placeholder generation, but could be extended
     const location = locationRow ? { name: locationRow.name } : null;
 
-    const placeholderData = getAssetTagPlaceholders(assetTag, equipment, article, location);
+    const placeholderData = getAssetTagPlaceholders(assetTag, equipment, article, location, joined.cases?.[0] ? { name: joined.cases[0].name } : null);
     const svgText = await generateSVG(templateJson, placeholderData);
 
     if (format === 'svg') {
