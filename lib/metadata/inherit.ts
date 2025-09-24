@@ -24,6 +24,15 @@ export function normalizeAdminCompanyMetadata(input: unknown): adminCompanyMetad
       ...base.customTypes,
       ...(raw.customTypes ?? {}),
     },
+      companyWidePrefix: raw.companyWidePrefix ?? base.companyWidePrefix,
+      assetTagArticlePrefix: raw.assetTagArticlePrefix ?? base.assetTagArticlePrefix,
+      assetTagEquipmentPrefix: raw.assetTagEquipmentPrefix ?? base.assetTagEquipmentPrefix,
+      assetTagCasePrefix: raw.assetTagCasePrefix ?? base.assetTagCasePrefix,
+      assetTagLocationPrefix: raw.assetTagLocationPrefix ?? base.assetTagLocationPrefix,
+      defaultArticleAssetTagTemplateId: raw.defaultArticleAssetTagTemplateId ?? base.defaultArticleAssetTagTemplateId,
+      defaultEquipmentAssetTagTemplateId: raw.defaultEquipmentAssetTagTemplateId ?? base.defaultEquipmentAssetTagTemplateId,
+      defaultCaseAssetTagTemplateId: raw.defaultCaseAssetTagTemplateId ?? base.defaultCaseAssetTagTemplateId,
+      defaultLocationAssetTagTemplateId: raw.defaultLocationAssetTagTemplateId ?? base.defaultLocationAssetTagTemplateId,
   };
   return out;
 }

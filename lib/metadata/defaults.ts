@@ -31,6 +31,15 @@ export const defaultAdminCompanyMetadataDE: adminCompanyMetadata = {
     },
   },
   customTypes: { articleTypes: [], caseTypes: [], locationTypes: [] },
+  companyWidePrefix: "",
+  assetTagArticlePrefix: "",
+  assetTagEquipmentPrefix: "",
+  assetTagCasePrefix: "",
+  assetTagLocationPrefix: "",
+  defaultArticleAssetTagTemplateId: undefined,
+  defaultEquipmentAssetTagTemplateId: undefined,
+  defaultCaseAssetTagTemplateId: undefined,
+  defaultLocationAssetTagTemplateId: undefined,
   notes: "",
 };
 

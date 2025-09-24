@@ -3,13 +3,15 @@
 import { useMemo, useState } from "react";
 import { createClient } from "@/lib/supabase/client";
 import type { Tables } from "@/database.types";
+import type { adminCompanyMetadata } from "@/components/metadataTypes.types";
+import { buildAssetTagCode } from "@/lib/asset-tags/code";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { useRouter } from "next/navigation";
 import { useCompany } from "@/app/management/_libs/companyHook";
 
-type AssetTag = Tables<"asset_tags">;
+type AssetTagTemplate = Tables<"asset_tag_templates">;
 
 export function LocationCreateForm() {
   const supabase = useMemo(() => createClient(), []);
@@ -17,8 +19,9 @@ export function LocationCreateForm() {
   const { company } = useCompany();
   const [name, setName] = useState("");
   const [description, setDescription] = useState("");
-  const [assetTagId, setAssetTagId] = useState<number | "">("");
-  const [assetTags, setAssetTags] = useState<AssetTag[]>([]);
+  const [assetTagTemplateId, setAssetTagTemplateId] = useState<number | "">("");
+  const [assetTagTemplates, setAssetTagTemplates] = useState<AssetTagTemplate[]>([]);
+  const [companyMeta, setCompanyMeta] = useState<adminCompanyMetadata | null>(null);
   const [loaded, setLoaded] = useState(false);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -26,12 +29,16 @@ export function LocationCreateForm() {
   useMemo(() => {
     let active = true;
     async function loadTags() {
-      const { data } = await supabase
-        .from("asset_tags")
-        .select("id, printed_code, printed_applied")
-        .order("created_at", { ascending: false });
+      const [{ data: tmplData }, { data: companyRow }] = await Promise.all([
+        supabase.from("asset_tag_templates").select("id,template").order("created_at", { ascending: false }),
+        supabase.from("companies").select("metadata").limit(1).maybeSingle(),
+      ]);
       if (!active) return;
-      setAssetTags((data as AssetTag[]) ?? []);
+      setAssetTagTemplates((tmplData as AssetTagTemplate[]) ?? []);
+      setCompanyMeta(companyRow?.metadata as unknown as adminCompanyMetadata || null);
+  const metaPartial = companyRow?.metadata as Partial<adminCompanyMetadata> | undefined;
+  const defId = metaPartial?.defaultLocationAssetTagTemplateId;
+      if (defId) setAssetTagTemplateId(defId);
       setLoaded(true);
     }
     loadTags();
@@ -52,7 +59,6 @@ export function LocationCreateForm() {
         .insert({
           name: name.trim(),
           description: description.trim() || null,
-          asset_tag: assetTagId === "" ? null : Number(assetTagId),
           company_id: company.id,
           created_by: userId,
         })
@@ -60,6 +66,17 @@ export function LocationCreateForm() {
         .single();
       if (error) throw error;
       const id = (data as Tables<"locations">).id;
+      if (assetTagTemplateId !== "") {
+        const printed_code = companyMeta ? buildAssetTagCode(companyMeta, "location", id) : String(id);
+        const { data: tag, error: tagErr } = await supabase
+          .from("asset_tags")
+          .insert({ printed_template: Number(assetTagTemplateId), printed_code, company_id: company.id, created_by: userId })
+          .select("id")
+          .single();
+        if (tagErr) throw tagErr;
+        const tagId = (tag as Tables<"asset_tags">).id;
+        await supabase.from("locations").update({ asset_tag: tagId }).eq("id", id);
+      }
       router.push(`/management/locations/${id}`);
     } catch (e: unknown) {
       setError(e instanceof Error ? e.message : String(e));
@@ -78,19 +95,17 @@ export function LocationCreateForm() {
         <Input id="description" value={description} onChange={(e) => setDescription(e.target.value)} />
       </div>
       <div className="grid gap-2">
-        <Label htmlFor="asset_tag">Asset Tag</Label>
+        <Label htmlFor="asset_tag_template">Asset Tag Template</Label>
         <select
-          id="asset_tag"
+          id="asset_tag_template"
           className="h-9 rounded-md border bg-background px-3 text-sm"
-          value={assetTagId}
-          onChange={(e) => setAssetTagId(e.target.value === "" ? "" : Number(e.target.value))}
+          value={assetTagTemplateId}
+          onChange={(e) => setAssetTagTemplateId(e.target.value === "" ? "" : Number(e.target.value))}
           disabled={!loaded}
         >
-          <option value="">— Kein Asset Tag —</option>
-          {assetTags.map((tag) => (
-            <option key={tag.id} value={tag.id}>
-              {tag.printed_code ?? `#${tag.id}`} {tag.printed_applied ? "(verwendet)" : ""}
-            </option>
+          <option value="">— Keins —</option>
+          {assetTagTemplates.map((t) => (
+            <option key={t.id} value={t.id}>{`Template #${t.id}`}</option>
           ))}
         </select>
       </div>

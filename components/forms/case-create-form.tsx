@@ -3,6 +3,8 @@
 import { useEffect, useMemo, useState } from "react";
 import { createClient } from "@/lib/supabase/client";
 import type { Tables, Database, Json } from "@/database.types";
+import type { adminCompanyMetadata } from "@/components/metadataTypes.types";
+import { buildAssetTagCode } from "@/lib/asset-tags/code";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { useRouter } from "next/navigation";
@@ -29,6 +31,9 @@ export function CaseCreateForm() {
   const [articleItems, setArticleItems] = useState<Array<{ article_id: number; amount: number }>>([]);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [assetTagTemplateId, setAssetTagTemplateId] = useState<number | "">("");
+  const [assetTagTemplates, setAssetTagTemplates] = useState<Tables<"asset_tag_templates">[]>([]);
+  const [companyMeta, setCompanyMeta] = useState<adminCompanyMetadata | null>(null);
 
   useEffect(() => {
     let active = true;
@@ -42,9 +47,18 @@ export function CaseCreateForm() {
         .from("articles")
         .select("id,name")
         .order("name");
+      const [{ data: tmplData }, { data: companyRow }] = await Promise.all([
+        supabase.from("asset_tag_templates").select("id,template").order("created_at", { ascending: false }),
+        supabase.from("companies").select("metadata").limit(1).maybeSingle(),
+      ]);
       if (!active) return;
       setEquipments((data as Equipment[]) ?? []);
       setArticles((arts as Article[]) ?? []);
+      setAssetTagTemplates((tmplData as Tables<"asset_tag_templates">[]) ?? []);
+      setCompanyMeta(companyRow?.metadata as unknown as adminCompanyMetadata || null);
+      const metaPartial = companyRow?.metadata as Partial<adminCompanyMetadata> | undefined;
+      const defId = metaPartial?.defaultCaseAssetTagTemplateId;
+      if (defId) setAssetTagTemplateId(defId);
     }
     load();
     return () => { active = false; };
@@ -92,6 +106,17 @@ export function CaseCreateForm() {
         .single();
       if (error) throw error;
       const id = (data as Tables<"cases">).id;
+      if (assetTagTemplateId !== "") {
+        const printed_code = companyMeta ? buildAssetTagCode(companyMeta, "case", id) : String(id);
+        const { data: tag, error: tagErr } = await supabase
+          .from("asset_tags")
+          .insert({ printed_template: Number(assetTagTemplateId), printed_code, company_id: company.id, created_by: userId })
+          .select("id")
+          .single();
+        if (tagErr) throw tagErr;
+        const tagId = (tag as Tables<"asset_tags">).id;
+        await supabase.from("cases").update({ asset_tag: tagId }).eq("id", id);
+      }
       router.push(`/management/cases/${id}`);
     } catch (e: unknown) {
       setError(e instanceof Error ? e.message : String(e));
@@ -225,6 +250,20 @@ export function CaseCreateForm() {
             </table>
           </div>
         )}
+      </div>
+      <div className="grid gap-2">
+        <Label htmlFor="asset_tag_template">Asset Tag Template</Label>
+        <select
+          id="asset_tag_template"
+          className="h-9 rounded-md border bg-background px-3 text-sm"
+          value={assetTagTemplateId}
+          onChange={(e) => setAssetTagTemplateId(e.target.value === "" ? "" : Number(e.target.value))}
+        >
+          <option value="">— Keins —</option>
+          {assetTagTemplates.map((t) => (
+            <option key={t.id} value={t.id}>{`Template #${t.id}`}</option>
+          ))}
+        </select>
       </div>
       <div className="flex items-center gap-3">
         <Button type="submit" disabled={saving}>{saving ? "Erstellen…" : "Erstellen"}</Button>

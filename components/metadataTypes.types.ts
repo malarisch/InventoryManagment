@@ -113,6 +113,18 @@ export interface adminCompanyMetadata {
     person: Person;
   };
   customTypes: { articleTypes: string[], caseTypes: string[], locationTypes: string[] };
+  /** Optional company wide prefix applied before any specific entity prefix when generating asset tag codes. */
+  companyWidePrefix?: string;
+  /** Optional default prefixes for asset tag codes per entity type (appended after companyWidePrefix if present). */
+  assetTagArticlePrefix?: string;
+  assetTagEquipmentPrefix?: string;
+  assetTagCasePrefix?: string;
+  assetTagLocationPrefix?: string;
+  /** Default asset tag template IDs per entity type used for automatic tag creation. */
+  defaultArticleAssetTagTemplateId?: number;
+  defaultEquipmentAssetTagTemplateId?: number;
+  defaultCaseAssetTagTemplateId?: number;
+  defaultLocationAssetTagTemplateId?: number;
   taxNumber?: string;
   address?: string;
   industry?: string; // e.g., "IT Services", "Manufacturing"

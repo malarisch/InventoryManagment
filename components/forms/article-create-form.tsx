@@ -3,6 +3,8 @@
 import { useEffect, useMemo, useState } from "react";
 import { createClient } from "@/lib/supabase/client";
 import type { Tables } from "@/database.types";
+import { buildAssetTagCode } from "@/lib/asset-tags/code";
+import type { adminCompanyMetadata } from "@/components/metadataTypes.types";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
@@ -10,10 +12,10 @@ import { useRouter } from "next/navigation";
 import { useCompany } from "@/app/management/_libs/companyHook";
 import { ArticleMetadataForm } from "@/components/forms/partials/article-metadata-form";
 import { defaultArticleMetadataDE, toPrettyJSON } from "@/lib/metadata/defaults";
-import type { Json } from "@/database.types";
 
 type Location = Tables<"locations">;
-type AssetTag = Tables<"asset_tags">;
+import type { Json } from "@/database.types";
+type AssetTagTemplate = { id: number; template: Json };
 
 export function ArticleCreateForm() {
   const supabase = useMemo(() => createClient(), []);
@@ -21,9 +23,10 @@ export function ArticleCreateForm() {
   const { company } = useCompany();
   const [name, setName] = useState<string>("");
   const [defaultLocation, setDefaultLocation] = useState<number | "">("");
-  const [assetTagId, setAssetTagId] = useState<number | "">("");
+  const [assetTagTemplateId, setAssetTagTemplateId] = useState<number | "">("");
   const [locations, setLocations] = useState<Location[]>([]);
-  const [assetTags, setAssetTags] = useState<AssetTag[]>([]);
+  const [assetTagTemplates, setAssetTagTemplates] = useState<AssetTagTemplate[]>([]);
+  const [companyMeta, setCompanyMeta] = useState<adminCompanyMetadata | null>(null);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [metaText, setMetaText] = useState<string>(() => toPrettyJSON(defaultArticleMetadataDE));
@@ -33,13 +36,19 @@ export function ArticleCreateForm() {
   useEffect(() => {
     let active = true;
     async function loadData() {
-      const [{ data: locationsData }, { data: assetTagData }] = await Promise.all([
+      const [{ data: locationsData }, { data: tmplData }, { data: companyRow }] = await Promise.all([
         supabase.from("locations").select("id,name").order("name"),
-        supabase.from("asset_tags").select("id, printed_code, printed_applied").order("created_at", { ascending: false }),
+        supabase.from("asset_tag_templates").select("id,template").order("created_at", { ascending: false }),
+        supabase.from("companies").select("metadata").limit(1).maybeSingle(),
       ]);
       if (!active) return;
       setLocations((locationsData as Location[]) ?? []);
-      setAssetTags((assetTagData as AssetTag[]) ?? []);
+  setAssetTagTemplates(((tmplData as Tables<"asset_tag_templates">[]) ?? []).map(t => ({ id: t.id, template: t.template as Json })));
+  setCompanyMeta(companyRow?.metadata ? companyRow.metadata as unknown as adminCompanyMetadata : null);
+  // preselect default template id from metadata (loose cast for optional field presence)
+  const metaAny = companyRow?.metadata as Partial<adminCompanyMetadata> | undefined;
+  const defId = metaAny?.defaultArticleAssetTagTemplateId;
+      if (defId) setAssetTagTemplateId(defId);
     }
     loadData();
     return () => { active = false; };
@@ -71,7 +80,6 @@ export function ArticleCreateForm() {
         .insert({
           name: name.trim(),
           default_location: defaultLocation === "" ? null : Number(defaultLocation),
-          asset_tag: assetTagId === "" ? null : Number(assetTagId),
           company_id: company.id,
           created_by: userId,
           metadata,
@@ -80,6 +88,23 @@ export function ArticleCreateForm() {
         .single();
       if (error) throw error;
       const id = (data as Tables<"articles">).id;
+      // auto create asset tag if template selected
+      if (assetTagTemplateId !== "") {
+  const printed_code = companyMeta ? buildAssetTagCode(companyMeta, "article", id) : String(id);
+        const { data: tagData, error: tagErr } = await supabase
+          .from("asset_tags")
+          .insert({
+            printed_template: Number(assetTagTemplateId),
+            printed_code,
+            company_id: company.id,
+            created_by: userId,
+          })
+          .select("id")
+          .single();
+        if (tagErr) throw tagErr;
+        const tagId = (tagData as Tables<"asset_tags">).id;
+        await supabase.from("articles").update({ asset_tag: tagId }).eq("id", id);
+      }
       router.push(`/management/articles/${id}`);
     } catch (e: unknown) {
       setError(e instanceof Error ? e.message : String(e));
@@ -94,18 +119,16 @@ export function ArticleCreateForm() {
         <Input id="name" value={name} onChange={(e) => setName(e.target.value)} required placeholder="Artikelname" />
       </div>
       <div className="grid gap-2">
-        <Label htmlFor="asset_tag">Asset Tag</Label>
+        <Label htmlFor="asset_tag_template">Asset Tag Template</Label>
         <select
-          id="asset_tag"
+          id="asset_tag_template"
           className="h-9 rounded-md border bg-background px-3 text-sm"
-          value={assetTagId}
-          onChange={(e) => setAssetTagId(e.target.value === "" ? "" : Number(e.target.value))}
+          value={assetTagTemplateId}
+          onChange={(e) => setAssetTagTemplateId(e.target.value === "" ? "" : Number(e.target.value))}
         >
-          <option value="">— Kein Asset Tag —</option>
-          {assetTags.map((tag) => (
-            <option key={tag.id} value={tag.id}>
-              {tag.printed_code ?? `#${tag.id}`} {tag.printed_applied ? "(verwendet)" : ""}
-            </option>
+          <option value="">— Keins —</option>
+          {assetTagTemplates.map((t) => (
+            <option key={t.id} value={t.id}>{`Template #${t.id}`}</option>
           ))}
         </select>
       </div>

@@ -108,9 +108,10 @@ export function getAssetTagPlaceholders(
   article?: { name?: string } | null, 
   location?: { name?: string } | null
 ): PlaceholderData {
+  console.log('Generating placeholders with:', { assetTag, equipment, article, location });
   return {
     printed_code: assetTag.printed_code || '',
-    equipment_name: equipment?.name || '',
+    equipment_name: equipment?.name || article?.name || '',
     article_name: article?.name || '',
     location_name: location?.name || '',
     current_date: new Date().toLocaleDateString(),

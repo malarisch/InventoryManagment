@@ -84,6 +84,13 @@ export default async function ArticleDetailPage({ params }: { params: Promise<{ 
                 <Button asChild variant="secondary">
                   <Link href={`/management/equipments/new?articleId=${article.id}`}>Equipment hinzufügen</Link>
                 </Button>
+                {article.asset_tag && (
+                  <Button asChild variant="outline">
+                    <Link href={`/api/asset-tags/${article.asset_tag}/render?format=svg`} target="_blank" rel="noopener noreferrer">
+                      Asset Tag anzeigen
+                    </Link>
+                  </Button>
+                )}
               </div>
             </div>
             <ArticleEditForm article={article} />

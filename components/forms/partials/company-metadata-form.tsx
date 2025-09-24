@@ -238,6 +238,47 @@ export function CompanyMetadataForm({
             value={value.notes ?? ""} 
             onChange={(e) => set("notes", e.target.value)} />
       </div>
+      <h3 className="text-lg font-medium">Asset Tag Einstellungen</h3>
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
+        <div className="grid gap-1.5">
+          <Label htmlFor="cmf-at-company-prefix">Globaler Prefix</Label>
+          <Input id="cmf-at-company-prefix" value={value.companyWidePrefix ?? ""} onChange={(e) => set("companyWidePrefix", e.target.value)} placeholder="z.B. ACME" />
+        </div>
+        <div className="grid gap-1.5">
+          <Label htmlFor="cmf-at-article-prefix">Artikel-Prefix</Label>
+          <Input id="cmf-at-article-prefix" value={value.assetTagArticlePrefix ?? ""} onChange={(e) => set("assetTagArticlePrefix", e.target.value)} placeholder="ART" />
+        </div>
+        <div className="grid gap-1.5">
+          <Label htmlFor="cmf-at-equipment-prefix">Equipment-Prefix</Label>
+          <Input id="cmf-at-equipment-prefix" value={value.assetTagEquipmentPrefix ?? ""} onChange={(e) => set("assetTagEquipmentPrefix", e.target.value)} placeholder="EQ" />
+        </div>
+        <div className="grid gap-1.5">
+          <Label htmlFor="cmf-at-case-prefix">Case-Prefix</Label>
+          <Input id="cmf-at-case-prefix" value={value.assetTagCasePrefix ?? ""} onChange={(e) => set("assetTagCasePrefix", e.target.value)} placeholder="CASE" />
+        </div>
+        <div className="grid gap-1.5">
+          <Label htmlFor="cmf-at-location-prefix">Location-Prefix</Label>
+          <Input id="cmf-at-location-prefix" value={value.assetTagLocationPrefix ?? ""} onChange={(e) => set("assetTagLocationPrefix", e.target.value)} placeholder="LOC" />
+        </div>
+      </div>
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-4">
+        <div className="grid gap-1.5">
+          <Label htmlFor="cmf-at-article-template">Default Artikel Template ID</Label>
+          <Input id="cmf-at-article-template" type="number" min={0} value={value.defaultArticleAssetTagTemplateId ?? ""} onChange={(e) => set("defaultArticleAssetTagTemplateId", e.target.value ? Number(e.target.value) : undefined)} />
+        </div>
+        <div className="grid gap-1.5">
+          <Label htmlFor="cmf-at-equipment-template">Default Equipment Template ID</Label>
+          <Input id="cmf-at-equipment-template" type="number" min={0} value={value.defaultEquipmentAssetTagTemplateId ?? ""} onChange={(e) => set("defaultEquipmentAssetTagTemplateId", e.target.value ? Number(e.target.value) : undefined)} />
+        </div>
+        <div className="grid gap-1.5">
+          <Label htmlFor="cmf-at-case-template">Default Case Template ID</Label>
+          <Input id="cmf-at-case-template" type="number" min={0} value={value.defaultCaseAssetTagTemplateId ?? ""} onChange={(e) => set("defaultCaseAssetTagTemplateId", e.target.value ? Number(e.target.value) : undefined)} />
+        </div>
+        <div className="grid gap-1.5">
+          <Label htmlFor="cmf-at-location-template">Default Location Template ID</Label>
+          <Input id="cmf-at-location-template" type="number" min={0} value={value.defaultLocationAssetTagTemplateId ?? ""} onChange={(e) => set("defaultLocationAssetTagTemplateId", e.target.value ? Number(e.target.value) : undefined)} />
+        </div>
+      </div>
     </div>
   );
 }

@@ -3,6 +3,8 @@
 import { useEffect, useMemo, useState } from "react";
 import { createClient } from "@/lib/supabase/client";
 import type { Tables, Json, Database } from "@/database.types";
+import type { adminCompanyMetadata } from "@/components/metadataTypes.types";
+import { buildAssetTagCode } from "@/lib/asset-tags/code";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -14,18 +16,19 @@ import { EquipmentMetadataForm } from "@/components/forms/partials/equipment-met
 import { buildEquipmentMetadata } from "@/lib/metadata/builders";
 type Article = Tables<"articles">;
 type Location = Tables<"locations">;
-type AssetTag = Tables<"asset_tags">;
+type AssetTagTemplate = Tables<"asset_tag_templates">;
 
 export function EquipmentCreateForm({ initialArticleId }: { initialArticleId?: number }) {
   const supabase = useMemo(() => createClient(), []);
   const router = useRouter();
   const { company } = useCompany();
-  const [assetTagId, setAssetTagId] = useState<number | "">("");
+  const [assetTagTemplateId, setAssetTagTemplateId] = useState<number | "">("");
   const [articleId, setArticleId] = useState<number | "">(initialArticleId ?? "");
   
   const [articles, setArticles] = useState<Article[]>([]);
   const [locations, setLocations] = useState<Location[]>([]);
-  const [assetTags, setAssetTags] = useState<AssetTag[]>([]);
+  const [assetTagTemplates, setAssetTagTemplates] = useState<AssetTagTemplate[]>([]);
+  const [companyMeta, setCompanyMeta] = useState<adminCompanyMetadata | null>(null);
   const [currentLocation, setCurrentLocation] = useState<number | "">("");
   const [addedAt, setAddedAt] = useState<string>(() => {
     const d = new Date();
@@ -44,15 +47,20 @@ export function EquipmentCreateForm({ initialArticleId }: { initialArticleId?: n
   useEffect(() => {
     let active = true;
     async function loadData() {
-      const [{ data: articlesData }, { data: locationsData }, { data: assetTagData }] = await Promise.all([
+      const [{ data: articlesData }, { data: locationsData }, { data: tmplData }, { data: companyRow }] = await Promise.all([
         supabase.from("articles").select("id,name").order("name"),
         supabase.from("locations").select("id,name").order("name"),
-        supabase.from("asset_tags").select("id, printed_code, printed_applied").order("created_at", { ascending: false }),
+        supabase.from("asset_tag_templates").select("id,template").order("created_at", { ascending: false }),
+        supabase.from("companies").select("metadata").limit(1).maybeSingle(),
       ]);
       if (!active) return;
       setArticles((articlesData as Article[]) ?? []);
       setLocations((locationsData as Location[]) ?? []);
-      setAssetTags((assetTagData as AssetTag[]) ?? []);
+      setAssetTagTemplates((tmplData as AssetTagTemplate[]) ?? []);
+  setCompanyMeta(companyRow?.metadata ? companyRow.metadata as unknown as adminCompanyMetadata : null);
+  const metaPartial = companyRow?.metadata as Partial<adminCompanyMetadata> | undefined;
+  const defId = metaPartial?.defaultEquipmentAssetTagTemplateId;
+      if (defId) setAssetTagTemplateId(defId);
     }
     loadData();
     return () => { active = false; };
@@ -76,7 +84,7 @@ export function EquipmentCreateForm({ initialArticleId }: { initialArticleId?: n
   metadata = buildEquipmentMetadata(metaObj) as unknown as Json;
       }
       const base: Database["public"]["Tables"]["equipments"]["Insert"] = {
-        asset_tag: assetTagId === "" ? null : Number(assetTagId),
+        asset_tag: null,
         article_id: articleId === "" ? null : Number(articleId),
         current_location: currentLocation === "" ? null : Number(currentLocation),
         metadata,
@@ -86,7 +94,7 @@ export function EquipmentCreateForm({ initialArticleId }: { initialArticleId?: n
       if (addedAt) base.added_to_inventory_at = addedAt;
 
       if (!Number.isFinite(count) || count < 1) throw new Error("Anzahl ungültig");
-      if (count > 1 && assetTagId !== "") throw new Error("Bei Mehrfacherstellung darf kein Asset Tag gewählt werden");
+  if (count > 1 && assetTagTemplateId !== "") throw new Error("Bei Mehrfacherstellung derzeit kein automatischer Asset Tag je Einheit");
 
       if (count === 1) {
         const { data, error } = await supabase
@@ -96,6 +104,17 @@ export function EquipmentCreateForm({ initialArticleId }: { initialArticleId?: n
           .single();
         if (error) throw error;
         const id = (data as Tables<"equipments">).id;
+        if (assetTagTemplateId !== "") {
+          const printed_code = companyMeta ? buildAssetTagCode(companyMeta, "equipment", id) : String(id);
+            const { data: tag, error: tagErr } = await supabase
+              .from("asset_tags")
+              .insert({ printed_template: Number(assetTagTemplateId), printed_code, company_id: company.id, created_by: userId })
+              .select("id")
+              .single();
+            if (tagErr) throw tagErr;
+            const tagId = (tag as Tables<"asset_tags">).id;
+            await supabase.from("equipments").update({ asset_tag: tagId }).eq("id", id);
+        }
         router.push(`/management/equipments/${id}`);
       } else {
         const rows: Database["public"]["Tables"]["equipments"]["Insert"][] = Array.from({ length: count }, () => ({ ...base }));
@@ -113,18 +132,16 @@ export function EquipmentCreateForm({ initialArticleId }: { initialArticleId?: n
   return (
     <form onSubmit={onSubmit} className="space-y-4">
       <div className="grid gap-2">
-        <Label htmlFor="asset_tag">Asset Tag</Label>
+        <Label htmlFor="asset_tag_template">Asset Tag Template</Label>
         <select
-          id="asset_tag"
+          id="asset_tag_template"
           className="h-9 rounded-md border bg-background px-3 text-sm"
-          value={assetTagId}
-          onChange={(e) => setAssetTagId(e.target.value === "" ? "" : Number(e.target.value))}
+          value={assetTagTemplateId}
+          onChange={(e) => setAssetTagTemplateId(e.target.value === "" ? "" : Number(e.target.value))}
         >
-          <option value="">— Kein Asset Tag —</option>
-          {assetTags.map((tag) => (
-            <option key={tag.id} value={tag.id}>
-              {tag.printed_code ?? `#${tag.id}`} {tag.printed_applied ? "(verwendet)" : ""}
-            </option>
+          <option value="">— Keins —</option>
+          {assetTagTemplates.map((t) => (
+            <option key={t.id} value={t.id}>{`Template #${t.id}`}</option>
           ))}
         </select>
       </div>
