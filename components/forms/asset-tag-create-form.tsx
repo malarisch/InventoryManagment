@@ -41,6 +41,7 @@ export function AssetTagCreateForm({ item, table, companyId }: { item: { id: num
     const payload: TablesInsert<'asset_tags'> = {
       printed_code: values.printed_code,
       printed_template: values.printed_template,
+      company_id: companyId,
     };
     const { data, error } = await supabase.from('asset_tags').insert(payload).select().single();
     if (error) {
