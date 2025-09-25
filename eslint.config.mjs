@@ -13,4 +13,25 @@ const eslintConfig = [{
   ignores: ["node_modules/**", ".next/**", "out/**", "build/**", "next-env.d.ts"]
 }, ...compat.extends("next/core-web-vitals", "next/typescript")];
 
+eslintConfig.push({
+    languageOptions: {
+        globals: {
+            ...globals.browser,
+            ...globals.node,
+        },
+    },
+    rules: {
+        '@typescript-eslint/no-unused-vars': [
+            'error',
+            {
+                "argsIgnorePattern": "^_",
+                "varsIgnorePattern": "^_",
+                "caughtErrorsIgnorePattern": "^_"
+            }
+        ]
+    }
+}, {
+    ignores: ["**/.idea/**", "**/test-results/**", "**/playwright-report/**", "**/dist/**", "**/build/**", "**/out/**", "**/node_modules/**", "**/supabase/functions/_shared/cors.ts"],
+});
+
 export default eslintConfig;
