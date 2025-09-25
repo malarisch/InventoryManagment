@@ -1,111 +1,15 @@
 import 'dotenv/config';
-import { test, expect } from '@playwright/test';
-import { createAdminClient } from "@/lib/supabase/admin";
-import type { SupabaseClient } from '@supabase/supabase-js';
+import { expect } from '@playwright/test';
+import {test} from '../playwright_setup.types';
 
-const requiredEnv = ["NEXT_PUBLIC_SUPABASE_URL", "NEXT_PUBLIC_SUPABASE_ANON_KEY", "SUPABASE_SERVICE_ROLE_KEY"] as const;
-const missing = requiredEnv.filter((key) => !process.env[key]);
-const shouldSkip = missing.length > 0;
 
 test.describe('Equipment Form Tests', () => {
-  test.skip(shouldSkip, `Supabase env vars missing: ${missing.join(", ")}`);
-  
+
   // Configure this describe block to run sequentially to avoid data collisions
   test.describe.configure({ mode: 'serial' });
 
-  let admin: SupabaseClient | null = null;
-  const timestamp = Date.now();
-  const testEmail = `playwright+equipment+${timestamp}@example.com`;
-  const testPassword = `PlaywrightTest-${timestamp}!`;
-  const companyName = `Equipment Test Co ${timestamp}`;
-
-  let userId: string | null = null;
-  let companyId: number | null = null;
-  let membershipId: number | null = null;
-  let testArticleId: number | null = null;
-
-  test.beforeAll(async () => {
-    admin = createAdminClient();
-    
-    // Create test user
-    const { data: createUserData, error: createUserError } = await admin.auth.admin.createUser({
-      email: testEmail,
-      password: testPassword,
-      email_confirm: true,
-    });
-    if (createUserError) {
-      throw createUserError;
-    }
-    userId = createUserData.user.id;
-
-    // Create test company
-    const { data: companyData, error: companyError } = await admin
-      .from('companies')
-      .insert({ 
-        name: companyName, 
-        description: 'Test company for equipment testing',
-        owner_user_id: userId 
-      })
-      .select()
-      .single();
-    if (companyError) {
-      throw companyError;
-    }
-    companyId = companyData.id;
-
-    // Create company membership
-    const { data: membershipData, error: membershipError } = await admin
-      .from('users_companies')
-      .insert({ user_id: userId, company_id: companyId })
-      .select()
-      .single();
-    if (membershipError) {
-      throw membershipError;
-    }
-    membershipId = membershipData.id;
-
-    // Create a test article for equipment
-    const { data: articleData, error: articleError } = await admin
-      .from('articles')
-      .insert({
-        name: `Test Article for Equipment ${timestamp}`,
-        company_id: companyId,
-        created_by: userId
-      })
-      .select()
-      .single();
-    if (articleError) {
-      throw articleError;
-    }
-    testArticleId = articleData.id;
-  });
-
-  test.afterAll(async () => {
-    if (admin && testArticleId) {
-      await admin.from('articles').delete().eq('id', testArticleId);
-    }
-    if (admin && membershipId) {
-      await admin.from('users_companies').delete().eq('id', membershipId);
-    }
-    if (admin && companyId) {
-      await admin.from('companies').delete().eq('id', companyId);
-    }
-    if (admin && userId) {
-      await admin.auth.admin.deleteUser(userId);
-    }
-  });
-
-  /**
-   * Helper function to log in the test user
-   */
-  async function loginUser(page: import('@playwright/test').Page) {
-    await page.goto('/auth/login');
-    await page.fill('[data-testid="email-input"], input[type="email"]', testEmail);
-    await page.fill('[data-testid="password-input"], input[type="password"]', testPassword);
-    await page.click('button[type="submit"]');
-    await page.waitForURL('/management**');
-  }
-
+    const testArticleId = 1; // Assume article with ID 1 exists for testing
+    const timestamp = Date.now();
     // Select the known test article reliably by its id (value attribute) or visible text fallback
     async function selectTestArticle(page: import('@playwright/test').Page) {
       if (!testArticleId) throw new Error('testArticleId not initialized');
@@ -146,7 +50,7 @@ test.describe('Equipment Form Tests', () => {
     }
 
   test('should display equipments list page correctly', async ({ page }) => {
-    await loginUser(page);
+
     
     await page.goto('/management/equipments');
     await page.waitForLoadState('networkidle');
@@ -164,7 +68,7 @@ test.describe('Equipment Form Tests', () => {
   });
 
   test('should create new equipment with form validation', async ({ page }) => {
-    await loginUser(page);
+
     
     await page.goto('/management/equipments/new');
     await page.waitForLoadState('networkidle');
@@ -207,7 +111,7 @@ test.describe('Equipment Form Tests', () => {
   });
 
   test('should navigate from article to equipment creation', async ({ page }) => {
-    await loginUser(page);
+
     
     // Go to articles list and click on our test article
     await page.goto('/management/articles');
@@ -240,7 +144,7 @@ test.describe('Equipment Form Tests', () => {
   });
 
   test('should display equipment detail page correctly', async ({ page }) => {
-    await loginUser(page);
+
     
     // First create an equipment to test
     await page.goto('/management/equipments/new');
@@ -279,7 +183,7 @@ test.describe('Equipment Form Tests', () => {
     // Set mobile viewport
     await page.setViewportSize({ width: 375, height: 667 });
     
-    await loginUser(page);
+
     
     // Test equipments list on mobile
     await page.goto('/management/equipments');
@@ -300,7 +204,7 @@ test.describe('Equipment Form Tests', () => {
   });
 
   test('should handle location assignment', async ({ page }) => {
-    await loginUser(page);
+
     
     // First create a location for testing
     await page.goto('/management/locations/new');

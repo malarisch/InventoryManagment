@@ -57,3 +57,6 @@ supabase/seed.sql
 supabase/seed.sql
 
 seed.sql
+*.auth
+playwright/.auth
+/lib/generated/prisma

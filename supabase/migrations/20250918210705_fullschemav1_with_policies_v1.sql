@@ -179,7 +179,7 @@ alter table "public"."asset_tag_templates" add constraint "asset_tag_templates_c
 
 alter table "public"."asset_tag_templates" validate constraint "asset_tag_templates_company_id_fkey";
 
-alter table "public"."asset_tag_templates" add constraint "asset_tag_templates_created_by_fkey" FOREIGN KEY (created_by) REFERENCES auth.users(id) ON UPDATE CASCADE ON DELETE SET NULL not valid;
+alter table "public"."asset_tag_templates" add constraint "asset_tag_templates_created_by_fkey" FOREIGN KEY (created_by) REFERENCES profiles(id) ON UPDATE CASCADE ON DELETE SET NULL not valid;
 
 alter table "public"."asset_tag_templates" validate constraint "asset_tag_templates_created_by_fkey";
 
@@ -187,7 +187,7 @@ alter table "public"."asset_tags" add constraint "asset_tags_company_id_fkey" FO
 
 alter table "public"."asset_tags" validate constraint "asset_tags_company_id_fkey";
 
-alter table "public"."asset_tags" add constraint "asset_tags_created_by_fkey" FOREIGN KEY (created_by) REFERENCES auth.users(id) ON UPDATE CASCADE ON DELETE SET NULL not valid;
+alter table "public"."asset_tags" add constraint "asset_tags_created_by_fkey" FOREIGN KEY (created_by) REFERENCES profiles(id) ON UPDATE CASCADE ON DELETE SET NULL not valid;
 
 alter table "public"."asset_tags" validate constraint "asset_tags_created_by_fkey";
 
@@ -199,7 +199,7 @@ alter table "public"."cases" add constraint "cases_company_id_fkey" FOREIGN KEY 
 
 alter table "public"."cases" validate constraint "cases_company_id_fkey";
 
-alter table "public"."cases" add constraint "cases_created_by_fkey" FOREIGN KEY (created_by) REFERENCES auth.users(id) ON UPDATE CASCADE ON DELETE SET NULL not valid;
+alter table "public"."cases" add constraint "cases_created_by_fkey" FOREIGN KEY (created_by) REFERENCES profiles(id) ON UPDATE CASCADE ON DELETE SET NULL not valid;
 
 alter table "public"."cases" validate constraint "cases_created_by_fkey";
 
@@ -207,7 +207,7 @@ alter table "public"."customers" add constraint "customers_company_id_fkey" FORE
 
 alter table "public"."customers" validate constraint "customers_company_id_fkey";
 
-alter table "public"."customers" add constraint "customers_created_by_fkey" FOREIGN KEY (created_by) REFERENCES auth.users(id) ON UPDATE CASCADE ON DELETE SET NULL not valid;
+alter table "public"."customers" add constraint "customers_created_by_fkey" FOREIGN KEY (created_by) REFERENCES profiles(id) ON UPDATE CASCADE ON DELETE SET NULL not valid;
 
 alter table "public"."customers" validate constraint "customers_created_by_fkey";
 
@@ -219,7 +219,7 @@ alter table "public"."equipments" add constraint "equipments_current_location_fk
 
 alter table "public"."equipments" validate constraint "equipments_current_location_fkey";
 
-alter table "public"."history" add constraint "history_change_made_by_fkey" FOREIGN KEY (change_made_by) REFERENCES auth.users(id) ON UPDATE CASCADE ON DELETE SET NULL not valid;
+alter table "public"."history" add constraint "history_change_made_by_fkey" FOREIGN KEY (change_made_by) REFERENCES profiles(id) ON UPDATE CASCADE ON DELETE SET NULL not valid;
 
 alter table "public"."history" validate constraint "history_change_made_by_fkey";
 
@@ -235,7 +235,7 @@ alter table "public"."job_assets_on_job" add constraint "job_assets_on_job_compa
 
 alter table "public"."job_assets_on_job" validate constraint "job_assets_on_job_company_id_fkey";
 
-alter table "public"."job_assets_on_job" add constraint "job_assets_on_job_created_by_fkey" FOREIGN KEY (created_by) REFERENCES auth.users(id) ON UPDATE CASCADE ON DELETE SET NULL not valid;
+alter table "public"."job_assets_on_job" add constraint "job_assets_on_job_created_by_fkey" FOREIGN KEY (created_by) REFERENCES profiles(id) ON UPDATE CASCADE ON DELETE SET NULL not valid;
 
 alter table "public"."job_assets_on_job" validate constraint "job_assets_on_job_created_by_fkey";
 
@@ -255,7 +255,7 @@ alter table "public"."job_booked_assets" add constraint "job_booked_assets_compa
 
 alter table "public"."job_booked_assets" validate constraint "job_booked_assets_company_id_fkey";
 
-alter table "public"."job_booked_assets" add constraint "job_booked_assets_created_by_fkey" FOREIGN KEY (created_by) REFERENCES auth.users(id) ON UPDATE CASCADE ON DELETE SET NULL not valid;
+alter table "public"."job_booked_assets" add constraint "job_booked_assets_created_by_fkey" FOREIGN KEY (created_by) REFERENCES profiles(id) ON UPDATE CASCADE ON DELETE SET NULL not valid;
 
 alter table "public"."job_booked_assets" validate constraint "job_booked_assets_created_by_fkey";
 
@@ -271,7 +271,7 @@ alter table "public"."jobs" add constraint "jobs_company_id_fkey" FOREIGN KEY (c
 
 alter table "public"."jobs" validate constraint "jobs_company_id_fkey";
 
-alter table "public"."jobs" add constraint "jobs_created_by_fkey" FOREIGN KEY (created_by) REFERENCES auth.users(id) ON UPDATE CASCADE ON DELETE SET NULL not valid;
+alter table "public"."jobs" add constraint "jobs_created_by_fkey" FOREIGN KEY (created_by) REFERENCES profiles(id) ON UPDATE CASCADE ON DELETE SET NULL not valid;
 
 alter table "public"."jobs" validate constraint "jobs_created_by_fkey";
 
@@ -288,7 +288,7 @@ alter table "public"."users_companies" add constraint "users_companies_company_i
 
 alter table "public"."users_companies" validate constraint "users_companies_company_id_fkey";
 
-alter table "public"."users_companies" add constraint "users_companies_user_id_fkey" FOREIGN KEY (user_id) REFERENCES auth.users(id) ON UPDATE CASCADE ON DELETE CASCADE not valid;
+alter table "public"."users_companies" add constraint "users_companies_user_id_fkey" FOREIGN KEY (user_id) REFERENCES profiles(id) ON UPDATE CASCADE ON DELETE CASCADE not valid;
 
 alter table "public"."users_companies" validate constraint "users_companies_user_id_fkey";
 

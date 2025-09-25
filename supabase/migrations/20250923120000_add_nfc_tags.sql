@@ -17,7 +17,7 @@ alter table "public"."nfc_tags" add constraint "nfc_tags_company_id_fkey" FOREIG
 
 alter table "public"."nfc_tags" validate constraint "nfc_tags_company_id_fkey";
 
-alter table "public"."nfc_tags" add constraint "nfc_tags_created_by_fkey" FOREIGN KEY (created_by) REFERENCES auth.users(id) ON UPDATE CASCADE ON DELETE SET NULL not valid;
+alter table "public"."nfc_tags" add constraint "nfc_tags_created_by_fkey" FOREIGN KEY (created_by) REFERENCES profiles(id) ON UPDATE CASCADE ON DELETE SET NULL not valid;
 
 alter table "public"."nfc_tags" validate constraint "nfc_tags_created_by_fkey";
 

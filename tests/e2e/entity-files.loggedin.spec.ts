@@ -1,7 +1,9 @@
 import 'dotenv/config';
-import { test, expect } from '@playwright/test';
+import { expect , Page} from '@playwright/test';
 import { createAdminClient } from "@/lib/supabase/admin";
 import type { SupabaseClient } from '@supabase/supabase-js';
+import {test} from '../playwright_setup.types';
+import { createEquipment } from '../helpers';
 
 const requiredEnv = [
   "NEXT_PUBLIC_SUPABASE_URL", 
@@ -28,82 +30,17 @@ test.describe('Entity Files Tests', () => {
 
   let admin: SupabaseClient | null = null;
   const timestamp = Date.now();
-  const testEmail = `test-files-${timestamp}@example.com`;
-  const testPassword = 'TestPassword123!';
-  const companyName = `Test Files Company ${timestamp}`;
-
-  let userId: string | null = null;
-  let companyId: number;
-  let membershipId: number;
-
   test.beforeAll(async () => {
     admin = createAdminClient();
     
-    // Create test user
-    const { data: createUserData, error: createUserError } = await admin.auth.admin.createUser({
-      email: testEmail,
-      password: testPassword,
-      email_confirm: true,
-    });
-    if (createUserError) {
-      throw createUserError;
-    }
-    userId = createUserData.user.id;
-
-    // Create test company
-    const { data: companyData, error: companyError } = await admin
-      .from('companies')
-      .insert({ 
-        name: companyName, 
-        description: 'Test company for files testing',
-        owner_user_id: userId 
-      })
-      .select()
-      .single();
-    if (companyError) {
-      throw companyError;
-    }
-    companyId = companyData.id;
-
-    // Create company membership
-    const { data: membershipData, error: membershipError } = await admin
-      .from('users_companies')
-      .insert({ user_id: userId, company_id: companyId })
-      .select()
-      .single();
-    if (membershipError) {
-      throw membershipError;
-    }
-    membershipId = membershipData.id;
   });
 
-  test.afterAll(async () => {
-    if (admin && membershipId) {
-      await admin.from('users_companies').delete().eq('id', membershipId);
-    }
-    if (admin && companyId) {
-      await admin.from('companies').delete().eq('id', companyId);
-    }
-    if (admin && userId) {
-      await admin.auth.admin.deleteUser(userId);
-    }
-  });
-
-  /**
-   * Helper function to log in the test user
-   */
-  async function loginUser(page: import('@playwright/test').Page) {
-    await page.goto('/auth/login');
-    await page.fill('[data-testid="email-input"], input[type="email"]', testEmail);
-    await page.fill('[data-testid="password-input"], input[type="password"]', testPassword);
-    await page.click('button[type="submit"]');
-    await page.waitForURL('/management**');
-  }
+  
 
   /**
    * Helper function to create an article for testing
    */
-  async function createTestArticle(page: import('@playwright/test').Page): Promise<string> {
+  async function createTestArticle(page: Page): Promise<string> {
     // Navigate directly to the create form
     await page.goto('/management/articles/new');
     await page.waitForLoadState('networkidle');
@@ -117,7 +54,7 @@ test.describe('Entity Files Tests', () => {
   }
 
   test('should display file manager on article detail page', async ({ page }) => {
-    await loginUser(page);
+
     
     // Create test article
     const articleUrl = await createTestArticle(page);
@@ -141,7 +78,7 @@ test.describe('Entity Files Tests', () => {
   });
 
   test('should validate file upload form elements', async ({ page }) => {
-    await loginUser(page);
+
     
     // Create test article
     const articleUrl = await createTestArticle(page);
@@ -171,11 +108,11 @@ test.describe('Entity Files Tests', () => {
     await page.screenshot({ path: 'test-results/files-upload-form.png', fullPage: true });
   });
 
-  test('should display file manager on equipment detail page', async ({ page }) => {
+  test('should display file manager on equipment detail page', async ({ page, companyName }) => {
     if (!admin) throw new Error('Admin client not initialized');
     
     // Login first
-    await loginUser(page);
+
     
     // Try to find an existing equipment first
     const { data: existingEquipment } = await admin
@@ -189,28 +126,8 @@ test.describe('Entity Files Tests', () => {
     if (existingEquipment) {
       equipmentId = existingEquipment.id;
     } else {
-      // Try to create a new equipment if none exist
-      const { data: equipment, error } = await admin
-        .from('equipments')
-        .insert([{
-          company_id: companyId,
-          created_by: userId!,
-          article_id: null,
-          asset_tag: null,
-          current_location: null,
-          added_to_inventory_at: new Date().toISOString(),
-          metadata: null
-        }])
-        .select('id')
-        .single();
-      
-      if (error) {
-        console.error('Failed to create equipment:', error);
-        test.skip(true, 'Could not create equipment for testing');
-        return;
-      }
-      
-      equipmentId = equipment.id;
+      equipmentId = await createEquipment(companyName);
+      ;
     }
     
     const equipmentUrl = `/management/equipments/${equipmentId}`;
@@ -267,7 +184,7 @@ test.describe('Entity Files Tests', () => {
   });
 
   test('should work on mobile viewport', async ({ page }) => {
-    await loginUser(page);
+
     
     // Set mobile viewport
     await page.setViewportSize({ width: 375, height: 667 });
@@ -286,12 +203,13 @@ test.describe('Entity Files Tests', () => {
   });
 
   test('should test file manager on customer page', async ({ page }) => {
-    await loginUser(page);
+
     
     // Create a customer first
     await page.goto('/management/customers/new');
     await page.waitForLoadState('networkidle');
-    
+        await page.check('input[value="private"]');
+
     // Fill in customer form using the correct field names
     await page.fill('input[id="forename"]', 'Test');
     await page.fill('input[id="surname"]', 'Customer');
@@ -318,7 +236,7 @@ test.describe('Entity Files Tests', () => {
   });
 
   test('should test file manager on job page', async ({ page }) => {
-    await loginUser(page);
+
     
     // Create a job first
     await page.goto('/management/jobs/new');
@@ -356,7 +274,7 @@ test.describe('Entity Files Tests', () => {
   });
 
   test('should display consistent file manager across all entity types', async ({ page }) => {
-    await loginUser(page);
+
     
     // Create test article
     const articleUrl = await createTestArticle(page);

@@ -11,7 +11,7 @@ export function CompanyNameHeader() {
   return (
     <div className="flex h-14 items-center gap-2 border-b px-4">
       {logoUrl ? (
-        <div className="relative h-6 w-6 rounded-sm overflow-hidden">
+        <div className="relative h-6 w-6 rounded-sm overflow-hidden" id="company-logo">
           <Image 
             src={logoUrl} 
             alt={`${company?.name ?? "Company"} Logo`} 

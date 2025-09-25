@@ -1,4 +1,5 @@
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { JobNameProvider, JobNameHeading } from "@/components/jobs/job-name-context";
 import { createClient } from "@/lib/supabase/server";
 import type { Tables } from "@/database.types";
 import Link from "next/link";
@@ -13,6 +14,10 @@ import { DeleteWithUndo } from "@/components/forms/delete-with-undo";
 import { FileManager } from "@/components/files/file-manager";
 
 type JobRow = Tables<"jobs">;
+
+// Force dynamic rendering so updates appear immediately after client-side router.refresh()
+export const dynamic = "force-dynamic";
+export const revalidate = 0;
 
 export default async function JobDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const { id: idParam } = await params;
@@ -50,9 +55,12 @@ export default async function JobDetailPage({ params }: { params: Promise<{ id: 
         <div className="text-sm text-muted-foreground">
           <Link href="/management/jobs" className="hover:underline">← Zurück zur Übersicht</Link>
         </div>
+        <JobNameProvider initialName={title}>
         <Card>
           <CardHeader>
-            <CardTitle>{title}</CardTitle>
+            <CardTitle>
+              <JobNameHeading data-testid="job-title" fallback={title} />
+            </CardTitle>
             <CardDescription>
               Job-ID #{job.id} • Erstellt am {createdDisplay} • Erstellt von {creatorDisplay}
             </CardDescription>
@@ -67,6 +75,7 @@ export default async function JobDetailPage({ params }: { params: Promise<{ id: 
             </div>
           </CardContent>
         </Card>
+        </JobNameProvider>
         <JobBookedAssetsCard jobId={id} />
         <Card>
           <CardHeader>

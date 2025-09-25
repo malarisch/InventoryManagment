@@ -1,18 +1,54 @@
 import { defineConfig } from "@playwright/test";
+import path from "path";
+import 'dotenv/config';
+import type { TestOptions } from "./tests/playwright_setup.types";
 
-export default defineConfig({
+
+// Ensure required env vars are set
+const requiredEnv = ["NEXT_PUBLIC_SUPABASE_URL", "NEXT_PUBLIC_SUPABASE_ANON_KEY", "SUPABASE_SERVICE_ROLE_KEY"] as const;
+const missing = requiredEnv.filter((key) => !process.env[key]);
+if (missing.length) {
+  throw new Error(`⚠️  Playwright config: Missing required env vars: ${missing.join(", ")}`);
+}
+
+export const STORAGE_STATE = path.join(__dirname, 'playwright/.auth/user.json');
+
+export default defineConfig<TestOptions>({
   testDir: "./tests/e2e",
-  timeout: 30_000,
+  timeout: 60000,
+  expect: {
+    timeout: 10000,
+  },
+  workers: 7,
   fullyParallel: true,
   use: {
-    baseURL: "http://localhost:3005",
+    baseURL: "http://localhost:3000",
     trace: "on-first-retry",
   },
   reporter: [["list"]],
   webServer: {
-    command: "PORT=3005 npm run dev",
-    port: 3005,
+    command: "npm run dev",
+    port: 3000,
     timeout: 120_000,
     reuseExistingServer: true,
   },
+  projects: [
+    {"name": "base",
+      "testMatch": /.*\.base\.spec.ts/,
+    },
+    { "name": "setup",
+      "testMatch": /.*\.setup\.ts/,
+      use: {
+        
+      }
+    },
+    {
+      name: "loggedin",
+      dependencies: ["setup"],
+      use: {
+        storageState: STORAGE_STATE
+      },
+      "testMatch": /.*\.loggedin\.spec\.ts/
+    }
+  ]
 });

@@ -109,7 +109,7 @@ export function AssetTagTemplateCreateForm() {
         .single();
 
       if (companyError || !userCompany) {
-        throw new Error('No company found for user');
+        throw companyError || new Error('User has no associated company');
       }
 
       // Create template

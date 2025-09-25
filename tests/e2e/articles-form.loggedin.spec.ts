@@ -1,8 +1,6 @@
 import 'dotenv/config';
-import { test, expect } from '@playwright/test';
-import { createAdminClient } from "@/lib/supabase/admin";
-import type { SupabaseClient } from '@supabase/supabase-js';
-
+import { expect } from '@playwright/test';
+import {test} from '../playwright_setup.types';
 const requiredEnv = ["NEXT_PUBLIC_SUPABASE_URL", "NEXT_PUBLIC_SUPABASE_ANON_KEY", "SUPABASE_SERVICE_ROLE_KEY"] as const;
 const missing = requiredEnv.filter((key) => !process.env[key]);
 const shouldSkip = missing.length > 0;
@@ -13,82 +11,8 @@ test.describe('Articles Form Tests', () => {
   // Configure this describe block to run sequentially to avoid data collisions
   test.describe.configure({ mode: 'serial' });
 
-  let admin: SupabaseClient | null = null;
-  const timestamp = Date.now();
-  const testEmail = `playwright+articles+${timestamp}@example.com`;
-  const testPassword = `PlaywrightTest-${timestamp}!`;
-  const companyName = `Articles Test Co ${timestamp}`;
-
-  let userId: string | null = null;
-  let companyId: number | null = null;
-  let membershipId: number | null = null;
-
-  test.beforeAll(async () => {
-    admin = createAdminClient();
-    
-    // Create test user
-    const { data: createUserData, error: createUserError } = await admin.auth.admin.createUser({
-      email: testEmail,
-      password: testPassword,
-      email_confirm: true,
-    });
-    if (createUserError) {
-      throw createUserError;
-    }
-    userId = createUserData.user.id;
-
-    // Create test company
-    const { data: companyData, error: companyError } = await admin
-      .from('companies')
-      .insert({ 
-        name: companyName, 
-        description: 'Test company for articles testing',
-        owner_user_id: userId 
-      })
-      .select()
-      .single();
-    if (companyError) {
-      throw companyError;
-    }
-    companyId = companyData.id;
-
-    // Create company membership
-    const { data: membershipData, error: membershipError } = await admin
-      .from('users_companies')
-      .insert({ user_id: userId, company_id: companyId })
-      .select()
-      .single();
-    if (membershipError) {
-      throw membershipError;
-    }
-    membershipId = membershipData.id;
-  });
-
-  test.afterAll(async () => {
-    if (admin && membershipId) {
-      await admin.from('users_companies').delete().eq('id', membershipId);
-    }
-    if (admin && companyId) {
-      await admin.from('companies').delete().eq('id', companyId);
-    }
-    if (admin && userId) {
-      await admin.auth.admin.deleteUser(userId);
-    }
-  });
-
-  /**
-   * Helper function to log in the test user
-   */
-  async function loginUser(page: import('@playwright/test').Page) {
-    await page.goto('/auth/login');
-    await page.fill('[data-testid="email-input"], input[type="email"]', testEmail);
-    await page.fill('[data-testid="password-input"], input[type="password"]', testPassword);
-    await page.click('button[type="submit"]');
-    await page.waitForURL('/management**');
-  }
 
   test('should display articles list page correctly', async ({ page }) => {
-    await loginUser(page);
     
     await page.goto('/management/articles');
     await page.waitForLoadState('networkidle');
@@ -106,7 +30,6 @@ test.describe('Articles Form Tests', () => {
   });
 
   test('should create a new article with form validation', async ({ page }) => {
-    await loginUser(page);
     
     await page.goto('/management/articles/new');
     await page.waitForLoadState('networkidle');
@@ -116,7 +39,7 @@ test.describe('Articles Form Tests', () => {
     await expect(page.locator('.error, [role="alert"], .text-red-500')).toBeVisible();
     
     // Fill out the form
-    const articleName = `Test Article ${timestamp}`;
+    const articleName = `Test Article ${Date.now()}`;
     await page.fill('input[name="name"], input[placeholder*="Name"], input[placeholder*="name"]', articleName);
     
     // Add description if field exists
@@ -153,13 +76,12 @@ test.describe('Articles Form Tests', () => {
   });
 
   test('should display article detail page correctly', async ({ page }) => {
-    await loginUser(page);
     
     // First create an article to test
     await page.goto('/management/articles/new');
     await page.waitForLoadState('networkidle');
     
-    const articleName = `Detail Test Article ${timestamp}`;
+    const articleName = `Detail Test Article ${Date.now()}`;
     await page.fill('input[name="name"], input[placeholder*="Name"], input[placeholder*="name"]', articleName);
     await page.click('button[type="submit"]');
     
@@ -194,7 +116,6 @@ test.describe('Articles Form Tests', () => {
     // Set mobile viewport
     await page.setViewportSize({ width: 375, height: 667 });
     
-    await loginUser(page);
     
     // Test articles list on mobile
     await page.goto('/management/articles');
@@ -214,7 +135,7 @@ test.describe('Articles Form Tests', () => {
     await page.waitForLoadState('networkidle');
     
     // Fill form on mobile
-    const articleName = `Mobile Test Article ${timestamp}`;
+    const articleName = `Mobile Test Article ${Date.now()}`;
     await page.fill('input[name="name"], input[placeholder*="Name"], input[placeholder*="name"]', articleName);
     
     // Take mobile form screenshot
@@ -229,7 +150,6 @@ test.describe('Articles Form Tests', () => {
   });
 
   test('should handle form errors gracefully', async ({ page }) => {
-    await loginUser(page);
     
     await page.goto('/management/articles/new');
     await page.waitForLoadState('networkidle');

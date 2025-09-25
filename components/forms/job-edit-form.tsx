@@ -80,6 +80,14 @@ export function JobEditForm({ job }: { job: Job }) {
       setError(error.message);
     } else {
       setMessage("Gespeichert.");
+      // Fire custom event so job name heading context (if present) can update optimistically
+      try {
+        if (name.trim()) {
+          const newName = name.trim();
+          console.log('[JobEditForm] dispatch job:name:updated', newName);
+          window.dispatchEvent(new CustomEvent('job:name:updated', { detail: { id: job.id, name: newName } }));
+        }
+      } catch { /* ignore */ }
       // Refresh server components (job detail title) so updated name appears
       try { router.refresh(); } catch { /* ignore */ }
     }

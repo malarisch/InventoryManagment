@@ -1,101 +1,15 @@
 import 'dotenv/config';
-import { test, expect } from '@playwright/test';
-import { createAdminClient } from "@/lib/supabase/admin";
-import type { SupabaseClient } from '@supabase/supabase-js';
-
-const requiredEnv = ["NEXT_PUBLIC_SUPABASE_URL", "NEXT_PUBLIC_SUPABASE_ANON_KEY", "SUPABASE_SERVICE_ROLE_KEY"] as const;
-const missing = requiredEnv.filter((key) => !process.env[key]);
-const shouldSkip = missing.length > 0;
+import { expect } from '@playwright/test';
+import {test } from '../playwright_setup.types';
 
 test.describe('Customers Form Tests', () => {
-  test.skip(shouldSkip, `Supabase env vars missing: ${missing.join(", ")}`);
   
   // Configure this describe block to run sequentially to avoid data collisions
   test.describe.configure({ mode: 'serial' });
-
-  let admin: SupabaseClient | null = null;
-  const timestamp = Date.now();
-  const testEmail = `playwright+customers+${timestamp}@example.com`;
-  const testPassword = `PlaywrightTest-${timestamp}!`;
-  const companyName = `Customers Test Co ${timestamp}`;
-
-  let userId: string | null = null;
-  let companyId: number | null = null;
-  let membershipId: number | null = null;
-
-  test.beforeAll(async () => {
-    admin = createAdminClient();
-    console.log ('Admin client created');
-    console.log('Creating User and Company for tests...');
-    // Create test user
-    const { data: createUserData, error: createUserError } = await admin.auth.admin.createUser({
-      email: testEmail,
-      password: testPassword,
-      email_confirm: true,
-    });
-    if (createUserError) {
-      throw createUserError;
-    }
-    userId = createUserData.user.id;
-    console.log('Test user created with ID:', userId);
-    // Create test company
-    const { data: companyData, error: companyError } = await admin
-      .from('companies')
-      .insert({ 
-        name: companyName, 
-        description: 'Test company for customers testing',
-        owner_user_id: userId 
-      })
-      .select()
-      .single();
-    if (companyError) {
-      throw companyError;
-    }
-    companyId = companyData.id;
-    console.log('Test company created with ID:', companyId);
-    // Create company membership
-    const { data: membershipData, error: membershipError } = await admin
-      .from('users_companies')
-      .insert({ user_id: userId, company_id: companyId })
-      .select()
-      .single();
-    if (membershipError) {
-      throw membershipError;
-    }
-    membershipId = membershipData.id;
-    console.log('Company membership created with ID:', membershipData);
-  });
-
-  test.afterAll(async () => {
-    console.log('Cleaning up test data...');
-    if (admin && membershipId) {
-      console.log('Deleting company membership...');
-      await admin.from('users_companies').delete().eq('id', membershipId);
-    }
-    if (admin && companyId) {
-      console.log('Deleting company...');
-      await admin.from('companies').update({ owner_user_id: null }).eq('id', companyId);
-      await admin.from('companies').delete().eq('id', companyId);
-    }
-    if (admin && userId) {
-      console.log('Deleting user...');
-      await admin.auth.admin.deleteUser(userId);
-    }
-  });
-
-  /**
-   * Helper function to log in the test user
-   */
-  async function loginUser(page: import('@playwright/test').Page) {
-    await page.goto('/auth/login');
-    await page.fill('[data-testid="email-input"], input[type="email"]', testEmail);
-    await page.fill('[data-testid="password-input"], input[type="password"]', testPassword);
-    await page.click('button[type="submit"]');
-    await page.waitForURL('/management**');
-  }
+const timestamp = Date.now();
 
   test('should display customers list page correctly', async ({ page }) => {
-    await loginUser(page);
+    
     
     await page.goto('/management/customers');
     await page.waitForLoadState('networkidle');
@@ -113,7 +27,7 @@ test.describe('Customers Form Tests', () => {
   });
 
   test('should create new customer with personal type', async ({ page }) => {
-    await loginUser(page);
+
     
     await page.goto('/management/customers/new');
     await page.waitForLoadState('networkidle');
@@ -277,7 +191,6 @@ test.describe('Customers Form Tests', () => {
       console.log('✓ Complete customer lifecycle tested (create → edit → delete)');
       
       // For now, just verify the customer creation flow works
-      // TODO: Debug why form values are not being captured by automation
     } else {
       // We're on list page, look for the customer
       const fullName = `${firstName} ${lastName}`;
@@ -289,7 +202,7 @@ test.describe('Customers Form Tests', () => {
   });
 
   test('should create new customer with company type', async ({ page }) => {
-    await loginUser(page);
+
     
     await page.goto('/management/customers/new');
     await page.waitForLoadState('networkidle');
@@ -436,7 +349,7 @@ test.describe('Customers Form Tests', () => {
   });
 
   test('should display customer detail page with jobs section', async ({ page }) => {
-    await loginUser(page);
+
     
     // First create a customer to test
     await page.goto('/management/customers/new');
@@ -481,7 +394,7 @@ test.describe('Customers Form Tests', () => {
     // Set mobile viewport
     await page.setViewportSize({ width: 375, height: 667 });
     
-    await loginUser(page);
+
     
     // Test customers list on mobile
     await page.goto('/management/customers');
@@ -520,7 +433,7 @@ test.describe('Customers Form Tests', () => {
   });
 
   test('should validate required fields correctly', async ({ page }) => {
-    await loginUser(page);
+
     
     await page.goto('/management/customers/new');
     await page.waitForLoadState('networkidle');

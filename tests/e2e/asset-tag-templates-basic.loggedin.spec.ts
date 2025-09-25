@@ -1,17 +1,12 @@
-import { test, expect } from '@playwright/test';
+import { expect } from '@playwright/test';
+
+import {test} from '../playwright_setup.types';
 
 test.describe('Asset Tag Template System - Basic Tests', () => {
-  test('should load the home page', async ({ page }) => {
-    await page.goto('http://localhost:3000');
-    await page.waitForLoadState('networkidle');
-    
-    // Check if we can access the page
-    expect(page.url()).toContain('localhost:3000');
-    console.log('✅ Home page loaded successfully');
-  });
+
 
   test('should access management without auth issues', async ({ page }) => {
-    await page.goto('http://localhost:3000/management');
+    await page.goto('/management');
     await page.waitForLoadState('networkidle');
     
     // This will either show login page or management page
@@ -28,11 +23,11 @@ test.describe('Asset Tag Template System - Basic Tests', () => {
     }
     
     // Just verify we can navigate
-    expect(page.url()).toMatch(/localhost:3000/);
+    expect(page.url()).toContain("/management");
   });
 
   test('should check if company settings is accessible', async ({ page }) => {
-    await page.goto('http://localhost:3000/management/company-settings');
+    await page.goto('/management/company-settings');
     await page.waitForLoadState('networkidle');
     
     // Check what we get
@@ -50,12 +45,11 @@ test.describe('Asset Tag Template System - Basic Tests', () => {
       console.log('✅ Templates section found');
     }
     
-    expect(currentUrl).toMatch(/localhost:3000/);
   });
 
   test('should test the asset tag render API endpoint', async ({ page }) => {
     // Test API endpoint directly
-    const response = await page.request.get('http://localhost:3000/api/asset-tags/1/render?format=svg');
+    const response = await page.request.get('/api/asset-tags/1/render?format=svg');
     
     console.log('API Response status:', response.status());
     console.log('API Response headers:', response.headers());

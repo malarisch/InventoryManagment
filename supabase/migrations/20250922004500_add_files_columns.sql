@@ -1,10 +1,5 @@
 begin;
 
--- Create a public storage bucket for attachments if it doesn't exist
-insert into storage.buckets (id, name, public)
-values ('attachments','attachments', true)
-on conflict (id) do nothing;
-
 -- Add `files jsonb` with empty array default to core business tables
 alter table public.articles add column if not exists files jsonb not null default '[]'::jsonb;
 alter table public.equipments add column if not exists files jsonb not null default '[]'::jsonb;

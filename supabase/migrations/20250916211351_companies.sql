@@ -31,7 +31,7 @@ alter table "public"."articles" add constraint "articles_company_id_fkey" FOREIG
 
 alter table "public"."articles" validate constraint "articles_company_id_fkey";
 
-alter table "public"."companies" add constraint "companies_owner_user_id_fkey" FOREIGN KEY (owner_user_id) REFERENCES auth.users(id) ON UPDATE CASCADE ON DELETE RESTRICT not valid;
+alter table "public"."companies" add constraint "companies_owner_user_id_fkey" FOREIGN KEY (owner_user_id) REFERENCES profiles(id) ON UPDATE CASCADE ON DELETE RESTRICT not valid;
 
 alter table "public"."companies" validate constraint "companies_owner_user_id_fkey";
 

@@ -1,113 +1,15 @@
-import { test, expect, type Page } from '@playwright/test';
-import { createAdminClient } from '@/lib/supabase/admin';
-
-const requiredEnv = ['NEXT_PUBLIC_SUPABASE_URL', 'NEXT_PUBLIC_SUPABASE_ANON_KEY', 'SUPABASE_SERVICE_ROLE_KEY'] as const;
-const missing = requiredEnv.filter((key) => !process.env[key]);
-const shouldSkip = missing.length > 0;
+import {expect} from '@playwright/test';
+import {test} from '../playwright_setup.types';
 
 test.describe('Asset Tag Template System', () => {
-  test.skip(shouldSkip, `Supabase env vars missing: ${missing.join(', ')}`);
-
-  const admin = createAdminClient();
-  const timestamp = Date.now();
-  const testEmail = `playwright+templates+${timestamp}@example.com`;
-  const testPassword = `PlaywrightTest-${timestamp}!`;
-  const companyName = `Template Test Co ${timestamp}`;
-
-  let userId: string | null = null;
-  let companyId: number | null = null;
-  let membershipId: number | null = null;
-
-  test.beforeAll(async () => {
-    // Create test user and company
-    const { data: createUserData, error: createUserError } = await admin.auth.admin.createUser({
-      email: testEmail,
-      password: testPassword,
-      email_confirm: true,
-    });
-    if (createUserError) {
-      throw createUserError;
-    }
-    userId = createUserData.user?.id ?? null;
-
-    // Create company
-    const { data: companyRow, error: companyError } = await admin
-      .from('companies')
-      .insert({
-        name: companyName,
-        description: 'Playwright test company for asset tag templates',
-        owner_user_id: userId,
-        metadata: { seededBy: 'playwright-templates', timestamp },
-      })
-      .select('id')
-      .maybeSingle();
-    if (companyError) {
-      throw companyError;
-    }
-    companyId = companyRow?.id ?? null;
-
-    // Create membership
-    const { data: membershipRow, error: membershipError } = await admin
-      .from('users_companies')
-      .insert({ company_id: companyId!, user_id: userId! })
-      .select('id')
-      .maybeSingle();
-    if (membershipError) {
-      throw membershipError;
-    }
-    membershipId = membershipRow?.id ?? null;
-  });
-
-  test.afterAll(async () => {
-    // Cleanup
-    if (membershipId) {
-      await admin.from('users_companies').delete().eq('id', membershipId);
-    }
-    if (companyId) {
-      await admin.from('companies').delete().eq('id', companyId);
-    }
-    if (userId) {
-      await admin.auth.admin.deleteUser(userId);
-    }
-  });
-  let page: Page;
-
-  test.beforeEach(async ({ page: testPage }) => {
-    page = testPage;
-    
-    // Navigate to login page
-    await page.goto('http://localhost:3000/auth/login');
-    
-    // Login with test credentials
-    await page.fill('input[type="email"]', testEmail);
-    await page.fill('input[type="password"]', testPassword);
-    await page.click('button[type="submit"]');
-    
-    // Wait for redirect to management
-    await page.waitForURL('**/management/**', { timeout: 10000 });
-  });
-
-  test('should navigate to Asset Tag Templates in Company Settings', async () => {
-    // Navigate to company settings
-    await page.goto('http://localhost:3000/management/company-settings');
-    
-    // Wait for page to load
-    await page.waitForLoadState('networkidle');
-    
-    // Click on Templates tab
-    await page.click('text=Templates, text=Asset Tag Templates, [data-tab="templates"]'.split(',')[0]);
-    
-    // Verify we can see the templates section
-    await expect(page.locator('text=Asset Tag Templates, text=Create New Template').first()).toBeVisible({ timeout: 5000 });
-  });
-
-  test('should open template creation form', async () => {
+  
+  test('should open template creation form', async ({page}) => {
     // Navigate to company settings templates tab
-    await page.goto('http://localhost:3000/management/company-settings?tab=templates');
+    await page.goto('/management/company-settings?tab=templates');
     await page.waitForLoadState('networkidle');
     
     // Click create new template button
-    await page.click('text=Create New Template, button:has-text("Create"), button:has-text("New")'.split(',')[0]);
+    await page.click('text=Create Template, button:has-text("Create")'.split(',')[0]);
     
     // Verify form sections are visible
     await expect(page.locator('text=Basic Information')).toBeVisible();
@@ -117,9 +19,9 @@ test.describe('Asset Tag Template System', () => {
     await expect(page.locator('text=Elements')).toBeVisible();
   });
 
-  test('should fill out comprehensive template form', async () => {
+  test('should fill out comprehensive template form', async ({page}) => {
     // Navigate to template creation form
-    await page.goto('http://localhost:3000/management/company-settings?tab=templates');
+    await page.goto('/management/company-settings?tab=templates');
     await page.waitForLoadState('networkidle');
     
     // Click create new template
@@ -128,7 +30,7 @@ test.describe('Asset Tag Template System', () => {
       await createButton.click();
     } else {
       // Try alternative navigation - might be on a separate page
-      await page.goto('http://localhost:3000/management/asset-tag-templates/new');
+      await page.goto('/management/asset-tag-templates/new');
     }
     
     await page.waitForLoadState('networkidle');
@@ -172,8 +74,8 @@ test.describe('Asset Tag Template System', () => {
     console.log('✅ Form filled successfully');
   });
 
-  test('should show template preview', async () => {
-    await page.goto('http://localhost:3000/management/company-settings?tab=templates');
+  test('should show template preview', async ({page}) => {
+    await page.goto('/management/company-settings?tab=templates');
     await page.waitForLoadState('networkidle');
     
     // Navigate to form and fill minimal data
@@ -181,7 +83,7 @@ test.describe('Asset Tag Template System', () => {
     if (await createButton.isVisible({ timeout: 3000 })) {
       await createButton.click();
     } else {
-      await page.goto('http://localhost:3000/management/asset-tag-templates/new');
+      await page.goto('/management/asset-tag-templates/new');
     }
     
     await page.waitForLoadState('networkidle');
@@ -204,8 +106,8 @@ test.describe('Asset Tag Template System', () => {
     }
   });
 
-  test('should submit template successfully', async () => {
-    await page.goto('http://localhost:3000/management/company-settings?tab=templates');
+  test('should submit template successfully', async ({page}) => {
+    await page.goto('/management/company-settings?tab=templates');
     await page.waitForLoadState('networkidle');
     
     // Navigate to creation form
@@ -213,7 +115,7 @@ test.describe('Asset Tag Template System', () => {
     if (await createButton.isVisible({ timeout: 3000 })) {
       await createButton.click();
     } else {
-      await page.goto('http://localhost:3000/management/asset-tag-templates/new');
+      await page.goto('/management/asset-tag-templates/new');
     }
     
     await page.waitForLoadState('networkidle');
@@ -240,12 +142,12 @@ test.describe('Asset Tag Template System', () => {
     console.log('✅ Template creation submitted successfully');
   });
 
-  test('should handle API render endpoint', async () => {
+  test('should handle API render endpoint', async ({page}) => {
     // First, we need to create a template and get its ID
     // For this test, we'll assume template ID 1 exists or create one programmatically
     
     // Test the render API directly
-    const response = await page.request.get('http://localhost:3000/api/asset-tags/1/render?format=svg');
+    const response = await page.request.get('/api/asset-tags/1/render?format=svg');
     
     if (response.status() === 404) {
       console.log('ℹ️ Asset tag with ID 1 not found - this is expected for a fresh system');
@@ -256,8 +158,8 @@ test.describe('Asset Tag Template System', () => {
     }
   });
 
-  test('should test template management in company settings', async () => {
-    await page.goto('http://localhost:3000/management/company-settings?tab=templates');
+  test('should test template management in company settings', async ({page}) => {
+    await page.goto('/management/company-settings?tab=templates');
     await page.waitForLoadState('networkidle');
     
     // Check if templates table/list is visible

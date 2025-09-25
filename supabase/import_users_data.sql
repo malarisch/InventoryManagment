@@ -3,7 +3,7 @@ begin;
 -- Insert test data into the import.users table
 INSERT INTO import.users (user_id, username, cc, email, password)
 VALUES
-  ('4891b73c-3a01-40eb-b3c4-eaa5b4067e68', 'Testuser', 'DE', 'test@test.de', 'test'),
+  ('4a8b01dd-d981-4310-b730-47b48cbd6997', 'Testuser', 'DE', 'test@test.de', 'test'),
   (NULL, 'David', 'US', NULL, NULL),
   (NULL, 'Tom', 'CA', NULL, 'HelloTom');
 

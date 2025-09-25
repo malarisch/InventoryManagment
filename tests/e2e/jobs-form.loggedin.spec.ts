@@ -1,116 +1,24 @@
 import 'dotenv/config';
-import { test, expect } from '@playwright/test';
-import { createAdminClient } from "@/lib/supabase/admin";
-import type { SupabaseClient } from '@supabase/supabase-js';
-
-const requiredEnv = ["NEXT_PUBLIC_SUPABASE_URL", "NEXT_PUBLIC_SUPABASE_ANON_KEY", "SUPABASE_SERVICE_ROLE_KEY"] as const;
-const missing = requiredEnv.filter((key) => !process.env[key]);
-const shouldSkip = missing.length > 0;
+import { expect } from '@playwright/test';
+import { test } from '../playwright_setup.types';
+import { createCustomer } from '../helpers';
+import { createAdminClient } from '@/lib/supabase/admin';
 
 test.describe('Jobs Form Tests', () => {
-  test.skip(shouldSkip, `Supabase env vars missing: ${missing.join(", ")}`);
-  
+
   // Configure this describe block to run sequentially to avoid data collisions
   test.describe.configure({ mode: 'serial' });
 
-  let admin: SupabaseClient | null = null;
   const timestamp = Date.now();
-  const testEmail = `playwright+jobs+${timestamp}@example.com`;
-  const testPassword = `PlaywrightTest-${timestamp}!`;
-  const companyName = `Jobs Test Co ${timestamp}`;
 
-  let userId: string | null = null;
-  let companyId: number | null = null;
-  let membershipId: number | null = null;
-  let testCustomerId: number | null = null;
-
-  test.beforeAll(async () => {
-    admin = createAdminClient();
-    
-    // Create test user
-    const { data: createUserData, error: createUserError } = await admin.auth.admin.createUser({
-      email: testEmail,
-      password: testPassword,
-      email_confirm: true,
-    });
-    if (createUserError) {
-      throw createUserError;
-    }
-    userId = createUserData.user.id;
-
-    // Create test company
-    const { data: companyData, error: companyError } = await admin
-      .from('companies')
-      .insert({ 
-        name: companyName, 
-        description: 'Test company for jobs testing',
-        owner_user_id: userId 
-      })
-      .select()
-      .single();
-    if (companyError) {
-      throw companyError;
-    }
-    companyId = companyData.id;
-
-    // Create company membership
-    const { data: membershipData, error: membershipError } = await admin
-      .from('users_companies')
-      .insert({ user_id: userId, company_id: companyId })
-      .select()
-      .single();
-    if (membershipError) {
-      throw membershipError;
-    }
-    membershipId = membershipData.id;
-
-    // Create a test customer for jobs
-    const { data: customerData, error: customerError } = await admin
-      .from('customers')
-      .insert({
-        type: 'personal',
-        forename: 'Test',
-        surname: `Customer ${timestamp}`,
-        email: `customer${timestamp}@example.com`,
-        company_id: companyId,
-        created_by: userId
-      })
-      .select()
-      .single();
-    if (customerError) {
-      throw customerError;
-    }
-    testCustomerId = customerData.id;
+  test.beforeAll(async ({companyName}) => {
+    await createCustomer(companyName);
   });
 
-  test.afterAll(async () => {
-    if (admin && testCustomerId) {
-      await admin.from('customers').delete().eq('id', testCustomerId);
-    }
-    if (admin && membershipId) {
-      await admin.from('users_companies').delete().eq('id', membershipId);
-    }
-    if (admin && companyId) {
-      await admin.from('companies').delete().eq('id', companyId);
-    }
-    if (admin && userId) {
-      await admin.auth.admin.deleteUser(userId);
-    }
-  });
 
-  /**
-   * Helper function to log in the test user
-   */
-  async function loginUser(page: import('@playwright/test').Page) {
-    await page.goto('/auth/login');
-    await page.fill('[data-testid="email-input"], input[type="email"]', testEmail);
-    await page.fill('[data-testid="password-input"], input[type="password"]', testPassword);
-    await page.click('button[type="submit"]');
-    await page.waitForURL('/management**');
-  }
 
   test('should display jobs list page correctly', async ({ page }) => {
-    await loginUser(page);
+
     
     await page.goto('/management/jobs');
     await page.waitForLoadState('networkidle');
@@ -128,7 +36,7 @@ test.describe('Jobs Form Tests', () => {
   });
 
   test('should update job name and refresh heading', async ({ page }) => {
-    await loginUser(page);
+
     // Create a new job first
     await page.goto('/management/jobs/new');
     await page.waitForLoadState('networkidle');
@@ -144,17 +52,28 @@ test.describe('Jobs Form Tests', () => {
       await page.waitForLoadState('networkidle');
     }
     // Edit the name
-    const newName = `${originalName} Updated`;
+  const newName = `${originalName} Updated`;
     await page.fill('form input#name', newName);
     await page.click('form button[type="submit"]');
-    await page.waitForTimeout(300); // allow router.refresh to complete
-    // Assert heading updated (covers various heading selectors)
-    await expect(page.locator('h1, .text-2xl, .text-xl, .font-semibold.leading-none.tracking-tight')).toContainText(newName);
+    // Wait for success message to ensure update finished
+    const successMessage = page.locator('text=Gespeichert');
+    await expect(successMessage).toBeVisible({ timeout: 3000 });
+    // Now expect heading to reflect new name (router.refresh should have re-fetched)
+    // Debug: verify DB row actually updated (temporary instrumentation)
+    try {
+      const admin = createAdminClient();
+      const jobIdFromUrl = Number(page.url().split('/').pop());
+      const { data: verifyRow } = await admin.from('jobs').select('name').eq('id', jobIdFromUrl).single();
+      console.log('DB row after update', verifyRow);
+    } catch (e) {
+      console.log('DB verify failed', e);
+    }
+    await expect(page.locator('[data-testid="job-title"]')).toHaveText(newName);
     await page.screenshot({ path: 'test-results/jobs-rename-success.png', fullPage: true });
   });
 
   test('should create new job with form validation', async ({ page }) => {
-    await loginUser(page);
+
     
     await page.goto('/management/jobs/new');
     await page.waitForLoadState('networkidle');
@@ -262,7 +181,7 @@ test.describe('Jobs Form Tests', () => {
   });
 
   test('should display job detail page with asset booking', async ({ page }) => {
-    await loginUser(page);
+
     
     // First create a job to test
     await page.goto('/management/jobs/new');
@@ -300,7 +219,7 @@ test.describe('Jobs Form Tests', () => {
   });
 
   test('should test asset booking functionality', async ({ page }) => {
-    await loginUser(page);
+
     
     // First create an article and equipment for booking
     await page.goto('/management/articles/new');
@@ -361,7 +280,7 @@ test.describe('Jobs Form Tests', () => {
     // Set mobile viewport
     await page.setViewportSize({ width: 375, height: 667 });
     
-    await loginUser(page);
+
     
     // Test jobs list on mobile
     await page.goto('/management/jobs');
@@ -395,7 +314,7 @@ test.describe('Jobs Form Tests', () => {
   });
 
   test('should validate date fields correctly', async ({ page }) => {
-    await loginUser(page);
+
     
     await page.goto('/management/jobs/new');
     await page.waitForLoadState('networkidle');

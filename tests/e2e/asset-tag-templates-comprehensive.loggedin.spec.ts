@@ -1,11 +1,11 @@
-import { test } from '@playwright/test';
+import { test } from '../playwright_setup.types';
 
 test.describe('Asset Tag Template System - Comprehensive Test', () => {
   test('should test complete template creation and management flow', async ({ page }) => {
     console.log('🚀 Starting comprehensive template system test...');
     
     // Step 1: Login
-    await page.goto('http://localhost:3000/auth/login');
+    await page.goto('/auth/login');
     await page.fill('input[type="email"]', 'test@test.de');
     await page.fill('input[type="password"]', 'test');
     await page.click('button[type="submit"]');
@@ -13,7 +13,7 @@ test.describe('Asset Tag Template System - Comprehensive Test', () => {
     console.log('✅ Step 1: Login successful');
     
     // Step 2: Navigate to company settings
-    await page.goto('http://localhost:3000/management/company-settings');
+    await page.goto('/management/company-settings');
     await page.waitForLoadState('networkidle');
     console.log('✅ Step 2: Company settings loaded');
     
@@ -83,7 +83,7 @@ test.describe('Asset Tag Template System - Comprehensive Test', () => {
       }
     } else {
       // Preview might be automatic - look for SVG in preview area
-      const hasSvg = await page.locator('[class*="preview"] svg').or(page.locator('[dangerouslySetInnerHTML] svg')).first().isVisible({ timeout: 2000 });
+      const hasSvg = await page.locator('[class*="preview"] svg').or(page.locator('canvas')).first().isVisible({ timeout: 2000 });
       if (hasSvg) {
         console.log('✅ Step 6: Automatic template preview working');
       } else {
@@ -93,7 +93,7 @@ test.describe('Asset Tag Template System - Comprehensive Test', () => {
     
     // Step 7: Submit the form
     console.log('📤 Step 7: Submitting template...');
-    const submitButton = page.locator('button[type="submit"]').or(page.locator('button:has-text("Create Template")'));
+    const submitButton = (page.locator('button:has-text("Create Template")'));
     await submitButton.click();
     await page.waitForTimeout(3000);
     
@@ -140,7 +140,7 @@ test.describe('Asset Tag Template System - Comprehensive Test', () => {
     console.log('🔗 Step 9: Testing render API...');
     
     // Try to get any asset tag ID for testing (may not exist)
-    const apiResponse = await page.request.get('http://localhost:3000/api/asset-tags/1/render?format=svg');
+    const apiResponse = await page.request.get('/api/asset-tags/1/render?format=svg');
     console.log('API Response Status:', apiResponse.status());
     
     if (apiResponse.status() === 200) {

@@ -1,16 +1,6 @@
-import { test, expect, Page } from '@playwright/test';
+import { expect, Page } from '@playwright/test';
 
-// Reuse existing seeded test user credentials if present via env or fallback
-const USER_EMAIL = process.env.PLAYWRIGHT_SEEDED_EMAIL || 'test@test.de';
-const USER_PASSWORD = process.env.PLAYWRIGHT_SEEDED_PASSWORD || 'test';
-
-async function login(page: Page) {
-  await page.goto('/auth/login');
-  await page.getByLabel(/email/i).fill(USER_EMAIL);
-  await page.getByLabel(/password/i).fill(USER_PASSWORD);
-  await page.getByRole('button', { name: /login/i }).click();
-  await page.waitForURL(/management/);
-}
+import {test} from '../playwright_setup.types';
 
 // Helper to extract content-type via fetch inside browser (keeps session)
 async function fetchBinary(page: Page, url: string) {
@@ -22,7 +12,6 @@ async function fetchBinary(page: Page, url: string) {
 
 test.describe('Asset Tag rendering', () => {
   test('renders existing asset tag as SVG and PNG', async ({ page }) => {
-    await login(page);
 
     await page.goto('/management/asset-tags');
     // Grab first asset tag id from table (cells start with #<id>)

@@ -43,8 +43,9 @@ export function AssetTagTemplatesSection() {
         .select('company_id')
         .eq('user_id', user.id)
         .single();
-
+console.log(companyError, userCompany, user.id);
       if (companyError || !userCompany) {
+        console.log(companyError, userCompany, user.id);
         throw new Error('No company found for user');
       }
 

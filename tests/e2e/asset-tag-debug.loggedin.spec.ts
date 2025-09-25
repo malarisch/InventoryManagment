@@ -1,24 +1,16 @@
-import { test } from '@playwright/test';
+import { test } from '../playwright_setup.types';
+
 
 test.describe('Asset Tag System - Debug Analysis', () => {
   test('should debug complete asset tag workflow with authentication', async ({ page }) => {
     console.log('🚀 Starting authenticated asset tag system debug...');
 
-    // Step 1: Navigate to login page
-    await page.goto('http://localhost:3001/auth/login');
-    console.log('📍 Step 1: Navigated to login page');
-
-    // Step 2: Login with test credentials
-    await page.fill('input[type="email"], textbox[placeholder*="email" i]', 'test@test.de');
-    await page.fill('input[type="password"], textbox[placeholder*="password" i]', 'test');
-    await page.click('button:has-text("Login")');
-    
     // Wait for login to complete
-    await page.waitForURL('**/management**', { timeout: 10000 });
+    await page.goto('/management', { timeout: 10000 });
     console.log('✅ Step 2: Successfully logged in');
 
     // Step 3: Navigate to Asset Tags page
-    await page.goto('http://localhost:3001/management/asset-tags');
+    await page.goto('/management/asset-tags');
     await page.waitForLoadState('networkidle');
     console.log('📍 Step 3: Navigated to Asset Tags page');
 
@@ -93,7 +85,7 @@ test.describe('Asset Tag System - Debug Analysis', () => {
 
     // Step 6: Navigate back to asset tags and check if we can create an asset tag
     console.log('📍 Step 6: Testing asset tag creation...');
-    await page.goto('http://localhost:3001/management/asset-tags');
+    await page.goto('/management/asset-tags');
     await page.waitForLoadState('networkidle');
 
     const createAssetTagButton = page.locator('text="Asset Tag", text="New", a[href*="new"]').first();
@@ -131,7 +123,7 @@ test.describe('Asset Tag System - Debug Analysis', () => {
     console.log('📍 Step 7: Testing render API with authentication...');
     
     // First check if we have any asset tags in the database
-    const response = await page.request.get('http://localhost:3001/api/asset-tags/1/render?format=svg');
+    const response = await page.request.get('/api/asset-tags/1/render?format=svg');
     console.log('Render API status:', response.status());
     console.log('Render API content-type:', response.headers()['content-type']);
     
@@ -148,7 +140,7 @@ test.describe('Asset Tag System - Debug Analysis', () => {
       console.log('ℹ️ Asset tag 1 not found, trying to find existing asset tags...');
       
       // Try to find actual asset tags in the page
-      await page.goto('http://localhost:3001/management/asset-tags');
+      await page.goto('/management/asset-tags');
       await page.waitForLoadState('networkidle');
       
       const assetTagLinks = page.locator('a[href*="/asset-tags/"]');
@@ -162,7 +154,7 @@ test.describe('Asset Tag System - Debug Analysis', () => {
         if (firstLink) {
           const assetTagId = firstLink.match(/\/asset-tags\/(\d+)/)?.[1];
           if (assetTagId) {
-            const testResponse = await page.request.get(`http://localhost:3001/api/asset-tags/${assetTagId}/render?format=svg`);
+            const testResponse = await page.request.get(`/api/asset-tags/${assetTagId}/render?format=svg`);
             console.log('Test render API status for ID', assetTagId, ':', testResponse.status());
           }
         }
@@ -183,7 +175,7 @@ test.describe('Asset Tag System - Debug Analysis', () => {
     console.log('🚀 Testing template management in company settings...');
 
     // Login first
-    await page.goto('http://localhost:3001/auth/login');
+    await page.goto('/auth/login');
     await page.fill('input[type="email"], textbox[placeholder*="email" i]', 'test@test.de');
     await page.fill('input[type="password"], textbox[placeholder*="password" i]', 'test');
     await page.click('button:has-text("Login")');
@@ -191,7 +183,7 @@ test.describe('Asset Tag System - Debug Analysis', () => {
     console.log('✅ Logged in successfully');
 
     // Navigate to company settings
-    await page.goto('http://localhost:3001/management/company-settings');
+    await page.goto('/management/company-settings');
     await page.waitForLoadState('networkidle');
     console.log('📍 Navigated to company settings');
 

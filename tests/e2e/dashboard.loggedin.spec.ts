@@ -1,94 +1,15 @@
-import 'dotenv/config';
-import { test, expect } from '@playwright/test';
-import { createAdminClient } from "@/lib/supabase/admin";
-import type { SupabaseClient } from '@supabase/supabase-js';
 
-const requiredEnv = ["NEXT_PUBLIC_SUPABASE_URL", "NEXT_PUBLIC_SUPABASE_ANON_KEY", "SUPABASE_SERVICE_ROLE_KEY"] as const;
-const missing = requiredEnv.filter((key) => !process.env[key]);
-const shouldSkip = missing.length > 0;
-
+import { expect } from '@playwright/test';
+import { test } from '../playwright_setup.types';
 test.describe('Management Dashboard Tests', () => {
-  test.skip(shouldSkip, `Supabase env vars missing: ${missing.join(", ")}`);
+  
   
   // Configure this describe block to run sequentially to avoid data collisions
   test.describe.configure({ mode: 'serial' });
 
-  let admin: SupabaseClient | null = null;
-  const timestamp = Date.now();
-  const testEmail = `playwright+dashboard+${timestamp}@example.com`;
-  const testPassword = `PlaywrightTest-${timestamp}!`;
-  const companyName = `Dashboard Test Co ${timestamp}`;
-
-  let userId: string | null = null;
-  let companyId: number | null = null;
-  let membershipId: number | null = null;
-
-  test.beforeAll(async () => {
-    admin = createAdminClient();
-    
-    // Create test user
-    const { data: createUserData, error: createUserError } = await admin.auth.admin.createUser({
-      email: testEmail,
-      password: testPassword,
-      email_confirm: true,
-    });
-    if (createUserError) {
-      throw createUserError;
-    }
-    userId = createUserData.user.id;
-
-    // Create test company
-    const { data: companyData, error: companyError } = await admin
-      .from('companies')
-      .insert({ 
-        name: companyName, 
-        description: 'Test company for dashboard testing',
-        owner_user_id: userId 
-      })
-      .select()
-      .single();
-    if (companyError) {
-      throw companyError;
-    }
-    companyId = companyData.id;
-
-    // Create company membership
-    const { data: membershipData, error: membershipError } = await admin
-      .from('users_companies')
-      .insert({ user_id: userId, company_id: companyId })
-      .select()
-      .single();
-    if (membershipError) {
-      throw membershipError;
-    }
-    membershipId = membershipData.id;
-  });
-
-  test.afterAll(async () => {
-    if (admin && membershipId) {
-      await admin.from('users_companies').delete().eq('id', membershipId);
-    }
-    if (admin && companyId) {
-      await admin.from('companies').delete().eq('id', companyId);
-    }
-    if (admin && userId) {
-      await admin.auth.admin.deleteUser(userId);
-    }
-  });
-
-  /**
-   * Helper function to log in the test user
-   */
-  async function loginUser(page: import('@playwright/test').Page) {
-    await page.goto('/auth/login');
-    await page.fill('[data-testid="email-input"], input[type="email"]', testEmail);
-    await page.fill('[data-testid="password-input"], input[type="password"]', testPassword);
-    await page.click('button[type="submit"]');
-    await page.waitForURL('/management**');
-  }
 
   test('should display management dashboard correctly', async ({ page }) => {
-    await loginUser(page);
+
     
     await page.goto('/management');
     await page.waitForLoadState('networkidle');
@@ -125,7 +46,7 @@ test.describe('Management Dashboard Tests', () => {
   });
 
   test('should navigate to all main sections from dashboard', async ({ page }) => {
-    await loginUser(page);
+
     
     await page.goto('/management');
     await page.waitForLoadState('networkidle');
@@ -183,8 +104,8 @@ test.describe('Management Dashboard Tests', () => {
     await page.screenshot({ path: 'test-results/dashboard-navigation-test.png', fullPage: true });
   });
 
-  test('should display user menu and company switcher', async ({ page }) => {
-    await loginUser(page);
+  test('should display user menu and company switcher', async ({ page, companyName }) => {
+
     
     await page.goto('/management');
     await page.waitForLoadState('networkidle');
@@ -233,7 +154,7 @@ test.describe('Management Dashboard Tests', () => {
     // Set mobile viewport
     await page.setViewportSize({ width: 375, height: 667 });
     
-    await loginUser(page);
+
     
     await page.goto('/management');
     await page.waitForLoadState('networkidle');
@@ -259,7 +180,7 @@ test.describe('Management Dashboard Tests', () => {
   });
 
   test('should display recent activity and history', async ({ page }) => {
-    await loginUser(page);
+    const timestamp = Date.now();
     
     // Create some test data first to have activity
     await page.goto('/management/articles/new');
@@ -291,7 +212,7 @@ test.describe('Management Dashboard Tests', () => {
   });
 
   test('should handle empty state gracefully', async ({ page }) => {
-    await loginUser(page);
+
     
     await page.goto('/management');
     await page.waitForLoadState('networkidle');
