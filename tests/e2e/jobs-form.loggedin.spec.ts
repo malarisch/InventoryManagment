@@ -1,8 +1,8 @@
 import 'dotenv/config';
-import { expect } from '@playwright/test';
-import { test } from '../playwright_setup.types';
-import { createCustomer } from '../helpers';
-import { createAdminClient } from '@/lib/supabase/admin';
+import {expect} from '@playwright/test';
+import {test} from '../playwright_setup.types';
+import {createCustomer} from '../../lib/tools/helpers';
+import {createAdminClient} from '@/lib/supabase/admin';
 
 test.describe('Jobs Form Tests', () => {
 

@@ -3,9 +3,7 @@
   <component name="DataSourcePerFileMappings">
     <file url="file://$PROJECT_DIR$/supabase/create_table_import.sql" value="4bbb06f6-4418-4d33-b248-25f32ec82f8a" />
     <file url="file://$PROJECT_DIR$/supabase/import_users_data.sql" value="4bbb06f6-4418-4d33-b248-25f32ec82f8a" />
-    <file url="file://$PROJECT_DIR$/supabase/migrations/20250916202055_base.sql" value="4bbb06f6-4418-4d33-b248-25f32ec82f8a" />
-    <file url="file://$PROJECT_DIR$/supabase/migrations/20250916211351_companies.sql" value="4bbb06f6-4418-4d33-b248-25f32ec82f8a" />
-    <file url="file://$PROJECT_DIR$/supabase/migrations/20250918210705_fullschemav1_with_policies_v1.sql" value="4bbb06f6-4418-4d33-b248-25f32ec82f8a" />
+    <file url="file://$PROJECT_DIR$/supabase/migrations/20250926171500_profiles_rls.sql" value="4bbb06f6-4418-4d33-b248-25f32ec82f8a" />
     <file url="file://$PROJECT_DIR$/supabase/seed_companies.sql" value="4bbb06f6-4418-4d33-b248-25f32ec82f8a" />
     <file url="file://$PROJECT_DIR$/supabase/supa_import_auth_users.sql" value="4bbb06f6-4418-4d33-b248-25f32ec82f8a" />
   </component>

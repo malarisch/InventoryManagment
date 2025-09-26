@@ -1,6 +1,6 @@
-import { describe, it, expect } from "vitest";
-import { buildCustomerMetadata, buildEquipmentMetadata } from "@/lib/metadata/builders";
-import { defaultCustomerMetadataDE, defaultEquipmentMetadataDE } from "@/lib/metadata/defaults";
+import {describe, expect, it} from "vitest";
+import {buildCustomerMetadata, buildEquipmentMetadata} from "@/lib/metadata/builders";
+import {defaultCustomerMetadataDE, defaultEquipmentMetadataDE} from "@/lib/metadata/defaults";
 
 describe("metadata builders", () => {
   it("buildCustomerMetadata merges defaults and overrides", () => {
@@ -14,9 +14,9 @@ describe("metadata builders", () => {
   it("buildEquipmentMetadata merges nested power defaults", () => {
     const out = buildEquipmentMetadata({ type: "Camera", power: { powerType: "DC" } });
     expect(out.type).toBe("Camera");
-    expect(out.power.powerType).toBe("DC");
+    expect(out.power!.powerType).toBe("DC");
     // still keeps default voltage if not provided
-    expect(out.power.voltageRangeV).toBe(defaultEquipmentMetadataDE.power.voltageRangeV);
+    expect(out.power!.voltageRangeV).toBe(defaultEquipmentMetadataDE.power!.voltageRangeV);
   });
 });
 

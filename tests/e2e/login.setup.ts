@@ -2,7 +2,7 @@ import {STORAGE_STATE} from "../../playwright.config";
 import "dotenv/config";
 import {expect} from "@playwright/test";
 import {test} from "../playwright_setup.types";
-import {getUserIdByEmail} from "../helpers";
+import {getUserIdByEmail} from "../../lib/tools/helpers";
 import {createAdminClient} from "@/lib/supabase/admin";
 
 const requiredEnv = [

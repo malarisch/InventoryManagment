@@ -1,39 +1,1583 @@
--- profiles RLS policies
--- Allows users to:
--- 1) select all profiles that belong to companies they are a member of
--- 2) insert/update/delete only their own profile row
 
--- enable rls on profiles (idempotent if already enabled)
-alter table public.profiles enable row level security;
 
--- see company co-members' profiles
-drop policy if exists profiles_select_company_members on public.profiles;
-create policy profiles_select_company_members
-on public.profiles
-as permissive
-for select
-to authenticated
-using (
-  exists (
+
+SET statement_timeout = 0;
+SET lock_timeout = 0;
+SET idle_in_transaction_session_timeout = 0;
+SET client_encoding = 'UTF8';
+SET standard_conforming_strings = on;
+SELECT pg_catalog.set_config('search_path', '', false);
+SET check_function_bodies = false;
+SET xmloption = content;
+SET client_min_messages = warning;
+SET row_security = off;
+
+
+CREATE EXTENSION IF NOT EXISTS "pg_net" WITH SCHEMA "extensions";
+
+
+
+
+create user "prisma" with password 'custom_password' bypassrls createdb;
+
+
+COMMENT ON SCHEMA "public" IS 'standard public schema';
+
+
+
+CREATE EXTENSION IF NOT EXISTS "pg_graphql" WITH SCHEMA "graphql";
+
+
+
+
+
+
+CREATE EXTENSION IF NOT EXISTS "pg_stat_statements" WITH SCHEMA "extensions";
+
+
+
+
+
+
+CREATE EXTENSION IF NOT EXISTS "pgcrypto" WITH SCHEMA "extensions";
+
+
+
+
+
+
+CREATE EXTENSION IF NOT EXISTS "supabase_vault" WITH SCHEMA "vault";
+
+
+
+
+
+
+CREATE EXTENSION IF NOT EXISTS "uuid-ossp" WITH SCHEMA "extensions";
+
+
+
+
+
+
+CREATE OR REPLACE FUNCTION "public"."handle_new_user"() RETURNS "trigger"
+    LANGUAGE "plpgsql" SECURITY DEFINER
+    SET "search_path" TO ''
+    AS $$
+begin
+  insert into public.profiles (id, first_name, last_name, email, avatar_url)
+  values (new.id, new.raw_user_meta_data ->> 'first_name',
+  new.raw_user_meta_data ->> 'last_name', new.email,
+  new.raw_user_meta_data ->> 'avatar_url');
+  return new;
+end;
+$$;
+
+
+ALTER FUNCTION "public"."handle_new_user"() OWNER TO "postgres";
+
+
+CREATE OR REPLACE FUNCTION "public"."is_company_member"("p_company_id" bigint) RETURNS boolean
+    LANGUAGE "sql" STABLE SECURITY DEFINER
+    SET "search_path" TO 'public'
+    AS $$
+  select exists (
     select 1
-    from public.users_companies as uc_target
-    join public.users_companies as uc_me
-      on uc_me.company_id = uc_target.company_id
-    where uc_target.user_id = public.profiles.id
-      and uc_me.user_id = auth.uid()
-  )
+    from users_companies uc
+    where uc.company_id = p_company_id
+      and uc.user_id = auth.uid()
+  ) or exists (
+    select 1
+    from companies c
+    where c.id = p_company_id
+      and c.owner_user_id = auth.uid()
+  );
+$$;
+
+
+ALTER FUNCTION "public"."is_company_member"("p_company_id" bigint) OWNER TO "postgres";
+
+
+CREATE OR REPLACE FUNCTION "public"."log_history"() RETURNS "trigger"
+    LANGUAGE "plpgsql" SECURITY DEFINER
+    SET "search_path" TO 'public'
+    AS $$
+declare
+  v_company_id bigint;
+  v_changed_by uuid := auth.uid();
+  v_table text := tg_table_name;
+  v_data_id bigint;
+  v_payload jsonb;
+  v_record_id bigint;
+begin
+  if v_table = 'companies' then
+    if tg_op = 'INSERT' then
+      v_company_id := (new).id;
+      v_data_id := (new).id;
+      v_payload := to_jsonb(new);
+      v_record_id := (new).id;
+    elsif tg_op = 'UPDATE' then
+      v_company_id := coalesce((new).id, (old).id);
+      v_data_id := coalesce((new).id, (old).id);
+      v_payload := to_jsonb(old);
+      v_record_id := coalesce((old).id, (new).id);
+    else
+      v_company_id := (old).id;
+      v_data_id := (old).id;
+      v_payload := to_jsonb(old);
+      v_record_id := (old).id;
+    end if;
+  else
+    if tg_op = 'INSERT' then
+      v_company_id := (new).company_id;
+      v_data_id := (new).id;
+      v_payload := to_jsonb(new);
+      v_record_id := (new).id;
+    elsif tg_op = 'UPDATE' then
+      v_company_id := coalesce((new).company_id, (old).company_id);
+      v_data_id := coalesce((new).id, (old).id);
+      v_payload := to_jsonb(old);
+      v_record_id := coalesce((old).id, (new).id);
+    else
+      v_company_id := (old).company_id;
+      v_data_id := (old).id;
+      v_payload := to_jsonb(old);
+      v_record_id := (old).id;
+    end if;
+  end if;
+
+  if v_table in ('job_booked_assets', 'job_assets_on_job') then
+    v_data_id := coalesce((new).job_id, (old).job_id, v_data_id);
+    if v_record_id is not null then
+      v_payload := jsonb_set(v_payload, '{record_id}', to_jsonb(v_record_id), true);
+    end if;
+  end if;
+
+  v_payload := jsonb_set(v_payload, '{_op}', to_jsonb(tg_op::text), true);
+
+  insert into public.history (company_id, table_name, data_id, old_data, change_made_by)
+  values (v_company_id, v_table, v_data_id, v_payload, v_changed_by);
+  return null;
+end;
+$$;
+
+
+ALTER FUNCTION "public"."log_history"() OWNER TO "postgres";
+
+SET default_tablespace = '';
+
+SET default_table_access_method = "heap";
+
+
+CREATE TABLE IF NOT EXISTS "public"."articles" (
+    "id" bigint NOT NULL,
+    "created_at" timestamp with time zone DEFAULT "now"() NOT NULL,
+    "name" character varying DEFAULT ''::character varying NOT NULL,
+    "metadata" "jsonb",
+    "created_by" "uuid" DEFAULT "auth"."uid"(),
+    "default_location" bigint,
+    "company_id" bigint NOT NULL,
+    "asset_tag" bigint,
+    "files" "jsonb"
 );
 
--- allow users to manage only their own profile
-drop policy if exists profiles_modify_own_row on public.profiles;
-create policy profiles_modify_own_row
-on public.profiles
-as permissive
-for all
-to authenticated
-using (public.profiles.id = auth.uid())
-with check (public.profiles.id = auth.uid());
 
-comment on policy profiles_select_company_members on public.profiles is 'Authenticated users can read profiles of users who share a company membership with them via public.users_companies.';
-comment on policy profiles_modify_own_row on public.profiles is 'Authenticated users may insert, update, and delete only their own profile row.';
+ALTER TABLE "public"."articles" OWNER TO "postgres";
 
+
+COMMENT ON COLUMN "public"."articles"."files" IS 'Array of file attachments: [{id, link, name?, description?}].';
+
+
+
+ALTER TABLE "public"."articles" ALTER COLUMN "id" ADD GENERATED BY DEFAULT AS IDENTITY (
+    SEQUENCE NAME "public"."articles_id_seq"
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1
+);
+
+
+
+CREATE TABLE IF NOT EXISTS "public"."asset_tag_templates" (
+    "id" bigint NOT NULL,
+    "created_at" timestamp with time zone DEFAULT "now"() NOT NULL,
+    "created_by" "uuid" DEFAULT "auth"."uid"(),
+    "template" "jsonb",
+    "company_id" bigint
+);
+
+
+ALTER TABLE "public"."asset_tag_templates" OWNER TO "postgres";
+
+
+ALTER TABLE "public"."asset_tag_templates" ALTER COLUMN "id" ADD GENERATED BY DEFAULT AS IDENTITY (
+    SEQUENCE NAME "public"."asset_tag_templates_id_seq"
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1
+);
+
+
+
+CREATE TABLE IF NOT EXISTS "public"."asset_tags" (
+    "id" bigint NOT NULL,
+    "created_at" timestamp with time zone DEFAULT "now"() NOT NULL,
+    "created_by" "uuid" DEFAULT "auth"."uid"(),
+    "printed_code" character varying,
+    "printed_template" bigint,
+    "printed_applied" boolean DEFAULT false NOT NULL,
+    "company_id" bigint,
+    "nfc_tag_id" bigint
+);
+
+
+ALTER TABLE "public"."asset_tags" OWNER TO "postgres";
+
+
+ALTER TABLE "public"."asset_tags" ALTER COLUMN "id" ADD GENERATED BY DEFAULT AS IDENTITY (
+    SEQUENCE NAME "public"."asset_tags_id_seq"
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1
+);
+
+
+
+CREATE TABLE IF NOT EXISTS "public"."cases" (
+    "id" bigint NOT NULL,
+    "created_at" timestamp with time zone DEFAULT "now"() NOT NULL,
+    "case_equipment" bigint,
+    "contains_equipments" bigint,
+    "company_id" bigint,
+    "created_by" "uuid" DEFAULT "auth"."uid"(),
+    "contains_articles" "jsonb"[],
+    "asset_tag" bigint,
+    "description" "text",
+    "name" "text",
+    "files" "jsonb"
+);
+
+
+ALTER TABLE "public"."cases" OWNER TO "postgres";
+
+
+COMMENT ON COLUMN "public"."cases"."files" IS 'Array of file attachments: [{id, link, name?, description?}].';
+
+
+
+ALTER TABLE "public"."cases" ALTER COLUMN "id" ADD GENERATED BY DEFAULT AS IDENTITY (
+    SEQUENCE NAME "public"."cases_id_seq"
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1
+);
+
+
+
+CREATE TABLE IF NOT EXISTS "public"."companies" (
+    "id" bigint NOT NULL,
+    "created_at" timestamp with time zone DEFAULT "now"() NOT NULL,
+    "name" character varying NOT NULL,
+    "description" "text",
+    "metadata" "jsonb",
+    "owner_user_id" "uuid" DEFAULT "auth"."uid"(),
+    "files" "jsonb"
+);
+
+
+ALTER TABLE "public"."companies" OWNER TO "postgres";
+
+
+ALTER TABLE "public"."companies" ALTER COLUMN "id" ADD GENERATED BY DEFAULT AS IDENTITY (
+    SEQUENCE NAME "public"."companies_id_seq"
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1
+);
+
+
+
+CREATE TABLE IF NOT EXISTS "public"."customers" (
+    "id" bigint NOT NULL,
+    "created_at" timestamp with time zone DEFAULT "now"() NOT NULL,
+    "company_id" bigint NOT NULL,
+    "created_by" "uuid" DEFAULT "auth"."uid"(),
+    "type" "text",
+    "forename" "text",
+    "surname" "text",
+    "company_name" "text",
+    "address" "text",
+    "postal_code" "text",
+    "country" "text",
+    "email" "text",
+    "metadata" "jsonb",
+    "files" "jsonb"
+);
+
+
+ALTER TABLE "public"."customers" OWNER TO "postgres";
+
+
+COMMENT ON COLUMN "public"."customers"."files" IS 'Array of file attachments: [{id, link, name?, description?}].';
+
+
+
+ALTER TABLE "public"."customers" ALTER COLUMN "id" ADD GENERATED BY DEFAULT AS IDENTITY (
+    SEQUENCE NAME "public"."customers_id_seq"
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1
+);
+
+
+
+CREATE TABLE IF NOT EXISTS "public"."equipments" (
+    "id" bigint NOT NULL,
+    "created_at" timestamp with time zone DEFAULT "now"() NOT NULL,
+    "asset_tag" bigint,
+    "added_to_inventory_at" timestamp without time zone,
+    "metadata" "jsonb",
+    "article_id" bigint,
+    "created_by" "uuid" DEFAULT "auth"."uid"() NOT NULL,
+    "company_id" bigint NOT NULL,
+    "current_location" bigint,
+    "files" "jsonb"
+);
+
+
+ALTER TABLE "public"."equipments" OWNER TO "postgres";
+
+
+COMMENT ON COLUMN "public"."equipments"."files" IS 'Array of file attachments: [{id, link, name?, description?}].';
+
+
+
+ALTER TABLE "public"."equipments" ALTER COLUMN "id" ADD GENERATED BY DEFAULT AS IDENTITY (
+    SEQUENCE NAME "public"."equipments_id_seq"
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1
+);
+
+
+
+CREATE TABLE IF NOT EXISTS "public"."history" (
+    "id" bigint NOT NULL,
+    "created_at" timestamp with time zone DEFAULT "now"() NOT NULL,
+    "company_id" bigint,
+    "table_name" "text" NOT NULL,
+    "data_id" bigint NOT NULL,
+    "old_data" "jsonb" NOT NULL,
+    "change_made_by" "uuid"
+);
+
+
+ALTER TABLE "public"."history" OWNER TO "postgres";
+
+
+ALTER TABLE "public"."history" ALTER COLUMN "id" ADD GENERATED BY DEFAULT AS IDENTITY (
+    SEQUENCE NAME "public"."history_id_seq"
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1
+);
+
+
+
+CREATE TABLE IF NOT EXISTS "public"."job_assets_on_job" (
+    "id" bigint NOT NULL,
+    "created_at" timestamp with time zone DEFAULT "now"() NOT NULL,
+    "created_by" "uuid" DEFAULT "auth"."uid"(),
+    "company_id" bigint NOT NULL,
+    "job_id" bigint NOT NULL,
+    "equipment_id" bigint,
+    "case_id" bigint
+);
+
+
+ALTER TABLE "public"."job_assets_on_job" OWNER TO "postgres";
+
+
+ALTER TABLE "public"."job_assets_on_job" ALTER COLUMN "id" ADD GENERATED BY DEFAULT AS IDENTITY (
+    SEQUENCE NAME "public"."job_assets_on_job_id_seq"
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1
+);
+
+
+
+CREATE TABLE IF NOT EXISTS "public"."job_booked_assets" (
+    "id" bigint NOT NULL,
+    "created_at" timestamp with time zone DEFAULT "now"() NOT NULL,
+    "created_by" "uuid" DEFAULT "auth"."uid"(),
+    "company_id" bigint NOT NULL,
+    "job_id" bigint NOT NULL,
+    "equipment_id" bigint,
+    "case_id" bigint
+);
+
+
+ALTER TABLE "public"."job_booked_assets" OWNER TO "postgres";
+
+
+ALTER TABLE "public"."job_booked_assets" ALTER COLUMN "id" ADD GENERATED BY DEFAULT AS IDENTITY (
+    SEQUENCE NAME "public"."job_booked_assets_id_seq"
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1
+);
+
+
+
+CREATE TABLE IF NOT EXISTS "public"."jobs" (
+    "id" bigint NOT NULL,
+    "created_at" timestamp with time zone DEFAULT "now"() NOT NULL,
+    "customer_id" bigint,
+    "created_by" "uuid",
+    "startdate" timestamp without time zone,
+    "enddate" timestamp without time zone,
+    "name" "text",
+    "type" "text",
+    "job_location" "text",
+    "meta" "jsonb",
+    "company_id" bigint NOT NULL,
+    "files" "jsonb"
+);
+
+
+ALTER TABLE "public"."jobs" OWNER TO "postgres";
+
+
+COMMENT ON COLUMN "public"."jobs"."files" IS 'Array of file attachments: [{id, link, name?, description?}].';
+
+
+
+ALTER TABLE "public"."jobs" ALTER COLUMN "id" ADD GENERATED BY DEFAULT AS IDENTITY (
+    SEQUENCE NAME "public"."jobs_id_seq"
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1
+);
+
+
+
+CREATE TABLE IF NOT EXISTS "public"."locations" (
+    "id" bigint NOT NULL,
+    "created_at" timestamp with time zone DEFAULT "now"() NOT NULL,
+    "created_by" "uuid" DEFAULT "auth"."uid"() NOT NULL,
+    "name" character varying NOT NULL,
+    "description" "text",
+    "company_id" bigint NOT NULL,
+    "asset_tag" bigint,
+    "files" "jsonb"
+);
+
+
+ALTER TABLE "public"."locations" OWNER TO "postgres";
+
+
+COMMENT ON COLUMN "public"."locations"."files" IS 'Array of file attachments: [{id, link, name?, description?}].';
+
+
+
+ALTER TABLE "public"."locations" ALTER COLUMN "id" ADD GENERATED BY DEFAULT AS IDENTITY (
+    SEQUENCE NAME "public"."locations_id_seq"
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1
+);
+
+
+
+CREATE TABLE IF NOT EXISTS "public"."nfc_tags" (
+    "id" bigint NOT NULL,
+    "created_at" timestamp with time zone DEFAULT "now"() NOT NULL,
+    "created_by" "uuid" DEFAULT "auth"."uid"(),
+    "tag_id" character varying NOT NULL,
+    "company_id" bigint NOT NULL
+);
+
+
+ALTER TABLE "public"."nfc_tags" OWNER TO "postgres";
+
+
+ALTER TABLE "public"."nfc_tags" ALTER COLUMN "id" ADD GENERATED BY DEFAULT AS IDENTITY (
+    SEQUENCE NAME "public"."nfc_tags_id_seq"
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1
+);
+
+
+
+CREATE TABLE IF NOT EXISTS "public"."profiles" (
+    "id" "uuid" NOT NULL,
+    "first_name" "text",
+    "last_name" "text",
+    "email" "text",
+    "avatar_url" "text"
+);
+
+
+ALTER TABLE "public"."profiles" OWNER TO "postgres";
+
+
+CREATE TABLE IF NOT EXISTS "public"."users_companies" (
+    "id" bigint NOT NULL,
+    "created_at" timestamp with time zone DEFAULT "now"() NOT NULL,
+    "user_id" "uuid" NOT NULL,
+    "company_id" bigint NOT NULL
+);
+
+
+ALTER TABLE "public"."users_companies" OWNER TO "postgres";
+
+
+ALTER TABLE "public"."users_companies" ALTER COLUMN "id" ADD GENERATED BY DEFAULT AS IDENTITY (
+    SEQUENCE NAME "public"."users_companies_id_seq"
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1
+);
+
+
+
+ALTER TABLE ONLY "public"."articles"
+    ADD CONSTRAINT "articles_pkey" PRIMARY KEY ("id");
+
+
+
+ALTER TABLE ONLY "public"."asset_tag_templates"
+    ADD CONSTRAINT "asset_tag_templates_pkey" PRIMARY KEY ("id");
+
+
+
+ALTER TABLE ONLY "public"."asset_tags"
+    ADD CONSTRAINT "asset_tags_pkey" PRIMARY KEY ("id");
+
+
+
+ALTER TABLE ONLY "public"."cases"
+    ADD CONSTRAINT "cases_pkey" PRIMARY KEY ("id");
+
+
+
+ALTER TABLE ONLY "public"."companies"
+    ADD CONSTRAINT "companies_pkey" PRIMARY KEY ("id");
+
+
+
+ALTER TABLE ONLY "public"."customers"
+    ADD CONSTRAINT "customers_pkey" PRIMARY KEY ("id");
+
+
+
+ALTER TABLE ONLY "public"."equipments"
+    ADD CONSTRAINT "equipments_pkey" PRIMARY KEY ("id");
+
+
+
+ALTER TABLE ONLY "public"."history"
+    ADD CONSTRAINT "history_pkey" PRIMARY KEY ("id");
+
+
+
+ALTER TABLE ONLY "public"."job_assets_on_job"
+    ADD CONSTRAINT "job_assets_on_job_pkey" PRIMARY KEY ("id");
+
+
+
+ALTER TABLE ONLY "public"."job_booked_assets"
+    ADD CONSTRAINT "job_booked_assets_pkey" PRIMARY KEY ("id");
+
+
+
+ALTER TABLE ONLY "public"."jobs"
+    ADD CONSTRAINT "jobs_pkey" PRIMARY KEY ("id");
+
+
+
+ALTER TABLE ONLY "public"."locations"
+    ADD CONSTRAINT "locations_pkey" PRIMARY KEY ("id");
+
+
+
+ALTER TABLE ONLY "public"."nfc_tags"
+    ADD CONSTRAINT "nfc_tags_pkey" PRIMARY KEY ("id");
+
+
+
+ALTER TABLE ONLY "public"."profiles"
+    ADD CONSTRAINT "profiles_pkey" PRIMARY KEY ("id");
+
+
+
+ALTER TABLE ONLY "public"."users_companies"
+    ADD CONSTRAINT "users_companies_pkey" PRIMARY KEY ("id");
+
+
+
+CREATE OR REPLACE TRIGGER "trg_log_history_articles" AFTER INSERT OR DELETE OR UPDATE ON "public"."articles" FOR EACH ROW EXECUTE FUNCTION "public"."log_history"();
+
+
+
+CREATE OR REPLACE TRIGGER "trg_log_history_asset_tags" AFTER INSERT OR DELETE OR UPDATE ON "public"."asset_tags" FOR EACH ROW EXECUTE FUNCTION "public"."log_history"();
+
+
+
+CREATE OR REPLACE TRIGGER "trg_log_history_cases" AFTER INSERT OR DELETE OR UPDATE ON "public"."cases" FOR EACH ROW EXECUTE FUNCTION "public"."log_history"();
+
+
+
+CREATE OR REPLACE TRIGGER "trg_log_history_companies" AFTER INSERT OR DELETE OR UPDATE ON "public"."companies" FOR EACH ROW EXECUTE FUNCTION "public"."log_history"();
+
+
+
+CREATE OR REPLACE TRIGGER "trg_log_history_customers" AFTER INSERT OR DELETE OR UPDATE ON "public"."customers" FOR EACH ROW EXECUTE FUNCTION "public"."log_history"();
+
+
+
+CREATE OR REPLACE TRIGGER "trg_log_history_equipments" AFTER INSERT OR DELETE OR UPDATE ON "public"."equipments" FOR EACH ROW EXECUTE FUNCTION "public"."log_history"();
+
+
+
+CREATE OR REPLACE TRIGGER "trg_log_history_job_assets_on_job" AFTER INSERT OR DELETE OR UPDATE ON "public"."job_assets_on_job" FOR EACH ROW EXECUTE FUNCTION "public"."log_history"();
+
+
+
+CREATE OR REPLACE TRIGGER "trg_log_history_job_booked_assets" AFTER INSERT OR DELETE OR UPDATE ON "public"."job_booked_assets" FOR EACH ROW EXECUTE FUNCTION "public"."log_history"();
+
+
+
+CREATE OR REPLACE TRIGGER "trg_log_history_jobs" AFTER INSERT OR DELETE OR UPDATE ON "public"."jobs" FOR EACH ROW EXECUTE FUNCTION "public"."log_history"();
+
+
+
+CREATE OR REPLACE TRIGGER "trg_log_history_locations" AFTER INSERT OR DELETE OR UPDATE ON "public"."locations" FOR EACH ROW EXECUTE FUNCTION "public"."log_history"();
+
+
+
+ALTER TABLE ONLY "public"."articles"
+    ADD CONSTRAINT "articles_asset_tag_fkey" FOREIGN KEY ("asset_tag") REFERENCES "public"."asset_tags"("id");
+
+
+
+ALTER TABLE ONLY "public"."articles"
+    ADD CONSTRAINT "articles_company_id_fkey" FOREIGN KEY ("company_id") REFERENCES "public"."companies"("id") ON UPDATE CASCADE ON DELETE CASCADE;
+
+
+
+ALTER TABLE ONLY "public"."articles"
+    ADD CONSTRAINT "articles_created_by_fkey" FOREIGN KEY ("created_by") REFERENCES "public"."profiles"("id") ON UPDATE CASCADE ON DELETE SET NULL;
+
+
+
+ALTER TABLE ONLY "public"."articles"
+    ADD CONSTRAINT "articles_default_location_fkey" FOREIGN KEY ("default_location") REFERENCES "public"."locations"("id") ON UPDATE CASCADE ON DELETE SET NULL;
+
+
+
+ALTER TABLE ONLY "public"."asset_tag_templates"
+    ADD CONSTRAINT "asset_tag_templates_company_id_fkey" FOREIGN KEY ("company_id") REFERENCES "public"."companies"("id");
+
+
+
+ALTER TABLE ONLY "public"."asset_tag_templates"
+    ADD CONSTRAINT "asset_tag_templates_created_by_fkey" FOREIGN KEY ("created_by") REFERENCES "public"."profiles"("id") ON UPDATE CASCADE ON DELETE SET NULL;
+
+
+
+ALTER TABLE ONLY "public"."asset_tags"
+    ADD CONSTRAINT "asset_tags_company_id_fkey" FOREIGN KEY ("company_id") REFERENCES "public"."companies"("id") ON UPDATE CASCADE ON DELETE CASCADE;
+
+
+
+ALTER TABLE ONLY "public"."asset_tags"
+    ADD CONSTRAINT "asset_tags_created_by_fkey" FOREIGN KEY ("created_by") REFERENCES "public"."profiles"("id") ON UPDATE CASCADE ON DELETE SET NULL;
+
+
+
+ALTER TABLE ONLY "public"."asset_tags"
+    ADD CONSTRAINT "asset_tags_nfc_tag_id_fkey" FOREIGN KEY ("nfc_tag_id") REFERENCES "public"."nfc_tags"("id") ON UPDATE CASCADE ON DELETE SET NULL;
+
+
+
+ALTER TABLE ONLY "public"."asset_tags"
+    ADD CONSTRAINT "asset_tags_printed_template_fkey" FOREIGN KEY ("printed_template") REFERENCES "public"."asset_tag_templates"("id") ON UPDATE CASCADE ON DELETE SET NULL;
+
+
+
+ALTER TABLE ONLY "public"."cases"
+    ADD CONSTRAINT "cases_asset_tag_fkey" FOREIGN KEY ("asset_tag") REFERENCES "public"."asset_tags"("id");
+
+
+
+ALTER TABLE ONLY "public"."cases"
+    ADD CONSTRAINT "cases_case_equipment_fkey" FOREIGN KEY ("case_equipment") REFERENCES "public"."equipments"("id");
+
+
+ALTER TABLE ONLY "public"."cases"
+    ADD CONSTRAINT "cases_case_contains_equipments_fkey" FOREIGN KEY ("contains_equipments") REFERENCES "public"."equipments"("id");
+
+
+
+ALTER TABLE ONLY "public"."cases"
+    ADD CONSTRAINT "cases_company_id_fkey" FOREIGN KEY ("company_id") REFERENCES "public"."companies"("id") ON UPDATE CASCADE ON DELETE CASCADE;
+
+
+
+ALTER TABLE ONLY "public"."cases"
+    ADD CONSTRAINT "cases_created_by_fkey" FOREIGN KEY ("created_by") REFERENCES "public"."profiles"("id") ON UPDATE CASCADE ON DELETE SET NULL;
+
+
+
+ALTER TABLE ONLY "public"."companies"
+    ADD CONSTRAINT "companies_owner_user_id_fkey" FOREIGN KEY ("owner_user_id") REFERENCES "public"."profiles"("id") ON UPDATE CASCADE ON DELETE RESTRICT;
+
+
+
+ALTER TABLE ONLY "public"."customers"
+    ADD CONSTRAINT "customers_company_id_fkey" FOREIGN KEY ("company_id") REFERENCES "public"."companies"("id") ON UPDATE CASCADE ON DELETE CASCADE;
+
+
+
+ALTER TABLE ONLY "public"."customers"
+    ADD CONSTRAINT "customers_created_by_fkey" FOREIGN KEY ("created_by") REFERENCES "public"."profiles"("id") ON UPDATE CASCADE ON DELETE SET NULL;
+
+
+
+ALTER TABLE ONLY "public"."equipments"
+    ADD CONSTRAINT "equipments_article_id_fkey" FOREIGN KEY ("article_id") REFERENCES "public"."articles"("id");
+
+
+
+ALTER TABLE ONLY "public"."equipments"
+    ADD CONSTRAINT "equipments_asset_tag_fkey" FOREIGN KEY ("asset_tag") REFERENCES "public"."asset_tags"("id");
+
+
+
+ALTER TABLE ONLY "public"."equipments"
+    ADD CONSTRAINT "equipments_company_id_fkey" FOREIGN KEY ("company_id") REFERENCES "public"."companies"("id") ON UPDATE CASCADE ON DELETE CASCADE;
+
+
+
+ALTER TABLE ONLY "public"."equipments"
+    ADD CONSTRAINT "equipments_created_by_fkey" FOREIGN KEY ("created_by") REFERENCES "public"."profiles"("id");
+
+
+
+ALTER TABLE ONLY "public"."equipments"
+    ADD CONSTRAINT "equipments_current_location_fkey" FOREIGN KEY ("current_location") REFERENCES "public"."locations"("id") ON UPDATE CASCADE ON DELETE SET NULL;
+
+
+
+ALTER TABLE ONLY "public"."history"
+    ADD CONSTRAINT "history_change_made_by_fkey" FOREIGN KEY ("change_made_by") REFERENCES "public"."profiles"("id") ON UPDATE CASCADE ON DELETE SET NULL;
+
+
+
+ALTER TABLE ONLY "public"."history"
+    ADD CONSTRAINT "history_company_id_fkey" FOREIGN KEY ("company_id") REFERENCES "public"."companies"("id") ON UPDATE CASCADE ON DELETE CASCADE;
+
+
+
+ALTER TABLE ONLY "public"."job_assets_on_job"
+    ADD CONSTRAINT "job_assets_on_job_case_id_fkey" FOREIGN KEY ("case_id") REFERENCES "public"."cases"("id") ON UPDATE CASCADE ON DELETE CASCADE;
+
+
+
+ALTER TABLE ONLY "public"."job_assets_on_job"
+    ADD CONSTRAINT "job_assets_on_job_company_id_fkey" FOREIGN KEY ("company_id") REFERENCES "public"."companies"("id") ON UPDATE CASCADE ON DELETE CASCADE;
+
+
+
+ALTER TABLE ONLY "public"."job_assets_on_job"
+    ADD CONSTRAINT "job_assets_on_job_created_by_fkey" FOREIGN KEY ("created_by") REFERENCES "public"."profiles"("id") ON UPDATE CASCADE ON DELETE SET NULL;
+
+
+
+ALTER TABLE ONLY "public"."job_assets_on_job"
+    ADD CONSTRAINT "job_assets_on_job_equipment_id_fkey" FOREIGN KEY ("equipment_id") REFERENCES "public"."equipments"("id") ON UPDATE CASCADE ON DELETE CASCADE;
+
+
+
+ALTER TABLE ONLY "public"."job_assets_on_job"
+    ADD CONSTRAINT "job_assets_on_job_job_id_fkey" FOREIGN KEY ("job_id") REFERENCES "public"."jobs"("id") ON UPDATE CASCADE ON DELETE CASCADE;
+
+
+
+ALTER TABLE ONLY "public"."job_booked_assets"
+    ADD CONSTRAINT "job_booked_assets_case_id_fkey" FOREIGN KEY ("case_id") REFERENCES "public"."cases"("id") ON UPDATE CASCADE ON DELETE CASCADE;
+
+
+
+ALTER TABLE ONLY "public"."job_booked_assets"
+    ADD CONSTRAINT "job_booked_assets_company_id_fkey" FOREIGN KEY ("company_id") REFERENCES "public"."companies"("id") ON UPDATE CASCADE ON DELETE CASCADE;
+
+
+
+ALTER TABLE ONLY "public"."job_booked_assets"
+    ADD CONSTRAINT "job_booked_assets_created_by_fkey" FOREIGN KEY ("created_by") REFERENCES "public"."profiles"("id") ON UPDATE CASCADE ON DELETE SET NULL;
+
+
+
+ALTER TABLE ONLY "public"."job_booked_assets"
+    ADD CONSTRAINT "job_booked_assets_equipment_id_fkey" FOREIGN KEY ("equipment_id") REFERENCES "public"."equipments"("id") ON UPDATE CASCADE ON DELETE CASCADE;
+
+
+
+ALTER TABLE ONLY "public"."job_booked_assets"
+    ADD CONSTRAINT "job_booked_assets_job_id_fkey" FOREIGN KEY ("job_id") REFERENCES "public"."jobs"("id") ON UPDATE CASCADE ON DELETE CASCADE;
+
+
+
+ALTER TABLE ONLY "public"."jobs"
+    ADD CONSTRAINT "jobs_company_id_fkey" FOREIGN KEY ("company_id") REFERENCES "public"."companies"("id") ON UPDATE CASCADE ON DELETE CASCADE;
+
+
+
+ALTER TABLE ONLY "public"."jobs"
+    ADD CONSTRAINT "jobs_created_by_fkey" FOREIGN KEY ("created_by") REFERENCES "public"."profiles"("id") ON UPDATE CASCADE ON DELETE SET NULL;
+
+
+
+ALTER TABLE ONLY "public"."jobs"
+    ADD CONSTRAINT "jobs_customer_id_fkey" FOREIGN KEY ("customer_id") REFERENCES "public"."customers"("id") ON UPDATE CASCADE ON DELETE SET NULL;
+
+
+
+ALTER TABLE ONLY "public"."locations"
+    ADD CONSTRAINT "locations_asset_tag_fkey" FOREIGN KEY ("asset_tag") REFERENCES "public"."asset_tags"("id");
+
+
+
+ALTER TABLE ONLY "public"."locations"
+    ADD CONSTRAINT "locations_company_id_fkey" FOREIGN KEY ("company_id") REFERENCES "public"."companies"("id") ON UPDATE CASCADE ON DELETE CASCADE;
+
+
+
+ALTER TABLE ONLY "public"."locations"
+    ADD CONSTRAINT "locations_created_by_fkey" FOREIGN KEY ("created_by") REFERENCES "public"."profiles"("id") ON DELETE SET NULL;
+
+
+
+ALTER TABLE ONLY "public"."nfc_tags"
+    ADD CONSTRAINT "nfc_tags_company_id_fkey" FOREIGN KEY ("company_id") REFERENCES "public"."companies"("id") ON UPDATE CASCADE ON DELETE CASCADE;
+
+
+
+ALTER TABLE ONLY "public"."nfc_tags"
+    ADD CONSTRAINT "nfc_tags_created_by_fkey" FOREIGN KEY ("created_by") REFERENCES "public"."profiles"("id") ON UPDATE CASCADE ON DELETE SET NULL;
+
+
+
+ALTER TABLE ONLY "public"."profiles"
+    ADD CONSTRAINT "profiles_id_fkey" FOREIGN KEY ("id") REFERENCES "auth"."users"("id") ON UPDATE CASCADE ON DELETE CASCADE;
+
+
+
+ALTER TABLE ONLY "public"."users_companies"
+    ADD CONSTRAINT "users_companies_company_id_fkey" FOREIGN KEY ("company_id") REFERENCES "public"."companies"("id") ON UPDATE CASCADE ON DELETE CASCADE;
+
+
+
+ALTER TABLE ONLY "public"."users_companies"
+    ADD CONSTRAINT "users_companies_user_id_fkey" FOREIGN KEY ("user_id") REFERENCES "public"."profiles"("id") ON UPDATE CASCADE ON DELETE CASCADE;
+
+
+
+CREATE POLICY "Allow all for company members" ON "public"."articles" USING ("public"."is_company_member"("company_id"));
+
+
+
+CREATE POLICY "Allow all for company members" ON "public"."asset_tag_templates" USING ("public"."is_company_member"("company_id"));
+
+
+
+CREATE POLICY "Allow all for company members" ON "public"."asset_tags" USING ("public"."is_company_member"("company_id"));
+
+
+
+CREATE POLICY "Allow all for company members" ON "public"."cases" USING ("public"."is_company_member"("company_id"));
+
+
+
+CREATE POLICY "Allow all for company members" ON "public"."customers" USING ("public"."is_company_member"("company_id"));
+
+
+
+CREATE POLICY "Allow all for company members" ON "public"."equipments" USING ("public"."is_company_member"("company_id"));
+
+
+
+CREATE POLICY "Allow all for company members" ON "public"."job_assets_on_job" USING ("public"."is_company_member"("company_id"));
+
+
+
+CREATE POLICY "Allow all for company members" ON "public"."job_booked_assets" USING ("public"."is_company_member"("company_id"));
+
+
+
+CREATE POLICY "Allow all for company members" ON "public"."jobs" USING ("public"."is_company_member"("company_id"));
+
+
+
+CREATE POLICY "Allow all for company members" ON "public"."locations" USING ("public"."is_company_member"("company_id"));
+
+
+
+CREATE POLICY "Allow all for company members" ON "public"."nfc_tags" USING ("public"."is_company_member"("company_id"));
+
+
+
+CREATE POLICY "Allow delete for company owners" ON "public"."companies" FOR DELETE USING (("owner_user_id" = "auth"."uid"()));
+
+
+
+CREATE POLICY "Allow delete for company owners" ON "public"."users_companies" FOR DELETE USING ((EXISTS ( SELECT 1
+   FROM "public"."companies"
+  WHERE (("companies"."id" = "users_companies"."company_id") AND ("companies"."owner_user_id" = "auth"."uid"()) AND ("users_companies"."user_id" <> "auth"."uid"())))));
+
+
+
+CREATE POLICY "Allow insert for authenticated users" ON "public"."companies" FOR INSERT WITH CHECK (true);
+
+
+
+CREATE POLICY "Allow insert for company owners" ON "public"."users_companies" FOR INSERT WITH CHECK ((EXISTS ( SELECT 1
+   FROM "public"."companies"
+  WHERE (("companies"."id" = "users_companies"."company_id") AND ("companies"."owner_user_id" = "auth"."uid"())))));
+
+
+
+CREATE POLICY "Allow select for company members" ON "public"."companies" FOR SELECT USING ("public"."is_company_member"("id"));
+
+
+
+CREATE POLICY "Allow select for company members" ON "public"."history" FOR SELECT USING ("public"."is_company_member"("company_id"));
+
+
+
+CREATE POLICY "Allow select for company members" ON "public"."users_companies" FOR SELECT USING ("public"."is_company_member"("company_id"));
+
+
+
+CREATE POLICY "Allow update for company owners" ON "public"."companies" FOR UPDATE USING (("owner_user_id" = "auth"."uid"()));
+
+
+
+CREATE POLICY "allow articles" ON "public"."articles" TO "authenticated" USING (("company_id" IN ( SELECT "companies"."id"
+   FROM "public"."companies"
+  WHERE ("companies"."owner_user_id" = "auth"."uid"()))));
+
+
+
+CREATE POLICY "allow equipments" ON "public"."equipments" TO "authenticated" USING (("company_id" IN ( SELECT "companies"."id"
+   FROM "public"."companies"
+  WHERE ("companies"."owner_user_id" = "auth"."uid"()))));
+
+
+
+CREATE POLICY "allow locations" ON "public"."locations" TO "authenticated" USING (("company_id" IN ( SELECT "companies"."id"
+   FROM "public"."companies"
+  WHERE ("companies"."owner_user_id" = "auth"."uid"()))));
+
+
+
+CREATE POLICY "allow owner" ON "public"."companies" TO "authenticated" USING (("owner_user_id" = "auth"."uid"()));
+
+
+
+ALTER TABLE "public"."articles" ENABLE ROW LEVEL SECURITY;
+
+
+ALTER TABLE "public"."asset_tag_templates" ENABLE ROW LEVEL SECURITY;
+
+
+ALTER TABLE "public"."asset_tags" ENABLE ROW LEVEL SECURITY;
+
+
+ALTER TABLE "public"."cases" ENABLE ROW LEVEL SECURITY;
+
+
+ALTER TABLE "public"."companies" ENABLE ROW LEVEL SECURITY;
+
+
+ALTER TABLE "public"."customers" ENABLE ROW LEVEL SECURITY;
+
+
+ALTER TABLE "public"."equipments" ENABLE ROW LEVEL SECURITY;
+
+
+ALTER TABLE "public"."history" ENABLE ROW LEVEL SECURITY;
+
+
+ALTER TABLE "public"."job_assets_on_job" ENABLE ROW LEVEL SECURITY;
+
+
+ALTER TABLE "public"."job_booked_assets" ENABLE ROW LEVEL SECURITY;
+
+
+ALTER TABLE "public"."jobs" ENABLE ROW LEVEL SECURITY;
+
+
+ALTER TABLE "public"."locations" ENABLE ROW LEVEL SECURITY;
+
+
+ALTER TABLE "public"."nfc_tags" ENABLE ROW LEVEL SECURITY;
+
+
+ALTER TABLE "public"."profiles" ENABLE ROW LEVEL SECURITY;
+
+
+CREATE POLICY "profiles_modify_own_row" ON "public"."profiles" TO "authenticated" USING (("id" = "auth"."uid"())) WITH CHECK (("id" = "auth"."uid"()));
+
+
+
+COMMENT ON POLICY "profiles_modify_own_row" ON "public"."profiles" IS 'Authenticated users may insert, update, and delete only their own profile row.';
+
+
+
+CREATE POLICY "profiles_select_company_members" ON "public"."profiles" FOR SELECT TO "authenticated" USING ((EXISTS ( SELECT 1
+   FROM ("public"."users_companies" "uc_target"
+     JOIN "public"."users_companies" "uc_me" ON (("uc_me"."company_id" = "uc_target"."company_id")))
+  WHERE (("uc_target"."user_id" = "profiles"."id") AND ("uc_me"."user_id" = "auth"."uid"())))));
+
+
+
+COMMENT ON POLICY "profiles_select_company_members" ON "public"."profiles" IS 'Authenticated users can read profiles of users who share a company membership with them via public.users_companies.';
+
+
+
+ALTER TABLE "public"."users_companies" ENABLE ROW LEVEL SECURITY;
+
+
+
+
+ALTER PUBLICATION "supabase_realtime" OWNER TO "postgres";
+
+
+
+
+
+GRANT USAGE ON SCHEMA "public" TO "postgres";
+GRANT USAGE ON SCHEMA "public" TO "anon";
+GRANT USAGE ON SCHEMA "public" TO "authenticated";
+GRANT USAGE ON SCHEMA "public" TO "service_role";
+GRANT ALL ON SCHEMA "public" TO "prisma";
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+GRANT ALL ON FUNCTION "public"."handle_new_user"() TO "anon";
+GRANT ALL ON FUNCTION "public"."handle_new_user"() TO "authenticated";
+GRANT ALL ON FUNCTION "public"."handle_new_user"() TO "service_role";
+GRANT ALL ON FUNCTION "public"."handle_new_user"() TO "prisma";
+
+
+
+GRANT ALL ON FUNCTION "public"."is_company_member"("p_company_id" bigint) TO "anon";
+GRANT ALL ON FUNCTION "public"."is_company_member"("p_company_id" bigint) TO "authenticated";
+GRANT ALL ON FUNCTION "public"."is_company_member"("p_company_id" bigint) TO "service_role";
+GRANT ALL ON FUNCTION "public"."is_company_member"("p_company_id" bigint) TO "prisma";
+
+
+
+GRANT ALL ON FUNCTION "public"."log_history"() TO "anon";
+GRANT ALL ON FUNCTION "public"."log_history"() TO "authenticated";
+GRANT ALL ON FUNCTION "public"."log_history"() TO "service_role";
+GRANT ALL ON FUNCTION "public"."log_history"() TO "prisma";
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+GRANT ALL ON TABLE "public"."articles" TO "anon";
+GRANT ALL ON TABLE "public"."articles" TO "authenticated";
+GRANT ALL ON TABLE "public"."articles" TO "service_role";
+GRANT ALL ON TABLE "public"."articles" TO "prisma";
+
+
+
+GRANT ALL ON SEQUENCE "public"."articles_id_seq" TO "anon";
+GRANT ALL ON SEQUENCE "public"."articles_id_seq" TO "authenticated";
+GRANT ALL ON SEQUENCE "public"."articles_id_seq" TO "service_role";
+GRANT ALL ON SEQUENCE "public"."articles_id_seq" TO "prisma";
+
+
+
+GRANT ALL ON TABLE "public"."asset_tag_templates" TO "anon";
+GRANT ALL ON TABLE "public"."asset_tag_templates" TO "authenticated";
+GRANT ALL ON TABLE "public"."asset_tag_templates" TO "service_role";
+GRANT ALL ON TABLE "public"."asset_tag_templates" TO "prisma";
+
+
+
+GRANT ALL ON SEQUENCE "public"."asset_tag_templates_id_seq" TO "anon";
+GRANT ALL ON SEQUENCE "public"."asset_tag_templates_id_seq" TO "authenticated";
+GRANT ALL ON SEQUENCE "public"."asset_tag_templates_id_seq" TO "service_role";
+GRANT ALL ON SEQUENCE "public"."asset_tag_templates_id_seq" TO "prisma";
+
+
+
+GRANT ALL ON TABLE "public"."asset_tags" TO "anon";
+GRANT ALL ON TABLE "public"."asset_tags" TO "authenticated";
+GRANT ALL ON TABLE "public"."asset_tags" TO "service_role";
+GRANT ALL ON TABLE "public"."asset_tags" TO "prisma";
+
+
+
+GRANT ALL ON SEQUENCE "public"."asset_tags_id_seq" TO "anon";
+GRANT ALL ON SEQUENCE "public"."asset_tags_id_seq" TO "authenticated";
+GRANT ALL ON SEQUENCE "public"."asset_tags_id_seq" TO "service_role";
+GRANT ALL ON SEQUENCE "public"."asset_tags_id_seq" TO "prisma";
+
+
+
+GRANT ALL ON TABLE "public"."cases" TO "anon";
+GRANT ALL ON TABLE "public"."cases" TO "authenticated";
+GRANT ALL ON TABLE "public"."cases" TO "service_role";
+GRANT ALL ON TABLE "public"."cases" TO "prisma";
+
+
+
+GRANT ALL ON SEQUENCE "public"."cases_id_seq" TO "anon";
+GRANT ALL ON SEQUENCE "public"."cases_id_seq" TO "authenticated";
+GRANT ALL ON SEQUENCE "public"."cases_id_seq" TO "service_role";
+GRANT ALL ON SEQUENCE "public"."cases_id_seq" TO "prisma";
+
+
+
+GRANT ALL ON TABLE "public"."companies" TO "anon";
+GRANT ALL ON TABLE "public"."companies" TO "authenticated";
+GRANT ALL ON TABLE "public"."companies" TO "service_role";
+GRANT ALL ON TABLE "public"."companies" TO "prisma";
+
+
+
+GRANT ALL ON SEQUENCE "public"."companies_id_seq" TO "anon";
+GRANT ALL ON SEQUENCE "public"."companies_id_seq" TO "authenticated";
+GRANT ALL ON SEQUENCE "public"."companies_id_seq" TO "service_role";
+GRANT ALL ON SEQUENCE "public"."companies_id_seq" TO "prisma";
+
+
+
+GRANT ALL ON TABLE "public"."customers" TO "anon";
+GRANT ALL ON TABLE "public"."customers" TO "authenticated";
+GRANT ALL ON TABLE "public"."customers" TO "service_role";
+GRANT ALL ON TABLE "public"."customers" TO "prisma";
+
+
+
+GRANT ALL ON SEQUENCE "public"."customers_id_seq" TO "anon";
+GRANT ALL ON SEQUENCE "public"."customers_id_seq" TO "authenticated";
+GRANT ALL ON SEQUENCE "public"."customers_id_seq" TO "service_role";
+GRANT ALL ON SEQUENCE "public"."customers_id_seq" TO "prisma";
+
+
+
+GRANT ALL ON TABLE "public"."equipments" TO "anon";
+GRANT ALL ON TABLE "public"."equipments" TO "authenticated";
+GRANT ALL ON TABLE "public"."equipments" TO "service_role";
+GRANT ALL ON TABLE "public"."equipments" TO "prisma";
+
+
+
+GRANT ALL ON SEQUENCE "public"."equipments_id_seq" TO "anon";
+GRANT ALL ON SEQUENCE "public"."equipments_id_seq" TO "authenticated";
+GRANT ALL ON SEQUENCE "public"."equipments_id_seq" TO "service_role";
+GRANT ALL ON SEQUENCE "public"."equipments_id_seq" TO "prisma";
+
+
+
+GRANT ALL ON TABLE "public"."history" TO "anon";
+GRANT ALL ON TABLE "public"."history" TO "authenticated";
+GRANT ALL ON TABLE "public"."history" TO "service_role";
+GRANT ALL ON TABLE "public"."history" TO "prisma";
+
+
+
+GRANT ALL ON SEQUENCE "public"."history_id_seq" TO "anon";
+GRANT ALL ON SEQUENCE "public"."history_id_seq" TO "authenticated";
+GRANT ALL ON SEQUENCE "public"."history_id_seq" TO "service_role";
+GRANT ALL ON SEQUENCE "public"."history_id_seq" TO "prisma";
+
+
+
+GRANT ALL ON TABLE "public"."job_assets_on_job" TO "anon";
+GRANT ALL ON TABLE "public"."job_assets_on_job" TO "authenticated";
+GRANT ALL ON TABLE "public"."job_assets_on_job" TO "service_role";
+GRANT ALL ON TABLE "public"."job_assets_on_job" TO "prisma";
+
+
+
+GRANT ALL ON SEQUENCE "public"."job_assets_on_job_id_seq" TO "anon";
+GRANT ALL ON SEQUENCE "public"."job_assets_on_job_id_seq" TO "authenticated";
+GRANT ALL ON SEQUENCE "public"."job_assets_on_job_id_seq" TO "service_role";
+GRANT ALL ON SEQUENCE "public"."job_assets_on_job_id_seq" TO "prisma";
+
+
+
+GRANT ALL ON TABLE "public"."job_booked_assets" TO "anon";
+GRANT ALL ON TABLE "public"."job_booked_assets" TO "authenticated";
+GRANT ALL ON TABLE "public"."job_booked_assets" TO "service_role";
+GRANT ALL ON TABLE "public"."job_booked_assets" TO "prisma";
+
+
+
+GRANT ALL ON SEQUENCE "public"."job_booked_assets_id_seq" TO "anon";
+GRANT ALL ON SEQUENCE "public"."job_booked_assets_id_seq" TO "authenticated";
+GRANT ALL ON SEQUENCE "public"."job_booked_assets_id_seq" TO "service_role";
+GRANT ALL ON SEQUENCE "public"."job_booked_assets_id_seq" TO "prisma";
+
+
+
+GRANT ALL ON TABLE "public"."jobs" TO "anon";
+GRANT ALL ON TABLE "public"."jobs" TO "authenticated";
+GRANT ALL ON TABLE "public"."jobs" TO "service_role";
+GRANT ALL ON TABLE "public"."jobs" TO "prisma";
+
+
+
+GRANT ALL ON SEQUENCE "public"."jobs_id_seq" TO "anon";
+GRANT ALL ON SEQUENCE "public"."jobs_id_seq" TO "authenticated";
+GRANT ALL ON SEQUENCE "public"."jobs_id_seq" TO "service_role";
+GRANT ALL ON SEQUENCE "public"."jobs_id_seq" TO "prisma";
+
+
+
+GRANT ALL ON TABLE "public"."locations" TO "anon";
+GRANT ALL ON TABLE "public"."locations" TO "authenticated";
+GRANT ALL ON TABLE "public"."locations" TO "service_role";
+GRANT ALL ON TABLE "public"."locations" TO "prisma";
+
+
+
+GRANT ALL ON SEQUENCE "public"."locations_id_seq" TO "anon";
+GRANT ALL ON SEQUENCE "public"."locations_id_seq" TO "authenticated";
+GRANT ALL ON SEQUENCE "public"."locations_id_seq" TO "service_role";
+GRANT ALL ON SEQUENCE "public"."locations_id_seq" TO "prisma";
+
+
+
+GRANT ALL ON TABLE "public"."nfc_tags" TO "anon";
+GRANT ALL ON TABLE "public"."nfc_tags" TO "authenticated";
+GRANT ALL ON TABLE "public"."nfc_tags" TO "service_role";
+GRANT ALL ON TABLE "public"."nfc_tags" TO "prisma";
+
+
+
+GRANT ALL ON SEQUENCE "public"."nfc_tags_id_seq" TO "anon";
+GRANT ALL ON SEQUENCE "public"."nfc_tags_id_seq" TO "authenticated";
+GRANT ALL ON SEQUENCE "public"."nfc_tags_id_seq" TO "service_role";
+GRANT ALL ON SEQUENCE "public"."nfc_tags_id_seq" TO "prisma";
+
+
+
+GRANT ALL ON TABLE "public"."profiles" TO "anon";
+GRANT ALL ON TABLE "public"."profiles" TO "authenticated";
+GRANT ALL ON TABLE "public"."profiles" TO "service_role";
+GRANT ALL ON TABLE "public"."profiles" TO "prisma";
+
+
+
+GRANT ALL ON TABLE "public"."users_companies" TO "anon";
+GRANT ALL ON TABLE "public"."users_companies" TO "authenticated";
+GRANT ALL ON TABLE "public"."users_companies" TO "service_role";
+GRANT ALL ON TABLE "public"."users_companies" TO "prisma";
+
+
+
+GRANT ALL ON SEQUENCE "public"."users_companies_id_seq" TO "anon";
+GRANT ALL ON SEQUENCE "public"."users_companies_id_seq" TO "authenticated";
+GRANT ALL ON SEQUENCE "public"."users_companies_id_seq" TO "service_role";
+GRANT ALL ON SEQUENCE "public"."users_companies_id_seq" TO "prisma";
+
+
+
+
+
+
+
+
+
+ALTER DEFAULT PRIVILEGES FOR ROLE "postgres" IN SCHEMA "public" GRANT ALL ON SEQUENCES TO "postgres";
+ALTER DEFAULT PRIVILEGES FOR ROLE "postgres" IN SCHEMA "public" GRANT ALL ON SEQUENCES TO "anon";
+ALTER DEFAULT PRIVILEGES FOR ROLE "postgres" IN SCHEMA "public" GRANT ALL ON SEQUENCES TO "authenticated";
+ALTER DEFAULT PRIVILEGES FOR ROLE "postgres" IN SCHEMA "public" GRANT ALL ON SEQUENCES TO "service_role";
+ALTER DEFAULT PRIVILEGES FOR ROLE "postgres" IN SCHEMA "public" GRANT ALL ON SEQUENCES TO "prisma";
+
+
+
+
+
+
+ALTER DEFAULT PRIVILEGES FOR ROLE "postgres" IN SCHEMA "public" GRANT ALL ON FUNCTIONS TO "postgres";
+ALTER DEFAULT PRIVILEGES FOR ROLE "postgres" IN SCHEMA "public" GRANT ALL ON FUNCTIONS TO "anon";
+ALTER DEFAULT PRIVILEGES FOR ROLE "postgres" IN SCHEMA "public" GRANT ALL ON FUNCTIONS TO "authenticated";
+ALTER DEFAULT PRIVILEGES FOR ROLE "postgres" IN SCHEMA "public" GRANT ALL ON FUNCTIONS TO "service_role";
+ALTER DEFAULT PRIVILEGES FOR ROLE "postgres" IN SCHEMA "public" GRANT ALL ON FUNCTIONS TO "prisma";
+
+
+
+
+
+
+ALTER DEFAULT PRIVILEGES FOR ROLE "postgres" IN SCHEMA "public" GRANT ALL ON TABLES TO "postgres";
+ALTER DEFAULT PRIVILEGES FOR ROLE "postgres" IN SCHEMA "public" GRANT ALL ON TABLES TO "anon";
+ALTER DEFAULT PRIVILEGES FOR ROLE "postgres" IN SCHEMA "public" GRANT ALL ON TABLES TO "authenticated";
+ALTER DEFAULT PRIVILEGES FOR ROLE "postgres" IN SCHEMA "public" GRANT ALL ON TABLES TO "service_role";
+ALTER DEFAULT PRIVILEGES FOR ROLE "postgres" IN SCHEMA "public" GRANT ALL ON TABLES TO "prisma";
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+RESET ALL;
+
+--
+-- Dumped schema changes for auth and storage
+--
+
+CREATE OR REPLACE TRIGGER "on_auth_user_created" AFTER INSERT ON "auth"."users" FOR EACH ROW EXECUTE FUNCTION "public"."handle_new_user"();
+
+
+
+CREATE POLICY "Service role can manage users" ON "auth"."users" TO "service_role" USING (true);
+
+
+
+CREATE POLICY "Allow company members to manage public assets" ON "storage"."objects" USING ((("bucket_id" = 'public-assets'::"text") AND "public"."is_company_member"((("string_to_array"("name", '/'::"text"))[1])::bigint)));
+
+
+
+CREATE POLICY "Allow public read access to public assets" ON "storage"."objects" FOR SELECT USING (("bucket_id" = 'public-assets'::"text"));
+
+
+
+SET SESSION AUTHORIZATION "postgres";
+GRANT SELECT ON TABLE "auth"."users" TO "service_role";
+RESET SESSION AUTHORIZATION;

@@ -1,6 +1,10 @@
 2025-09-24: Made generateSVG async to support QR code generation; updated callers (template-preview, asset tag render API) and added QR embedding via <image>. Typecheck passed.
 2025-09-24: Implemented canvas-based asset tag template preview (`template-preview.tsx`) now rendering SVG via generator and added draggable overlay for element positioning. Wired editable preview into create and edit forms. Ran tsc (no errors). Next: consider adding tests/E2E for drag interactions.
 # 2025-09-24 01:05 – Added unit test for automatic asset tag creation helper (createAndAttachAssetTag). Introduced `tests/vitest/asset-tag-auto-create.test.ts` with Supabase client mock validating prefix assembly and entity update. All vitest tests passing (10 passed, 1 skipped). Next: add documentation for asset tag auto-creation & preview embedding.
+\n+## 2025-09-26 23:20 – Add unit tests for asset tag code generator
+- Added `tests/vitest/asset-tag-code.test.ts` covering `buildAssetTagCode` including new `stringTemplate` path and fallback behavior.
+- Mocked `adminCompanyMetadata` and `asset_tag_template_print` types; no DB calls.
+- Next: if desired, extend tests for additional placeholders and error cases.
 2025-09-24 01:12 – Updated E2E equipment form tests to reliably select the specific created article by id (helper `selectTestArticle`) instead of brittle index-based selection. File: tests/e2e/equipment-form.spec.ts. Prevents intermittent failures when option order changes.
 2025-09-24 01:20 – Fixed job detail title not updating after edits by adding router.refresh() in JobEditForm submit handler; added E2E test verifying rename reflects in heading. Files: components/forms/job-edit-form.tsx, tests/e2e/jobs-form.spec.ts.
 # Agent Activity Log

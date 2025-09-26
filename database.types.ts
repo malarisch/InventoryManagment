@@ -202,40 +202,40 @@ export type Database = {
       }
       cases: {
         Row: {
-          articles: Json[] | null
           asset_tag: number | null
           case_equipment: number | null
           company_id: number | null
+          contains_articles: Json[] | null
+          contains_equipments: number | null
           created_at: string
           created_by: string | null
           description: string | null
-          equipments: number[] | null
           files: Json | null
           id: number
           name: string | null
         }
         Insert: {
-          articles?: Json[] | null
           asset_tag?: number | null
           case_equipment?: number | null
           company_id?: number | null
+          contains_articles?: Json[] | null
+          contains_equipments?: number | null
           created_at?: string
           created_by?: string | null
           description?: string | null
-          equipments?: number[] | null
           files?: Json | null
           id?: number
           name?: string | null
         }
         Update: {
-          articles?: Json[] | null
           asset_tag?: number | null
           case_equipment?: number | null
           company_id?: number | null
+          contains_articles?: Json[] | null
+          contains_equipments?: number | null
           created_at?: string
           created_by?: string | null
           description?: string | null
-          equipments?: number[] | null
           files?: Json | null
           id?: number
           name?: string | null
@@ -246,6 +246,13 @@ export type Database = {
             columns: ["asset_tag"]
             isOneToOne: false
             referencedRelation: "asset_tags"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "cases_case_contains_equipments_fkey"
+            columns: ["contains_equipments"]
+            isOneToOne: false
+            referencedRelation: "equipments"
             referencedColumns: ["id"]
           },
           {
@@ -810,15 +817,7 @@ export type Database = {
           id?: string
           last_name?: string | null
         }
-        Relationships: [
-          {
-            foreignKeyName: "profiles_id_fkey"
-            columns: ["id"]
-            isOneToOne: true
-            referencedRelation: "profiles"
-            referencedColumns: ["id"]
-          },
-        ]
+        Relationships: []
       }
       users_companies: {
         Row: {

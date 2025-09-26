@@ -1,4 +1,4 @@
-import type { adminCompanyMetadata } from "@/components/metadataTypes.types";
+import type {adminCompanyMetadata, asset_tag_template_print} from "@/components/metadataTypes.types";
 
 export type AssetTagEntityType = "article" | "equipment" | "case" | "location";
 
@@ -10,7 +10,11 @@ export type AssetTagEntityType = "article" | "equipment" | "case" | "location";
  *  - only entity: EQ-42
  *  - none: 42
  */
-export function buildAssetTagCode(meta: adminCompanyMetadata, entity: AssetTagEntityType, id: number): string {
+
+interface PlaceholderData {
+    [key: string]: string;
+}
+export function buildAssetTagCode(meta: adminCompanyMetadata, entity: AssetTagEntityType, id: number, template?: asset_tag_template_print): string {
   const companyPref = (meta.companyWidePrefix || "").trim();
   const map: Record<AssetTagEntityType, string | undefined> = {
     article: meta.assetTagArticlePrefix,
@@ -20,6 +24,21 @@ export function buildAssetTagCode(meta: adminCompanyMetadata, entity: AssetTagEn
   };
   const entityPref = (map[entity] || "").trim();
   const parts: string[] = [];
+  if (template) {
+      let value = template.stringTemplate || '';
+      const placeholderData: PlaceholderData = {
+          "prefix": template.prefix || '',
+          "suffix": template.suffix || '',
+          "company-prefix": companyPref,
+          "code": String(id).padStart(template.numberLength, "0")
+          // Add more placeholders as needed
+
+      }
+      Object.entries(placeholderData).forEach(([key, replacement]) => {
+          value = value.replace(new RegExp(`\\{${key}\\}`, 'g'), replacement);
+      });
+      return value;
+  }
   if (companyPref) parts.push(companyPref);
   if (entityPref) parts.push(entityPref);
   if (parts.length === 0) return String(id);

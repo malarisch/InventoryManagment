@@ -1,10 +1,10 @@
 'use client';
 
-import { Button } from '@/components/ui/button';
-import type { Tables } from '@/database.types';
+import {Button} from '@/components/ui/button';
+import type {Tables} from '@/database.types';
 import Link from 'next/link';
-import { Pencil } from 'lucide-react';
-import { DataTable } from '@/components/data-table';
+import {Pencil} from 'lucide-react';
+import {DataTable} from '@/components/data-table';
 
 type CaseRow = Tables<"cases"> & {
   case_equipment_equipment?: { id: number } | null;
@@ -24,7 +24,7 @@ export function CaseTable({ pageSize = 10, className }: Props) {
           <Link className="underline-offset-2 hover:underline" href={`/management/equipments/${row.case_equipment}`}>#{row.case_equipment}</Link>
         ) : "—"
       ) },
-    { key: 'equipments', label: 'Equipments', render: (row: CaseRow) => row.equipments?.length ?? 0 },
+    { key: 'contains_equipments', label: 'Equipments', render: (row: CaseRow) => row.contains_equipments?.length ?? 0 },
     { key: 'articles', label: 'Artikel (Summe)', render: (row: CaseRow) => (
         Array.isArray(row.articles) ? (row.articles as unknown as Array<{ amount?: number }>).reduce((acc, it) => acc + (Number(it?.amount) || 0), 0) : 0
       ) },

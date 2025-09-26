@@ -1,6 +1,6 @@
 import QRCode from 'qrcode';
 
-import type { AssetTagTemplate } from '@/components/asset-tag-templates/types';
+import type {AssetTagTemplate} from '@/components/asset-tag-templates/types';
 
 export interface PlaceholderData {
   [key: string]: string;
@@ -152,7 +152,7 @@ export function getAssetTagPlaceholders(
   
   article?: { name?: string } | null, 
   location?: { name?: string } | null,
-  caseeq?: { name?: string } | null
+  caseeq?: { name?: string } | null,
   
 ): PlaceholderData {
   console.log('Generating placeholders with:', { assetTag, equipment, article, location });
@@ -168,6 +168,7 @@ export function getAssetTagPlaceholders(
   } else if (caseeq?.name) {
     safeName = caseeq.name;
   }
+
   return {
     printed_code: assetTag.printed_code || '',
     equipment_name: equipment?.name || '',

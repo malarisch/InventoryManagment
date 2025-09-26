@@ -263,7 +263,7 @@ export interface asset_tag_prefixes {
 export interface asset_tag_template_print {
     name: string; // Name of the tag template, e.g., "Standard Equipment Tag"
     description: string; // Description of the tag template
-  prefix: asset_tag_prefixes; // Prefix for the asset tag, e.g., "EQP" for equipment
+  prefix: string; // Prefix for the asset tag, e.g., "EQP" for equipment
   numberLength: number; // Total length of the numeric part, e.g., 5 for "00001"
   suffix?: string; // Optional suffix for the asset tag, e.g., "A" for versioning
   numberingScheme: "sequential" | "random"; // Scheme for generating the numeric part

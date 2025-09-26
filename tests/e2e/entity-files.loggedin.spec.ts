@@ -1,9 +1,9 @@
 import 'dotenv/config';
-import { expect , Page} from '@playwright/test';
-import { createAdminClient } from "@/lib/supabase/admin";
-import type { SupabaseClient } from '@supabase/supabase-js';
+import {expect, Page} from '@playwright/test';
+import {createAdminClient} from "@/lib/supabase/admin";
+import type {SupabaseClient} from '@supabase/supabase-js';
 import {test} from '../playwright_setup.types';
-import { createEquipment } from '../helpers';
+import {createEquipment} from '../../lib/tools/helpers';
 
 const requiredEnv = [
   "NEXT_PUBLIC_SUPABASE_URL", 
