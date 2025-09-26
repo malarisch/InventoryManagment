@@ -1,8 +1,9 @@
-import { STORAGE_STATE } from "../../playwright.config";
+import {STORAGE_STATE} from "../../playwright.config";
 import "dotenv/config";
-import { expect } from "@playwright/test";
-import { test } from "../playwright_setup.types";
-import { getUserIdByEmail } from "../helpers";
+import {expect} from "@playwright/test";
+import {test} from "../playwright_setup.types";
+import {getUserIdByEmail} from "../helpers";
+import {createAdminClient} from "@/lib/supabase/admin";
 
 const requiredEnv = [
   "NEXT_PUBLIC_SUPABASE_URL",
@@ -27,7 +28,7 @@ test.describe("Login Setup", () => {
   }) => {
     // Don't construct the admin client at module-eval time (it throws if env missing).
     // Create it during the test so we only attempt it when the suite actually runs.
-    const { createAdminClient } = await import("@/lib/supabase/admin");
+
     // Create the admin client now that the test run is starting
     const admin = createAdminClient();
 

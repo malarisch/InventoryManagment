@@ -1,30 +1,19 @@
-import { createClient } from '@/lib/supabase/server';
-import { NextRequest, NextResponse } from 'next/server';
+import {createClient} from '@/lib/supabase/server';
+import {NextRequest, NextResponse} from 'next/server';
 import sharp from 'sharp';
-import { generateSVG, getAssetTagPlaceholders } from '@/lib/asset-tags/svg-generator';
-import type { AssetTagTemplate } from '@/components/asset-tag-templates/types';
+import {generateSVG, getAssetTagPlaceholders} from '@/lib/asset-tags/svg-generator';
+import type {AssetTagTemplate} from '@/components/asset-tag-templates/types';
 
-export async function GET(req: NextRequest, context: { params: Promise<{ id: string }> }) {
+export async function GET(req: NextRequest, context: { params: Promise<{ id: string }> })  {
   try {
     const supabase = await createClient();
     const { id } = await context.params;
     const format = req.nextUrl.searchParams.get('format') || 'svg';
 
-    // Fetch asset tag + template + referencing entities (equipment, article, location)
-    // Reverse FKs: equipments.asset_tag, articles.asset_tag, locations.asset_tag
+    // Fetch asset tag + template (FK)
     const { data: assetTag, error: tagError } = await supabase
       .from('asset_tags')
-      .select(`
-        id,
-        printed_code,
-        printed_template,
-        asset_tag_templates:asset_tag_templates!printed_template(template),
-        equipments:equipments_asset_tag_fkey(id, metadata, articles(id, name), locations(name)),
-        articles:articles_asset_tag_fkey(id, name),
-        locations:locations_asset_tag_fkey(id, name),
-        cases:cases_asset_tag_fkey(id, name)
-      )
-      `)
+      .select('id, printed_code, printed_template, asset_tag_templates:asset_tag_templates!printed_template(template)')
       .eq('id', id)
       .maybeSingle();
 
@@ -41,43 +30,52 @@ export async function GET(req: NextRequest, context: { params: Promise<{ id: str
       return new NextResponse('Asset tag template not found', { status: 404 });
     }
 
-    interface AssetTagJoined {
-      id: number;
-      printed_code: string;
-      printed_template?: number;
-      asset_tag_templates?: { template?: AssetTagTemplate };
-      equipments?: Array<{
-        id: number;
-        metadata: unknown;
-        articles?: { id?: number; name?: string } | null;
-        locations?: { name?: string } | null;
-      }>;
-      articles?: Array<{ id: number; name?: string }>;
-      locations?: Array<{ id: number; name?: string }>;
-      cases?: Array<{ id: number; name?: string }>;
+    // Load referencing entities via reverse FK lookups (optional)
+    const [
+      { data: equipmentData, error: equipError },
+      { data: articleData, error: articleError },
+      { data: locationData, error: locationError },
+      { data: caseData, error: caseError }
+    ] = await Promise.all([
+      supabase.from('equipments').select('id, metadata, articles(id, name), locations(name)').eq('asset_tag', id).maybeSingle(),
+      supabase.from('articles').select('id, name').eq('asset_tag', id).maybeSingle(),
+      supabase.from('locations').select('id, name').eq('asset_tag', id).maybeSingle(),
+      supabase.from('cases').select('id, name').eq('asset_tag', id).maybeSingle(),
+    ]);
+
+    if (equipError) console.warn('equipment lookup failed (continuing):', equipError.message);
+    if (articleError) console.warn('article lookup failed (continuing):', articleError.message);
+    if (locationError) console.warn('location lookup failed (continuing):', locationError.message);
+    if (caseError) console.warn('case lookup failed (continuing):', caseError.message);
+
+    // Build friendly entities
+    let equipment: { name: string; id?: number } | null = null;
+    let article: { name?: string } | null = null;
+    let location: { name?: string } | null = null;
+    let caseeq: { name?: string } | null = null;
+
+    if (equipmentData) {
+      const metaName = (equipmentData.metadata as { name?: string } | null)?.name;
+      const eqArticle = (equipmentData as unknown as { articles?: { id?: number; name?: string } | { id?: number; name?: string }[] }).articles;
+      const singleArticle = Array.isArray(eqArticle) ? eqArticle[0] : eqArticle;
+      equipment = { name: metaName || `${singleArticle?.name || 'Equipment'} #${equipmentData.id}`, id: equipmentData.id };
+      if (singleArticle) article = { name: singleArticle.name };
+      const eqLocation = (equipmentData as unknown as { locations?: { name?: string } | { name?: string }[] }).locations;
+      const singleLocation = Array.isArray(eqLocation) ? eqLocation[0] : eqLocation;
+      if (singleLocation) location = { name: singleLocation.name };
     }
 
-    const joined = assetTag as unknown as AssetTagJoined;
-    const equipmentRow = joined.equipments?.[0];
-    let articleRow = joined.articles?.[0] || null;
-    const locationRow = joined.locations?.[0] || null;
-    // If no direct article but equipment has an article reference, synthesize articleRow
-    if (!articleRow && equipmentRow?.articles) {
-      // Synthesize minimal article object from equipment's related article
-      articleRow = { id: equipmentRow.articles.id ?? 0, name: equipmentRow.articles.name };
-    }
+    if (!article && articleData) article = { name: articleData.name };
+    if (!location && locationData) location = { name: locationData.name };
+    if (caseData) caseeq = { name: caseData.name };
 
-    // Derive friendly equipment name similar to previous logic
-    let equipment: { name: string } | null = null;
-    if (equipmentRow) {
-      const metaName = (equipmentRow.metadata as { name?: string } | null)?.name;
-      equipment = { name: metaName || `${equipmentRow.articles?.name || 'Equipment'} #${equipmentRow.id}` };
-    }
-  const article = articleRow ? { name: articleRow.name } : null;
-  // cases currently unused in placeholder generation, but could be extended
-    const location = locationRow ? { name: locationRow.name } : null;
-
-    const placeholderData = getAssetTagPlaceholders(assetTag, equipment, article, location, joined.cases?.[0] ? { name: joined.cases[0].name } : null);
+    const placeholderData = getAssetTagPlaceholders(
+      assetTag as { printed_code?: string | null },
+      equipment,
+      article,
+      location,
+      caseeq
+    );
     const svgText = await generateSVG(templateJson, placeholderData);
 
     if (format === 'svg') {

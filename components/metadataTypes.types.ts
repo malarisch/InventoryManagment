@@ -166,7 +166,7 @@ export interface ArticleMetadata {
   UPC?: string; // Universal Product Code
   canBeBookedWithoutStock?: boolean; // e.g., for consumables
   image?: string;
-  case: {
+  case?: {
     /** Whether the case is 19" rack based. */
     is19Inch: boolean;
     /** Height in rack units (U) if rack-based. */
@@ -181,12 +181,12 @@ export interface ArticleMetadata {
   /** Whether article itself is 19" rack mountable. */
   is19Inch: boolean;
   /** Height in rack units (U) if rack-mountable. */
-  heightUnits: number;
+  heightUnits?: number;
   dimensionsCm?: DimensionsCm;
   weightKg?: number; // in kg
   connectivity?: string[]; // e.g., ["WiFi", "Bluetooth", "Ethernet"]
   interfaces?: string[]; // e.g., ["USB-C", "HDMI", "DisplayPort"]
-  power: Power;
+  power?: Power;
   /** Array of supplier tuples with optional price and website. */
   suppliers?: [(Company | Person), Price?, Website?][];
   dailyRentalRate?: Price; // in the company's currency
@@ -195,7 +195,8 @@ export interface ArticleMetadata {
 }
 
 /** Extra per-unit details for a physical equipment item. */
-export interface EquipmentMetadata extends ArticleMetadata {
+export interface EquipmentMetadata extends Partial<ArticleMetadata> {
+
   serialNumber?: string;
   purchaseDate?: string; // ISO date string
   warrantyExpiry?: string; // ISO date string

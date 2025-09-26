@@ -60,3 +60,5 @@ seed.sql
 *.auth
 playwright/.auth
 /lib/generated/prisma
+/playwright/
+/.playwright-mcp/

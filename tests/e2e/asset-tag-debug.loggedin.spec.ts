@@ -1,4 +1,4 @@
-import { test } from '../playwright_setup.types';
+import {test} from '../playwright_setup.types';
 
 
 test.describe('Asset Tag System - Debug Analysis', () => {
@@ -173,14 +173,6 @@ test.describe('Asset Tag System - Debug Analysis', () => {
 
   test('should test template management in company settings', async ({ page }) => {
     console.log('🚀 Testing template management in company settings...');
-
-    // Login first
-    await page.goto('/auth/login');
-    await page.fill('input[type="email"], textbox[placeholder*="email" i]', 'test@test.de');
-    await page.fill('input[type="password"], textbox[placeholder*="password" i]', 'test');
-    await page.click('button:has-text("Login")');
-    await page.waitForURL('**/management**');
-    console.log('✅ Logged in successfully');
 
     // Navigate to company settings
     await page.goto('/management/company-settings');

@@ -1,5 +1,53 @@
 import 'dotenv/config';
-import { PrismaClient } from '@/lib/generated/prisma';
+import {
+    equipmentsCreateNestedManyWithoutArticlesInput,
+    equipmentsUncheckedCreateWithoutArticlesInput,
+    Prisma,
+    PrismaClient
+} from '@/lib/generated/prisma';
+import {ArticleMetadata, EquipmentMetadata} from "@/components/metadataTypes.types";
+
+function genArticle({companyId, userid}: {companyId: number, userid: string}): object {
+
+    return {
+        name: "Test Article + #" + Date.now(),
+        description: "This is a test article",
+        metadata: {
+            type: "Article Test Type",
+            is19Inch: false,
+
+
+        } as ArticleMetadata,
+        created_by: userid,
+        company_id: companyId,
+
+    }
+}
+
+function genLocation({companyId, userid}: {companyId: number, userid: string}) {
+    return {
+        name: "Test Location + #" + Date.now(),
+        description: "This is a test location",
+        metadata: {
+            isWorkshop: false,
+        },
+        created_by: userid,
+        company_id: companyId,
+    }
+}
+
+
+function genEquipment({companyId, userid, sn }: {companyId: number, userid: string, sn?: number}): equipmentsUncheckedCreateWithoutArticlesInput {
+    return {
+        created_by: userid,
+        company_id: companyId,
+        metadata: {
+            SerialNo: sn,
+        } as EquipmentMetadata,
+    }
+}
+
+
 
 // Use a single PrismaClient instance across tests
 const prisma = new PrismaClient();
@@ -44,6 +92,34 @@ export async function createCustomer(companyName: string): Promise<number> {
 
   return Number(customer.id);
 }
+
+
+export async function createArticle(companyName: string, options : {createEquipments: 0, createLocation: false}) {
+    const ids = await getCompanyAndUserId(companyName);
+    if (!ids) throw new Error('Cannot create article without valid companyId and userId');
+    const { companyId, userId } = ids;
+
+    const articleData = genArticle({companyId, userid: userId}) as Prisma.articlesCreateInput;
+    const eqs = [] as equipmentsCreateNestedManyWithoutArticlesInput[];
+    if (options.createEquipments > 0) {
+
+        for (let i = 0; i < options.createEquipments; i++) {
+            eqs.push(genEquipment({companyId, userid: userId, sn: i}))
+        }
+        articleData.equipments = [...eqs] as Prisma.equipmentsCreateNestedManyWithoutArticlesInput;
+    }
+    let location = null;
+    if (options.createLocation) {
+        location = await prisma.locations.create({data: genLocation({companyId, userid: userId})})
+    }
+    const article = await prisma.articles.create({
+      data: {...articleData, default_location: location.id || null},
+      select: { id: true },
+    });
+
+    return Number(article.id);
+}
+
 
 export async function createEquipment(companyName: string): Promise<number> {
   const ids = await getCompanyAndUserId(companyName);
