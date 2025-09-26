@@ -333,3 +333,8 @@ Next: Run `supabase db push` to add `files` columns and `attachments` bucket; co
 - Builds successfully, ready for field testing on mobile devices.
 
 **2025-09-24 01:40 CET** - Complete Asset Tag Template System Overhaul. Fixed broken template creation (now saves to database), added missing foreign key constraint (asset_tags.printed_template → asset_tag_templates.id), moved template management to company settings as requested, fixed asset tag table query using correct relationship. Live tested via Playwright: user creation, authentication, multi-element template creation (text + QR code). Template "Equipment Label v2" successfully created and verified in database. All original issues resolved.
+2025-09-26 10:20 – Fix: Asset Tag Render API (/api/asset-tags/[id]/render)
+- Root cause: Invalid PostgREST reverse-join select string left parser artifacts in file, causing TS error and runtime query parser errors.
+- Change: Simplified query to fetch template via FK only; loaded equipments/articles/locations/cases via separate safe queries; cleaned duplicate/stray lines.
+- Validation: TypeScript check for route passed; follow-up E2E recommended to validate PNG/BMP/GIF conversions.
+2025-09-26 17:05 — Switch tests/helpers.ts to Prisma; replaced Supabase ORM calls with PrismaClient for companies/customers/equipments/profiles lookups. Adjusted return types to satisfy TS. Next: if tests need more seed helpers, extend Prisma usage accordingly.
