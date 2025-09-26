@@ -339,3 +339,4 @@ Next: Run `supabase db push` to add `files` columns and `attachments` bucket; co
 - Validation: TypeScript check for route passed; follow-up E2E recommended to validate PNG/BMP/GIF conversions.
 2025-09-26 17:05 — Switch tests/helpers.ts to Prisma; replaced Supabase ORM calls with PrismaClient for companies/customers/equipments/profiles lookups. Adjusted return types to satisfy TS. Next: if tests need more seed helpers, extend Prisma usage accordingly.
 2025-09-26 17:12 — Clarified data access policy in AGENTS.md: use Prisma for non-user-interactive functions (background/internal/test helpers) and Supabase for user-facing RLS-bound flows.
+2025-09-26 17:20 — Added RLS policies for public.profiles: select co-members via users_companies; allow users to insert/update/delete only their own profile. Migration: supabase/migrations/20250926171500_profiles_rls.sql.
