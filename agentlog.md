@@ -338,3 +338,4 @@ Next: Run `supabase db push` to add `files` columns and `attachments` bucket; co
 - Change: Simplified query to fetch template via FK only; loaded equipments/articles/locations/cases via separate safe queries; cleaned duplicate/stray lines.
 - Validation: TypeScript check for route passed; follow-up E2E recommended to validate PNG/BMP/GIF conversions.
 2025-09-26 17:05 — Switch tests/helpers.ts to Prisma; replaced Supabase ORM calls with PrismaClient for companies/customers/equipments/profiles lookups. Adjusted return types to satisfy TS. Next: if tests need more seed helpers, extend Prisma usage accordingly.
+2025-09-26 17:12 — Clarified data access policy in AGENTS.md: use Prisma for non-user-interactive functions (background/internal/test helpers) and Supabase for user-facing RLS-bound flows.

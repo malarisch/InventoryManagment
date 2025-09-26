@@ -36,6 +36,12 @@
 - Next.js: default Server Components; add `"use client"` only when required.
 - Styling: Tailwind CSS; use `clsx` and `tailwind-merge` for class composition.
 
+### Data Access Policy (Prisma vs Supabase)
+- Use Prisma for all functions and modules that users do not interact with directly (e.g., background jobs, server-only utilities, test helpers, data migrations, internal services).
+- Use Supabase client for user-interactive flows that rely on RLS/auth context (e.g., API routes handling end-user requests, SSR/CSR data fetching bound to the current session).
+- Keep a clear boundary: internal writes/reads that bypass user context → Prisma; user-scoped operations that must honor RLS → Supabase.
+- Prefer a single PrismaClient instance per process; place it in `lib/generated/prisma` (already configured by `prisma/schema.prisma`).
+
 ### Supabase AI Docs (Source of Truth)
 - Use the local docs in `supabase_ai_docs/` as the authoritative reference for Supabase-related work. Do not rely on Serena/MCP content.
 - Before writing or reviewing any of the following, open the matching doc:
