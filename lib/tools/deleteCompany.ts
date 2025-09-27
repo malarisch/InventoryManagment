@@ -1,5 +1,5 @@
 import "dotenv/config";
-import { PrismaClient } from "@/lib/generated/prisma";
+import {PrismaClient} from "@/lib/generated/prisma";
 
 const prisma = new PrismaClient();
 
@@ -18,13 +18,32 @@ export const deleteCompany = async (companies: Array<{ id: bigint }>) => {
       // Core entities
       await tx.jobs.deleteMany({ where: { company_id: companyId } });
       await tx.cases.deleteMany({ where: { company_id: companyId } });
+
+      // First remove equipments belonging to the company
       await tx.equipments.deleteMany({ where: { company_id: companyId } });
+
+      // Defensive: nullify article references from any remaining equipments
+      // that might (incorrectly) point to this company's articles.
+      const articleIds = await tx.articles.findMany({
+        where: { company_id: companyId },
+        select: { id: true },
+      });
+      if (articleIds.length > 0) {
+        await tx.equipments.updateMany({
+          where: { article_id: { in: articleIds.map((a) => a.id) } },
+          data: { article_id: null },
+        });
+      }
+
+      // Now it's safe to delete articles
       await tx.articles.deleteMany({ where: { company_id: companyId } });
+
       await tx.locations.deleteMany({ where: { company_id: companyId } });
       await tx.customers.deleteMany({ where: { company_id: companyId } });
-      await tx.nfc_tags.deleteMany({ where: { company_id: companyId } });
+
 
       // Asset tags before templates because of FK from asset_tags.printed_template -> asset_tag_templates.id
+      await tx.nfc_tags.deleteMany({ where: { company_id: companyId } });
       await tx.asset_tags.deleteMany({ where: { company_id: companyId } });
       await tx.asset_tag_templates.deleteMany({ where: { company_id: companyId } });
 
