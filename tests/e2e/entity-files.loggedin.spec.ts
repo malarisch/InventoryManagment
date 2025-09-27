@@ -3,7 +3,7 @@ import {expect, Page} from '@playwright/test';
 import {createAdminClient} from "@/lib/supabase/admin";
 import type {SupabaseClient} from '@supabase/supabase-js';
 import {test} from '../playwright_setup.types';
-import {createEquipment} from '../../lib/tools/helpers';
+import {createEquipment} from '@/lib/tools/dbhelpers';
 
 const requiredEnv = [
   "NEXT_PUBLIC_SUPABASE_URL", 
@@ -127,7 +127,7 @@ test.describe('Entity Files Tests', () => {
       equipmentId = existingEquipment.id;
     } else {
       equipmentId = await createEquipment(companyName);
-      ;
+      console.log(`Created new equipment with ID: ${equipmentId}`);
     }
     
     const equipmentUrl = `/management/equipments/${equipmentId}`;

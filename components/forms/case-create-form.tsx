@@ -1,14 +1,15 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
-import { createClient } from "@/lib/supabase/client";
-import type { Tables, Database, Json } from "@/database.types";
-import type { adminCompanyMetadata } from "@/components/metadataTypes.types";
-import { buildAssetTagCode } from "@/lib/asset-tags/code";
-import { Label } from "@/components/ui/label";
-import { Button } from "@/components/ui/button";
-import { useRouter } from "next/navigation";
-import { useCompany } from "@/app/management/_libs/companyHook";
+import {useEffect, useMemo, useState} from "react";
+import {createClient} from "@/lib/supabase/client";
+import type {Json, Tables, TablesInsert} from "@/database.types";
+import type {adminCompanyMetadata} from "@/components/metadataTypes.types";
+import {buildAssetTagCode} from "@/lib/asset-tags/code";
+import {Label} from "@/components/ui/label";
+import {Button} from "@/components/ui/button";
+import {useRouter} from "next/navigation";
+import {useCompany} from "@/app/management/_libs/companyHook";
+import {cases} from "@/lib/generated/prisma";
 
 type Equipment = Tables<"equipments">;
 type Article = Tables<"articles">;
@@ -90,15 +91,15 @@ export function CaseCreateForm() {
       const { data: auth } = await supabase.auth.getUser();
       const userId = auth.user?.id ?? null;
       if (!company || !userId) throw new Error("Fehlende Company oder Nutzer");
-      const payload: Database["public"]["Tables"]["cases"]["Insert"] = {
+      const payload: TablesInsert<"cases"> = {
         case_equipment: caseEquipment === "" ? null : Number(caseEquipment),
-        equipments: selectedIds.length ? selectedIds : null,
+        contains_equipments: selectedIds || null,
         name: name.trim() || null,
         description: description.trim() || null,
         company_id: company.id,
         created_by: userId,
       };
-      if (articleItems.length) payload.articles = articleItems as unknown as Json[];
+      if (articleItems.length) payload.contains_articles = articleItems as unknown as Json[];
       const { data, error } = await supabase
         .from("cases")
         .insert(payload)

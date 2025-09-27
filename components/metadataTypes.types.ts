@@ -37,7 +37,7 @@ export type Power = {
   /** Maximum continuous power in watts. */
   maxPowerW?: number;
   /** Source/type of power. */
-  powerType: "AC" | "DC" | "PoE" | "Battery" | "Other";
+  powerType?: "AC" | "DC" | "PoE" | "Battery" | "Other" | undefined;
   /** Voltage range, e.g., "220–240V". */
   voltageRangeV?: string;
   /** Frequency, e.g., "50Hz" or "50/60Hz". */

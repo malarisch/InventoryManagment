@@ -1,8 +1,8 @@
-import {STORAGE_STATE} from "../../playwright.config";
+import {STORAGE_STATE} from "@/playwright.config";
 import "dotenv/config";
 import {expect} from "@playwright/test";
 import {test} from "../playwright_setup.types";
-import {getUserIdByEmail} from "../../lib/tools/helpers";
+import {getUserIdByEmail} from "@/lib/tools/dbhelpers";
 import {createAdminClient} from "@/lib/supabase/admin";
 
 const requiredEnv = [
@@ -48,7 +48,7 @@ test.describe("Login Setup", () => {
     console.error("Error creating test user:", e);
     userId = await getUserIdByEmail(testEmail);
     if (!userId) {
-      throw new Error("Failed to create or find test user");
+      return Promise.reject("Failed to create or find test user");
     }
   }
     

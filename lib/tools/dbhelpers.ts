@@ -4,7 +4,6 @@ import {
     adminCompanyMetadata,
     ArticleMetadata,
     asset_tag_template_print,
-    EquipmentMetadata
 } from "@/components/metadataTypes.types";
 import {AssetTagEntityType, buildAssetTagCode} from "@/lib/asset-tags/code";
 
@@ -19,9 +18,9 @@ function genArticle({companyId, userid}: {companyId: number, userid: string}): P
             is19Inch: false,
 
 
-        } as ArticleMetadata as unknown as Prisma.JsonObject,
-        created_by: userid,
-        company_id: companyId,
+    } as ArticleMetadata as unknown as Prisma.InputJsonValue,
+    created_by: userid,
+    company_id: BigInt(companyId),
 
     }
 }
@@ -30,23 +29,20 @@ function genLocation({companyId, userid}: {companyId: number, userid: string}) {
     return {
         name: "Test Location + #" + Date.now(),
         description: "This is a test location",
-        metadata: {
-            isWorkshop: false,
-        },
         created_by: userid,
         company_id: companyId,
     }
 }
 
 
-function genEquipment({companyId, userid, sn }: {companyId: number, userid: string, sn?: number}): Prisma.equipmentsUncheckedCreateInput {
+function genEquipment({companyId, userid, sn }: {companyId: number, userid: string, sn?: number}): Prisma.equipmentsCreateManyArticlesInput {
     return {
         created_by: userid,
-        company_id: companyId,
+        company_id: BigInt(companyId),
         metadata: {
             SerialNo: sn,
-        } as Partial<EquipmentMetadata> as unknown as Prisma.JsonObject,
-    }
+        } as unknown as Prisma.InputJsonValue,
+    };
 }
 
 
@@ -94,30 +90,40 @@ export async function createCustomer(companyName: string): Promise<number> {
 
   return Number(customer.id);
 }
-
-
-export async function createArticle(companyName: string, options : {createEquipments: 0, createLocation: false}) {
+export async function articleMock(companyName: string, options : {createEquipments: number, createLocation: boolean} = {createEquipments: 0, createLocation: false}) {
     const ids = await getCompanyAndUserId(companyName);
     if (!ids) throw new Error('Cannot create article without valid companyId and userId');
     const { companyId, userId } = ids;
 
     const articleData = genArticle({companyId, userid: userId});
-    const eqs = [] as Prisma.equipmentsUncheckedCreateInput[];
+    const eqs: Prisma.equipmentsCreateManyArticlesInput[] = [];
     if (options.createEquipments > 0) {
-
         for (let i = 0; i < options.createEquipments; i++) {
-            eqs.push(genEquipment({companyId, userid: userId, sn: i}))
+            eqs.push(genEquipment({companyId, userid: userId, sn: i}));
         }
-        articleData.equipments = [...eqs] as Prisma.equipmentsCreateNestedManyWithoutArticlesInput;
+        // Use nested createMany to attach equipments to this article
+        (articleData as Prisma.articlesUncheckedCreateInput).equipments = {
+            createMany: { data: eqs }
+        } as Prisma.equipmentsCreateNestedManyWithoutArticlesInput;
     }
     let location = null;
     if (options.createLocation) {
         location = await prisma.locations.create({data: genLocation({companyId, userid: userId})})
     }
-    const article = await prisma.articles.create({
-      data: {default_location: location?.id || null, ...articleData} as Prisma.articlesUncheckedCreateInput,
-      select: { id: true },
-    });
+        return { location,
+            ...await prisma.articles.create({
+                    data: {
+                        ...articleData,
+                        default_location: location ? BigInt(location.id) : null,
+                    },
+            select: { id: true, name: true, equipments: { select: { id: true, metadata: true } }, default_location: true}
+        }
+    )
+}
+}
+
+export async function createArticle(companyName: string, options : {createEquipments: number, createLocation: boolean} = {createEquipments: 0, createLocation: false}): Promise<number> {
+    const article = await articleMock(companyName, options);
 
     return Number(article.id);
 }

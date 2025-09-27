@@ -1,7 +1,7 @@
-import { defineConfig } from "@playwright/test";
+import {defineConfig} from "@playwright/test";
 import path from "path";
 import 'dotenv/config';
-import type { TestOptions } from "./tests/playwright_setup.types";
+import type {TestOptions} from "./tests/playwright_setup.types";
 
 
 // Ensure required env vars are set
@@ -19,7 +19,7 @@ export default defineConfig<TestOptions>({
   expect: {
     timeout: 10000,
   },
-  workers: 7,
+  workers: 15,
   fullyParallel: true,
   use: {
     baseURL: "http://localhost:3000",
@@ -40,7 +40,8 @@ export default defineConfig<TestOptions>({
       "testMatch": /.*\.setup\.ts/,
       use: {
         
-      }
+      },
+        teardown: "cleanup db"
     },
     {
       name: "loggedin",
@@ -48,7 +49,12 @@ export default defineConfig<TestOptions>({
       use: {
         storageState: STORAGE_STATE
       },
-      "testMatch": /.*\.loggedin\.spec\.ts/
-    }
+      "testMatch": /.*\.loggedin\.spec\.ts/,
+        teardown: "cleanup db"
+    },
+      {
+          name: 'cleanup db',
+          testMatch: /.*\.teardown\.ts/,
+      },
   ]
 });

@@ -1,11 +1,11 @@
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { createClient } from "@/lib/supabase/server";
-import type { Tables } from "@/database.types";
+import {Card, CardContent, CardDescription, CardHeader, CardTitle} from "@/components/ui/card";
+import {createClient} from "@/lib/supabase/server";
+import type {Tables} from "@/database.types";
 import Link from "next/link";
-import { HistoryCard } from "@/components/historyCard";
-import { CaseEditItemsForm } from "@/components/forms/case-edit-items-form";
-import { DeleteWithUndo } from "@/components/forms/delete-with-undo";
-import { FileManager } from "@/components/files/file-manager";
+import {HistoryCard} from "@/components/historyCard";
+import {CaseEditItemsForm} from "@/components/forms/case-edit-items-form";
+import {DeleteWithUndo} from "@/components/forms/delete-with-undo";
+import {FileManager} from "@/components/files/file-manager";
 
 type CaseRow = Tables<"cases">;
 
@@ -66,7 +66,7 @@ export default async function CaseDetailPage({ params }: { params: Promise<{ id:
             <div className="mb-4">
               <DeleteWithUndo table="cases" id={row.id} payload={row as Record<string, unknown>} redirectTo="/management/cases" />
             </div>
-            <CaseEditItemsForm caseId={id} initialEquipments={row.equipments ?? []} initialArticles={(row.articles as unknown as Array<{ article_id?: number; amount?: number }>) ?? []} caseEquipmentId={row.case_equipment ?? null} initialName={row.name ?? null} initialDescription={row.description ?? null} />
+            <CaseEditItemsForm caseId={id} initialEquipments={row.contains_equipments ?? []} initialArticles={(row.contains_articles as unknown as Array<{ article_id?: number; amount?: number }>) ?? []} caseEquipmentId={row.case_equipment ?? null} initialName={row.name ?? null} initialDescription={row.description ?? null} />
             <div className="mt-6">
               <FileManager table="cases" rowId={row.id} companyId={row.company_id ?? undefined} isPublic={false} initial={(row as Record<string, unknown>).files} />
             </div>

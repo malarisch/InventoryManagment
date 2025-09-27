@@ -26,7 +26,7 @@ export function CaseTable({ pageSize = 10, className }: Props) {
       ) },
     { key: 'contains_equipments', label: 'Equipments', render: (row: CaseRow) => row.contains_equipments?.length ?? 0 },
     { key: 'articles', label: 'Artikel (Summe)', render: (row: CaseRow) => (
-        Array.isArray(row.articles) ? (row.articles as unknown as Array<{ amount?: number }>).reduce((acc, it) => acc + (Number(it?.amount) || 0), 0) : 0
+        Array.isArray(row.contains_articles) ? (row.contains_articles as unknown as Array<{ amount?: number }>).reduce((acc, it) => acc + (Number(it?.amount) || 0), 0) : 0
       ) },
   ];
 

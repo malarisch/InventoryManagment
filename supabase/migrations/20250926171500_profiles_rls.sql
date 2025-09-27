@@ -707,7 +707,7 @@ ALTER TABLE ONLY "public"."articles"
 
 
 ALTER TABLE ONLY "public"."asset_tag_templates"
-    ADD CONSTRAINT "asset_tag_templates_company_id_fkey" FOREIGN KEY ("company_id") REFERENCES "public"."companies"("id");
+    ADD CONSTRAINT "asset_tag_templates_company_id_fkey" FOREIGN KEY ("company_id") REFERENCES "public"."companies"("id") ON UPDATE CASCADE ON DELETE CASCADE;;
 
 
 

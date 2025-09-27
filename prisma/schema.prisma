@@ -198,7 +198,7 @@ model cases {
   id                                               BigInt              @id @default(autoincrement())
   created_at                                       DateTime            @default(now()) @db.Timestamptz(6)
   case_equipment                                   BigInt?
-  contains_equipments                              BigInt?
+  contains_equipments                              BigInt[]?
   company_id                                       BigInt?
   created_by                                       String?             @default(dbgenerated("auth.uid()")) @db.Uuid
   contains_articles                                Json[]
@@ -207,7 +207,6 @@ model cases {
   name                                             String?
   files                                            Json?
   asset_tags                                       asset_tags?         @relation(fields: [asset_tag], references: [id], onDelete: NoAction, onUpdate: NoAction)
-  equipments_cases_contains_equipmentsToequipments equipments?         @relation("cases_contains_equipmentsToequipments", fields: [contains_equipments], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "cases_case_contains_equipments_fkey")
   equipments_cases_case_equipmentToequipments      equipments?         @relation("cases_case_equipmentToequipments", fields: [case_equipment], references: [id], onDelete: NoAction, onUpdate: NoAction)
   companies                                        companies?          @relation(fields: [company_id], references: [id], onDelete: Cascade)
   profiles                                         profiles?           @relation(fields: [created_by], references: [id])
@@ -281,7 +280,6 @@ model equipments {
   company_id                                  BigInt
   current_location                            BigInt?
   files                                       Json?
-  cases_cases_contains_equipmentsToequipments cases[]             @relation("cases_contains_equipmentsToequipments")
   cases_cases_case_equipmentToequipments      cases[]             @relation("cases_case_equipmentToequipments")
   articles                                    articles?           @relation(fields: [article_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
   asset_tags                                  asset_tags?         @relation(fields: [asset_tag], references: [id], onDelete: NoAction, onUpdate: NoAction)

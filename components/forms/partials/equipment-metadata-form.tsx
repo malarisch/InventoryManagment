@@ -1,13 +1,13 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
-import type { EquipmentMetadata } from "@/components/metadataTypes.types";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Checkbox } from "@/components/ui/checkbox";
-import { useCompany } from "@/app/management/_libs/companyHook";
-import { normalizeAdminCompanyMetadata } from "@/lib/metadata/inherit";
-import { SearchPicker, type SearchItem } from "@/components/search/search-picker";
+import {useEffect, useMemo, useState} from "react";
+import type {EquipmentMetadata} from "@/components/metadataTypes.types";
+import {Input} from "@/components/ui/input";
+import {Label} from "@/components/ui/label";
+import {Checkbox} from "@/components/ui/checkbox";
+import {useCompany} from "@/app/management/_libs/companyHook";
+import {normalizeAdminCompanyMetadata} from "@/lib/metadata/inherit";
+import {type SearchItem, SearchPicker} from "@/components/search/search-picker";
 
 export function EquipmentMetadataForm({
   value,
@@ -90,7 +90,7 @@ export function EquipmentMetadataForm({
         <div className="grid gap-1.5">
           <Label htmlFor="emf-power-type">Stromtyp</Label>
           <select id="emf-power-type" className="h-9 rounded-md border bg-background px-3 text-sm"
-            value={local.power.powerType}
+            value={local.power?.powerType}
             onChange={(e) => set("power", { ...local.power, powerType: e.target.value as "AC" | "DC" | "PoE" | "Battery" | "Other" })}
           >
             <option>AC</option>
@@ -102,19 +102,19 @@ export function EquipmentMetadataForm({
         </div>
         <div className="grid gap-1.5">
           <Label htmlFor="emf-v">Spannung</Label>
-          <Input id="emf-v" value={local.power.voltageRangeV ?? ""} onChange={(e) => set("power", { ...local.power, voltageRangeV: e.target.value })} />
+          <Input id="emf-v" value={local.power?.voltageRangeV ?? ""} onChange={(e) => set("power", { ...local.power, voltageRangeV: e.target.value })} />
         </div>
         <div className="grid gap-1.5">
           <Label htmlFor="emf-f">Frequenz</Label>
-          <Input id="emf-f" value={local.power.frequencyHz ?? ""} onChange={(e) => set("power", { ...local.power, frequencyHz: e.target.value })} />
+          <Input id="emf-f" value={local.power?.frequencyHz ?? ""} onChange={(e) => set("power", { ...local.power, frequencyHz: e.target.value })} />
         </div>
         <div className="grid gap-1.5">
           <Label htmlFor="emf-pc">Anschlusstyp</Label>
-          <Input id="emf-pc" value={local.power.powerConnectorType ?? ""} onChange={(e) => set("power", { ...local.power, powerConnectorType: e.target.value })} />
+          <Input id="emf-pc" value={local.power?.powerConnectorType ?? ""} onChange={(e) => set("power", { ...local.power, powerConnectorType: e.target.value })} />
         </div>
         <div className="grid gap-1.5">
           <Label htmlFor="emf-max-power">Max. Leistung (W)</Label>
-          <Input id="emf-max-power" type="number" min={0} value={local.power.maxPowerW ?? ""} onChange={(e) => set("power", { ...local.power, maxPowerW: Number(e.target.value) })} />
+          <Input id="emf-max-power" type="number" min={0} value={local.power?.maxPowerW ?? ""} onChange={(e) => set("power", { ...local.power, maxPowerW: Number(e.target.value) })} />
         </div>
       </div>
 

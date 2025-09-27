@@ -10,13 +10,13 @@ test.describe('Asset Tag Template System', () => {
     
     // Click create new template button
     await page.click('text=Create Template, button:has-text("Create")'.split(',')[0]);
-    
+    await page.waitForLoadState('networkidle');
     // Verify form sections are visible
     await expect(page.locator('text=Basic Information')).toBeVisible();
     await expect(page.locator('text=Dimensions')).toBeVisible();
     await expect(page.locator('text=Styling')).toBeVisible();
     await expect(page.locator('text=Code Generation')).toBeVisible();
-    await expect(page.locator('text=Elements')).toBeVisible();
+    await expect(page.locator('text=Add Element')).toBeVisible();
   });
 
   test('should fill out comprehensive template form', async ({page}) => {
@@ -159,11 +159,11 @@ test.describe('Asset Tag Template System', () => {
   });
 
   test('should test template management in company settings', async ({page}) => {
-    await page.goto('/management/company-settings?tab=templates');
+    await page.goto('management/asset-tag-templates/new');
     await page.waitForLoadState('networkidle');
     
     // Check if templates table/list is visible
-    const templatesSection = page.locator('text=Asset Tag Templates, text=Templates').first();
+    const templatesSection = page.getByRole('heading', { name: 'Create Asset Tag Template' });
     await expect(templatesSection).toBeVisible({ timeout: 5000 });
     
     // Look for any existing templates or empty state

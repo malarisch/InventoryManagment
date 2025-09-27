@@ -345,3 +345,10 @@ Next: Run `supabase db push` to add `files` columns and `attachments` bucket; co
 2025-09-26 17:12 — Clarified data access policy in AGENTS.md: use Prisma for non-user-interactive functions (background/internal/test helpers) and Supabase for user-facing RLS-bound flows.
 2025-09-26 17:20 — Added RLS policies for public.profiles: select co-members via users_companies; allow users to insert/update/delete only their own profile. Migration: supabase/migrations/20250926171500_profiles_rls.sql.
 2025-09-26 17:33 — Fixed Prisma schema mismatches: added cases.equipments bigint[]; made locations.created_by nullable with optional relation; removed erroneous self-relation on profiles; renamed cases.case_equipment relation field to avoid name clash. Regenerated Prisma client and ran `npm run supabase-gen-types`.
+2025-09-26 23:32 — Align cases.contains_equipments with UI/domain
+- Added migration `supabase/migrations/20250926233000_cases_contains_equipments_array.sql` converting `cases.contains_equipments` from bigint FK to `bigint[]` with default `{}` and dropping FK.
+- Updated `prisma/schema.prisma` to `BigInt[]?` and removed the obsolete relation on both `cases` and `equipments`.
+- Updated `database.types.ts` to `number[] | null` and removed the FK mapping under Relationships.
+- Purpose: resolve linter/type error where `selectedIds: number[]` was assigned to a 1:1 FK column; matches domain model (multi-equipment cases).
+[2025-09-27T01:46:35Z] fix: robust deleteCompany tool; add test to verify cleanup order and FKs.
+Files: lib/tools/deleteCompany.ts, tests/vitest/delete-company.test.ts. Next: run DB (Supabase) and execute vitest.

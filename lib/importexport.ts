@@ -1,21 +1,21 @@
 import {
-    Prisma,
-    PrismaClient,
-    locations,
-    asset_tag_templates,
     articles,
-    equipments,
-    customers,
-    jobs,
-    job_assets_on_job,
-    job_booked_assets,
+    asset_tag_templates,
     asset_tags,
-    nfc_tags,
-    history,
     cases,
     companies,
-    users_companies,
-    profiles
+    customers,
+    equipments,
+    history,
+    job_assets_on_job,
+    job_booked_assets,
+    jobs,
+    locations,
+    nfc_tags,
+    Prisma,
+    PrismaClient,
+    profiles,
+    users_companies
 } from "./generated/prisma";
 import {DefaultArgs} from "@prisma/client/runtime/library";
 
@@ -398,7 +398,7 @@ export async function importCompanyData(companyData: CompanyData, newUser: strin
                 await prisma.cases.create({
                     data: {
                         ...caseData,
-                        articles: (caseData.articles as Prisma.InputJsonValue[]) ?? Prisma.JsonNull,
+                        contains_articles: (caseData.contains_articles as Prisma.InputJsonValue[]) ?? Prisma.JsonNull,
                         files: caseData.files ?? Prisma.JsonNull,
                     }
                 });

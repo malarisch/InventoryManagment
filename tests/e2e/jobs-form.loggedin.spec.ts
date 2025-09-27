@@ -1,7 +1,7 @@
 import 'dotenv/config';
 import {expect} from '@playwright/test';
 import {test} from '../playwright_setup.types';
-import {createCustomer} from '../../lib/tools/helpers';
+import {createCustomer} from '@/lib/tools/dbhelpers';
 import {createAdminClient} from '@/lib/supabase/admin';
 
 test.describe('Jobs Form Tests', () => {
@@ -52,9 +52,11 @@ test.describe('Jobs Form Tests', () => {
       await page.waitForLoadState('networkidle');
     }
     // Edit the name
+        await page.waitForLoadState('networkidle');
+        await page.waitForURL(/\/management\/jobs\/\d+/);
   const newName = `${originalName} Updated`;
-    await page.fill('form input#name', newName);
-    await page.click('form button[type="submit"]');
+    await (await page.getByRole('textbox', { name: 'Name', exact: true })).fill(newName);
+    await page.getByRole('button', { name: 'Speichern' }).click();
     // Wait for success message to ensure update finished
     const successMessage = page.locator('text=Gespeichert');
     await expect(successMessage).toBeVisible({ timeout: 3000 });
@@ -89,12 +91,12 @@ test.describe('Jobs Form Tests', () => {
     } catch {
       console.log('No validation errors found - form may allow empty submission');
     }
-    
+    await page.goto('/management/jobs/new');
     // Fill out the job form
     const jobName = `Test Job ${timestamp}`;
     
     // Fill name field specifically
-    await page.fill('input[id="name"]', jobName);
+    await (await page.getByRole('textbox', { name: 'Name', exact: true })).fill(jobName);
     
     // Fill the main type field
     await page.fill('input[id="type"]', 'Production Event');
@@ -170,7 +172,7 @@ test.describe('Jobs Form Tests', () => {
     // Verify job was created
     if (page.url().includes('/management/jobs/')) {
       // We're on detail page - check CardTitle classes and common heading selectors
-      await expect(page.locator('h1, .text-2xl, .text-xl, .font-semibold.leading-none.tracking-tight')).toContainText(jobName);
+      await expect(page.locator('[data-testid="job-title"]')).toContainText(jobName);
     } else {
       // We're on list page, look for the job
       await expect(page.locator(`text="${jobName}"`)).toBeVisible();
@@ -202,10 +204,10 @@ test.describe('Jobs Form Tests', () => {
     }
     
     // Verify detail page elements
-    await expect(page.locator('h1, .text-2xl, .text-xl')).toContainText(jobName);
+    await expect(page.locator('[data-testid="job-title"]')).toHaveText(jobName);
     
     // Check for asset booking section
-    const assetSection = page.locator('text="Assets", text="Equipment", text="Gebuchte", text="Booked"');
+    const assetSection = page.locator('text="Gebuchte Assets"');
     await expect(assetSection).toBeVisible();
     
     // Check for quick booking functionality
