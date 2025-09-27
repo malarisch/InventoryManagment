@@ -17,6 +17,7 @@ export function LocationEditForm({ location }: { location: Location }) {
   const [description, setDescription] = useState<string>(location.description ?? "");
   const [assetTagId, setAssetTagId] = useState<number | "">(location.asset_tag ?? "");
   const [assetTags, setAssetTags] = useState<AssetTag[]>([]);
+  const [isWorkshop, setIsWorkshop] = useState<boolean>((location as unknown as { is_workshop?: boolean }).is_workshop ?? false);
   const [saving, setSaving] = useState(false);
   const [message, setMessage] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -48,6 +49,7 @@ export function LocationEditForm({ location }: { location: Location }) {
         name: name.trim(),
         description: description.trim() || null,
         asset_tag: assetTagId === "" ? null : Number(assetTagId),
+        is_workshop: isWorkshop,
       })
       .eq("id", location.id);
     if (error) {
@@ -83,6 +85,10 @@ export function LocationEditForm({ location }: { location: Location }) {
             </option>
           ))}
         </select>
+      </div>
+      <div className="flex items-center gap-2">
+        <input id="is_workshop" type="checkbox" checked={isWorkshop} onChange={(e) => setIsWorkshop(e.target.checked)} />
+        <Label htmlFor="is_workshop">Ist Werkstatt</Label>
       </div>
       <div className="flex flex-wrap items-center gap-3">
         <Button type="submit" disabled={saving}>{saving ? "Speichern…" : "Speichern"}</Button>

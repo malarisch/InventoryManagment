@@ -22,6 +22,7 @@ export function LocationCreateForm() {
   const [assetTagTemplateId, setAssetTagTemplateId] = useState<number | "">("");
   const [assetTagTemplates, setAssetTagTemplates] = useState<AssetTagTemplate[]>([]);
   const [companyMeta, setCompanyMeta] = useState<adminCompanyMetadata | null>(null);
+  const [isWorkshop, setIsWorkshop] = useState<boolean>(false);
   const [loaded, setLoaded] = useState(false);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -61,6 +62,7 @@ export function LocationCreateForm() {
           description: description.trim() || null,
           company_id: company.id,
           created_by: userId,
+          is_workshop: isWorkshop,
         })
         .select("id")
         .single();
@@ -93,6 +95,10 @@ export function LocationCreateForm() {
       <div className="grid gap-2">
         <Label htmlFor="description">Beschreibung</Label>
         <Input id="description" value={description} onChange={(e) => setDescription(e.target.value)} />
+      </div>
+      <div className="flex items-center gap-2">
+        <input id="is_workshop" type="checkbox" checked={isWorkshop} onChange={(e) => setIsWorkshop(e.target.checked)} />
+        <Label htmlFor="is_workshop">Ist Werkstatt</Label>
       </div>
       <div className="grid gap-2">
         <Label htmlFor="asset_tag_template">Asset Tag Template</Label>
