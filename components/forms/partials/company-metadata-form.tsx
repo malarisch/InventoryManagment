@@ -79,6 +79,18 @@ export function CompanyMetadataForm({
 
   const selectedLocation = locationItems.find(it => it.id === String(value.standardData.defaultLocationId));
 
+  // Local textareas state to preserve newlines and caret during typing
+  const [articleTypesText, setArticleTypesText] = useState<string>(value.customTypes.articleTypes.join("\n"));
+  const [caseTypesText, setCaseTypesText] = useState<string>(value.customTypes.caseTypes.join("\n"));
+  const [locationTypesText, setLocationTypesText] = useState<string>(value.customTypes.locationTypes.join("\n"));
+
+  // Keep local state in sync if parent value changes (e.g., after load/save)
+  useEffect(() => {
+    setArticleTypesText(value.customTypes.articleTypes.join("\n"));
+    setCaseTypesText(value.customTypes.caseTypes.join("\n"));
+    setLocationTypesText(value.customTypes.locationTypes.join("\n"));
+  }, [value.customTypes.articleTypes, value.customTypes.caseTypes, value.customTypes.locationTypes]);
+
   return (
     <div className="grid gap-6 rounded-md border p-4">
       <h3 className="text-lg font-medium">Allgemein</h3>
@@ -143,22 +155,34 @@ export function CompanyMetadataForm({
           <Label htmlFor="cmf-article-types">Artikeltypen</Label>
           <Textarea id="cmf-article-types" className="min-h-[80px] w-full rounded-md border bg-background p-2 text-sm"
             placeholder="Jeder Typ in einer neuen Zeile"
-            value={value.customTypes.articleTypes.join("\n")}
-            onChange={(e) => set("customTypes", { ...value.customTypes, articleTypes: e.target.value.split("\n").map(s => s.trim()).filter(s => s.length > 0) })} />
+            value={articleTypesText}
+            onChange={(e) => {
+              const t = e.target.value;
+              setArticleTypesText(t);
+              set("customTypes", { ...value.customTypes, articleTypes: t.split("\n").map(s => s.trim()) });
+            }} />
         </div>
         <div className="grid gap-1.5">
           <Label htmlFor="cmf-case-types">Case-Typen</Label>
           <Textarea id="cmf-case-types" className="min-h-[80px] w-full rounded-md border bg-background p-2 text-sm"
             placeholder="Jeder Typ in einer neuen Zeile"
-            value={value.customTypes.caseTypes.join("\n")}
-            onChange={(e) => set("customTypes", { ...value.customTypes, caseTypes: e.target.value.split("\n").map(s => s.trim()).filter(s => s.length > 0) })} />
+            value={caseTypesText}
+            onChange={(e) => {
+              const t = e.target.value;
+              setCaseTypesText(t);
+              set("customTypes", { ...value.customTypes, caseTypes: t.split("\n").map(s => s.trim()) });
+            }} />
         </div>
         <div className="grid gap-1.5">
           <Label htmlFor="cmf-location-types">Location-Typen</Label>
           <Textarea id="cmf-location-types" className="min-h-[80px] w-full rounded-md border bg-background p-2 text-sm"
             placeholder="Jeder Typ in einer neuen Zeile"
-            value={value.customTypes.locationTypes.join("\n")}
-            onChange={(e) => set("customTypes", { ...value.customTypes, locationTypes: e.target.value.split("\n").map(s => s.trim()).filter(s => s.length > 0) })} />
+            value={locationTypesText}
+            onChange={(e) => {
+              const t = e.target.value;
+              setLocationTypesText(t);
+              set("customTypes", { ...value.customTypes, locationTypes: t.split("\n").map(s => s.trim()) });
+            }} />
         </div>
       </div>
 

@@ -1,6 +1,6 @@
 import 'dotenv/config';
 import { describe, it, expect, beforeAll } from 'vitest';
-import { PrismaClient } from '@/lib/generated/prisma';
+import { PrismaClient, Prisma } from '@/lib/generated/prisma';
 import { deleteCompany } from '@/lib/tools/deleteCompany';
 import { createAdminClient } from '@/lib/supabase/admin';
 
@@ -45,7 +45,7 @@ describe('deleteCompany tool', () => {
 
     // Create related rows to exercise cascades and FKs
     const template = await prisma.asset_tag_templates.create({
-      data: { company_id: companyId, created_by: userId, template: { name: 't' } as any },
+      data: { company_id: companyId, created_by: userId, template: { name: 't' } as unknown as Prisma.JsonObject },
       select: { id: true },
     });
 
@@ -105,7 +105,7 @@ describe('deleteCompany tool', () => {
 
     // History entry
     await prisma.history.create({
-      data: { company_id: companyId, table_name: 'articles', data_id: article.id, old_data: { a: 1 } as any },
+      data: { company_id: companyId, table_name: 'articles', data_id: article.id, old_data: { a: 1 } as unknown as Prisma.JsonObject },
     });
 
     // Membership

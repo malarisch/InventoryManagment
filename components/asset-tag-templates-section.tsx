@@ -6,7 +6,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
-import { AssetTagTemplateCreateForm } from '@/components/forms/asset-tag-template-create-form';
+
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { AssetTagTemplatePreview } from '@/components/asset-tag-templates/template-preview';
 import Link from 'next/link';
@@ -23,7 +23,6 @@ export function AssetTagTemplatesSection() {
   const [templates, setTemplates] = useState<AssetTagTemplateFromDB[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [showCreateForm, setShowCreateForm] = useState(false);
   const [previewTemplate, setPreviewTemplate] = useState<AssetTagTemplate | null>(null);
   const supabase = createClient();
 
@@ -116,9 +115,11 @@ console.log(companyError, userCompany, user.id);
               Manage templates for generating asset tags
             </CardDescription>
           </div>
-          <Button onClick={() => setShowCreateForm(!showCreateForm)}>
-            <Plus className="h-4 w-4 mr-2" />
-            {showCreateForm ? 'Cancel' : 'Create Template'}
+          <Button asChild>
+            <Link href="/management/asset-tag-templates/new" className="flex items-center">
+              <Plus className="h-4 w-4 mr-2" />
+              Create Template
+            </Link>
           </Button>
         </div>
       </CardHeader>
@@ -128,13 +129,7 @@ console.log(companyError, userCompany, user.id);
             {error}
           </div>
         )}
-        
-        {showCreateForm && (
-          <div className="mb-6 p-4 border rounded-lg">
-            <AssetTagTemplateCreateForm />
-          </div>
-        )}
-        
+
         {templates.length === 0 ? (
           <div className="text-center py-6 text-gray-500">
             <p>No templates created yet.</p>

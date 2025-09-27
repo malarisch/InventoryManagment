@@ -69,9 +69,9 @@ export function EquipmentEditForm({ equipment }: { equipment: Equipment }) {
     let active = true;
     async function loadData() {
       const [{ data: articlesData }, { data: locationsData }, { data: assetTagData }] = await Promise.all([
-        supabase.from("articles").select("id,name").order("name"),
-        supabase.from("locations").select("id,name").order("name"),
-        supabase.from("asset_tags").select("id, printed_code, printed_applied").order("created_at", { ascending: false }),
+        supabase.from("articles").select("id,name,company_id").eq("company_id", equipment.company_id).order("name"),
+        supabase.from("locations").select("id,name,company_id").eq("company_id", equipment.company_id).order("name"),
+        supabase.from("asset_tags").select("id, printed_code, printed_applied, company_id").eq("company_id", equipment.company_id).order("created_at", { ascending: false }),
       ]);
       if (!active) return;
       setArticles((articlesData as Article[]) ?? []);
@@ -96,6 +96,16 @@ export function EquipmentEditForm({ equipment }: { equipment: Equipment }) {
     } else {
       metadata = metaObj as unknown as Json;
     }
+    // Defensive: prevent cross-company article selection
+    if (articleId !== "") {
+      const { data: art } = await supabase.from("articles").select("company_id").eq("id", Number(articleId)).maybeSingle();
+      if (art && art.company_id !== equipment.company_id) {
+        setSaving(false);
+        setError("Der ausgewählte Artikel gehört nicht zur aktuellen Company.");
+        return;
+      }
+    }
+
     const { error } = await supabase
       .from("equipments")
       .update({

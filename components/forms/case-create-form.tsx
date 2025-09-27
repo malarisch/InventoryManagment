@@ -9,7 +9,6 @@ import {Label} from "@/components/ui/label";
 import {Button} from "@/components/ui/button";
 import {useRouter} from "next/navigation";
 import {useCompany} from "@/app/management/_libs/companyHook";
-import {cases} from "@/lib/generated/prisma";
 
 type Equipment = Tables<"equipments">;
 type Article = Tables<"articles">;
@@ -39,18 +38,21 @@ export function CaseCreateForm() {
   useEffect(() => {
     let active = true;
     async function load() {
+      if (!company?.id) return;
       const { data } = await supabase
         .from("equipments")
-        .select("id, article_id")
+        .select("id, article_id, company_id")
+        .eq("company_id", company.id)
         .order("created_at", { ascending: false })
         .limit(200);
       const { data: arts } = await supabase
         .from("articles")
-        .select("id,name")
+        .select("id,name,company_id")
+        .eq("company_id", company.id)
         .order("name");
       const [{ data: tmplData }, { data: companyRow }] = await Promise.all([
-        supabase.from("asset_tag_templates").select("id,template").order("created_at", { ascending: false }),
-        supabase.from("companies").select("metadata").limit(1).maybeSingle(),
+        supabase.from("asset_tag_templates").select("id,template,company_id").eq("company_id", company.id).order("created_at", { ascending: false }),
+        supabase.from("companies").select("metadata").eq("id", company.id).limit(1).maybeSingle(),
       ]);
       if (!active) return;
       setEquipments((data as Equipment[]) ?? []);

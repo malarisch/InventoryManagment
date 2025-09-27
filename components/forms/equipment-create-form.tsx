@@ -47,11 +47,12 @@ export function EquipmentCreateForm({ initialArticleId }: { initialArticleId?: n
   useEffect(() => {
     let active = true;
     async function loadData() {
+      if (!company?.id) return;
       const [{ data: articlesData }, { data: locationsData }, { data: tmplData }, { data: companyRow }] = await Promise.all([
-        supabase.from("articles").select("id,name").order("name"),
-        supabase.from("locations").select("id,name").order("name"),
-        supabase.from("asset_tag_templates").select("id,template").order("created_at", { ascending: false }),
-        supabase.from("companies").select("metadata").limit(1).maybeSingle(),
+        supabase.from("articles").select("id,name,company_id").eq("company_id", company.id).order("name"),
+        supabase.from("locations").select("id,name,company_id").eq("company_id", company.id).order("name"),
+        supabase.from("asset_tag_templates").select("id,template,company_id").eq("company_id", company.id).order("created_at", { ascending: false }),
+        supabase.from("companies").select("metadata").eq("id", company.id).limit(1).maybeSingle(),
       ]);
       if (!active) return;
       setArticles((articlesData as Article[]) ?? []);
@@ -83,6 +84,14 @@ export function EquipmentCreateForm({ initialArticleId }: { initialArticleId?: n
       } else {
   metadata = buildEquipmentMetadata(metaObj) as unknown as Json;
       }
+      // Defensive: ensure selected article (if any) belongs to this company
+      if (articleId !== "") {
+        const { data: art } = await supabase.from("articles").select("company_id").eq("id", Number(articleId)).maybeSingle();
+        if (art && art.company_id !== company.id) {
+          throw new Error("Der ausgewählte Artikel gehört nicht zur aktuellen Company.");
+        }
+      }
+
       const base: Database["public"]["Tables"]["equipments"]["Insert"] = {
         asset_tag: null,
         article_id: articleId === "" ? null : Number(articleId),

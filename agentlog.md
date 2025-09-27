@@ -14,6 +14,8 @@
 
 **2025-09-27 10:20** - Added Supabase migration `20250927101500_enforce_equipment_article_company_fk.sql` to enforce that `equipments.article_id` references an article in the same company via composite FK `(article_id, company_id) -> articles(id, company_id)`. Includes data cleanup and a supporting unique constraint on `articles(id, company_id)`. `npm run supabase-gen-types` failed due to an unrelated duplicate policy migration; added note in `human-review-todos.md` to resolve and then rerun.
 
+**2025-09-27 11:05** - App-level consistency + tests/lint fixes. Filtered equipment forms to current company and added cross-company article guard (create/edit). Unnested asset tag template create into its own page (Company Settings shows link). Fixed company custom types textareas to preserve newlines while typing. Updated E2E: asset-tag render creates template+tag when needed; newline test stabilized. ESLint now ignores `lib/generated/prisma/**`; removed client import of Prisma. All targeted tests green locally.
+
 - Use this file to append brief summaries after major tasks.
 - Include date/time, task, key changes, and next steps.
 

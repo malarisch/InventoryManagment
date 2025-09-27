@@ -10,7 +10,22 @@ const compat = new FlatCompat({
 });
 
 const eslintConfig = [{
-  ignores: ["node_modules/**", ".next/**", "out/**", "build/**", "next-env.d.ts", "**/.idea/**", "**/test-results/**", "**/playwright-report/**", "**/dist/**", "**/build/**", "**/out/**", "**/node_modules/**", "**/supabase/functions/_shared/cors.ts"],
+  ignores: [
+    "node_modules/**",
+    ".next/**",
+    "out/**",
+    "build/**",
+    "next-env.d.ts",
+    "**/.idea/**",
+    "**/test-results/**",
+    "**/playwright-report/**",
+    "**/dist/**",
+    "**/build/**",
+    "**/out/**",
+    "**/node_modules/**",
+    "**/supabase/functions/_shared/cors.ts",
+    "lib/generated/prisma/**"
+  ],
 
 }, ...compat.extends("next", "next/typescript")];
 
