@@ -12,6 +12,8 @@
 
 **2025-09-27 10:05** - Fix teardown deleteCompany FK error. Updated `lib/tools/deleteCompany.ts` to nullify `equipments.article_id` for any rows referencing the target company's articles before deleting those articles, preventing `equipments_article_id_fkey` violations in Playwright cleanup. Re-ran `tests/e2e/cleanup.teardown.ts` → green. Next: consider adding a DB constraint ensuring equipment/company matches article/company.
 
+**2025-09-27 10:20** - Added Supabase migration `20250927101500_enforce_equipment_article_company_fk.sql` to enforce that `equipments.article_id` references an article in the same company via composite FK `(article_id, company_id) -> articles(id, company_id)`. Includes data cleanup and a supporting unique constraint on `articles(id, company_id)`. `npm run supabase-gen-types` failed due to an unrelated duplicate policy migration; added note in `human-review-todos.md` to resolve and then rerun.
+
 - Use this file to append brief summaries after major tasks.
 - Include date/time, task, key changes, and next steps.
 
