@@ -45,7 +45,7 @@ test.describe('Workshop System', () => {
     const locationSelect = page.locator('select#current_location, select[name="current_location"]');
     if (await locationSelect.isVisible()) {
       await locationSelect.selectOption({ label: 'Werkstatt A' });
-      await page.click('button:has-text("Speichern")');
+      await page.click('button:has-text("Erstellen")');
       await page.waitForLoadState('networkidle');
     }
 

@@ -47,9 +47,11 @@ export const deleteCompany = async (companies: Array<{ id: bigint }>) => {
       await tx.asset_tags.deleteMany({ where: { company_id: companyId } });
       await tx.asset_tag_templates.deleteMany({ where: { company_id: companyId } });
 
-      // Historical data and memberships
-      await tx.history.deleteMany({ where: { company_id: companyId } });
+      // Memberships next
       await tx.users_companies.deleteMany({ where: { company_id: companyId } });
+
+      // Important: delete history last, because upstream deletes may append entries via triggers
+      await tx.history.deleteMany({ where: { company_id: companyId } });
 
       // Finally the company row
       await tx.companies.delete({ where: { id: companyId } });

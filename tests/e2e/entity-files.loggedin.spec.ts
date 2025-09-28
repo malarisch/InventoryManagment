@@ -114,17 +114,28 @@ test.describe('Entity Files Tests', () => {
     // Login first
 
     
-    // Try to find an existing equipment first
+    // Resolve the active company id for this test run
+    const { data: companyRow, error: companyErr } = await admin
+      .from('companies')
+      .select('id')
+      .eq('name', companyName)
+      .maybeSingle();
+    expect(companyErr).toBeFalsy();
+    const activeCompanyId = companyRow?.id as number | undefined;
+
+    // Try to find an existing equipment for the active company first
     const { data: existingEquipment } = await admin
       .from('equipments')
-      .select('id')
+      .select('id, company_id')
+      .eq('company_id', activeCompanyId ?? -1)
+      .order('created_at', { ascending: false })
       .limit(1)
-      .single();
+      .maybeSingle();
     
     let equipmentId: number;
     
-    if (existingEquipment) {
-      equipmentId = existingEquipment.id;
+    if (existingEquipment && existingEquipment.id) {
+      equipmentId = existingEquipment.id as number;
     } else {
       equipmentId = await createEquipment(companyName);
       console.log(`Created new equipment with ID: ${equipmentId}`);
