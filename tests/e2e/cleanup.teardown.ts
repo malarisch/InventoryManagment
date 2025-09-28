@@ -3,6 +3,7 @@ import {test} from "../playwright_setup.types";
 import {getCompanyAndUserId} from "@/lib/tools/dbhelpers";
 import {PrismaClient} from "@/lib/generated/prisma";
 import {deleteCompany} from "@/lib/tools/deleteCompany";
+import { createAdminClient } from "@/lib/supabase/admin";
 
 const prisma = new PrismaClient()
 
@@ -27,6 +28,15 @@ test.describe("Clean DB", () => {
         const companies = await prisma.companies.findMany({where: {owner_user_id: companduser?.userId}})
         await deleteCompany(companies);
 
+        // Also remove the auth user that owned these companies
+        if (companduser?.userId) {
+          const admin = createAdminClient();
+          try {
+            await admin.auth.admin.deleteUser(companduser.userId);
+          } catch (e) {
+            console.warn('Auth user deletion failed (continuing):', e);
+          }
+        }
 
     })
 

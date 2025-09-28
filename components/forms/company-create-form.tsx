@@ -16,6 +16,7 @@ import type { Tables, Json as DBJson } from "@/database.types";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { useRouter } from "next/navigation";
 
 export function CompanyCreateForm() {
@@ -62,39 +63,46 @@ export function CompanyCreateForm() {
   }
 
   return (
-    <form onSubmit={onSubmit} className="space-y-4">
-      <div className="grid gap-2">
-        <Label htmlFor="name">Name</Label>
-        <Input id="name" value={name} onChange={(e) => setName(e.target.value)} required />
-      </div>
-      <div className="grid gap-2">
-        <Label htmlFor="description">Beschreibung</Label>
-        <Input id="description" value={description} onChange={(e) => setDescription(e.target.value)} />
-      </div>
-      <div className="grid gap-3">
-        <div className="flex items-center justify-between">
-          <div className="text-sm font-medium">Company-Metadaten</div>
+    <form onSubmit={onSubmit} className="grid grid-cols-1 md:grid-cols-12 gap-6">
+      <Card className="md:col-span-6">
+        <CardHeader>
+          <CardTitle>Basisdaten</CardTitle>
+          <CardDescription>Name und Beschreibung</CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-3">
+          <div className="grid gap-2">
+            <Label htmlFor="name">Name</Label>
+            <Input id="name" value={name} onChange={(e) => setName(e.target.value)} required />
+          </div>
+          <div className="grid gap-2">
+            <Label htmlFor="description">Beschreibung</Label>
+            <Input id="description" value={description} onChange={(e) => setDescription(e.target.value)} />
+          </div>
+        </CardContent>
+      </Card>
+
+      <Card className="md:col-span-12">
+        <CardHeader>
+          <CardTitle>Company‑Metadaten</CardTitle>
+          <CardDescription>Strukturierte Felder oder JSON</CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-3">
           <label className="flex items-center gap-2 text-xs">
             <input type="checkbox" checked={advanced} onChange={(e) => setAdvanced(e.target.checked)} />
             Expertenmodus (JSON bearbeiten)
           </label>
-        </div>
-        {advanced ? (
-          <div className="grid gap-2">
-            <Label htmlFor="metadata">Metadata (JSON)</Label>
-            <textarea
-              id="metadata"
-              className="min-h-[120px] w-full rounded-md border bg-background p-2 text-sm font-mono"
-              value={metadataText}
-              onChange={(e) => setMetadataText(e.target.value)}
-              spellCheck={false}
-            />
-          </div>
-        ) : (
-          <CompanyMetadataForm value={metaObj} onChange={setMetaObj} />
-        )}
-      </div>
-      <div className="flex items-center gap-3">
+          {advanced ? (
+            <div className="grid gap-2">
+              <Label htmlFor="metadata">Metadata (JSON)</Label>
+              <textarea id="metadata" className="min-h-[120px] w-full rounded-md border bg-background p-2 text-sm font-mono" value={metadataText} onChange={(e) => setMetadataText(e.target.value)} spellCheck={false} />
+            </div>
+          ) : (
+            <CompanyMetadataForm value={metaObj} onChange={setMetaObj} />
+          )}
+        </CardContent>
+      </Card>
+
+      <div className="md:col-span-12 flex items-center gap-3 justify-end">
         <Button type="submit" disabled={saving}>{saving ? "Erstellen…" : "Erstellen"}</Button>
         {error && <span className="text-sm text-red-600">{error}</span>}
       </div>

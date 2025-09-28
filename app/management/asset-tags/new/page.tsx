@@ -5,7 +5,7 @@ import { AssetTagCreateFormStandalone } from "@/components/forms/asset-tag-creat
 export default function NewAssetTagPage() {
   return (
     <main className="min-h-screen w-full flex flex-col items-center p-5">
-      <div className="w-full max-w-7xl flex-1 space-y-4">
+      <div className="w-full max-w-none flex-1 space-y-4">
         <div className="text-sm text-muted-foreground">
           <Link href="/management/asset-tags" className="hover:underline">← Zurück zu Asset Tags</Link>
         </div>

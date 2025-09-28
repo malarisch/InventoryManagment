@@ -39,7 +39,7 @@ test.describe('Company Settings - Custom Types Newline Entry', () => {
     await articleTypesTextarea.focus();
     await articleTypesTextarea.press('End');
     await articleTypesTextarea.press('Enter');
-    await articleTypesTextarea.type('\nVerstärker');
+    await articleTypesTextarea.type('Verstärker');
     
     const finalValue = await articleTypesTextarea.inputValue();
     expect(finalValue).toBe(multiLineText + '\nVerstärker');

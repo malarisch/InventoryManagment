@@ -16,7 +16,7 @@ alter table public.articles
 
 -- 3) Replace the old single-column FK with a composite FK (article_id, company_id) -> articles(id, company_id)
 alter table public.equipments
-  drop constraint if exists "||equipments_article_id_fkey||";
+  drop constraint if exists "equipments_article_id_fkey";
 
 alter table public.equipments
   add constraint equipments_article_id_company_fk

@@ -21,6 +21,7 @@
     "test:unit": "vitest run",
     "test:tsc": "tsc --noEmit",
     "test": "npm run lint && npm run test:tsc && npm run test:unit && npm run test:e2e",
+    "seed:dev": "tsx lib/tools/seed.ts",
     "supabase-gen-types": "supabase migrations up && supabase gen types typescript --local > ./database.types.ts"
   },
   "supabase:write-env": "supabase gen types typescript > .env.local",
@@ -56,6 +57,7 @@
     "zod": "^3.25.76"
   },
   "devDependencies": {
+    "tsx": "^4.19.0",
     "playwright": "^1.55.1",
     "@eslint/eslintrc": "^3",
     "@playwright/test": "^1.47.2",

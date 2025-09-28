@@ -23,7 +23,7 @@ export default async function CaseDetailPage({ params }: { params: Promise<{ id:
   if (error || !data) {
     return (
       <main className="min-h-screen w-full flex flex-col items-center p-5">
-        <div className="w-full max-w-7xl flex-1">
+        <div className="w-full max-w-none flex-1">
           <p className="text-red-600">Eintrag nicht gefunden.</p>
         </div>
       </main>
@@ -36,7 +36,7 @@ export default async function CaseDetailPage({ params }: { params: Promise<{ id:
 
   return (
     <main className="min-h-screen w-full flex flex-col items-center p-5">
-      <div className="w-full max-w-7xl flex-1 space-y-4">
+      <div className="w-full max-w-none flex-1 space-y-4">
         <div className="text-sm text-muted-foreground">
           <Link href="/management/cases" className="hover:underline">← Zurück zur Übersicht</Link>
         </div>

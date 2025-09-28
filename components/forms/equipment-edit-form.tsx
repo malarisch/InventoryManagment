@@ -5,6 +5,7 @@ import { createClient } from "@/lib/supabase/client";
 import type { Tables } from "@/database.types";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import type { Json } from "@/database.types";
 import { EquipmentMetadataForm } from "@/components/forms/partials/equipment-metadata-form";
 import { defaultEquipmentMetadataDE, toPrettyJSON } from "@/lib/metadata/defaults";
@@ -80,7 +81,7 @@ export function EquipmentEditForm({ equipment }: { equipment: Equipment }) {
     }
     loadData();
     return () => { active = false; };
-  }, [supabase]);
+  }, [supabase, equipment.company_id]);
 
   async function onSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -124,75 +125,97 @@ export function EquipmentEditForm({ equipment }: { equipment: Equipment }) {
   }
 
   return (
-    <form onSubmit={onSubmit} className="space-y-4">
-      <div className="grid gap-2">
-        <Label htmlFor="asset_tag">Asset Tag</Label>
-        <select
-          id="asset_tag"
-          className="h-9 rounded-md border bg-background px-3 text-sm"
-          value={assetTagId}
-          onChange={(e) => setAssetTagId(e.target.value === "" ? "" : Number(e.target.value))}
-        >
-          <option value="">— Kein Asset Tag —</option>
-          {assetTags.map((tag) => (
-            <option key={tag.id} value={tag.id}>
-              {tag.printed_code ?? `#${tag.id}`} {tag.printed_applied ? "(verwendet)" : ""}
-            </option>
-          ))}
-        </select>
-      </div>
-      <div className="grid gap-3">
-        <div className="flex items-center justify-between">
-          <div className="text-sm font-medium">Equipment-Metadaten</div>
+    <form onSubmit={onSubmit} className="grid grid-cols-1 md:grid-cols-12 gap-6">
+      <Card className="md:col-span-4">
+        <CardHeader>
+          <CardTitle>Asset Tag</CardTitle>
+          <CardDescription>Vorhandenen Tag zuordnen</CardDescription>
+        </CardHeader>
+        <CardContent>
+          <div className="grid gap-2">
+            <Label htmlFor="asset_tag">Asset Tag</Label>
+            <select
+              id="asset_tag"
+              className="h-9 rounded-md border bg-background px-3 text-sm"
+              value={assetTagId}
+              onChange={(e) => setAssetTagId(e.target.value === "" ? "" : Number(e.target.value))}
+            >
+              <option value="">— Kein Asset Tag —</option>
+              {assetTags.map((tag) => (
+                <option key={tag.id} value={tag.id}>
+                  {tag.printed_code ?? `#${tag.id}`} {tag.printed_applied ? "(verwendet)" : ""}
+                </option>
+              ))}
+            </select>
+          </div>
+        </CardContent>
+      </Card>
+
+      <Card className="md:col-span-4">
+        <CardHeader>
+          <CardTitle>Zuordnung</CardTitle>
+          <CardDescription>Artikel und Standort</CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-3">
+          <div className="grid gap-2">
+            <Label htmlFor="article_id">Artikel</Label>
+            <select
+              id="article_id"
+              className="h-9 rounded-md border bg-background px-3 text-sm"
+              value={articleId}
+              onChange={(e) => setArticleId(e.target.value === "" ? "" : Number(e.target.value))}
+            >
+              <option value="">— Kein Artikel —</option>
+              {articles.map((a) => (
+                <option key={a.id} value={a.id}>{a.name}</option>
+              ))}
+            </select>
+          </div>
+          <div className="grid gap-2">
+            <Label htmlFor="current_location">Aktueller Standort</Label>
+            <select
+              id="current_location"
+              className="h-9 rounded-md border bg-background px-3 text-sm"
+              value={currentLocation}
+              onChange={(e) => setCurrentLocation(e.target.value === "" ? "" : Number(e.target.value))}
+            >
+              <option value="">— Kein Standort —</option>
+              {locations.map((location) => (
+                <option key={location.id} value={location.id}>{location.name}</option>
+              ))}
+            </select>
+          </div>
+        </CardContent>
+      </Card>
+
+      <Card className="md:col-span-12">
+        <CardHeader>
+          <CardTitle>Equipment-Metadaten</CardTitle>
+          <CardDescription>Strukturierte Felder oder JSON</CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-3">
           <label className="flex items-center gap-2 text-xs">
             <input type="checkbox" checked={advanced} onChange={(e) => setAdvanced(e.target.checked)} />
             Expertenmodus (JSON bearbeiten)
           </label>
-        </div>
-        {advanced ? (
-          <div className="grid gap-2">
-            <Label htmlFor="metadata">Metadata (JSON)</Label>
-            <textarea
-              id="metadata"
-              className="min-h-[120px] w-full rounded-md border bg-background p-2 text-sm font-mono"
-              value={metaText}
-              onChange={(e) => setMetaText(e.target.value)}
-              spellCheck={false}
-            />
-          </div>
-        ) : (
-          <EquipmentMetadataForm value={metaObj} onChange={v => setMetaObj(buildEquipmentMetadata(v))} />
-        )}
-      </div>
-      <div className="grid gap-2">
-        <Label htmlFor="article_id">Artikel</Label>
-        <select
-          id="article_id"
-          className="h-9 rounded-md border bg-background px-3 text-sm"
-          value={articleId}
-          onChange={(e) => setArticleId(e.target.value === "" ? "" : Number(e.target.value))}
-        >
-          <option value="">— Kein Artikel —</option>
-          {articles.map((a) => (
-            <option key={a.id} value={a.id}>{a.name}</option>
-          ))}
-        </select>
-      </div>
-      <div className="grid gap-2">
-        <Label htmlFor="current_location">Aktueller Standort</Label>
-        <select
-          id="current_location"
-          className="h-9 rounded-md border bg-background px-3 text-sm"
-          value={currentLocation}
-          onChange={(e) => setCurrentLocation(e.target.value === "" ? "" : Number(e.target.value))}
-        >
-          <option value="">— Kein Standort —</option>
-          {locations.map((location) => (
-            <option key={location.id} value={location.id}>{location.name}</option>
-          ))}
-        </select>
-      </div>
-      <div className="flex flex-wrap items-center gap-3">
+          {advanced ? (
+            <div className="grid gap-2">
+              <Label htmlFor="metadata">Metadata (JSON)</Label>
+              <textarea
+                id="metadata"
+                className="min-h-[120px] w-full rounded-md border bg-background p-2 text-sm font-mono"
+                value={metaText}
+                onChange={(e) => setMetaText(e.target.value)}
+                spellCheck={false}
+              />
+            </div>
+          ) : (
+            <EquipmentMetadataForm value={metaObj} onChange={v => setMetaObj(buildEquipmentMetadata(v))} />
+          )}
+        </CardContent>
+      </Card>
+
+      <div className="md:col-span-12 flex flex-wrap items-center gap-3 justify-end">
         <Button type="submit" disabled={saving}>{saving ? "Speichern…" : "Speichern"}</Button>
         {equipment.asset_tag && (
           <Link

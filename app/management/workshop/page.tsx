@@ -38,7 +38,7 @@ export default async function WorkshopPage() {
 
   return (
     <main className="min-h-screen w-full flex flex-col items-center p-5">
-      <div className="w-full max-w-5xl flex-1 flex flex-col gap-6">
+      <div className="w-full max-w-none flex-1 flex flex-col gap-6">
         <div className="flex items-center justify-between">
           <h1 className="text-2xl font-semibold">Werkstatt</h1>
           <div className="text-sm text-muted-foreground">Company: {companyId ?? '—'}</div>

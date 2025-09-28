@@ -5,7 +5,7 @@ import { JobCreateForm } from "@/components/forms/job-create-form";
 export default function JobNewPage() {
   return (
     <main className="min-h-screen w-full flex flex-col items-center p-5">
-      <div className="w-full max-w-7xl flex-1 space-y-4">
+      <div className="w-full max-w-none flex-1 space-y-4">
         <div className="text-sm text-muted-foreground">
           <Link href="/management/jobs" className="hover:underline">← Zurück zur Übersicht</Link>
         </div>

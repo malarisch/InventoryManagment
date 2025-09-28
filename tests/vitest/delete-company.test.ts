@@ -30,10 +30,20 @@ describe('deleteCompany tool', () => {
       await new Promise((r) => setTimeout(r, 100));
     }
 
-    // Create a company for the test via Supabase REST to avoid identity issues
+    // Create a company via Supabase REST. Guard against sequence desync by picking a fresh ID explicitly
+    const { data: maxCo } = await admin
+      .from('companies')
+      .select('id')
+      .order('id', { ascending: false })
+      .limit(1)
+      .maybeSingle();
+
+    const nextCompanyId = (maxCo?.id ?? 0) + 1;
+
     const { data: companyRow, error: companyError } = await admin
       .from('companies')
       .insert({
+        id: nextCompanyId,
         name: `DeleteCo ${Date.now()}`,
         owner_user_id: userId,
         metadata: { seededBy: 'vitest' },

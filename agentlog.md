@@ -359,3 +359,17 @@ Next: Run `supabase db push` to add `files` columns and `attachments` bucket; co
 - Purpose: resolve linter/type error where `selectedIds: number[]` was assigned to a 1:1 FK column; matches domain model (multi-equipment cases).
 [2025-09-27T01:46:35Z] fix: robust deleteCompany tool; add test to verify cleanup order and FKs.
 Files: lib/tools/deleteCompany.ts, tests/vitest/delete-company.test.ts. Next: run DB (Supabase) and execute vitest.
+2025-09-28  — Widen management pages to full width
+- Replaced `max-w-7xl/5xl/3xl` with `max-w-none` across management pages and loading states to use full screen width like the dashboard.
+- Files touched: multiple `app/management/**/page.tsx`, `_libs/management-loading.tsx`, plus normalized `articles/new/page.tsx` wrapper.
+- Next: visually verify grids/cards at 2K+ and extend remaining forms to 12-col layout where missing.
+
+2025-09-28  — Refactor forms into Cards (metadata isolated)
+- Updated forms to 12-col grids with dedicated Metadaten-Karte where applicable.
+- Files: components/forms/equipment-edit-form.tsx, customer-create-form.tsx, customer-edit-form.tsx, job-create-form.tsx, job-edit-form.tsx, location-create-form.tsx, location-edit-form.tsx, case-create-form.tsx.
+- Ran `npm run test:tsc` and `npm run lint` — both clean.
+
+2025-09-28  — Add seed script for test data
+- Extended `lib/tools/seed.ts`: creates admin test user, company + membership, locations, articles, asset tag template + tags, equipments, case, customers, job, and job asset relations.
+- Added script `npm run seed:dev` using `tsx`; added `tsx` devDependency.
+- TypeScript + ESLint green.

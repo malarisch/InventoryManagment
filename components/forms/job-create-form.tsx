@@ -9,6 +9,7 @@ import { Button } from "@/components/ui/button";
 import { useRouter } from "next/navigation";
 import { useCompany } from "@/app/management/_libs/companyHook";
 import { DatePicker } from "@/components/ui/date-picker";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { defaultJobMetadataDE, toPrettyJSON } from "@/lib/metadata/defaults";
 import { JobMetadataForm } from "@/components/forms/partials/job-metadata-form";
 
@@ -105,70 +106,93 @@ export function JobCreateForm() {
   }
 
   return (
-    <form onSubmit={onSubmit} className="space-y-4">
-      <div className="grid gap-2">
-        <Label htmlFor="name">Name</Label>
-        <Input id="name" name="name" value={name} onChange={(e) => setName(e.target.value)} placeholder="Jobname" />
-      </div>
-      <div className="grid gap-2">
-        <Label htmlFor="type">Typ</Label>
-        <Input id="type" name="type" value={type} onChange={(e) => setType(e.target.value)} placeholder="z. B. Produktion, Service, …" />
-      </div>
-      <div className="grid gap-2">
-        <Label htmlFor="job_location">Ort</Label>
-        <Input id="job_location" name="job_location" value={location} onChange={(e) => setLocation(e.target.value)} placeholder="Ort / Venue" />
-      </div>
-      <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
-        <div className="grid gap-2">
-          <Label htmlFor="startdate">Start</Label>
-          <DatePicker id="startdate" name="startdate" value={startDate} onChange={setStartDate} />
-        </div>
-        <div className="grid gap-2">
-          <Label htmlFor="enddate">Ende</Label>
-          <DatePicker id="enddate" name="enddate" value={endDate} onChange={setEndDate} />
-        </div>
-      </div>
-      <div className="grid gap-2">
-        <Label htmlFor="customer_id">Kunde</Label>
-        <select
-          id="customer_id"
-          name="customer_id"
-          className="h-9 rounded-md border bg-background px-3 text-sm"
-          value={customerId}
-          onChange={(e) => setCustomerId(e.target.value === "" ? "" : Number(e.target.value))}
-        >
-          <option value="">— Kein Kunde —</option>
-          {customers.map((c) => (
-            <option key={c.id} value={c.id}>
-              {c.company_name || `${c.forename ?? ""} ${c.surname ?? ""}`.trim() || `#${c.id}`}
-            </option>
-          ))}
-        </select>
-      </div>
-      <div className="grid gap-3">
-        <div className="flex items-center justify-between">
-          <div className="text-sm font-medium">Job-Metadaten</div>
+    <form onSubmit={onSubmit} className="grid grid-cols-1 md:grid-cols-12 gap-6">
+      <Card className="md:col-span-5">
+        <CardHeader>
+          <CardTitle>Basisdaten</CardTitle>
+          <CardDescription>Name, Typ, Ort</CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-3">
+          <div className="grid gap-2">
+            <Label htmlFor="name">Name</Label>
+            <Input id="name" name="name" value={name} onChange={(e) => setName(e.target.value)} placeholder="Jobname" />
+          </div>
+          <div className="grid gap-2">
+            <Label htmlFor="type">Typ</Label>
+            <Input id="type" name="type" value={type} onChange={(e) => setType(e.target.value)} placeholder="z. B. Produktion, Service, …" />
+          </div>
+          <div className="grid gap-2">
+            <Label htmlFor="job_location">Ort</Label>
+            <Input id="job_location" name="job_location" value={location} onChange={(e) => setLocation(e.target.value)} placeholder="Ort / Venue" />
+          </div>
+        </CardContent>
+      </Card>
+
+      <Card className="md:col-span-4">
+        <CardHeader>
+          <CardTitle>Termine</CardTitle>
+          <CardDescription>Start und Ende</CardDescription>
+        </CardHeader>
+        <CardContent className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+          <div className="grid gap-2">
+            <Label htmlFor="startdate">Start</Label>
+            <DatePicker id="startdate" name="startdate" value={startDate} onChange={setStartDate} />
+          </div>
+          <div className="grid gap-2">
+            <Label htmlFor="enddate">Ende</Label>
+            <DatePicker id="enddate" name="enddate" value={endDate} onChange={setEndDate} />
+          </div>
+        </CardContent>
+      </Card>
+
+      <Card className="md:col-span-3">
+        <CardHeader>
+          <CardTitle>Kunde</CardTitle>
+          <CardDescription>Optional</CardDescription>
+        </CardHeader>
+        <CardContent>
+          <div className="grid gap-2">
+            <Label htmlFor="customer_id">Kunde</Label>
+            <select
+              id="customer_id"
+              name="customer_id"
+              className="h-9 rounded-md border bg-background px-3 text-sm"
+              value={customerId}
+              onChange={(e) => setCustomerId(e.target.value === "" ? "" : Number(e.target.value))}
+            >
+              <option value="">— Kein Kunde —</option>
+              {customers.map((c) => (
+                <option key={c.id} value={c.id}>
+                  {c.company_name || `${c.forename ?? ""} ${c.surname ?? ""}`.trim() || `#${c.id}`}
+                </option>
+              ))}
+            </select>
+          </div>
+        </CardContent>
+      </Card>
+
+      <Card className="md:col-span-12">
+        <CardHeader>
+          <CardTitle>Job‑Metadaten</CardTitle>
+          <CardDescription>Strukturierte Felder oder JSON</CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-3">
           <label className="flex items-center gap-2 text-xs">
             <input type="checkbox" checked={advanced} onChange={(e) => setAdvanced(e.target.checked)} />
             Expertenmodus (JSON bearbeiten)
           </label>
-        </div>
-        {advanced ? (
-          <div className="grid gap-2">
-            <Label htmlFor="meta">Meta (JSON)</Label>
-            <textarea
-              id="meta"
-              className="min-h-[120px] w-full rounded-md border bg-background p-2 text-sm font-mono"
-              value={metaText}
-              onChange={(e) => setMetaText(e.target.value)}
-              spellCheck={false}
-            />
-          </div>
-        ) : (
-          <JobMetadataForm value={metaObj} onChange={setMetaObj} />
-        )}
-      </div>
-      <div className="flex items-center gap-3">
+          {advanced ? (
+            <div className="grid gap-2">
+              <Label htmlFor="meta">Meta (JSON)</Label>
+              <textarea id="meta" className="min-h-[120px] w-full rounded-md border bg-background p-2 text-sm font-mono" value={metaText} onChange={(e) => setMetaText(e.target.value)} spellCheck={false} />
+            </div>
+          ) : (
+            <JobMetadataForm value={metaObj} onChange={setMetaObj} />
+          )}
+        </CardContent>
+      </Card>
+
+      <div className="md:col-span-12 flex items-center gap-3 justify-end">
         <Button type="submit" disabled={saving}>{saving ? "Erstellen…" : "Erstellen"}</Button>
         {error && <span className="text-sm text-red-600">{error}</span>}
       </div>

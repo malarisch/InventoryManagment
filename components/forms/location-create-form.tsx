@@ -10,6 +10,7 @@ import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { useRouter } from "next/navigation";
 import { useCompany } from "@/app/management/_libs/companyHook";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 
 type AssetTagTemplate = Tables<"asset_tag_templates">;
 
@@ -87,39 +88,65 @@ export function LocationCreateForm() {
   }
 
   return (
-    <form onSubmit={onSubmit} className="space-y-4">
-      <div className="grid gap-2">
-        <Label htmlFor="name">Name</Label>
-        <Input id="name" value={name} onChange={(e) => setName(e.target.value)} required />
-      </div>
-      <div className="grid gap-2">
-        <Label htmlFor="description">Beschreibung</Label>
-        <Input id="description" value={description} onChange={(e) => setDescription(e.target.value)} />
-      </div>
-      <div className="flex items-center gap-2">
-        <input id="is_workshop" type="checkbox" checked={isWorkshop} onChange={(e) => setIsWorkshop(e.target.checked)} />
-        <Label htmlFor="is_workshop">Ist Werkstatt</Label>
-      </div>
-      <div className="grid gap-2">
-        <Label htmlFor="asset_tag_template">Asset Tag Template</Label>
-        <select
-          id="asset_tag_template"
-          className="h-9 rounded-md border bg-background px-3 text-sm"
-          value={assetTagTemplateId}
-          onChange={(e) => setAssetTagTemplateId(e.target.value === "" ? "" : Number(e.target.value))}
-          disabled={!loaded}
-        >
-          <option value="">— Keins —</option>
-          {assetTagTemplates.map((t) => (
-            <option key={t.id} value={t.id}>{`Template #${t.id}`}</option>
-          ))}
-        </select>
-      </div>
-      <div className="flex items-center gap-3">
+    <form onSubmit={onSubmit} className="grid grid-cols-1 md:grid-cols-12 gap-6">
+      <Card className="md:col-span-6">
+        <CardHeader>
+          <CardTitle>Basisdaten</CardTitle>
+          <CardDescription>Name und Beschreibung</CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-3">
+          <div className="grid gap-2">
+            <Label htmlFor="name">Name</Label>
+            <Input id="name" value={name} onChange={(e) => setName(e.target.value)} required />
+          </div>
+          <div className="grid gap-2">
+            <Label htmlFor="description">Beschreibung</Label>
+            <Input id="description" value={description} onChange={(e) => setDescription(e.target.value)} />
+          </div>
+        </CardContent>
+      </Card>
+
+      <Card className="md:col-span-3">
+        <CardHeader>
+          <CardTitle>Werkstatt</CardTitle>
+          <CardDescription>Optional</CardDescription>
+        </CardHeader>
+        <CardContent>
+          <div className="flex items-center gap-2">
+            <input id="is_workshop" type="checkbox" checked={isWorkshop} onChange={(e) => setIsWorkshop(e.target.checked)} />
+            <Label htmlFor="is_workshop">Ist Werkstatt</Label>
+          </div>
+        </CardContent>
+      </Card>
+
+      <Card className="md:col-span-3">
+        <CardHeader>
+          <CardTitle>Asset Tag</CardTitle>
+          <CardDescription>Optionales Template</CardDescription>
+        </CardHeader>
+        <CardContent>
+          <div className="grid gap-2">
+            <Label htmlFor="asset_tag_template">Asset Tag Template</Label>
+            <select
+              id="asset_tag_template"
+              className="h-9 rounded-md border bg-background px-3 text-sm"
+              value={assetTagTemplateId}
+              onChange={(e) => setAssetTagTemplateId(e.target.value === "" ? "" : Number(e.target.value))}
+              disabled={!loaded}
+            >
+              <option value="">— Keins —</option>
+              {assetTagTemplates.map((t) => (
+                <option key={t.id} value={t.id}>{`Template #${t.id}`}</option>
+              ))}
+            </select>
+          </div>
+        </CardContent>
+      </Card>
+
+      <div className="md:col-span-12 flex items-center gap-3 justify-end">
         <Button type="submit" disabled={saving}>{saving ? "Erstellen…" : "Erstellen"}</Button>
         {error && <span className="text-sm text-red-600">{error}</span>}
       </div>
     </form>
   );
 }
-

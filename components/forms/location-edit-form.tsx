@@ -7,6 +7,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 
 type Location = Tables<"locations">;
 type AssetTag = Tables<"asset_tags">;
@@ -61,36 +62,63 @@ export function LocationEditForm({ location }: { location: Location }) {
   }
 
   return (
-    <form onSubmit={onSubmit} className="space-y-4">
-      <div className="grid gap-2">
-        <Label htmlFor="name">Name</Label>
-        <Input id="name" value={name} onChange={(e) => setName(e.target.value)} placeholder="z.B. Lager A" />
-      </div>
-      <div className="grid gap-2">
-        <Label htmlFor="description">Beschreibung</Label>
-        <Input id="description" value={description} onChange={(e) => setDescription(e.target.value)} placeholder="optional" />
-      </div>
-      <div className="grid gap-2">
-        <Label htmlFor="asset_tag">Asset Tag</Label>
-        <select
-          id="asset_tag"
-          className="h-9 rounded-md border bg-background px-3 text-sm"
-          value={assetTagId}
-          onChange={(e) => setAssetTagId(e.target.value === "" ? "" : Number(e.target.value))}
-        >
-          <option value="">— Kein Asset Tag —</option>
-          {assetTags.map((tag) => (
-            <option key={tag.id} value={tag.id}>
-              {tag.printed_code ?? `#${tag.id}`} {tag.printed_applied ? "(verwendet)" : ""}
-            </option>
-          ))}
-        </select>
-      </div>
-      <div className="flex items-center gap-2">
-        <input id="is_workshop" type="checkbox" checked={isWorkshop} onChange={(e) => setIsWorkshop(e.target.checked)} />
-        <Label htmlFor="is_workshop">Ist Werkstatt</Label>
-      </div>
-      <div className="flex flex-wrap items-center gap-3">
+    <form onSubmit={onSubmit} className="grid grid-cols-1 md:grid-cols-12 gap-6">
+      <Card className="md:col-span-6">
+        <CardHeader>
+          <CardTitle>Basisdaten</CardTitle>
+          <CardDescription>Name und Beschreibung</CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-3">
+          <div className="grid gap-2">
+            <Label htmlFor="name">Name</Label>
+            <Input id="name" value={name} onChange={(e) => setName(e.target.value)} placeholder="z.B. Lager A" />
+          </div>
+          <div className="grid gap-2">
+            <Label htmlFor="description">Beschreibung</Label>
+            <Input id="description" value={description} onChange={(e) => setDescription(e.target.value)} placeholder="optional" />
+          </div>
+        </CardContent>
+      </Card>
+
+      <Card className="md:col-span-3">
+        <CardHeader>
+          <CardTitle>Asset Tag</CardTitle>
+          <CardDescription>Vorhandenen Tag zuordnen</CardDescription>
+        </CardHeader>
+        <CardContent>
+          <div className="grid gap-2">
+            <Label htmlFor="asset_tag">Asset Tag</Label>
+            <select
+              id="asset_tag"
+              className="h-9 rounded-md border bg-background px-3 text-sm"
+              value={assetTagId}
+              onChange={(e) => setAssetTagId(e.target.value === "" ? "" : Number(e.target.value))}
+            >
+              <option value="">— Kein Asset Tag —</option>
+              {assetTags.map((tag) => (
+                <option key={tag.id} value={tag.id}>
+                  {tag.printed_code ?? `#${tag.id}`} {tag.printed_applied ? "(verwendet)" : ""}
+                </option>
+              ))}
+            </select>
+          </div>
+        </CardContent>
+      </Card>
+
+      <Card className="md:col-span-3">
+        <CardHeader>
+          <CardTitle>Werkstatt</CardTitle>
+          <CardDescription>Optional</CardDescription>
+        </CardHeader>
+        <CardContent>
+          <div className="flex items-center gap-2">
+            <input id="is_workshop" type="checkbox" checked={isWorkshop} onChange={(e) => setIsWorkshop(e.target.checked)} />
+            <Label htmlFor="is_workshop">Ist Werkstatt</Label>
+          </div>
+        </CardContent>
+      </Card>
+
+      <div className="md:col-span-12 flex flex-wrap items-center gap-3 justify-end">
         <Button type="submit" disabled={saving}>{saving ? "Speichern…" : "Speichern"}</Button>
         {location.asset_tag && (
           <Link

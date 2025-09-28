@@ -414,11 +414,11 @@ export type Database = {
         }
         Relationships: [
           {
-            foreignKeyName: "equipments_article_id_fkey"
-            columns: ["article_id"]
+            foreignKeyName: "equipments_article_id_company_fk"
+            columns: ["article_id", "company_id"]
             isOneToOne: false
             referencedRelation: "articles"
-            referencedColumns: ["id"]
+            referencedColumns: ["id", "company_id"]
           },
           {
             foreignKeyName: "equipments_asset_tag_fkey"
@@ -703,6 +703,7 @@ export type Database = {
           description: string | null
           files: Json | null
           id: number
+          is_workshop: boolean
           name: string
         }
         Insert: {
@@ -713,6 +714,7 @@ export type Database = {
           description?: string | null
           files?: Json | null
           id?: number
+          is_workshop?: boolean
           name: string
         }
         Update: {
@@ -723,6 +725,7 @@ export type Database = {
           description?: string | null
           files?: Json | null
           id?: number
+          is_workshop?: boolean
           name?: string
         }
         Relationships: [
@@ -844,6 +847,77 @@ export type Database = {
             columns: ["user_id"]
             isOneToOne: false
             referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      workshop_todos: {
+        Row: {
+          case_id: number | null
+          closed_at: string | null
+          company_id: number
+          created_at: string
+          created_by: string | null
+          due_date: string | null
+          equipment_id: number | null
+          id: number
+          notes: string | null
+          status: string
+          title: string
+        }
+        Insert: {
+          case_id?: number | null
+          closed_at?: string | null
+          company_id: number
+          created_at?: string
+          created_by?: string | null
+          due_date?: string | null
+          equipment_id?: number | null
+          id?: never
+          notes?: string | null
+          status?: string
+          title: string
+        }
+        Update: {
+          case_id?: number | null
+          closed_at?: string | null
+          company_id?: number
+          created_at?: string
+          created_by?: string | null
+          due_date?: string | null
+          equipment_id?: number | null
+          id?: never
+          notes?: string | null
+          status?: string
+          title?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "workshop_todos_case_id_fkey"
+            columns: ["case_id"]
+            isOneToOne: false
+            referencedRelation: "cases"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "workshop_todos_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "workshop_todos_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "workshop_todos_equipment_id_fkey"
+            columns: ["equipment_id"]
+            isOneToOne: false
+            referencedRelation: "equipments"
             referencedColumns: ["id"]
           },
         ]

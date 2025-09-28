@@ -17,7 +17,7 @@ export function ManagementListLoading({
 }: ManagementListLoadingProps) {
   return (
     <main className="min-h-screen w-full flex flex-col items-center p-5">
-      <div className="w-full max-w-5xl flex-1 flex flex-col gap-4">
+      <div className="w-full max-w-none flex-1 flex flex-col gap-4">
         <div className="flex flex-col gap-1 sm:flex-row sm:items-center sm:justify-between">
           <div>
             <h1 className="text-2xl font-semibold text-foreground">{heading}</h1>
@@ -56,7 +56,7 @@ export function ManagementDetailLoading({
 }: ManagementDetailLoadingProps) {
   return (
     <main className="min-h-screen w-full flex flex-col items-center p-5">
-      <div className="w-full max-w-5xl flex-1 flex flex-col gap-6">
+      <div className="w-full max-w-none flex-1 flex flex-col gap-6">
         <div className="flex flex-col gap-1 sm:flex-row sm:items-center sm:justify-between">
           <div>
             <h1 className="text-2xl font-semibold text-foreground">{heading}</h1>
@@ -123,7 +123,7 @@ export function ManagementFormLoading({
 }: ManagementFormLoadingProps) {
   return (
     <main className="min-h-screen w-full flex flex-col items-center p-5">
-      <div className="w-full max-w-7xl flex-1 space-y-4">
+      <div className="w-full max-w-none flex-1 space-y-4">
         {showBackLink ? <Skeleton className={`h-4 ${backLinkWidthClass}`} aria-hidden="true" /> : null}
         <div className="space-y-4 rounded-lg border border-border/60 bg-card/40 p-6">
           <Skeleton className={`h-6 ${titleWidthClass}`} aria-hidden="true" />
