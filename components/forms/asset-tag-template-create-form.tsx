@@ -179,7 +179,7 @@ export function AssetTagTemplateCreateForm() {
   };
 
   return (
-    <form onSubmit={form.handleSubmit(onSubmit)} className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-4">
+    <form onSubmit={form.handleSubmit(onSubmit)} className="grid grid-cols-1 md:grid-cols-12 gap-6">
       {error && (
         <Card className="col-span-full border-red-200">
           <CardContent className="bg-red-50 text-red-700 px-4 py-3">{error}</CardContent>
@@ -187,7 +187,7 @@ export function AssetTagTemplateCreateForm() {
       )}
       
       {/* Basic Information */}
-      <Card className="xl:col-span-1">
+      <Card className="md:col-span-4">
         <CardHeader>
           <CardTitle>Basic Information</CardTitle>
           <CardDescription>Template name and description</CardDescription>
@@ -205,7 +205,7 @@ export function AssetTagTemplateCreateForm() {
       </Card>
 
       {/* Dimensions */}
-      <Card>
+      <Card className="md:col-span-4">
         <CardHeader>
           <CardTitle>Dimensions</CardTitle>
           <CardDescription>Physical size and margins</CardDescription>
@@ -227,7 +227,7 @@ export function AssetTagTemplateCreateForm() {
       </Card>
 
       {/* Styling */}
-      <Card>
+      <Card className="md:col-span-4">
         <CardHeader>
           <CardTitle>Styling</CardTitle>
           <CardDescription>Colors and typography</CardDescription>
@@ -261,7 +261,7 @@ export function AssetTagTemplateCreateForm() {
       </Card>
 
       {/* Code Generation */}
-      <Card>
+      <Card className="md:col-span-6">
         <CardHeader>
           <CardTitle>Code Generation</CardTitle>
           <CardDescription>Build printed_code from rules</CardDescription>
@@ -306,7 +306,7 @@ export function AssetTagTemplateCreateForm() {
       </Card>
 
       {/* Elements */}
-      <Card className="col-span-full">
+      <Card className="md:col-span-12">
         <CardHeader>
           <CardTitle>Elements</CardTitle>
           <CardDescription>Add and configure template elements</CardDescription>
@@ -365,7 +365,7 @@ export function AssetTagTemplateCreateForm() {
       </Card>
 
       {/* Live Preview */}
-      <Card className="col-span-full xl:col-span-2">
+      <Card className="md:col-span-6 md:sticky md:top-20">
         <CardHeader>
           <CardTitle>Live Preview</CardTitle>
           <CardDescription>Drag to arrange elements</CardDescription>
@@ -412,7 +412,7 @@ export function AssetTagTemplateCreateForm() {
       </Card>
 
       {/* Actions */}
-      <div className="col-span-full flex justify-end">
+      <div className="md:col-span-12 flex justify-end">
         <Button type="submit" disabled={isLoading}>
           {isLoading ? 'Creating...' : 'Create Template'}
         </Button>

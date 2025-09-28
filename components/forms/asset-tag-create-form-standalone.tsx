@@ -87,8 +87,8 @@ export function AssetTagCreateFormStandalone() {
   };
 
   return (
-    <form onSubmit={form.handleSubmit(onSubmit)} className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-      <Card>
+    <form onSubmit={form.handleSubmit(onSubmit)} className="grid grid-cols-1 md:grid-cols-12 gap-6">
+      <Card className="md:col-span-6">
         <CardHeader>
           <CardTitle>Template auswählen</CardTitle>
         </CardHeader>
@@ -114,7 +114,7 @@ export function AssetTagCreateFormStandalone() {
         </CardContent>
       </Card>
 
-      <Card>
+      <Card className="md:col-span-6">
         <CardHeader>
           <CardTitle>Code</CardTitle>
         </CardHeader>
