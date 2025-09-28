@@ -8,6 +8,7 @@ import { buildAssetTagCode } from "@/lib/asset-tags/code";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/components/ui/card";
 import { useRouter } from "next/navigation";
 import { useCompany } from "@/app/management/_libs/companyHook";
 import { DatePicker } from "@/components/ui/date-picker";
@@ -58,14 +59,14 @@ export function EquipmentCreateForm({ initialArticleId }: { initialArticleId?: n
       setArticles((articlesData as Article[]) ?? []);
       setLocations((locationsData as Location[]) ?? []);
       setAssetTagTemplates((tmplData as AssetTagTemplate[]) ?? []);
-  setCompanyMeta(companyRow?.metadata ? companyRow.metadata as unknown as adminCompanyMetadata : null);
-  const metaPartial = companyRow?.metadata as Partial<adminCompanyMetadata> | undefined;
-  const defId = metaPartial?.defaultEquipmentAssetTagTemplateId;
+      setCompanyMeta(companyRow?.metadata ? (companyRow.metadata as unknown as adminCompanyMetadata) : null);
+      const metaPartial = companyRow?.metadata as Partial<adminCompanyMetadata> | undefined;
+      const defId = metaPartial?.defaultEquipmentAssetTagTemplateId;
       if (defId) setAssetTagTemplateId(defId);
     }
     loadData();
     return () => { active = false; };
-  }, [supabase]);
+  }, [supabase, company?.id]);
 
   async function onSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -139,82 +140,112 @@ export function EquipmentCreateForm({ initialArticleId }: { initialArticleId?: n
   }
 
   return (
-    <form onSubmit={onSubmit} className="space-y-4">
-      <div className="grid gap-2">
-        <Label htmlFor="asset_tag_template">Asset Tag Template</Label>
-        <select
-          id="asset_tag_template"
-          className="h-9 rounded-md border bg-background px-3 text-sm"
-          value={assetTagTemplateId}
-          onChange={(e) => setAssetTagTemplateId(e.target.value === "" ? "" : Number(e.target.value))}
-        >
-          <option value="">— Keins —</option>
-          {assetTagTemplates.map((t) => (
-            <option key={t.id} value={t.id}>{`Template #${t.id}`}</option>
-          ))}
-        </select>
-      </div>
-      <div className="grid gap-2">
-        <Label htmlFor="article_id">Artikel</Label>
-        <select
-          id="article_id"
-          className="h-9 rounded-md border bg-background px-3 text-sm"
-          value={articleId}
-          onChange={(e) => setArticleId(e.target.value === "" ? "" : Number(e.target.value))}
-        >
-          <option value="">— Kein Artikel —</option>
-          {articles.map((a) => (
-            <option key={a.id} value={a.id}>{a.name}</option>
-          ))}
-        </select>
-      </div>
-      <div className="grid gap-2">
-        <Label htmlFor="current_location">Aktueller Standort</Label>
-        <select
-          id="current_location"
-          className="h-9 rounded-md border bg-background px-3 text-sm"
-          value={currentLocation}
-          onChange={(e) => setCurrentLocation(e.target.value === "" ? "" : Number(e.target.value))}
-        >
-          <option value="">— Kein Standort —</option>
-          {locations.map((location) => (
-            <option key={location.id} value={location.id}>{location.name}</option>
-          ))}
-        </select>
-      </div>
-      
-      <div className="grid gap-2">
-        <Label htmlFor="added">Im Lager seit</Label>
-        <DatePicker id="added" name="added" value={addedAt} onChange={setAddedAt} />
-      </div>
-      <div className="grid gap-2">
-        <Label htmlFor="count">Anzahl</Label>
-        <Input id="count" type="number" min={1} value={String(count)} onChange={(e) => setCount(Math.max(1, Number(e.target.value) || 1))} />
-      </div>
-      <div className="grid gap-3">
-        <div className="flex items-center justify-between">
-          <div className="text-sm font-medium">Equipment-Metadaten</div>
+    <form onSubmit={onSubmit} className="grid grid-cols-1 md:grid-cols-12 gap-6">
+      <Card className="md:col-span-4">
+        <CardHeader>
+          <CardTitle>Asset Tag</CardTitle>
+          <CardDescription>Optionales Template</CardDescription>
+        </CardHeader>
+        <CardContent>
+          <div className="grid gap-2">
+            <Label htmlFor="asset_tag_template">Asset Tag Template</Label>
+            <select
+              id="asset_tag_template"
+              className="h-9 rounded-md border bg-background px-3 text-sm"
+              value={assetTagTemplateId}
+              onChange={(e) => setAssetTagTemplateId(e.target.value === "" ? "" : Number(e.target.value))}
+            >
+              <option value="">— Keins —</option>
+              {assetTagTemplates.map((t) => (
+                <option key={t.id} value={t.id}>{`Template #${t.id}`}</option>
+              ))}
+            </select>
+          </div>
+        </CardContent>
+      </Card>
+
+      <Card className="md:col-span-4">
+        <CardHeader>
+          <CardTitle>Zuordnung</CardTitle>
+          <CardDescription>Artikel und Standort</CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-3">
+          <div className="grid gap-2">
+            <Label htmlFor="article_id">Artikel</Label>
+            <select
+              id="article_id"
+              className="h-9 rounded-md border bg-background px-3 text-sm"
+              value={articleId}
+              onChange={(e) => setArticleId(e.target.value === "" ? "" : Number(e.target.value))}
+            >
+              <option value="">— Kein Artikel —</option>
+              {articles.map((a) => (
+                <option key={a.id} value={a.id}>{a.name}</option>
+              ))}
+            </select>
+          </div>
+          <div className="grid gap-2">
+            <Label htmlFor="current_location">Aktueller Standort</Label>
+            <select
+              id="current_location"
+              className="h-9 rounded-md border bg-background px-3 text-sm"
+              value={currentLocation}
+              onChange={(e) => setCurrentLocation(e.target.value === "" ? "" : Number(e.target.value))}
+            >
+              <option value="">— Kein Standort —</option>
+              {locations.map((location) => (
+                <option key={location.id} value={location.id}>{location.name}</option>
+              ))}
+            </select>
+          </div>
+        </CardContent>
+      </Card>
+
+      <Card className="md:col-span-4">
+        <CardHeader>
+          <CardTitle>Inventar</CardTitle>
+          <CardDescription>Datum & Anzahl</CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-3">
+          <div className="grid gap-2">
+            <Label htmlFor="added">Im Lager seit</Label>
+            <DatePicker id="added" name="added" value={addedAt} onChange={setAddedAt} />
+          </div>
+          <div className="grid gap-2">
+            <Label htmlFor="count">Anzahl</Label>
+            <Input id="count" type="number" min={1} value={String(count)} onChange={(e) => setCount(Math.max(1, Number(e.target.value) || 1))} />
+          </div>
+        </CardContent>
+      </Card>
+
+      <Card className="md:col-span-12">
+        <CardHeader>
+          <CardTitle>Equipment-Metadaten</CardTitle>
+          <CardDescription>Strukturierte Felder oder JSON</CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-3">
           <label className="flex items-center gap-2 text-xs">
             <input type="checkbox" checked={advanced} onChange={(e) => setAdvanced(e.target.checked)} />
             Expertenmodus (JSON bearbeiten)
           </label>
-        </div>
-        {advanced ? (
-          <div className="grid gap-2">
-            <Label htmlFor="metadata">Metadata (JSON)</Label>
-            <textarea
-              id="metadata"
-              className="min-h-[120px] w-full rounded-md border bg-background p-2 text-sm font-mono"
-              value={metaText}
-              onChange={(e) => setMetaText(e.target.value)}
-              spellCheck={false}
-            />
-          </div>
-        ) : (
-          <EquipmentMetadataForm value={metaObj} onChange={v => setMetaObj(buildEquipmentMetadata(v))} />
-        )}
-      </div>
-      <div className="flex items-center gap-3">
+          {advanced ? (
+            <div className="grid gap-2">
+              <Label htmlFor="metadata">Metadata (JSON)</Label>
+              <textarea
+                id="metadata"
+                className="min-h-[120px] w-full rounded-md border bg-background p-2 text-sm font-mono"
+                value={metaText}
+                onChange={(e) => setMetaText(e.target.value)}
+                spellCheck={false}
+              />
+            </div>
+          ) : (
+            <EquipmentMetadataForm value={metaObj} onChange={v => setMetaObj(buildEquipmentMetadata(v))} />
+          )}
+        </CardContent>
+      </Card>
+
+      <div className="md:col-span-12 flex items-center gap-3 justify-end">
         <Button type="submit" disabled={saving}>{saving ? "Erstellen…" : "Erstellen"}</Button>
         {error && <span className="text-sm text-red-600">{error}</span>}
       </div>

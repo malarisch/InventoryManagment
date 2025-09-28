@@ -6,6 +6,7 @@ import type { Tables } from "@/database.types";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
+import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/components/ui/card";
 import { ArticleMetadataForm } from "@/components/forms/partials/article-metadata-form";
 import type { Json } from "@/database.types";
 import type { ArticleMetadata } from "@/components/metadataTypes.types";
@@ -74,65 +75,87 @@ export function ArticleEditForm({ article }: { article: Article }) {
   }
 
   return (
-    <form onSubmit={onSubmit} className="space-y-4">
-      <div className="grid gap-2">
-        <Label htmlFor="name">Name</Label>
-        <Input id="name" value={name} onChange={(e) => setName(e.target.value)} placeholder="Artikelname" />
-      </div>
-      <div className="grid gap-2">
-        <Label htmlFor="asset_tag">Asset Tag</Label>
-        <select
-          id="asset_tag"
-          className="h-9 rounded-md border bg-background px-3 text-sm"
-          value={assetTagId}
-          onChange={(e) => setAssetTagId(e.target.value === "" ? "" : Number(e.target.value))}
-        >
-          <option value="">— Kein Asset Tag —</option>
-          {assetTags.map((tag) => (
-            <option key={tag.id} value={tag.id}>
-              {tag.printed_code ?? `#${tag.id}`} {tag.printed_applied ? "(verwendet)" : ""}
-            </option>
-          ))}
-        </select>
-      </div>
-      <div className="grid gap-2">
-        <Label htmlFor="default_location">Default Location</Label>
-        <select
-          id="default_location"
-          className="h-9 rounded-md border bg-background px-3 text-sm"
-          value={defaultLocation}
-          onChange={(e) => setDefaultLocation(e.target.value === "" ? "" : Number(e.target.value))}
-        >
-          <option value="">— Kein Standort —</option>
-          {locations.map((l) => (
-            <option key={l.id} value={l.id}>{l.name}</option>
-          ))}
-        </select>
-      </div>
-      <div className="grid gap-3">
-        <div className="flex items-center justify-between">
-          <div className="text-sm font-medium">Artikel-Metadaten</div>
+    <form onSubmit={onSubmit} className="grid grid-cols-1 md:grid-cols-12 gap-6">
+      <Card className="md:col-span-5">
+        <CardHeader>
+          <CardTitle>Basisdaten</CardTitle>
+          <CardDescription>Name und Standort</CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-3">
+          <div className="grid gap-2">
+            <Label htmlFor="name">Name</Label>
+            <Input id="name" value={name} onChange={(e) => setName(e.target.value)} placeholder="Artikelname" />
+          </div>
+          <div className="grid gap-2">
+            <Label htmlFor="default_location">Default Location</Label>
+            <select
+              id="default_location"
+              className="h-9 rounded-md border bg-background px-3 text-sm"
+              value={defaultLocation}
+              onChange={(e) => setDefaultLocation(e.target.value === "" ? "" : Number(e.target.value))}
+            >
+              <option value="">— Kein Standort —</option>
+              {locations.map((l) => (
+                <option key={l.id} value={l.id}>{l.name}</option>
+              ))}
+            </select>
+          </div>
+        </CardContent>
+      </Card>
+
+      <Card className="md:col-span-7">
+        <CardHeader>
+          <CardTitle>Asset Tag</CardTitle>
+          <CardDescription>Vorhandenen Tag zuordnen</CardDescription>
+        </CardHeader>
+        <CardContent>
+          <div className="grid gap-2">
+            <Label htmlFor="asset_tag">Asset Tag</Label>
+            <select
+              id="asset_tag"
+              className="h-9 rounded-md border bg-background px-3 text-sm"
+              value={assetTagId}
+              onChange={(e) => setAssetTagId(e.target.value === "" ? "" : Number(e.target.value))}
+            >
+              <option value="">— Kein Asset Tag —</option>
+              {assetTags.map((tag) => (
+                <option key={tag.id} value={tag.id}>
+                  {tag.printed_code ?? `#${tag.id}`} {tag.printed_applied ? "(verwendet)" : ""}
+                </option>
+              ))}
+            </select>
+          </div>
+        </CardContent>
+      </Card>
+
+      <Card className="md:col-span-12">
+        <CardHeader>
+          <CardTitle>Artikel-Metadaten</CardTitle>
+          <CardDescription>Strukturierte Felder oder JSON</CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-3">
           <label className="flex items-center gap-2 text-xs">
             <input type="checkbox" checked={advanced} onChange={(e) => setAdvanced(e.target.checked)} />
             Expertenmodus (JSON bearbeiten)
           </label>
-        </div>
-        {advanced ? (
-          <div className="grid gap-2">
-            <Label htmlFor="metadata">Metadata (JSON)</Label>
-            <textarea
-              id="metadata"
-              className="min-h-[120px] w-full rounded-md border bg-background p-2 text-sm font-mono"
-              value={metaText}
-              onChange={(e) => setMetaText(e.target.value)}
-              spellCheck={false}
-            />
-          </div>
-        ) : (
-          <ArticleMetadataForm value={metaObj} onChange={setMetaObj} />
-        )}
-      </div>
-      <div className="flex items-center gap-3">
+          {advanced ? (
+            <div className="grid gap-2">
+              <Label htmlFor="metadata">Metadata (JSON)</Label>
+              <textarea
+                id="metadata"
+                className="min-h-[140px] w-full rounded-md border bg-background p-2 text-sm font-mono"
+                value={metaText}
+                onChange={(e) => setMetaText(e.target.value)}
+                spellCheck={false}
+              />
+            </div>
+          ) : (
+            <ArticleMetadataForm value={metaObj} onChange={setMetaObj} />
+          )}
+        </CardContent>
+      </Card>
+
+      <div className="md:col-span-12 flex items-center gap-3 justify-end">
         <Button type="submit" disabled={saving}>{saving ? "Speichern…" : "Speichern"}</Button>
         {message && <span className="text-sm text-green-600">{message}</span>}
         {error && <span className="text-sm text-red-600">{error}</span>}

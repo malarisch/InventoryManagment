@@ -146,71 +146,77 @@ export function CompanySettingsForm() {
   }
 
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle>Company Settings</CardTitle>
-        <CardDescription>Namen, Beschreibung und Metadaten bearbeiten</CardDescription>
-      </CardHeader>
-      <CardContent>
-        {loading ? (
-          <div className="text-sm text-muted-foreground">Lädt…</div>
-        ) : company ? (
-          <form onSubmit={onSubmit} className="space-y-4">
-            <div className="grid gap-2">
-              <Label htmlFor="name">Name</Label>
-              <Input id="name" value={name} onChange={(e) => setName(e.target.value)} required />
-            </div>
-            <div className="grid gap-2">
-              <Label htmlFor="description">Beschreibung</Label>
-              <Input id="description" value={description} onChange={(e) => setDescription(e.target.value)} />
-            </div>
-            <div className="grid gap-3">
-              <div className="flex items-center justify-between">
-                <div className="text-sm font-medium">Company-Metadaten</div>
-                <label className="flex items-center gap-2 text-xs">
-                  <input type="checkbox" checked={advanced} onChange={(e) => setAdvanced(e.target.checked)} />
-                  Expertenmodus (JSON bearbeiten)
-                </label>
+    <div className="grid grid-cols-1 md:grid-cols-12 gap-6">
+      <Card className="md:col-span-4">
+        <CardHeader>
+          <CardTitle>Company Settings</CardTitle>
+          <CardDescription>Basisdaten</CardDescription>
+        </CardHeader>
+        <CardContent>
+          {loading ? (
+            <div className="text-sm text-muted-foreground">Lädt…</div>
+          ) : company ? (
+            <form onSubmit={onSubmit} className="space-y-4">
+              <div className="grid gap-2">
+                <Label htmlFor="name">Name</Label>
+                <Input id="name" value={name} onChange={(e) => setName(e.target.value)} required />
               </div>
-              {advanced ? (
-                <div className="grid gap-2">
-                  <Label htmlFor="metadata">Metadata (JSON)</Label>
-                  <textarea
-                    id="metadata"
-                    className="min-h-[140px] w-full rounded-md border bg-background p-2 text-sm font-mono"
-                    value={metadataText}
-                    onChange={(e) => setMetadataText(e.target.value)}
-                    spellCheck={false}
-                  />
-                </div>
-              ) : (
-                <CompanyMetadataForm value={metaObj} onChange={setMetaObj} />
-              )}
+              <div className="grid gap-2">
+                <Label htmlFor="description">Beschreibung</Label>
+                <Input id="description" value={description} onChange={(e) => setDescription(e.target.value)} />
+              </div>
+              <div className="flex items-center gap-3">
+                <Button type="submit" disabled={saving}>{saving ? "Speichern…" : "Speichern"}</Button>
+                {message && <span className="text-sm text-green-600">{message}</span>}
+                {error && <span className="text-sm text-red-600">{error}</span>}
+              </div>
+            </form>
+          ) : (
+            <div className="text-sm text-red-600">Keine Company gefunden.</div>
+          )}
+        </CardContent>
+      </Card>
+
+      <Card className="md:col-span-8">
+        <CardHeader>
+          <CardTitle>Company-Metadaten</CardTitle>
+          <CardDescription>Strukturierte Felder oder JSON</CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-3">
+          <label className="flex items-center gap-2 text-xs">
+            <input type="checkbox" checked={advanced} onChange={(e) => setAdvanced(e.target.checked)} />
+            Expertenmodus (JSON bearbeiten)
+          </label>
+          {advanced ? (
+            <div className="grid gap-2">
+              <Label htmlFor="metadata">Metadata (JSON)</Label>
+              <textarea
+                id="metadata"
+                className="min-h-[200px] w-full rounded-md border bg-background p-2 text-sm font-mono"
+                value={metadataText}
+                onChange={(e) => setMetadataText(e.target.value)}
+                spellCheck={false}
+              />
             </div>
-            <div className="flex items-center gap-3">
-              <Button type="submit" disabled={saving}>{saving ? "Speichern…" : "Speichern"}</Button>
-              {message && <span className="text-sm text-green-600">{message}</span>}
-              {error && <span className="text-sm text-red-600">{error}</span>}
-            </div>
-          </form>
-        ) : (
-          <div className="text-sm text-red-600">Keine Company gefunden.</div>
-        )}
-        
-        
-        
-        <div className="mt-4 border-t pt-4">
+          ) : (
+            <CompanyMetadataForm value={metaObj} onChange={setMetaObj} />
+          )}
+        </CardContent>
+      </Card>
+
+      <Card className="md:col-span-12">
+        <CardHeader>
+          <CardTitle>Seed Dump</CardTitle>
+          <CardDescription>Dump public + auth Daten nach supabase/seed.sql</CardDescription>
+        </CardHeader>
+        <CardContent>
           <div className="flex items-center justify-between gap-3">
-            <div>
-              <div className="text-sm font-medium">Seed Dump</div>
-              <div className="text-xs text-muted-foreground">Dump public + auth Daten nach supabase/seed.sql</div>
-            </div>
+            <div className="text-sm">Exportiert aktuelle Datenstände der Company.</div>
             <Button type="button" variant="outline" onClick={createSeedDump}>Seed-Dump erstellen</Button>
           </div>
           {dumpStatus && <div className="mt-2 text-xs text-muted-foreground">{dumpStatus}</div>}
-        </div>
-      </CardContent>
-    </Card>
-    
+        </CardContent>
+      </Card>
+    </div>
   );
 }
