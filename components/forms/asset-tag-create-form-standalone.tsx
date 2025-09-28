@@ -6,6 +6,7 @@ import * as z from 'zod';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import { createClient } from '@/lib/supabase/client';
 import { AssetTagTemplate } from '@/components/asset-tag-templates/types';
 import type { TablesInsert } from '@/database.types';
@@ -20,7 +21,7 @@ const formSchema = z.object({
 
 export function AssetTagCreateFormStandalone() {
   const [templates, setTemplates] = useState<Array<{ id: number; template: AssetTagTemplate }>>([]);
-  const [selectedTemplate, setSelectedTemplate] = useState<AssetTagTemplate | null>(null);
+  const [, setSelectedTemplate] = useState<AssetTagTemplate | null>(null);
   const [loading, setLoading] = useState(false);
   const supabase = createClient();
   const router = useRouter();
@@ -86,50 +87,48 @@ export function AssetTagCreateFormStandalone() {
   };
 
   return (
-    <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
-      <div>
-        <Label htmlFor="template">Template</Label>
-        <select
-          id="template"
-          className="w-full rounded border px-3 py-2 mt-1"
-          value={String(form.watch('printed_template') ?? '')}
-          onChange={(e) => handleTemplateChange(e.target.value)}
-          disabled={loading}
-        >
-          <option value="">Bitte wählen Sie ein Template</option>
-          {templates.map((template) => (
-            <option key={template.id} value={template.id.toString()}>
-              {template.template.name}
-            </option>
-          ))}
-        </select>
-        {form.formState.errors.printed_template && (
-          <p className="text-red-500 text-sm mt-1">{form.formState.errors.printed_template.message}</p>
-        )}
-      </div>
-      
-      {selectedTemplate && (
-        <div>
-          <Label htmlFor="printed_code">Code</Label>
-          <Input 
-            id="printed_code" 
-            {...form.register('printed_code')} 
+    <form onSubmit={form.handleSubmit(onSubmit)} className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+      <Card>
+        <CardHeader>
+          <CardTitle>Template auswählen</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <Label htmlFor="template">Template</Label>
+          <select
+            id="template"
+            className="w-full rounded border px-3 py-2 mt-1"
+            value={String(form.watch('printed_template') ?? '')}
+            onChange={(e) => handleTemplateChange(e.target.value)}
             disabled={loading}
-            className="mt-1"
-          />
+          >
+            <option value="">Bitte wählen Sie ein Template</option>
+            {templates.map((template) => (
+              <option key={template.id} value={template.id.toString()}>
+                {template.template.name}
+              </option>
+            ))}
+          </select>
+          {form.formState.errors.printed_template && (
+            <p className="text-red-500 text-sm mt-1">{form.formState.errors.printed_template.message}</p>
+          )}
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardHeader>
+          <CardTitle>Code</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <Label htmlFor="printed_code">Code</Label>
+          <Input id="printed_code" {...form.register('printed_code')} disabled={loading} className="mt-1" />
           {form.formState.errors.printed_code && (
             <p className="text-red-500 text-sm mt-1">{form.formState.errors.printed_code.message}</p>
           )}
-        </div>
-      )}
-      
-      <div className="flex justify-end gap-2">
-        <Button 
-          type="button" 
-          variant="outline" 
-          onClick={() => router.push('/management/asset-tags')}
-          disabled={loading}
-        >
+        </CardContent>
+      </Card>
+
+      <div className="col-span-full flex justify-end gap-2">
+        <Button type="button" variant="outline" onClick={() => router.push('/management/asset-tags')} disabled={loading}>
           Abbrechen
         </Button>
         <Button type="submit" disabled={loading}>

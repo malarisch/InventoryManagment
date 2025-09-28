@@ -7,6 +7,7 @@ import * as z from 'zod';
 import { AssetTagTemplatePreview } from '@/components/asset-tag-templates/template-preview';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { createClient } from '@/lib/supabase/client';
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
@@ -155,8 +156,19 @@ export function AssetTagTemplateCreateForm() {
       }
 
       console.log('Template created successfully:', data);
-      // Redirect to company settings or show success message
-      router.push('/management/company-settings?tab=templates');
+      // Robust redirect after success
+      const target = '/management/company-settings?tab=templates';
+      try {
+        router.push(target);
+        // Fallback in case client-side navigation is blocked
+        setTimeout(() => {
+          if (typeof window !== 'undefined' && !window.location.href.includes('/management/company-settings')) {
+            window.location.assign(target);
+          }
+        }, 250);
+      } catch {
+        if (typeof window !== 'undefined') window.location.assign(target);
+      }
       
     } catch (err) {
       console.error('Error creating template:', err);
@@ -167,30 +179,38 @@ export function AssetTagTemplateCreateForm() {
   };
 
   return (
-    <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+    <form onSubmit={form.handleSubmit(onSubmit)} className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-4">
       {error && (
-        <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded">
-          {error}
-        </div>
+        <Card className="col-span-full border-red-200">
+          <CardContent className="bg-red-50 text-red-700 px-4 py-3">{error}</CardContent>
+        </Card>
       )}
       
       {/* Basic Information */}
-      <div className="space-y-4">
-        <h3 className="text-lg font-medium">Basic Information</h3>
-        <div>
-          <label className="block text-sm font-medium mb-1">Name</label>
-          <Input placeholder="My Template" {...form.register('name')} />
-        </div>
-        <div>
-          <label className="block text-sm font-medium mb-1">Description</label>
-          <Input placeholder="Optional description" {...form.register('description')} />
-        </div>
-      </div>
+      <Card className="xl:col-span-1">
+        <CardHeader>
+          <CardTitle>Basic Information</CardTitle>
+          <CardDescription>Template name and description</CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-3">
+          <div>
+            <label className="block text-sm font-medium mb-1">Name</label>
+            <Input placeholder="My Template" {...form.register('name')} />
+          </div>
+          <div>
+            <label className="block text-sm font-medium mb-1">Description</label>
+            <Input placeholder="Optional description" {...form.register('description')} />
+          </div>
+        </CardContent>
+      </Card>
 
       {/* Dimensions */}
-      <div className="space-y-4">
-        <h3 className="text-lg font-medium">Dimensions</h3>
-        <div className="grid grid-cols-2 gap-4">
+      <Card>
+        <CardHeader>
+          <CardTitle>Dimensions</CardTitle>
+          <CardDescription>Physical size and margins</CardDescription>
+        </CardHeader>
+        <CardContent className="grid grid-cols-2 gap-4">
           <div>
             <label className="block text-sm font-medium mb-1">Width (mm)</label>
             <Input type="number" {...form.register('tagWidthMm', { valueAsNumber: true })} />
@@ -203,13 +223,16 @@ export function AssetTagTemplateCreateForm() {
             <label className="block text-sm font-medium mb-1">Margin (mm)</label>
             <Input type="number" step="0.1" {...form.register('marginMm', { valueAsNumber: true })} />
           </div>
-        </div>
-      </div>
+        </CardContent>
+      </Card>
 
       {/* Styling */}
-      <div className="space-y-4">
-        <h3 className="text-lg font-medium">Styling</h3>
-        <div className="grid grid-cols-2 gap-4">
+      <Card>
+        <CardHeader>
+          <CardTitle>Styling</CardTitle>
+          <CardDescription>Colors and typography</CardDescription>
+        </CardHeader>
+        <CardContent className="grid grid-cols-2 gap-4">
           <div>
             <label className="block text-sm font-medium mb-1">Background Color</label>
             <Input type="color" {...form.register('backgroundColor')} />
@@ -234,13 +257,16 @@ export function AssetTagTemplateCreateForm() {
             <input type="checkbox" {...form.register('isMonochrome')} />
             <label className="text-sm font-medium">Monochrome (Black & White)</label>
           </div>
-        </div>
-      </div>
+        </CardContent>
+      </Card>
 
       {/* Code Generation */}
-      <div className="space-y-4">
-        <h3 className="text-lg font-medium">Code Generation</h3>
-        <div className="grid grid-cols-2 gap-4">
+      <Card>
+        <CardHeader>
+          <CardTitle>Code Generation</CardTitle>
+          <CardDescription>Build printed_code from rules</CardDescription>
+        </CardHeader>
+        <CardContent className="grid grid-cols-2 gap-4">
           <div>
             <label className="block text-sm font-medium mb-1">Prefix</label>
             <Input placeholder="e.g., EQ" {...form.register('prefix')} />
@@ -255,18 +281,18 @@ export function AssetTagTemplateCreateForm() {
           </div>
           <div>
             <label className="block text-sm font-medium mb-1">Numbering Scheme</label>
-            <select {...form.register('numberingScheme')} className="w-full px-3 py-2 border border-gray-300 rounded-md">
+            <select {...form.register('numberingScheme')} className="h-9 rounded-md border bg-background px-3 text-sm w-full">
               <option value="sequential">Sequential</option>
               <option value="random">Random</option>
             </select>
           </div>
-          <div>
+          <div className="col-span-2">
             <label className="block text-sm font-medium mb-1">String Template</label>
-            <Input placeholder="e.g., {prefix}-{number}-{suffix}" {...form.register('stringTemplate')} />
+            <Input placeholder="e.g., {prefix}{number}{suffix}" {...form.register('stringTemplate')} />
           </div>
           <div>
             <label className="block text-sm font-medium mb-1">Code Type</label>
-            <select {...form.register('codeType')} className="w-full px-3 py-2 border border-gray-300 rounded-md">
+            <select {...form.register('codeType')} className="h-9 rounded-md border bg-background px-3 text-sm w-full">
               <option value="QR">QR Code</option>
               <option value="Barcode">Barcode</option>
               <option value="None">None</option>
@@ -276,103 +302,121 @@ export function AssetTagTemplateCreateForm() {
             <label className="block text-sm font-medium mb-1">Code Size (mm)</label>
             <Input type="number" {...form.register('codeSizeMm', { valueAsNumber: true })} />
           </div>
-        </div>
-      </div>
+        </CardContent>
+      </Card>
 
       {/* Elements */}
-      <div className="space-y-4">
-        <h3 className="text-lg font-medium">Elements</h3>
-        {fields.map((f, index) => (
-          <div key={f.id} className="border border-gray-200 p-4 rounded-md space-y-4">
-            <div className="grid grid-cols-3 gap-4">
-              <div>
-                <label className="block text-sm font-medium mb-1">Type</label>
-                <select className="w-full px-3 py-2 border border-gray-300 rounded-md" {...form.register(`elements.${index}.type` as const)}>
-                  <option value="text">Text</option>
-                  <option value="qrcode">QR Code</option>
-                  <option value="barcode">Barcode</option>
-                  <option value="image">Image</option>
-                </select>
+      <Card className="col-span-full">
+        <CardHeader>
+          <CardTitle>Elements</CardTitle>
+          <CardDescription>Add and configure template elements</CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          {fields.map((f, index) => (
+            <div key={f.id} className="border border-dashed rounded-md p-4 space-y-4">
+              <div className="grid grid-cols-3 gap-4">
+                <div>
+                  <label className="block text-sm font-medium mb-1">Type</label>
+                  <select className="h-9 rounded-md border bg-background px-3 text-sm w-full" {...form.register(`elements.${index}.type` as const)}>
+                    <option value="text">Text</option>
+                    <option value="qrcode">QR Code</option>
+                    <option value="barcode">Barcode</option>
+                    <option value="image">Image</option>
+                  </select>
+                </div>
+                <div>
+                  <label className="block text-sm font-medium mb-1">X Position (mm)</label>
+                  <Input type="number" step="0.01" {...form.register(`elements.${index}.x` as const, { valueAsNumber: true })} />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium mb-1">Y Position (mm)</label>
+                  <Input type="number" step="0.01" {...form.register(`elements.${index}.y` as const, { valueAsNumber: true })} />
+                </div>
               </div>
-              <div>
-                <label className="block text-sm font-medium mb-1">X Position (mm)</label>
-                <Input type="number" step="0.01" {...form.register(`elements.${index}.x` as const, { valueAsNumber: true })} />
+              <div className="grid grid-cols-3 gap-4">
+                <div className="col-span-2">
+                  <label className="block text-sm font-medium mb-1">Value / Placeholder / Image URL</label>
+                  <Input placeholder="e.g., {equipment_name} or https://...img.png" {...form.register(`elements.${index}.value` as const)} />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium mb-1">Size</label>
+                  <Input type="number" placeholder="Font/code/image width" {...form.register(`elements.${index}.size` as const, { valueAsNumber: true })} />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium mb-1">Height (image)</label>
+                  <Input type="number" placeholder="Only for image" {...form.register(`elements.${index}.height` as const, { valueAsNumber: true })} />
+                </div>
               </div>
-              <div>
-                <label className="block text-sm font-medium mb-1">Y Position (mm)</label>
-                <Input type="number" step="0.01" {...form.register(`elements.${index}.y` as const, { valueAsNumber: true })} />
+              <div className="flex items-end justify-between">
+                <div>
+                  <label className="block text-sm font-medium mb-1">Color Override</label>
+                  <Input type="color" {...form.register(`elements.${index}.color` as const)} />
+                </div>
+                <Button type="button" variant="destructive" onClick={() => remove(index)}>
+                  Remove Element
+                </Button>
               </div>
             </div>
-            <div className="grid grid-cols-3 gap-4">
-              <div className="col-span-2">
-                <label className="block text-sm font-medium mb-1">Value / Placeholder / Image URL</label>
-                <Input placeholder="e.g., {equipment_name} or https://...img.png" {...form.register(`elements.${index}.value` as const)} />
-              </div>
-              <div>
-                <label className="block text-sm font-medium mb-1">Size</label>
-                <Input type="number" placeholder="Font/code/image width" {...form.register(`elements.${index}.size` as const, { valueAsNumber: true })} />
-              </div>
-              <div>
-                <label className="block text-sm font-medium mb-1">Height (image)</label>
-                <Input type="number" placeholder="Only for image" {...form.register(`elements.${index}.height` as const, { valueAsNumber: true })} />
-              </div>
-            </div>
-            <div className="flex items-end justify-between">
-              <div>
-                <label className="block text-sm font-medium mb-1">Color Override</label>
-                <Input type="color" {...form.register(`elements.${index}.color` as const)} />
-              </div>
-              <Button type="button" variant="destructive" onClick={() => remove(index)}>
-                Remove Element
-              </Button>
-            </div>
-          </div>
-        ))}
-        <Button type="button" variant="outline" onClick={() => append({ type: 'text', x: 0, y: 0, value: '', size: 12 })}>
-          Add Element
+          ))}
+          <Button type="button" variant="outline" onClick={() => append({ type: 'text', x: 0, y: 0, value: '', size: 12 })}>
+            Add Element
+          </Button>
+        </CardContent>
+      </Card>
+
+      {/* Live Preview */}
+      <Card className="col-span-full xl:col-span-2">
+        <CardHeader>
+          <CardTitle>Live Preview</CardTitle>
+          <CardDescription>Drag to arrange elements</CardDescription>
+        </CardHeader>
+        <CardContent>
+          {(() => {
+            const w = form.watch();
+            const previewTemplate: AssetTagTemplate = {
+              name: w.name,
+              description: w.description,
+              tagWidthMm: w.tagWidthMm,
+              tagHeightMm: w.tagHeightMm,
+              marginMm: w.marginMm as number | undefined,
+              backgroundColor: w.backgroundColor,
+              textColor: w.textColor,
+              borderColor: w.borderColor,
+              borderWidthMm: w.borderWidthMm as number | undefined,
+              textSizePt: w.textSizePt as number | undefined,
+              isMonochrome: w.isMonochrome,
+              prefix: w.prefix,
+              numberLength: w.numberLength as number | undefined,
+              suffix: w.suffix,
+              numberingScheme: w.numberingScheme,
+              stringTemplate: w.stringTemplate,
+              codeType: w.codeType,
+              codeSizeMm: w.codeSizeMm as number | undefined,
+              elements: (w.elements || []).map(e => ({
+                ...e,
+                size: e.size as number | undefined,
+                height: e.height as number | undefined,
+              })),
+            };
+            return (
+              <AssetTagTemplatePreview
+                template={previewTemplate}
+                editable
+                onElementsChange={(els: AssetTagTemplateElement[]) =>
+                  form.setValue('elements', els as unknown as FormValues['elements'], { shouldDirty: true, shouldTouch: true })
+                }
+              />
+            );
+          })()}
+        </CardContent>
+      </Card>
+
+      {/* Actions */}
+      <div className="col-span-full flex justify-end">
+        <Button type="submit" disabled={isLoading}>
+          {isLoading ? 'Creating...' : 'Create Template'}
         </Button>
       </div>
-
-      {/* Template Preview (interactive) */}
-      {(() => {
-        const w = form.watch();
-        const previewTemplate: AssetTagTemplate = {
-          name: w.name,
-            description: w.description,
-            tagWidthMm: w.tagWidthMm,
-            tagHeightMm: w.tagHeightMm,
-            marginMm: w.marginMm as number | undefined,
-            backgroundColor: w.backgroundColor,
-            textColor: w.textColor,
-            borderColor: w.borderColor,
-            borderWidthMm: w.borderWidthMm as number | undefined,
-            textSizePt: w.textSizePt as number | undefined,
-            isMonochrome: w.isMonochrome,
-            prefix: w.prefix,
-            numberLength: w.numberLength as number | undefined,
-            suffix: w.suffix,
-            numberingScheme: w.numberingScheme,
-            stringTemplate: w.stringTemplate,
-            codeType: w.codeType,
-            codeSizeMm: w.codeSizeMm as number | undefined,
-            elements: (w.elements || []).map(e => ({
-              ...e,
-              size: e.size as number | undefined,
-              height: e.height as number | undefined,
-            })),
-        };
-        return (
-          <AssetTagTemplatePreview
-            template={previewTemplate}
-            editable
-            onElementsChange={(els: AssetTagTemplateElement[]) => form.setValue('elements', els as unknown as FormValues['elements'], { shouldDirty: true, shouldTouch: true })}
-          />
-        );
-      })()}
-
-      <Button type="submit" disabled={isLoading}>
-        {isLoading ? 'Creating...' : 'Create Template'}
-      </Button>
     </form>
   );
 }
