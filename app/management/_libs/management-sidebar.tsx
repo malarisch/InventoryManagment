@@ -11,6 +11,7 @@ import {
   Briefcase,
   Users,
   Archive,
+  Wrench,
 } from "lucide-react";
 import { CompanyNameHeader } from "@/app/management/_libs/company-name-header";
 import React from "react";
@@ -30,6 +31,7 @@ const iconMap: Record<string, React.ComponentType<React.SVGProps<SVGSVGElement>>
   users: Users,
   archive: Archive,
   settings: Settings,
+  wrench: Wrench,
 };
 
 export function Sidebar({ items }: { items: NavItem[] }) {

@@ -18,6 +18,7 @@ import {
   Briefcase,
   Users,
   Archive,
+  Wrench,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { usePathname } from "next/navigation";
@@ -56,6 +57,7 @@ const iconMap: Record<string, ComponentType<SVGProps<SVGSVGElement>>> = {
   users: Users,
   archive: Archive,
   settings: Settings,
+  wrench: Wrench,
 };
 
 export function Header({ items }: { items: NavItem[] }) {

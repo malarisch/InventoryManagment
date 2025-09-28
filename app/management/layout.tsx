@@ -20,6 +20,7 @@ const navItems: NavItem[] = [
   { label: "Customers", href: "/management/customers", icon: "users" },
   { label: "Cases", href: "/management/cases", icon: "archive" },
   { label: "Jobs", href: "/management/jobs", icon: "briefcase" },
+  { label: "Workshop", href: "/management/workshop", icon: "wrench" },
   { label: "Asset Tags", href: "/management/asset-tags", icon: "tag" },
   { label: "Settings", href: "/management/company-settings", icon: "settings" },
   { label: "Asset Tag Templates", href: "/management/asset-tag-templates/new", icon: "file-plus" },
