@@ -5,7 +5,7 @@ import { CaseCreateForm } from "@/components/forms/case-create-form";
 export default function CaseNewPage() {
   return (
     <main className="min-h-screen w-full flex flex-col items-center p-5">
-      <div className="w-full max-w-3xl flex-1 space-y-4">
+      <div className="w-full max-w-7xl flex-1 space-y-4">
         <div className="text-sm text-muted-foreground">
           <Link href="/management" className="hover:underline">← Zurück</Link>
         </div>

@@ -2,7 +2,7 @@ import { createClient } from '@/lib/supabase/server';
 import Link from 'next/link';
 
 export default async function WorkshopPage() {
-  const supabase = createClient();
+  const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) {
     return (
@@ -20,17 +20,20 @@ export default async function WorkshopPage() {
     .maybeSingle();
   const companyId = uc?.company_id as number | undefined;
 
-  // Load workshop todos and equipments in workshop
-  const [{ data: todos }, { data: workshopLocations }, { data: equip }] = await Promise.all([
+  // Load workshop locations first, then todos and equipments filtered by those locations
+  const { data: workshopLocations } = await supabase
+    .from('locations')
+    .select('id, name')
+    .eq('is_workshop', true);
+  const workshopIds = (workshopLocations ?? []).map((l: { id: number }) => l.id);
+
+  const [{ data: todos }, { data: equip }] = await Promise.all([
     supabase.from('workshop_todos')
       .select('id, title, status, equipment_id, case_id, created_at')
       .order('created_at', { ascending: false }),
-    supabase.from('locations')
-      .select('id, name')
-      .eq('is_workshop', true),
     supabase.from('equipments')
       .select('id, articles(name), current_location, locations!equipments_current_location_fkey(name)')
-      .in('current_location', (workshopLocations?.map(l => l.id) ?? [0]) as number[])
+      .in('current_location', workshopIds.length ? workshopIds : [0])
   ]);
 
   return (

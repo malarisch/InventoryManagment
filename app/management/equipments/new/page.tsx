@@ -7,7 +7,7 @@ export default async function EquipmentNewPage({ searchParams }: { searchParams?
   const initialArticleId = typeof sp.articleId === "string" ? Number(sp.articleId) : undefined;
   return (
     <main className="min-h-screen w-full flex flex-col items-center p-5">
-      <div className="w-full max-w-3xl flex-1 space-y-4">
+      <div className="w-full max-w-7xl flex-1 space-y-4">
         <div className="text-sm text-muted-foreground">
           <Link href="/management/equipments" className="hover:underline">← Zurück zur Übersicht</Link>
         </div>

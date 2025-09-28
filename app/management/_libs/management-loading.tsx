@@ -123,7 +123,7 @@ export function ManagementFormLoading({
 }: ManagementFormLoadingProps) {
   return (
     <main className="min-h-screen w-full flex flex-col items-center p-5">
-      <div className="w-full max-w-3xl flex-1 space-y-4">
+      <div className="w-full max-w-7xl flex-1 space-y-4">
         {showBackLink ? <Skeleton className={`h-4 ${backLinkWidthClass}`} aria-hidden="true" /> : null}
         <div className="space-y-4 rounded-lg border border-border/60 bg-card/40 p-6">
           <Skeleton className={`h-6 ${titleWidthClass}`} aria-hidden="true" />
