@@ -198,7 +198,7 @@ model cases {
   id                                               BigInt              @id @default(autoincrement())
   created_at                                       DateTime            @default(now()) @db.Timestamptz(6)
   case_equipment                                   BigInt?
-  contains_equipments                              BigInt[]?
+  contains_equipments                              BigInt[]
   company_id                                       BigInt?
   created_by                                       String?             @default(dbgenerated("auth.uid()")) @db.Uuid
   contains_articles                                Json[]

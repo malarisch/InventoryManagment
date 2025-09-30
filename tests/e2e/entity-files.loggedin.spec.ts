@@ -111,35 +111,10 @@ test.describe('Entity Files Tests', () => {
   test('should display file manager on equipment detail page', async ({ page, companyName }) => {
     if (!admin) throw new Error('Admin client not initialized');
     
-    // Login first
-
     
-    // Resolve the active company id for this test run
-    const { data: companyRow, error: companyErr } = await admin
-      .from('companies')
-      .select('id')
-      .eq('name', companyName)
-      .maybeSingle();
-    expect(companyErr).toBeFalsy();
-    const activeCompanyId = companyRow?.id as number | undefined;
-
-    // Try to find an existing equipment for the active company first
-    const { data: existingEquipment } = await admin
-      .from('equipments')
-      .select('id, company_id')
-      .eq('company_id', activeCompanyId ?? -1)
-      .order('created_at', { ascending: false })
-      .limit(1)
-      .maybeSingle();
-    
-    let equipmentId: number;
-    
-    if (existingEquipment && existingEquipment.id) {
-      equipmentId = existingEquipment.id as number;
-    } else {
-      equipmentId = await createEquipment(companyName);
+    const equipmentId = await createEquipment(companyName);
       console.log(`Created new equipment with ID: ${equipmentId}`);
-    }
+    
     
     const equipmentUrl = `/management/equipments/${equipmentId}`;
     await page.goto(equipmentUrl);

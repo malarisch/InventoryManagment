@@ -21,6 +21,7 @@
   - `jobs`: scheduled work linked to `company_id`, optional `customer_id`, optional `created_by`, scheduling fields, `name`, `type`, `job_location`, and `meta` JSON.
   - `job_booked_assets` and `job_assets_on_job`: materialized reservations/assignments of equipment or cases to jobs; columns include `job_id`, optional `equipment_id`/`case_id`, `company_id`, optional `created_by`, and timestamps.
   - `history`: append-only audit trail storing `table_name`, `data_id`, `old_data`, optional `change_made_by`, and `company_id`; readable to company members.
+    - Note: The history trigger intentionally does not log DELETE operations on `companies` to avoid FK conflicts during teardown. The FK `history.company_id -> companies.id` is deferrable initially deferred so cascading deletes complete within the same transaction.
 
 ## Build, Test, and Development Commands
 - Install: `cd inventorymanagement && npm install`.
