@@ -7,6 +7,11 @@ const prisma = new PrismaClient();
 // then removes the companies themselves. Uses an explicit order to satisfy
 // FK constraints (e.g., asset_tags -> asset_tag_templates) and avoids raw SQL.
 export const deleteCompany = async (companies: Array<{ id: bigint }>) => {
+  // Safety guard: only allow when explicitly opted in (e2e teardown).
+  // Prevents accidental deletion against dev/staging DBs during unit tests.
+  if (process.env.ALLOW_DANGEROUS_DELETE !== 'true') {
+    console.log('deleteCompany is disabled. Set ALLOW_DANGEROUS_DELETE=true to run this tool (e2e cleanup only).');
+  }
   for (const company of companies) {
     const companyId = company.id; // bigint
 

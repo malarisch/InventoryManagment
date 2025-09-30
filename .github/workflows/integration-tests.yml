@@ -40,29 +40,8 @@ jobs:
         run: supabase start
 
       - name: Export Supabase environment
-        run: |
-          supabase status -o env | grep '=' > supabase.env
-          if [ ! -s supabase.env ]; then
-            echo "Supabase env output is empty" >&2
-            cat supabase.env
-            exit 1
-          fi
-          set -a
-          . supabase.env
-          set +a
-          {
-            echo "NEXT_PUBLIC_SUPABASE_URL=${API_URL}"
-            echo "NEXT_PUBLIC_SUPABASE_ANON_KEY=${ANON_KEY}"
-            echo "SUPABASE_SERVICE_ROLE_KEY=${SERVICE_ROLE_KEY}"
-          } >> "$GITHUB_ENV"
+        run: ./scripts/write-supabase-env.sh > .env.local
 
-      - name: Create env file for Next.js
-        run: |
-          cat <<EOF > .env.local
-          NEXT_PUBLIC_SUPABASE_URL=${NEXT_PUBLIC_SUPABASE_URL}
-          NEXT_PUBLIC_SUPABASE_ANON_KEY=${NEXT_PUBLIC_SUPABASE_ANON_KEY}
-          SUPABASE_SERVICE_ROLE_KEY=${SUPABASE_SERVICE_ROLE_KEY}
-          EOF
       - name: Create symlink for .env
         run: ln -s .env.local .env
 
@@ -97,4 +76,5 @@ jobs:
           NEXT_PUBLIC_SUPABASE_URL: ${{ env.NEXT_PUBLIC_SUPABASE_URL }}
           NEXT_PUBLIC_SUPABASE_ANON_KEY: ${{ env.NEXT_PUBLIC_SUPABASE_ANON_KEY }}
           SUPABASE_SERVICE_ROLE_KEY: ${{ env.SUPABASE_SERVICE_ROLE_KEY }}
+          DATABASE_URL: ${{ env.DATABASE_URL }}
         run: npm run test
