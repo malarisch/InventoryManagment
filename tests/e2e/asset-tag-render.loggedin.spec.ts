@@ -1,5 +1,5 @@
 import { expect, Page } from '@playwright/test';
-import { createAdminClient } from '@/lib/supabase/admin';
+// removed unused createAdminClient import
 
 import {test} from '../playwright_setup.types';
 

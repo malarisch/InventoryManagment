@@ -44,13 +44,14 @@ test.describe("Login Setup", () => {
       throw createUserError;
     }
     userId = createUserData.user?.id ?? null;
-  } catch (e: any) {
+  } catch (e: unknown) {
     // Reduce noisy stack traces when the user already exists in auth
-    const code = e?.code || e?.error?.code;
-    if (code === 'email_exists' || String(e?.message || '').includes('already been registered')) {
+    const err = e as { code?: string; error?: { code?: string }; message?: string };
+    const code = err?.code || err?.error?.code;
+    if (code === 'email_exists' || String(err?.message || '').includes('already been registered')) {
       console.warn('Test user already exists, continuing with existing account');
     } else {
-      console.error("Error creating test user:", e);
+      console.error("Error creating test user:", err);
     }
     userId = await getUserIdByEmail(testEmail);
     if (!userId) {
