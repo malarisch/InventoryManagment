@@ -96,7 +96,7 @@ jobs:
       # Determine Playwright version for stable browser cache key
       - name: Determine Playwright version
         id: playwright-version
-        run: echo "version=$(node -e \"console.log(require('playwright/package.json').version)\")" >> $GITHUB_OUTPUT
+        run: echo version=$(node -e "console.log(require('playwright/package.json').version)") >> $GITHUB_OUTPUT
 
       # Cache Playwright browsers to avoid re-downloading on each run
       - name: Cache Playwright browsers
