@@ -131,16 +131,10 @@ test.describe('Entity Files Tests', () => {
       .order('created_at', { ascending: false })
       .limit(1)
       .maybeSingle();
-    
-    let equipmentId: number;
-    
-    if (existingEquipment && existingEquipment.id) {
-      equipmentId = existingEquipment.id as number;
-    } else {
-      equipmentId = await createEquipment(companyName);
-      console.log(`Created new equipment with ID: ${equipmentId}`);
-    
-    
+
+    const equipmentId = existingEquipment?.id as number | undefined ?? await createEquipment(companyName);
+
+
     const equipmentUrl = `/management/equipments/${equipmentId}`;
     await page.goto(equipmentUrl);
     await page.waitForLoadState('networkidle');

@@ -286,7 +286,7 @@ const timestamp = Date.now();
         console.log('✓ Company customer deleted successfully - redirected to list');
         
         // Verify customer is no longer in the list
-        await expect(page.locator(`text="${editCompanyName}"`)).not.toBeVisible();
+        await expect(page.locator(`text="${companyName}"`)).not.toBeVisible();
       } else {
         // Try to access the customer detail page directly to verify 404
         const currentUrl = page.url();
