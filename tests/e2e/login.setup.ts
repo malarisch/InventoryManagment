@@ -44,8 +44,14 @@ test.describe("Login Setup", () => {
       throw createUserError;
     }
     userId = createUserData.user?.id ?? null;
-  } catch (e) {
-    console.error("Error creating test user:", e);
+  } catch (e: any) {
+    // Reduce noisy stack traces when the user already exists in auth
+    const code = e?.code || e?.error?.code;
+    if (code === 'email_exists' || String(e?.message || '').includes('already been registered')) {
+      console.warn('Test user already exists, continuing with existing account');
+    } else {
+      console.error("Error creating test user:", e);
+    }
     userId = await getUserIdByEmail(testEmail);
     if (!userId) {
       return Promise.reject("Failed to create or find test user");

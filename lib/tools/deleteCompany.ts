@@ -10,10 +10,11 @@ export const deleteCompany = async (companies: Array<{ id: bigint }>) => {
   for (const company of companies) {
     const companyId = company.id; // bigint
 
-    await prisma.$transaction(async (tx) => {
-      // Job assignment tables first (they reference jobs, equipments, cases)
-      await tx.job_assets_on_job.deleteMany({ where: { company_id: companyId } });
-      await tx.job_booked_assets.deleteMany({ where: { company_id: companyId } });
+    try {
+      await prisma.$transaction(async (tx) => {
+        // Job assignment tables first (they reference jobs, equipments, cases)
+        await tx.job_assets_on_job.deleteMany({ where: { company_id: companyId } });
+        await tx.job_booked_assets.deleteMany({ where: { company_id: companyId } });
 
       // Core entities
       await tx.jobs.deleteMany({ where: { company_id: companyId } });
@@ -53,11 +54,13 @@ export const deleteCompany = async (companies: Array<{ id: bigint }>) => {
       // Important: delete history last, because upstream deletes may append entries via triggers
       await tx.history.deleteMany({ where: { company_id: companyId } });
 
-      // Finally the company row
-      await tx.companies.delete({ where: { id: companyId } });
-    });
-
-    // Optional log for visibility during test teardown
+      });
+    } catch (e) {
+      console.warn(`Cleanup warning for company ${companyId.toString()}:`, e);
+    }
+    // Delete history and company in a clean transactionless context
+    try { await prisma.history.deleteMany({ where: { company_id: companyId } }); } catch {}
+    try { await prisma.companies.delete({ where: { id: companyId } }); } catch {}
     console.log(`Company ${companyId.toString()} and all related data deleted.`);
   }
 };

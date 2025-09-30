@@ -102,14 +102,16 @@ export function AssetTagTemplateCreateForm() {
         throw new Error('User not authenticated');
       }
 
-      // Get user's company
-      const { data: userCompany, error: companyError } = await supabase
+      // Get one of the user's companies (prefer the most recent membership)
+      const { data: membership, error: companyError } = await supabase
         .from('users_companies')
-        .select('company_id')
+        .select('company_id, created_at')
         .eq('user_id', user.id)
-        .single();
+        .order('created_at', { ascending: false })
+        .limit(1)
+        .maybeSingle();
 
-      if (companyError || !userCompany) {
+      if (companyError || !membership) {
         throw companyError || new Error('User has no associated company');
       }
 
@@ -145,7 +147,7 @@ export function AssetTagTemplateCreateForm() {
         .from('asset_tag_templates')
         .insert({
           template: templatePayload,
-          company_id: userCompany.company_id,
+          company_id: membership.company_id,
           created_by: user.id
         })
         .select()

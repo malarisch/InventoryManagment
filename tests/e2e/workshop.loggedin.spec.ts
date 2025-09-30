@@ -60,8 +60,8 @@ test.describe('Workshop System', () => {
     await page.goto('/management/workshop');
     await page.waitForLoadState('networkidle');
 
-    // Verify todo appears
-    await expect(page.locator('text=Test: Netzteil prüfen')).toBeVisible();
+    // Verify todo appears (be tolerant if shown in multiple lists/columns)
+    await expect(page.getByText('Test: Netzteil prüfen').first()).toBeVisible();
     // Verify equipment listed under "In der Werkstatt"
     await expect(page.locator('text=In der Werkstatt')).toBeVisible();
   });

@@ -10,6 +10,7 @@ import type { CustomerMetadata } from "@/components/metadataTypes.types";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
+import { useRouter } from "next/navigation";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 
 type Customer = Tables<"customers">;
@@ -17,6 +18,7 @@ type Customer = Tables<"customers">;
 export function CustomerEditForm({ customer }: { customer: Customer }) {
   console.log('CustomerEditForm received customer:', JSON.stringify(customer, null, 2));
   const supabase = useMemo(() => createClient(), []);
+  const router = useRouter();
   const [type, setType] = useState<string>(customer.type ?? "");
   const [companyName, setCompanyName] = useState<string>(customer.company_name ?? "");
   const [forename, setForename] = useState<string>(customer.forename ?? "");
@@ -90,7 +92,10 @@ export function CustomerEditForm({ customer }: { customer: Customer }) {
         metadata,
       })
       .eq("id", customer.id);
-    if (error) setError(error.message); else setMessage("Gespeichert.");
+    if (error) setError(error.message); else {
+      setMessage("Gespeichert.");
+      try { router.refresh(); } catch { /* noop */ }
+    }
     setSaving(false);
   }
 
