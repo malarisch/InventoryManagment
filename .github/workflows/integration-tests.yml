@@ -31,13 +31,59 @@ jobs:
           fi
       - name: Install dependencies
         run: npm ci
+
+      # Cache Prisma engines to speed up `prisma generate`
+      - name: Cache Prisma engines
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.cache/prisma
+            node_modules/.prisma
+          key: ${{ runner.os }}-prisma-${{ hashFiles('**/package-lock.json') }}
       - name: Install Supabase CLI
         uses: supabase/setup-cli@v1
         with:
           version: latest
 
+      # Determine Supabase CLI version for cache key stability
+      - name: Determine Supabase CLI version
+        id: supabase-cli-version
+        run: echo "version=$(supabase --version | tr ' ' '-' )" >> $GITHUB_OUTPUT
+
+      # Restore cached Supabase Docker images (to avoid repeated image pulls)
+      - name: Restore Supabase Docker images cache
+        id: supabase-images-cache
+        uses: actions/cache@v4
+        with:
+          path: .cache/supabase-images.tar
+          key: ${{ runner.os }}-supabase-images-${{ steps.supabase-cli-version.outputs.version }}-${{ hashFiles('supabase/config.toml') }}
+
+      # Load cached Docker images if available
+      - name: Load cached Supabase Docker images
+        if: steps.supabase-images-cache.outputs.cache-hit == 'true'
+        run: |
+          docker load -i .cache/supabase-images.tar
+
       - name: Start Supabase stack
         run: supabase start
+
+      # Save Docker images to cache for future runs (only if not restored)
+      - name: Save Supabase Docker images to cache
+        if: steps.supabase-images-cache.outputs.cache-hit != 'true'
+        run: |
+          mkdir -p .cache
+          # Collect images used by running containers in this project
+          IMAGES=$(docker ps --format '{{.Image}} {{.Names}}' | grep -i 'inventorymanagment' | awk '{print $1}' | sort -u)
+          if [ -z "$IMAGES" ]; then
+            # Fallback to common Supabase image namespaces
+            IMAGES=$(docker ps --format '{{.Image}}' | grep -E 'supabase/|postgrest|kong|inbucket|imgproxy' | sort -u || true)
+          fi
+          if [ -n "$IMAGES" ]; then
+            echo "Caching images:" && echo "$IMAGES"
+            docker save -o .cache/supabase-images.tar $IMAGES
+          else
+            echo 'No Supabase images detected to cache'
+          fi
 
       - name: Export Supabase environment
         run: ./scripts/write-supabase-env.sh > .env.local
@@ -46,6 +92,18 @@ jobs:
         run: ln -s .env.local .env
       - name: Create Prisma client
         run: npx prisma generate
+
+      # Determine Playwright version for stable browser cache key
+      - name: Determine Playwright version
+        id: playwright-version
+        run: echo "version=$(node -e \"console.log(require('playwright/package.json').version)\")" >> $GITHUB_OUTPUT
+
+      # Cache Playwright browsers to avoid re-downloading on each run
+      - name: Cache Playwright browsers
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/ms-playwright
+          key: ${{ runner.os }}-playwright-${{ steps.playwright-version.outputs.version }}
       - name: Install Playwright browsers
         run: npx playwright install --with-deps
       - name: Build Next.js app
@@ -71,11 +129,9 @@ jobs:
             exit 1
           fi
       - name: Run full test suite (lint, tsc, unit, e2e)
+        # Do not override Supabase env vars here; Playwright loads them from .env via dotenv.
+        # We only set Playwright-specific envs.
         env:
           PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD: 1
           PLAYWRIGHT_BASE_URL: http://127.0.0.1:3000
-          NEXT_PUBLIC_SUPABASE_URL: ${{ env.NEXT_PUBLIC_SUPABASE_URL }}
-          NEXT_PUBLIC_SUPABASE_ANON_KEY: ${{ env.NEXT_PUBLIC_SUPABASE_ANON_KEY }}
-          SUPABASE_SERVICE_ROLE_KEY: ${{ env.SUPABASE_SERVICE_ROLE_KEY }}
-          DATABASE_URL: ${{ env.DATABASE_URL }}
         run: npm run test

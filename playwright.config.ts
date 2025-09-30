@@ -22,7 +22,7 @@ export default defineConfig<TestOptions>({
   workers: 15,
   fullyParallel: true,
   use: {
-    baseURL: "http://localhost:3000",
+    baseURL: process.env.PLAYWRIGHT_BASE_URL || "http://localhost:3000",
     trace: "on-first-retry",
   },
   reporter: [["list"]],
