@@ -4,6 +4,11 @@ const nextConfig: NextConfig = {
   // Enable standalone output for Docker deployments
   output: 'standalone',
   
+  // Use separate tsconfig for build to exclude test files
+  typescript: {
+    tsconfigPath: './tsconfig.build.json',
+  },
+  
   images: {
     remotePatterns: [
       {
