@@ -17,11 +17,6 @@ WORKDIR /app
 COPY --from=deps /app/node_modules ./node_modules
 COPY . .
 
-# Install dev dependencies for build
-RUN npm ci --ignore-scripts
-
-# Copy source code
-COPY . .
 
 # Generate Prisma Client (needed for build)
 RUN npx prisma generate

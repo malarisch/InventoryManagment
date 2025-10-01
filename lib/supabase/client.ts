@@ -1,4 +1,5 @@
 import { createBrowserClient } from "@supabase/ssr";
+import { unstable_noStore as noStore } from 'next/cache';
 
 /**
  * Create a per-request browser Supabase client using the public anon key.
@@ -13,8 +14,9 @@ import { createBrowserClient } from "@supabase/ssr";
  * Returns a fresh client per call to avoid sharing state.
  */
 export function createClient() {
+  noStore();
   return createBrowserClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+    process.env["NEXT_PUBLIC_SUPABASE_URL"]!,
+    process.env["NEXT_PUBLIC_SUPABASE_ANON_KEY"]!,
   );
 }
