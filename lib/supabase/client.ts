@@ -14,7 +14,7 @@ import { unstable_noStore as noStore } from 'next/cache';
  * Returns a fresh client per call to avoid sharing state.
  */
 export function createClient() {
-  noStore();
+  if (process.env.PAGES_DYNAMIC) noStore(); // Ensure this is not cached in a dynamic Fluid compute environment
   return createBrowserClient(
     process.env["NEXT_PUBLIC_SUPABASE_URL"]!,
     process.env["NEXT_PUBLIC_SUPABASE_ANON_KEY"]!,

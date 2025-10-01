@@ -20,10 +20,9 @@ COPY . .
 
 # Generate Prisma Client (needed for build)
 RUN npx prisma generate
+ENV NEXT_TELEMETRY_DISABLED=1
+ENV PAGES_DYNAMIC=true
 
-# Build Next.js app
-# Environment variables for build (NEXT_PUBLIC_* only)
-# Other secrets should be provided at runtime
 RUN npm run build
 
 # Stage 3: Production runtime
