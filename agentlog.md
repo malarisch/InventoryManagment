@@ -377,3 +377,5 @@ Files: lib/tools/deleteCompany.ts, tests/vitest/delete-company.test.ts. Next: ru
 - Extended `lib/tools/seed.ts`: creates admin test user, company + membership, locations, articles, asset tag template + tags, equipments, case, customers, job, and job asset relations.
 - Added script `npm run seed:dev` using `tsx`; added `tsx` devDependency.
 - TypeScript + ESLint green.
+
+**2025-09-30 19:15** - GitHub Actions Docker Build Workflow: Created `.github/workflows/docker-build.yml` that automatically builds and pushes Docker images to GitHub Container Registry after successful Integration Tests. Workflow triggers on completed test runs for `main` branch, builds multi-stage Docker image, tags with `latest`, branch name, git SHA, and semantic versions. Uses GitHub Actions cache for faster builds. Updated DEPLOYMENT.md and DOCKER.md with pre-built image pull instructions (`ghcr.io/malarisch/inventorymanagment:latest`). Enhanced README.md with comprehensive project overview, features list, tech stack, and quick start guide. Files: .github/workflows/docker-build.yml, DEPLOYMENT.md, DOCKER.md, README.md. Next: Push to trigger first automated build.
