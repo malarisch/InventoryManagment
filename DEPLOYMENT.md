@@ -20,20 +20,34 @@ vercel
 
 ### 2. Docker (Self-Hosted)
 
+**Option A: Automatisch gebautes Image von GitHub (empfohlen)**
+
 ```bash
+# Image von GitHub Container Registry pullen
+docker pull ghcr.io/malarisch/inventorymanagment:latest
+
 # .env.production aus Template erstellen
 cp .env.production.example .env.production
 # Dann Werte eintragen!
 
-# Mit Docker Compose
+# Mit Docker Compose (angepasst für ghcr.io Image)
+# Ersetze in docker-compose.yml: build: -> image: ghcr.io/malarisch/inventorymanagment:latest
 docker-compose --env-file .env.production up -d
 
 # Oder Standalone
+docker run -p 3000:3000 --env-file .env.production ghcr.io/malarisch/inventorymanagment:latest
+```
+
+**Option B: Selbst bauen**
+
+```bash
 docker build -t inventory-management .
 docker run -p 3000:3000 --env-file .env.production inventory-management
 ```
 
 Siehe [`DOCKER.md`](./DOCKER.md) für Details.
+
+> **💡 Hinweis:** Nach jedem erfolgreichen Test-Durchlauf auf `main` wird automatisch ein Docker Image gebaut und zu `ghcr.io/malarisch/inventorymanagment:latest` gepusht (siehe `.github/workflows/docker-build.yml`).
 
 ### 3. Node.js Server (VPS/Dedicated)
 

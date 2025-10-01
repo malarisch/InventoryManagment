@@ -30,19 +30,41 @@ S3_REGION=us-east-1
 NEXT_PUBLIC_STORAGE_S3_URL=https://your-project.supabase.co/storage/v1/s3
 ```
 
-### 2. Image bauen und starten
+### 2. Image holen und starten
+
+**Option A: Pre-built Image von GitHub Container Registry (empfohlen)**
 
 ```bash
-# Mit docker-compose (empfohlen)
-docker-compose --env-file .env.production up -d
+# Image pullen (automatisch gebaut nach jedem erfolgreichen Test auf main)
+docker pull ghcr.io/malarisch/inventorymanagment:latest
 
-# Oder nur das Image bauen
+# Starten
+docker run -d \
+  --name inventory-app \
+  -p 3000:3000 \
+  --env-file .env.production \
+  ghcr.io/malarisch/inventorymanagment:latest
+```
+
+**Option B: Selbst bauen**
+
+```bash
+# Image bauen
 docker build -t inventory-management:latest .
 
-# Und manuell starten
-docker run -p 3000:3000 \
+# Starten
+docker run -d \
+  --name inventory-app \
+  -p 3000:3000 \
   --env-file .env.production \
   inventory-management:latest
+```
+
+**Option C: Mit docker-compose**
+
+```bash
+# docker-compose.yml anpassen: image: ghcr.io/malarisch/inventorymanagment:latest
+docker-compose --env-file .env.production up -d
 ```
 
 ### 3. App aufrufen
@@ -88,14 +110,35 @@ docker logs -f inventory-app
 
 ### Option C: Push zu Container Registry
 
+> **💡 Hinweis:** Das Repository nutzt bereits GitHub Actions, um automatisch Images zu bauen und zu `ghcr.io/malarisch/inventorymanagment` zu pushen nach jedem erfolgreichen Test auf `main`. Siehe `.github/workflows/docker-build.yml`.
+
 ```bash
+# Falls du manuell pushen möchtest:
+
 # Docker Hub
 docker tag inventory-management:latest your-username/inventory-management:latest
 docker push your-username/inventory-management:latest
 
-# GitHub Container Registry
-docker tag inventory-management:latest ghcr.io/your-username/inventory-management:latest
-docker push ghcr.io/your-username/inventory-management:latest
+# GitHub Container Registry (bereits automatisiert via CI/CD)
+docker tag inventory-management:latest ghcr.io/malarisch/inventorymanagment:latest
+docker push ghcr.io/malarisch/inventorymanagment:latest
+```
+
+## CI/CD: Automatischer Docker Build
+
+Der Workflow `.github/workflows/docker-build.yml` baut automatisch Docker Images:
+
+- **Trigger:** Nach erfolgreichen Integration Tests auf `main`
+- **Registry:** GitHub Container Registry (`ghcr.io`)
+- **Tags:**
+  - `latest` für main branch
+  - `main-<git-sha>` für jeden Commit
+  - Semantic versioning wenn Git-Tags gepusht werden
+
+**Image pullen:**
+```bash
+docker pull ghcr.io/malarisch/inventorymanagment:latest
+docker pull ghcr.io/malarisch/inventorymanagment:main-abc1234
 ```
 
 ## Produktion mit Supabase Cloud
