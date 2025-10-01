@@ -20,6 +20,9 @@ COPY . .
 # Install dev dependencies for build
 RUN npm ci --ignore-scripts
 
+# Copy source code
+COPY . .
+
 # Generate Prisma Client (needed for build)
 RUN npx prisma generate
 
@@ -40,13 +43,11 @@ RUN addgroup --system --gid 1001 nodejs && \
     adduser --system --uid 1001 nextjs
 
 # Copy built app and dependencies
-COPY --from=builder /app/public ./public
 COPY --from=builder --chown=nextjs:nodejs /app/.next/standalone ./
 COPY --from=builder --chown=nextjs:nodejs /app/.next/static ./.next/static
 
 # Copy Prisma client (generated during build)
 COPY --from=builder /app/lib/generated/prisma ./lib/generated/prisma
-COPY --from=builder /app/node_modules/.prisma ./node_modules/.prisma
 
 USER nextjs
 
