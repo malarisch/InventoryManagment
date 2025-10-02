@@ -10,32 +10,73 @@ import { createClient } from '@/lib/supabase/client';
 import { AssetTagTemplate } from '@/components/asset-tag-templates/types';
 import type { TablesInsert } from '@/database.types';
 import { useEffect, useState } from 'react';
+import { buildAssetTagCode, defaultTemplateId, type AssetTagEntityType } from '@/lib/asset-tags/code';
+import type { adminCompanyMetadata, asset_tag_template_print } from '@/components/metadataTypes.types';
 
 const formSchema = z.object({
   printed_code: z.string().min(1, 'Pflichtfeld'),
   printed_template: z.number(),
 });
 
+const tableToEntityType: Record<string, AssetTagEntityType> = {
+  articles: "article",
+  equipments: "equipment",
+  cases: "case",
+  locations: "location",
+};
+
 export function AssetTagCreateForm({ item, table, companyId }: { item: { id: number, name: string }, table: string, companyId: number }) {
   const [open, setOpen] = useState(false);
   const [templates, setTemplates] = useState<Array<{ id: number; template: AssetTagTemplate }>>([]);
   const [selectedTemplate, setSelectedTemplate] = useState<AssetTagTemplate | null>(null);
+  const [companyMeta, setCompanyMeta] = useState<adminCompanyMetadata | null>(null);
   const supabase = createClient();
 
-  useEffect(() => {
-    const fetchTemplates = async () => {
-      const { data } = await supabase
-        .from('asset_tag_templates')
-        .select('id, template')
-        .eq('company_id', companyId);
-      setTemplates(((data as Array<{ id: number; template: AssetTagTemplate }> | null) ?? []).filter(Boolean));
-    };
-    fetchTemplates();
-  }, [companyId, supabase]);
+  const entityType = tableToEntityType[table] || "equipment";
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
   });
+
+  useEffect(() => {
+    const fetchData = async () => {
+      const [templatesRes, companyRes] = await Promise.all([
+        supabase.from('asset_tag_templates').select('id, template').eq('company_id', companyId),
+        supabase.from('companies').select('metadata').eq('id', companyId).single(),
+      ]);
+      const templateData = ((templatesRes.data as Array<{ id: number; template: AssetTagTemplate }> | null) ?? []).filter(Boolean);
+      setTemplates(templateData);
+      const meta = (companyRes.data?.metadata as adminCompanyMetadata) ?? null;
+      setCompanyMeta(meta);
+    };
+    fetchData();
+  }, [companyId, supabase]);
+
+  // Auto-prefill when modal opens
+  useEffect(() => {
+    if (!open || !companyMeta || templates.length === 0) return;
+    
+    const defaultTmplId = defaultTemplateId(companyMeta, entityType);
+    const defaultTmpl = templates.find((t) => t.id === defaultTmplId) || templates[0];
+    if (defaultTmpl) {
+      setSelectedTemplate(defaultTmpl.template);
+      form.setValue('printed_template', defaultTmpl.id);
+      
+      // Build code using the template's stringTemplate if available
+      const templatePrint: asset_tag_template_print = {
+        name: defaultTmpl.template.name,
+        description: defaultTmpl.template.description || '',
+        prefix: defaultTmpl.template.prefix || '',
+        suffix: defaultTmpl.template.suffix || '',
+        numberLength: defaultTmpl.template.numberLength || 0,
+        numberingScheme: defaultTmpl.template.numberingScheme || 'sequential',
+        stringTemplate: defaultTmpl.template.stringTemplate || '{prefix}-{code}',
+        codeType: defaultTmpl.template.codeType || 'QR',
+      };
+      const code = buildAssetTagCode(companyMeta, entityType, item.id, templatePrint);
+      form.setValue('printed_code', code);
+    }
+  }, [open, companyMeta, templates, entityType, item.id, form]);
 
   const onSubmit = async (values: z.infer<typeof formSchema>) => {
     const payload: TablesInsert<'asset_tags'> = {

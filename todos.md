@@ -34,7 +34,6 @@ Diese To-Do List enthält Aufgaben, die an der Software zu bearbeiten sind. Soba
   - Es Fehlen Buttons um hinzugefügte Metadatenkarten wieder zu löschen. Wenn er geklickt wird "klappe die Karte zusammen" mit einem "Undo" button für diese Aktion.
   - Die Optionen "Ist 19" Rack" und "19" Rackmontage" schließen sich logisch aus. "Case hat schloss" als Checkbox ausführen. Führe die Caseoptionen in einer Karte zusammen, also Höheneinheiten und "19-Zoll Rackmontage" mit ins Case Setup, die Felder für ein Rack nur Anzeigen wenn "Case ist 19" Rack" und andersrum die anderen nur wenn "Ist 19 Zoll Montagefähig". 
 - Edit Pages:
-  - Bei "Asset Tag hinzufügen" wenn keiner besteht wird ein user Prompt angezeigt, bei dem der Code manuell eintragbar ist. Macht keinen Sinn, zu Codegenerierung gibts inzwischen ne super Helper funktion. Direkt prefillen, keine Nachfragen.
 - New Equipment:
   - Auswählbarkeit der Case Setup Karte fehlt.
 - Contacts 
@@ -86,6 +85,7 @@ Diese To-Do List enthält Aufgaben, die an der Software zu bearbeiten sind. Soba
 
 
 ## Done
+- **Fix: Asset Tag Creation Auto-prefill**: AssetTagCreateForm now automatically prefills the asset tag code using buildAssetTagCode helper when modal opens. Selects default template for entity type and generates code without requiring user input.
 - **Fix: Case Edit Items Column Names**: Fixed case edit items form using wrong column names - changed from 'equipments' and 'articles' to correct DB column names 'contains_equipments' and 'contains_articles'.
 - **Fix: PostgREST Query Syntax (Global)**: Fixed incorrect PostgREST foreign key syntax across multiple components (history-live.tsx, job-quick-book.tsx, case-edit-items-form.tsx) from `articles:article_id(name)` to `articles(name)`.
 - **Fix: Job Edit Page Booked Assets Query Error**: Fixed PostgREST query syntax from `articles:article_id(name)` to `articles(name)` in both job-booked-assets.client.tsx and job-booked-assets.tsx - Supabase auto-detects foreign key relationships without explicit column reference.
