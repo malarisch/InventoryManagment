@@ -13,11 +13,8 @@ import { Button } from "@/components/ui/button";
 import { safeParseDate } from "@/lib/dates";
 import { DatePicker } from "@/components/ui/date-picker";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { ContactFormDialog } from "@/components/forms/contacts/contact-form-dialog";
-import { SearchPicker, type SearchItem } from "@/components/search/search-picker";
 
 type Job = Tables<"jobs">;
-type Contact = Tables<"contacts">;
 
 export function JobEditForm({ job }: { job: Job }) {
   const supabase = useMemo(() => createClient(), []);
@@ -39,8 +36,6 @@ export function JobEditForm({ job }: { job: Job }) {
     }
     return false;
   });
-  const [contactId, setContactId] = useState<number | "">(job.contact_id ?? "");
-  const [contacts, setContacts] = useState<Contact[]>([]);
   const [metaText, setMetaText] = useState<string>(() => {
     try {
       return job.meta ? JSON.stringify(job.meta, null, 2) : toPrettyJSON(defaultJobMetadataDE);
@@ -54,54 +49,6 @@ export function JobEditForm({ job }: { job: Job }) {
   const [saving, setSaving] = useState(false);
   const [message, setMessage] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
-  const [contactDialogOpen, setContactDialogOpen] = useState(false);
-
-  const contactItems = useMemo(() => {
-    return contacts
-      .filter((contact) => contact.contact_type === "customer")
-      .map((contact): SearchItem<"contact", Contact> => {
-        const displayName = contact.display_name || contact.company_name || `${contact.first_name ?? ""} ${contact.last_name ?? ""}`.trim() || `#${contact.id}`;
-        const matchers = [
-          { value: String(contact.id), weight: 5 },
-          contact.display_name && { value: contact.display_name, weight: 20 },
-          contact.company_name && { value: contact.company_name, weight: 20 },
-          contact.first_name && { value: contact.first_name, weight: 15 },
-          contact.last_name && { value: contact.last_name, weight: 15 },
-        ].filter(Boolean) as Array<{ value: string; weight: number }>;
-
-        return {
-          id: `contact-${contact.id}`,
-          category: "contact",
-          title: displayName,
-          description: `Kontakt #${contact.id}`,
-          meta: contact.contact_type,
-          priority: 0,
-          matchers,
-          data: contact,
-        };
-      });
-  }, [contacts]);
-
-  useEffect(() => {
-    let active = true;
-    async function loadContacts() {
-      const { data, error } = await supabase
-        .from("contacts")
-        .select("*")
-        .eq("company_id", job.company_id)
-        .order("display_name", { ascending: true });
-      if (!active) return;
-      if (error) {
-        console.error("Failed to load contacts", error);
-        return;
-      }
-      setContacts((data as Contact[]) ?? []);
-    }
-    loadContacts();
-    return () => {
-      active = false;
-    };
-  }, [supabase, job.company_id]);
 
   useEffect(() => {
     if (advanced && !wasAdvanced) {
@@ -193,7 +140,6 @@ export function JobEditForm({ job }: { job: Job }) {
         job_location: location.trim() || null,
         startdate: finalStartDate,
         enddate: finalEndDate,
-        contact_id: contactId === "" ? null : Number(contactId),
         meta,
       })
       .eq("id", job.id);
@@ -315,35 +261,6 @@ export function JobEditForm({ job }: { job: Job }) {
           )}
         </CardContent>
       </Card>
-      <Card className="md:col-span-3">
-        <CardHeader>
-          <CardTitle>Kontakt</CardTitle>
-          <CardDescription>Auftraggeber auswählen oder anlegen</CardDescription>
-        </CardHeader>
-        <CardContent className="space-y-3">
-          <div className="grid gap-2">
-            <Label htmlFor="contact_id">Kontakt</Label>
-            <SearchPicker
-              items={contactItems}
-              onSelect={(item) => setContactId(item.data.id)}
-              categoryLabels={{ contact: "Kontakte" }}
-              placeholder="Kontakt suchen..."
-              emptyLabel="Keine Kontakte gefunden"
-              buttonLabel={
-                contactId
-                  ? contacts.find((c) => c.id === contactId)?.display_name ||
-                    contacts.find((c) => c.id === contactId)?.company_name ||
-                    `Kontakt #${contactId}`
-                  : "Kontakt auswählen"
-              }
-              resetOnSelect={false}
-            />
-          </div>
-          <Button type="button" variant="secondary" onClick={() => setContactDialogOpen(true)}>
-            Neuen Kontakt anlegen
-          </Button>
-        </CardContent>
-      </Card>
 
       <Card className="md:col-span-4">
         <CardHeader>
@@ -365,17 +282,6 @@ export function JobEditForm({ job }: { job: Job }) {
         {message && <span className="text-sm text-green-600">{message}</span>}
         {error && <span className="text-sm text-red-600">{error}</span>}
       </div>
-
-      <ContactFormDialog
-        open={contactDialogOpen}
-        onOpenChange={setContactDialogOpen}
-        companyId={job.company_id}
-        defaultType="customer"
-        onCreated={(contact) => {
-          setContacts((prev) => [...prev, contact]);
-          setContactId(contact.id);
-        }}
-      />
     </form>
   );
 }

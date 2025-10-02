@@ -14,6 +14,7 @@ import { DeleteWithUndo } from "@/components/forms/delete-with-undo";
 import { FileManager } from "@/components/files/file-manager";
 import { Button } from "@/components/ui/button";
 import { ClipboardList, PackageCheck } from "lucide-react";
+import { JobHeaderContact } from "@/components/jobs/job-header-contact";
 
 type JobRow = Tables<"jobs">;
 
@@ -45,6 +46,25 @@ export default async function JobDetailPage({ params }: { params: Promise<{ id: 
   }
 
   const job = data as JobRow;
+  
+  // Fetch contact if exists
+  let contactDisplay: string | null = null;
+  if (job.contact_id) {
+    const { data: contactData } = await supabase
+      .from("contacts")
+      .select("id, display_name, company_name, first_name, last_name")
+      .eq("id", job.contact_id)
+      .limit(1)
+      .single();
+    
+    if (contactData) {
+      contactDisplay = contactData.display_name || 
+                       contactData.company_name || 
+                       `${contactData.first_name ?? ""} ${contactData.last_name ?? ""}`.trim() || 
+                       `Kontakt #${contactData.id}`;
+    }
+  }
+  
   const creator = await fetchUserDisplayAdmin(job.created_by ?? undefined);
   const createdDisplay = formatDateTime(safeParseDate(job.created_at));
   const creatorDisplay = creator ?? (job.created_by === currentUserId ? "Du" : fallbackDisplayFromId(job.created_by)) ?? "—";
@@ -68,8 +88,15 @@ export default async function JobDetailPage({ params }: { params: Promise<{ id: 
                 <CardTitle>
                   <JobNameHeading data-testid="job-title" fallback={title} />
                 </CardTitle>
-                <CardDescription>
-                  Job-ID #{job.id} • Erstellt am {createdDisplay} • Erstellt von {creatorDisplay}
+                <CardDescription className="flex flex-wrap items-center gap-2">
+                  <span>Job-ID #{job.id} • Erstellt am {createdDisplay} • Erstellt von {creatorDisplay}</span>
+                  <span className="text-muted-foreground">•</span>
+                  <JobHeaderContact 
+                    jobId={job.id} 
+                    companyId={job.company_id} 
+                    contactId={job.contact_id} 
+                    contactDisplay={contactDisplay}
+                  />
                 </CardDescription>
               </CardHeader>
               <CardContent>
