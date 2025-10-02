@@ -5,11 +5,15 @@ Diese To-Do List enthält Aufgaben, die an der Software zu bearbeiten sind. Soba
 ## To-Do
 
 ### Fixes
-- Werkstatt
-  - Auf den Equipment Pages fehlt eine Übersicht der offnen Werkstatt jobs
-  - Erweitere das Werkstatt Job konzept: Eine Card, mit Beschreibung, Möglichkeit Fotos anzuhängen, und einer "Blockieren" checkbox, die verhindert, dass das Equip auf neue Jobs gebucht wird. Wenn ein kommender Job Equipmens gebucht hat, die geblockt sind, zeige eine Warnung im Dashboard und der Job tabelle an.
-  -  
+- Werkstatt (UI Implementation):
+  - Implement blocking checkbox UI in workshop todo forms
+  - Add FileManager for photo uploads to workshop todos
+  - Create dashboard warnings for blocked equipment on jobs
+  - Add job table indicators for blocked equipment bookings
+  
 ## Done
+- **Workshop Blocking Feature Schema**: Added is_blocked boolean to equipments/cases tables, files column to workshop_todos for photo attachments. Migration applied + types regenerated. (Commit 886d3b0)
+- **Workshop Equipment Page Overview**: Added WorkshopTodosCard showing open/in-progress workshop todos on equipment detail pages with status badges and count summary. (Commit 90cc2bb)
 - **Jobs Asset Summary**: Added summary card with total price (daily rental), weight (kg/tons), and truckspace (volume L/m³) calculated from booked assets. Responsive 4-column grid in sidebar. (Commit 3ffdf3f)
 - **Jobs Contact in Header with Modal**: Removed contact card from form, moved to job header with link and "Ändern" button. Modal opens with SearchPicker for quick contact changes. Server-side contact display fetch. (Commit cc202d9)
 - **Jobs Edit Page 2/3 Layout**: Reorganized job detail page with 2-column grid - left 2/3 for form/files/history, right 1/3 sidebar for Quick book + booked assets cards. Responsive on mobile. (Commit 2c18c72)

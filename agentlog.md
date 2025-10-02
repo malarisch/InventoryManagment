@@ -1,3 +1,24 @@
+## 2025-10-03 14:45 – Workshop: Added blocking feature schema and todos overview
+- **TASK**: Workshop features - equipment page overview + blocking (todos #4-5 of 6)
+- User requested:
+  1. "Auf den Equipment Pages fehlt eine Übersicht der offnen Werkstatt jobs"
+  2. "Erweitere das Werkstatt Job konzept: Eine Card, mit Beschreibung, Möglichkeit Fotos anzuhängen, und einer 'Blockieren' checkbox"
+- **SOLUTION Part 1 - Equipment page overview**:
+  * Created WorkshopTodosCard component for equipment detail pages
+  * Shows open + in-progress workshop todos with status badges
+  * Displays title, notes preview, creation date, due date
+  * Color-coded badges (open=red, in-progress=blue)
+  * Count summary in header
+- **SOLUTION Part 2 - Blocking feature schema**:
+  * Added `files` jsonb column to workshop_todos for photo attachments
+  * Added `is_blocked` boolean to equipments table (default false)
+  * Added `is_blocked` boolean to cases table (default false)
+  * Migration applied + TypeScript types regenerated
+- Files: components/maintenance/workshop-todos-card.tsx, app/management/equipments/[id]/page.tsx, supabase/migrations/20251002234633_workshop_blocking_feature.sql, database.types.ts, agentlog.md
+- TypeScript compilation: ✅ PASSED (`npm run test:tsc`)
+- Commits: 90cc2bb "feat: Add open workshop todos overview to equipment pages", 886d3b0 "feat: Add workshop blocking feature schema"
+- Next: Implement UI for blocking checkbox, photo uploads, and dashboard warnings
+
 ## 2025-10-03 14:20 – Jobs: Added asset summary card with price, weight, and truckspace
 - **TASK**: Asset summary calculations for jobs (todo #6 of 6 remaining)
 - User requested: "Jobs sollen eine Preisübersicht bekommen, anhand der zu ihnen gebuchten Assets. Ebenso Gewicht und Truckspace."
