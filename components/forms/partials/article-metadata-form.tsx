@@ -136,17 +136,19 @@ export function ArticleMetadataForm({
     return Array.from(new Set<SectionId>(["general", ...defaults]));
   });
 
+  // Sync local state with incoming value prop
   useEffect(() => {
-    setLocal((prev) => (prev !== value ? value : prev));
+    setLocal(value);
   }, [value]);
 
-  useEffect(() => {
-    if (local === value) return;
-    onChange(local);
-  }, [local, value, onChange]);
-
+  // Propagate local changes to parent - use a separate function to avoid including onChange in deps
   function update(updater: (prev: ArticleMetadata) => ArticleMetadata) {
-    setLocal((prev) => updater(prev));
+    setLocal((prev) => {
+      const next = updater(prev);
+      // Call onChange directly here instead of in useEffect
+      onChange(next);
+      return next;
+    });
   }
 
   function ensureSectionActive(section: SectionId, hasData: boolean) {

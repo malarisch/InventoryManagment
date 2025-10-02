@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import type { ArticleMetadata, DimensionsCm, EquipmentMetadata, Person } from "@/components/metadataTypes.types";
 import type { adminCompanyMetadata } from "@/components/metadataTypes.types";
 import { Input } from "@/components/ui/input";
@@ -65,12 +65,6 @@ export function EquipmentMetadataForm({
 }: EquipmentMetadataFormProps) {
   const [local, setLocal] = useState<EquipmentMetadata>(value);
   const { company } = useCompany();
-  const onChangeRef = useRef(onChange);
-
-  // Keep onChange ref updated
-  useEffect(() => {
-    onChangeRef.current = onChange;
-  }, [onChange]);
 
   const adminMeta = useMemo(() => normalizeAdminCompanyMetadata(companyMetadata ?? company?.metadata ?? null), [companyMetadata, company]);
   const powerDefaults = useMemo(() => powerPlaceholders(adminMeta), [adminMeta]);
@@ -90,25 +84,19 @@ export function EquipmentMetadataForm({
 
   const [activeSections, setActiveSections] = useState<SectionId[]>(() => SECTION_DEFINITIONS.filter((section) => section.defaultActive).map((section) => section.id));
 
-  // Track the last value we sent to parent to avoid loops
-  const lastSentRef = useRef<EquipmentMetadata>(value);
-
-  // Sync from parent value to local state when value prop changes
+  // Sync local state with incoming value prop
   useEffect(() => {
     setLocal(value);
-    lastSentRef.current = value;
   }, [value]);
 
-  // Notify parent when local changes (but not when we just synced from parent)
-  useEffect(() => {
-    if (local !== lastSentRef.current) {
-      lastSentRef.current = local;
-      onChangeRef.current(local);
-    }
-  }, [local]);
-
+  // Propagate local changes to parent - use a separate function to avoid including onChange in deps
   function update(updater: (prev: EquipmentMetadata) => EquipmentMetadata) {
-    setLocal((prev) => updater(prev));
+    setLocal((prev) => {
+      const next = updater(prev);
+      // Call onChange directly here instead of in useEffect
+      onChange(next);
+      return next;
+    });
   }
 
   function ensureSectionActive(section: SectionId, hasData: boolean) {

@@ -16,16 +16,18 @@ export function CustomerMetadataForm({
 }) {
   const [local, setLocal] = useState<CustomerMetadata>(value);
 
+  // Sync local state with incoming value prop
   useEffect(() => {
-    setLocal((prev) => (prev !== value ? value : prev));
+    setLocal(value);
   }, [value]);
-  useEffect(() => {
-    if (local === value) return;
-    onChange(local);
-  }, [local, value, onChange]);
 
   function set<K extends keyof CustomerMetadata>(key: K, v: CustomerMetadata[K]) {
-    setLocal((s) => ({ ...s, [key]: v }));
+    setLocal((s) => {
+      const next = { ...s, [key]: v };
+      // Call onChange directly here instead of in useEffect
+      onChange(next);
+      return next;
+    });
   }
 
   return (

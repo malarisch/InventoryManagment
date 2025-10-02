@@ -1,3 +1,14 @@
+## 2025-10-02 21:15 – Fixed infinite loop in metadata forms
+- **PROBLEM**: Article/Equipment/Job/Customer metadata forms caused infinite render loops when toggling JSON mode or editing rapidly
+- Root cause: Two competing useEffect hooks creating circular dependency (setLocal triggers onChange, which updates value prop, which triggers setLocal again)
+- Article form had dual useEffect pattern that always triggered each other; Equipment form used lastSentRef but compared object references (not deep equality)
+- **SOLUTION**: Removed problematic useEffect that called onChange; moved onChange call directly into update/set functions
+- Pattern: Single useEffect syncs value→local, update functions call onChange immediately within setState callback
+- Prevents loops: setState callback executes synchronously, no re-render cycle between state updates
+- Files: article-metadata-form.tsx, equipment-metadata-form.tsx, job-metadata-form.tsx, customer-metadata-form.tsx, agentlog.md
+- TypeScript compilation: ✅ PASSED (`npm run test:tsc`)
+- Next: User verification that forms work without infinite loops
+
 ## 2025-10-02 20:30 – Equipment Case card parity with Article
 - Aligned equipment form case card with new article behavior: added general-case toggle, updated mode radios, and respected inherited placeholders
 - Refined rack/general visibility logic to honor explicit overrides, cleaned helpers to account for `isGeneralCase`
