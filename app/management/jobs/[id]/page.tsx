@@ -86,12 +86,20 @@ export default async function JobDetailPage({ params }: { params: Promise<{ id: 
               </div>
             </div>
             <JobEditForm job={job} />
-            <div className="mt-6">
-              <FileManager table="jobs" rowId={job.id} companyId={job.company_id} isPublic={false} initial={(job as Record<string, unknown>).files} />
-            </div>
           </CardContent>
         </Card>
         </JobNameProvider>
+
+        <Card>
+          <CardHeader>
+            <CardTitle>Dateien</CardTitle>
+            <CardDescription>Anhänge und Dokumente zu diesem Job</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <FileManager table="jobs" rowId={job.id} companyId={job.company_id} isPublic={false} initial={(job as Record<string, unknown>).files} />
+          </CardContent>
+        </Card>
+
         <JobBookedAssetsCard jobId={id} />
         <Card>
           <CardHeader>

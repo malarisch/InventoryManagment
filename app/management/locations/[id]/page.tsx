@@ -92,9 +92,16 @@ export default async function LocationDetailPage({ params }: { params: Promise<{
               </div>
             </div>
             <LocationEditForm location={loc} />
-            <div className="mt-6">
-              <FileManager table="locations" rowId={loc.id} companyId={loc.company_id} isPublic={false} initial={(loc as Record<string, unknown>).files} />
-            </div>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader>
+            <CardTitle>Dateien</CardTitle>
+            <CardDescription>Anhänge und Dokumente zu diesem Standort</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <FileManager table="locations" rowId={loc.id} companyId={loc.company_id} isPublic={false} initial={(loc as Record<string, unknown>).files} />
           </CardContent>
         </Card>
 

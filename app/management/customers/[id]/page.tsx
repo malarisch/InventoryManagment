@@ -75,11 +75,19 @@ export default async function CustomerDetailPage({ params }: { params: Promise<{
               <DeleteWithUndo table="contacts" id={contact.id} payload={contact as Record<string, unknown>} redirectTo="/management/customers" />
             </div>
             <CustomerEditForm customer={contact} />
-            <div className="mt-6">
-              <FileManager table="contacts" rowId={contact.id} companyId={contact.company_id} isPublic={false} initial={(contact as Record<string, unknown>).files} />
-            </div>
           </CardContent>
         </Card>
+
+        <Card>
+          <CardHeader>
+            <CardTitle>Dateien</CardTitle>
+            <CardDescription>Anhänge und Dokumente zu diesem Kontakt</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <FileManager table="contacts" rowId={contact.id} companyId={contact.company_id} isPublic={false} initial={(contact as Record<string, unknown>).files} />
+          </CardContent>
+        </Card>
+
         <Card>
           <CardHeader>
             <CardTitle>Jobs dieses Kunden</CardTitle>

@@ -96,11 +96,19 @@ export default async function EquipmentDetailPage({ params }: { params: Promise<
               </div>
             </div>
             <EquipmentEditForm equipment={eq} />
-            <div className="mt-6">
-              <FileManager table="equipments" rowId={eq.id} companyId={eq.company_id} isPublic={false} initial={(eq as Record<string, unknown>).files} />
-            </div>
           </CardContent>
         </Card>
+
+        <Card>
+          <CardHeader>
+            <CardTitle>Dateien</CardTitle>
+            <CardDescription>Anhänge und Dokumente zu diesem Equipment</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <FileManager table="equipments" rowId={eq.id} companyId={eq.company_id} isPublic={false} initial={(eq as Record<string, unknown>).files} />
+          </CardContent>
+        </Card>
+
         <MaintenanceLogsCard companyId={Number(eq.company_id)} equipmentId={Number(eq.id)} />
       </div>
       <div className="w-full max-w-none mt-4">

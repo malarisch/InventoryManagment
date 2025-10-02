@@ -1,3 +1,14 @@
+## 2025-10-02 21:45 – Moved FileManager to separate cards on detail pages
+- **PROBLEM**: FileManager component was embedded inside entity cards, cluttered UI
+- User requested: FileManager should be in own card on top level alongside History
+- **SOLUTION**: Extracted FileManager from entity CardContent into separate Card components
+- Added consistent "Dateien" card with description on all entity detail pages
+- Affected pages: articles/[id], equipments/[id], locations/[id], cases/[id], customers/[id], jobs/[id]
+- Each page now has clean hierarchy: Entity card → Files card → Other cards → History card
+- Files: articles/[id]/page.tsx, equipments/[id]/page.tsx, locations/[id]/page.tsx, cases/[id]/page.tsx, customers/[id]/page.tsx, jobs/[id]/page.tsx, agentlog.md
+- TypeScript compilation: ✅ PASSED (`npm run test:tsc`)
+- Next: Continue with remaining fixes from todos.md
+
 ## 2025-10-02 21:30 – Fixed render-phase update error in metadata forms
 - **PROBLEM**: "Cannot update a component while rendering a different component" error when editing metadata
 - Previous fix called onChange inside setState callback, which updates parent during child render (React violation)

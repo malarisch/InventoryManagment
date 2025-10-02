@@ -94,9 +94,16 @@ export default async function ArticleDetailPage({ params }: { params: Promise<{ 
               </div>
             </div>
             <ArticleEditForm article={article} />
-            <div className="mt-6">
-              <FileManager table="articles" rowId={article.id} companyId={article.company_id} isPublic={false} initial={(article as Record<string, unknown>).files} />
-            </div>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader>
+            <CardTitle>Dateien</CardTitle>
+            <CardDescription>Anhänge und Dokumente zu diesem Artikel</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <FileManager table="articles" rowId={article.id} companyId={article.company_id} isPublic={false} initial={(article as Record<string, unknown>).files} />
           </CardContent>
         </Card>
 
