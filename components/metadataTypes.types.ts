@@ -186,7 +186,8 @@ export interface ArticleMetadata {
   image?: string;
   case?: {
     /** Whether the case is 19" rack based. */
-    is19Inch?: boolean | null;
+    isGeneralCase?: boolean;
+    is19InchRack?: boolean | null;
     /** Height in rack units (U) if rack-based. */
     heightUnits?: number | null;
     maxDeviceDepthCm?: number | null; // in cm
@@ -197,7 +198,7 @@ export interface ArticleMetadata {
   };
   fitsInRestrictedCaseTypes?: string[]; // e.g., "YAMAHA MINI Expansion Slot"
   /** Whether article itself is 19" rack mountable. */
-  is19Inch: boolean | null;
+  is19InchRackmountable?: boolean | null;
   /** Height in rack units (U) if rack-mountable. */
   heightUnits?: number | null;
   dimensionsCm?: DimensionsCm;
@@ -217,7 +218,7 @@ export interface EquipmentMetadata extends Partial<ArticleMetadata> {
   type?: string | null;
   manufacturer?: string | null;
   model?: string | null;
-  is19Inch?: boolean | null;
+  is19InchRackmountable?: boolean | null;
   heightUnits?: number | null;
   weightKg?: number | null;
 

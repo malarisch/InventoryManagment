@@ -7,14 +7,29 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
 import { Textarea } from "@/components/ui/textarea";
 import { useCompany } from "@/app/management/_libs/companyHook";
-import { normalizeAdminCompanyMetadata, powerPlaceholders } from "@/lib/metadata/inherit";
-import { type SearchItem, SearchPicker } from "@/components/search/search-picker";
+import {
+  normalizeAdminCompanyMetadata,
+  powerPlaceholders,
+} from "@/lib/metadata/inherit";
+import {
+  type SearchItem,
+  SearchPicker,
+} from "@/components/search/search-picker";
 import { StringListInput } from "@/components/forms/metadata/string-list-input";
 import { DimensionsFieldset } from "@/components/forms/metadata/dimensions-fieldset";
-import { SupplierListEditor, type ContactOption } from "@/components/forms/metadata/supplier-list-editor";
+import {
+  SupplierListEditor,
+  type ContactOption,
+} from "@/components/forms/metadata/supplier-list-editor";
 import { PriceFields } from "@/components/forms/metadata/price-fields";
 
 export interface ArticleMetadataFormProps {
@@ -42,12 +57,39 @@ interface SectionDefinition {
 }
 
 const SECTION_DEFINITIONS: SectionDefinition[] = [
-  { id: "general", title: "Allgemein", description: "Typ, Hersteller, Buchungsoptionen", defaultActive: true },
-  { id: "physical", title: "Physische Eigenschaften", description: "Gewicht, Maße und Rack-Optionen", defaultActive: false },
-  { id: "power", title: "Stromversorgung", description: "Spannung, Frequenz und Anschluss", defaultActive: false },
-  { id: "case", title: "Case Setup", description: "Rack Cases, Einschränkungen und Inhalt" },
-  { id: "connectivity", title: "Konnektivität & Schnittstellen", description: "Netzwerk-Features und Ports" },
-  { id: "suppliers", title: "Lieferanten & Preise", description: "Lieferanten, Preise und Konditionen" },
+  {
+    id: "general",
+    title: "Allgemein",
+    description: "Typ, Hersteller, Buchungsoptionen",
+    defaultActive: true,
+  },
+  {
+    id: "physical",
+    title: "Physische Eigenschaften",
+    description: "Gewicht, Maße und Rack-Optionen",
+    defaultActive: false,
+  },
+  {
+    id: "power",
+    title: "Stromversorgung",
+    description: "Spannung, Frequenz und Anschluss",
+    defaultActive: false,
+  },
+  {
+    id: "case",
+    title: "Case Setup",
+    description: "Rack Cases, Einschränkungen und Inhalt",
+  },
+  {
+    id: "connectivity",
+    title: "Konnektivität & Schnittstellen",
+    description: "Netzwerk-Features und Ports",
+  },
+  {
+    id: "suppliers",
+    title: "Lieferanten & Preise",
+    description: "Lieferanten, Preise und Konditionen",
+  },
   { id: "notes", title: "Notizen", description: "Freitext für Besonderheiten" },
 ];
 
@@ -61,12 +103,23 @@ export function ArticleMetadataForm({
   const [local, setLocal] = useState<ArticleMetadata>(value);
   const { company } = useCompany();
 
-  const adminMeta = useMemo(() => normalizeAdminCompanyMetadata(companyMetadata ?? company?.metadata ?? null), [companyMetadata, company]);
-  const powerDefaults = useMemo(() => powerPlaceholders(adminMeta), [adminMeta]);
+  const adminMeta = useMemo(
+    () =>
+      normalizeAdminCompanyMetadata(
+        companyMetadata ?? company?.metadata ?? null
+      ),
+    [companyMetadata, company]
+  );
+  const powerDefaults = useMemo(
+    () => powerPlaceholders(adminMeta),
+    [adminMeta]
+  );
   const currencyFallback = adminMeta.standardData.currency ?? "EUR";
 
   const articleTypeItems: SearchItem<"type", string>[] = useMemo(() => {
-    const customTypes = normalizeAdminCompanyMetadata(company?.metadata ?? null).customTypes;
+    const customTypes = normalizeAdminCompanyMetadata(
+      company?.metadata ?? null
+    ).customTypes;
     return customTypes.articleTypes.map((type) => ({
       id: type,
       category: "type",
@@ -77,7 +130,9 @@ export function ArticleMetadataForm({
   }, [company]);
 
   const [activeSections, setActiveSections] = useState<SectionId[]>(() => {
-    const defaults = SECTION_DEFINITIONS.filter((section) => section.defaultActive).map((section) => section.id);
+    const defaults = SECTION_DEFINITIONS.filter(
+      (section) => section.defaultActive
+    ).map((section) => section.id);
     return Array.from(new Set<SectionId>(["general", ...defaults]));
   });
 
@@ -96,16 +151,24 @@ export function ArticleMetadataForm({
 
   function ensureSectionActive(section: SectionId, hasData: boolean) {
     if (!hasData) return;
-    setActiveSections((current) => (current.includes(section) ? current : [...current, section]));
+    setActiveSections((current) =>
+      current.includes(section) ? current : [...current, section]
+    );
   }
 
   // Auto-enable sections when metadata values appear from outside (e.g., JSON mode, inheritance)
   useEffect(() => {
     ensureSectionActive("physical", hasPhysicalData(local));
-    ensureSectionActive("power", hasPowerData(local) || hasPowerDefaults(adminMeta));
+    ensureSectionActive(
+      "power",
+      hasPowerData(local) || hasPowerDefaults(adminMeta)
+    );
     ensureSectionActive("case", hasCaseData(local));
     ensureSectionActive("connectivity", hasConnectivityData(local));
-    ensureSectionActive("suppliers", (local.suppliers?.length ?? 0) > 0 || !!local.dailyRentalRate);
+    ensureSectionActive(
+      "suppliers",
+      (local.suppliers?.length ?? 0) > 0 || !!local.dailyRentalRate
+    );
     ensureSectionActive("notes", !!local.notes);
   }, [local, adminMeta]);
 
@@ -126,9 +189,13 @@ export function ArticleMetadataForm({
     }));
   }
 
-  function updatePower(partial: Partial<NonNullable<ArticleMetadata["power"]>>) {
+  function updatePower(
+    partial: Partial<NonNullable<ArticleMetadata["power"]>>
+  ) {
     update((prev) => {
-      const nextPower = { ...(prev.power ?? {}) } as NonNullable<ArticleMetadata["power"]>;
+      const nextPower = { ...(prev.power ?? {}) } as NonNullable<
+        ArticleMetadata["power"]
+      >;
       for (const [key, value] of Object.entries(partial)) {
         if (value === undefined) {
           delete nextPower[key as keyof typeof nextPower];
@@ -136,7 +203,9 @@ export function ArticleMetadataForm({
           nextPower[key as keyof typeof nextPower] = value as never;
         }
       }
-      const cleaned = Object.values(nextPower).every((value) => value === undefined)
+      const cleaned = Object.values(nextPower).every(
+        (value) => value === undefined
+      )
         ? undefined
         : nextPower;
       return {
@@ -170,7 +239,9 @@ export function ArticleMetadataForm({
             <Input
               id="amf-manufacturer"
               value={local.manufacturer ?? ""}
-              onChange={(event) => setTextField("manufacturer", event.target.value)}
+              onChange={(event) =>
+                setTextField("manufacturer", event.target.value)
+              }
             />
           </div>
           <div className="grid gap-1.5">
@@ -186,7 +257,9 @@ export function ArticleMetadataForm({
             <Input
               id="amf-mpn"
               value={local.manufacturerPartNumber ?? ""}
-              onChange={(event) => setTextField("manufacturerPartNumber", event.target.value)}
+              onChange={(event) =>
+                setTextField("manufacturerPartNumber", event.target.value)
+              }
             />
           </div>
           <div className="grid gap-1.5">
@@ -209,9 +282,16 @@ export function ArticleMetadataForm({
             <Checkbox
               id="amf-no-stock"
               checked={!!local.canBeBookedWithoutStock}
-              onCheckedChange={(checked) => update((prev) => ({ ...prev, canBeBookedWithoutStock: !!checked }))}
+              onCheckedChange={(checked) =>
+                update((prev) => ({
+                  ...prev,
+                  canBeBookedWithoutStock: !!checked,
+                }))
+              }
             />
-            <Label htmlFor="amf-no-stock" className="text-sm">Kann ohne Lagerbestand gebucht werden</Label>
+            <Label htmlFor="amf-no-stock" className="text-sm">
+              Kann ohne Lagerbestand gebucht werden
+            </Label>
           </div>
         </CardContent>
       </Card>
@@ -236,14 +316,18 @@ export function ArticleMetadataForm({
                 min={0}
                 step="0.1"
                 value={local.weightKg ?? ""}
-                onChange={(event) => setNumberField("weightKg", event.target.value)}
+                onChange={(event) =>
+                  setNumberField("weightKg", event.target.value)
+                }
               />
             </div>
           </div>
           <DimensionsFieldset
             idPrefix="article-dimensions"
             value={local.dimensionsCm}
-            onChange={(next) => update((prev) => ({ ...prev, dimensionsCm: next }))}
+            onChange={(next) =>
+              update((prev) => ({ ...prev, dimensionsCm: next }))
+            }
           />
         </CardContent>
       </Card>
@@ -254,12 +338,17 @@ export function ArticleMetadataForm({
     if (!activeSections.includes("power")) return null;
     const power = local.power ?? {};
     const inherited = adminMeta.standardData.power;
-    const connectorPlaceholder = inherited.powerConnectorType ?? adminMeta.standardData.power.powerConnectorType ?? undefined;
+    const connectorPlaceholder =
+      inherited.powerConnectorType ??
+      adminMeta.standardData.power.powerConnectorType ??
+      undefined;
     return (
       <Card>
         <CardHeader>
           <CardTitle>Stromversorgung</CardTitle>
-          <CardDescription>Geerbte Werte werden als Platzhalter angezeigt</CardDescription>
+          <CardDescription>
+            Geerbte Werte werden als Platzhalter angezeigt
+          </CardDescription>
         </CardHeader>
         <CardContent className="grid gap-4 sm:grid-cols-3">
           <div className="grid gap-1.5">
@@ -270,7 +359,9 @@ export function ArticleMetadataForm({
                   id="amf-power-type-ignore"
                   label="Ignorieren"
                   checked={power.powerType === null}
-                  onChange={(checked) => updatePower({ powerType: checked ? null : undefined })}
+                  onChange={(checked) =>
+                    updatePower({ powerType: checked ? null : undefined })
+                  }
                 />
               )}
             </div>
@@ -278,7 +369,16 @@ export function ArticleMetadataForm({
               id="amf-power-type"
               className="h-9 rounded-md border bg-background px-3 text-sm"
               value={power.powerType ?? inherited.powerType ?? "AC"}
-              onChange={(event) => updatePower({ powerType: event.target.value as "AC" | "DC" | "PoE" | "Battery" | "Other" })}
+              onChange={(event) =>
+                updatePower({
+                  powerType: event.target.value as
+                    | "AC"
+                    | "DC"
+                    | "PoE"
+                    | "Battery"
+                    | "Other",
+                })
+              }
               disabled={power.powerType === null}
             >
               <option>AC</option>
@@ -292,18 +392,26 @@ export function ArticleMetadataForm({
             id="amf-v"
             label="Spannung (V)"
             value={power.voltageRangeV ?? ""}
-            placeholder={power.voltageRangeV ? undefined : powerDefaults.voltageRangeV}
+            placeholder={
+              power.voltageRangeV ? undefined : powerDefaults.voltageRangeV
+            }
             ignored={power.voltageRangeV === null}
-            onIgnoreChange={(checked) => updatePower({ voltageRangeV: checked ? null : undefined })}
+            onIgnoreChange={(checked) =>
+              updatePower({ voltageRangeV: checked ? null : undefined })
+            }
             onChange={(raw) => updatePower({ voltageRangeV: raw })}
           />
           <PowerInput
             id="amf-f"
             label="Frequenz (Hz)"
             value={power.frequencyHz ?? ""}
-            placeholder={power.frequencyHz ? undefined : powerDefaults.frequencyHz}
+            placeholder={
+              power.frequencyHz ? undefined : powerDefaults.frequencyHz
+            }
             ignored={power.frequencyHz === null}
-            onIgnoreChange={(checked) => updatePower({ frequencyHz: checked ? null : undefined })}
+            onIgnoreChange={(checked) =>
+              updatePower({ frequencyHz: checked ? null : undefined })
+            }
             onChange={(raw) => updatePower({ frequencyHz: raw })}
           />
           <PowerInput
@@ -312,7 +420,9 @@ export function ArticleMetadataForm({
             value={power.powerConnectorType ?? ""}
             placeholder={connectorPlaceholder}
             ignored={power.powerConnectorType === null}
-            onIgnoreChange={(checked) => updatePower({ powerConnectorType: checked ? null : undefined })}
+            onIgnoreChange={(checked) =>
+              updatePower({ powerConnectorType: checked ? null : undefined })
+            }
             onChange={(raw) => updatePower({ powerConnectorType: raw })}
           />
           <PowerNumberInput
@@ -320,7 +430,9 @@ export function ArticleMetadataForm({
             label="Max. Leistung (W)"
             value={power.maxPowerW}
             ignored={power.maxPowerW === null}
-            onIgnoreChange={(checked) => updatePower({ maxPowerW: checked ? null : undefined })}
+            onIgnoreChange={(checked) =>
+              updatePower({ maxPowerW: checked ? null : undefined })
+            }
             onChange={(amount) => updatePower({ maxPowerW: amount })}
           />
         </CardContent>
@@ -331,20 +443,53 @@ export function ArticleMetadataForm({
   function renderCaseCard() {
     if (!activeSections.includes("case")) return null;
     const caseMeta = local.case ?? {};
-    
+
     // Determine which mode: "none", "case-is-rack", or "equipment-is-rackmountable"
-    const mode = caseMeta.is19Inch ? "case-is-rack" : local.is19Inch ? "equipment-is-rackmountable" : "none";
-    
+    const mode = caseMeta.is19InchRack
+      ? "case-is-rack"
+      : local.is19InchRackmountable
+      ? "equipment-is-rackmountable"
+      : "none";
+
     return (
       <Card>
         <CardHeader>
           <CardTitle>Case & Rack Setup</CardTitle>
-          <CardDescription>Konfiguration für Cases und Rackmontage-Eigenschaften</CardDescription>
+          <CardDescription>
+            Konfiguration für Cases und Rackmontage-Eigenschaften
+          </CardDescription>
         </CardHeader>
         <CardContent className="grid gap-4">
           {/* Mode Selection - Radio Buttons */}
           <div className="grid gap-3">
             <Label>Rack-Konfiguration</Label>
+            <div className="flex flex-col gap-2">
+              <div className="flex items-center space-x-2">
+                <Checkbox
+                  id="case-mode-general"
+                  checked={caseMeta.isGeneralCase ?? false}
+                  onCheckedChange={() => {
+                    update((prev) => {
+                      const current = prev.case?.isGeneralCase ?? false;
+                      return {
+                        ...prev,
+                        case: {
+                          ...(prev.case ?? {}),
+                          isGeneralCase: !current,
+                        },
+                      };
+                    });
+                  }}
+                />
+
+                <Label
+                  htmlFor="case-mode-general"
+                  className="font-normal cursor-pointer"
+                >
+                  Hat Case Eigenschaften
+                </Label>
+              </div>
+            </div>
             <div className="flex flex-col gap-2">
               <div className="flex items-center space-x-2">
                 <input
@@ -355,14 +500,22 @@ export function ArticleMetadataForm({
                   onChange={() => {
                     update((prev) => ({
                       ...prev,
-                      is19Inch: null,
+                      is19InchRackmountable: undefined,
                       heightUnits: undefined,
-                      case: { ...(prev.case ?? {}), is19Inch: undefined, heightUnits: undefined, maxDeviceDepthCm: undefined },
+                      case: {
+                        ...(prev.case ?? {}),
+                        is19InchRack: undefined,
+                        heightUnits: undefined,
+                        maxDeviceDepthCm: undefined,
+                      },
                     }));
                   }}
                 />
-                <Label htmlFor="case-mode-none" className="font-normal cursor-pointer">
-                  Keine Rack-Eigenschaften
+                <Label
+                  htmlFor="case-mode-none"
+                  className="font-normal cursor-pointer"
+                >
+                  Keine 19&quot; Rack-Eigenschaften
                 </Label>
               </div>
               <div className="flex items-center space-x-2">
@@ -374,13 +527,16 @@ export function ArticleMetadataForm({
                   onChange={() => {
                     update((prev) => ({
                       ...prev,
-                      is19Inch: null,
+                      is19InchRackmountable: null,
                       heightUnits: undefined,
-                      case: { ...(prev.case ?? {}), is19Inch: true },
+                      case: { ...(prev.case ?? {}), is19InchRack: true },
                     }));
                   }}
                 />
-                <Label htmlFor="case-mode-case-rack" className="font-normal cursor-pointer">
+                <Label
+                  htmlFor="case-mode-case-rack"
+                  className="font-normal cursor-pointer"
+                >
                   Case ist 19&quot; Rack
                 </Label>
               </div>
@@ -393,12 +549,20 @@ export function ArticleMetadataForm({
                   onChange={() => {
                     update((prev) => ({
                       ...prev,
-                      is19Inch: true,
-                      case: { ...(prev.case ?? {}), is19Inch: undefined, heightUnits: undefined, maxDeviceDepthCm: undefined },
+                      is19InchRackmountable: true,
+                      case: {
+                        ...(prev.case ?? {}),
+                        is19InchRack: undefined,
+                        heightUnits: undefined,
+                        maxDeviceDepthCm: undefined,
+                      },
                     }));
                   }}
                 />
-                <Label htmlFor="case-mode-equipment-rack" className="font-normal cursor-pointer">
+                <Label
+                  htmlFor="case-mode-equipment-rack"
+                  className="font-normal cursor-pointer"
+                >
                   Equipment ist 19&quot; rackmontierbar
                 </Label>
               </div>
@@ -441,7 +605,8 @@ export function ArticleMetadataForm({
                       ...prev,
                       case: {
                         ...(prev.case ?? {}),
-                        maxDeviceDepthCm: value === "" ? undefined : Number(value),
+                        maxDeviceDepthCm:
+                          value === "" ? undefined : Number(value),
                       },
                     }));
                   }}
@@ -460,20 +625,24 @@ export function ArticleMetadataForm({
                   type="number"
                   min={1}
                   value={local.heightUnits ?? ""}
-                  onChange={(event) => setNumberField("heightUnits", event.target.value)}
+                  onChange={(event) =>
+                    setNumberField("heightUnits", event.target.value)
+                  }
                 />
               </div>
             </div>
           )}
 
           {/* Common Case Fields (shown when case mode is active) */}
-          {mode === "case-is-rack" && (
+          {caseMeta.isGeneralCase && (
             <>
               <div className="grid gap-1.5">
                 <Label>Innenmaße (cm)</Label>
                 <div className="grid grid-cols-3 gap-3">
                   <div className="grid gap-1.5">
-                    <Label htmlFor="case-inner-w" className="text-xs">Breite</Label>
+                    <Label htmlFor="case-inner-w" className="text-xs">
+                      Breite
+                    </Label>
                     <Input
                       id="case-inner-w"
                       type="number"
@@ -482,19 +651,27 @@ export function ArticleMetadataForm({
                       value={caseMeta.innerDimensionsCm?.width ?? ""}
                       onChange={(event) => {
                         const value = event.target.value.trim();
-                        const existingDims = caseMeta.innerDimensionsCm ?? { width: 0, height: 0 };
+                        const existingDims = caseMeta.innerDimensionsCm ?? {
+                          width: 0,
+                          height: 0,
+                        };
                         update((prev) => ({
                           ...prev,
                           case: {
                             ...(prev.case ?? {}),
-                            innerDimensionsCm: value === "" ? undefined : { ...existingDims, width: Number(value) },
+                            innerDimensionsCm:
+                              value === ""
+                                ? undefined
+                                : { ...existingDims, width: Number(value) },
                           },
                         }));
                       }}
                     />
                   </div>
                   <div className="grid gap-1.5">
-                    <Label htmlFor="case-inner-h" className="text-xs">Höhe</Label>
+                    <Label htmlFor="case-inner-h" className="text-xs">
+                      Höhe
+                    </Label>
                     <Input
                       id="case-inner-h"
                       type="number"
@@ -503,19 +680,27 @@ export function ArticleMetadataForm({
                       value={caseMeta.innerDimensionsCm?.height ?? ""}
                       onChange={(event) => {
                         const value = event.target.value.trim();
-                        const existingDims = caseMeta.innerDimensionsCm ?? { width: 0, height: 0 };
+                        const existingDims = caseMeta.innerDimensionsCm ?? {
+                          width: 0,
+                          height: 0,
+                        };
                         update((prev) => ({
                           ...prev,
                           case: {
                             ...(prev.case ?? {}),
-                            innerDimensionsCm: value === "" ? undefined : { ...existingDims, height: Number(value) },
+                            innerDimensionsCm:
+                              value === ""
+                                ? undefined
+                                : { ...existingDims, height: Number(value) },
                           },
                         }));
                       }}
                     />
                   </div>
                   <div className="grid gap-1.5">
-                    <Label htmlFor="case-inner-d" className="text-xs">Tiefe</Label>
+                    <Label htmlFor="case-inner-d" className="text-xs">
+                      Tiefe
+                    </Label>
                     <Input
                       id="case-inner-d"
                       type="number"
@@ -524,12 +709,18 @@ export function ArticleMetadataForm({
                       value={caseMeta.innerDimensionsCm?.depth ?? ""}
                       onChange={(event) => {
                         const value = event.target.value.trim();
-                        const existingDims = caseMeta.innerDimensionsCm ?? { width: 0, height: 0 };
+                        const existingDims = caseMeta.innerDimensionsCm ?? {
+                          width: 0,
+                          height: 0,
+                        };
                         update((prev) => ({
                           ...prev,
                           case: {
                             ...(prev.case ?? {}),
-                            innerDimensionsCm: value === "" ? undefined : { ...existingDims, depth: Number(value) },
+                            innerDimensionsCm:
+                              value === ""
+                                ? undefined
+                                : { ...existingDims, depth: Number(value) },
                           },
                         }));
                       }}
@@ -540,7 +731,9 @@ export function ArticleMetadataForm({
 
               <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
                 <div className="grid gap-1.5">
-                  <Label htmlFor="case-content-weight">Max. Inhaltgewicht (kg)</Label>
+                  <Label htmlFor="case-content-weight">
+                    Max. Inhaltgewicht (kg)
+                  </Label>
                   <Input
                     id="case-content-weight"
                     type="number"
@@ -553,7 +746,8 @@ export function ArticleMetadataForm({
                         ...prev,
                         case: {
                           ...(prev.case ?? {}),
-                          contentMaxWeightKg: value === "" ? undefined : Number(value),
+                          contentMaxWeightKg:
+                            value === "" ? undefined : Number(value),
                         },
                       }));
                     }}
@@ -596,7 +790,9 @@ export function ArticleMetadataForm({
             <Label htmlFor="connectivity-list">Konnektivität</Label>
             <StringListInput
               values={local.connectivity ?? []}
-              onChange={(next) => update((prev) => ({ ...prev, connectivity: next }))}
+              onChange={(next) =>
+                update((prev) => ({ ...prev, connectivity: next }))
+              }
               placeholder="z. B. WiFi, Bluetooth"
             />
           </div>
@@ -604,7 +800,9 @@ export function ArticleMetadataForm({
             <Label htmlFor="interfaces-list">Schnittstellen</Label>
             <StringListInput
               values={local.interfaces ?? []}
-              onChange={(next) => update((prev) => ({ ...prev, interfaces: next }))}
+              onChange={(next) =>
+                update((prev) => ({ ...prev, interfaces: next }))
+              }
               placeholder="z. B. USB-C, HDMI"
             />
           </div>
@@ -619,12 +817,16 @@ export function ArticleMetadataForm({
       <Card>
         <CardHeader>
           <CardTitle>Lieferanten & Preise</CardTitle>
-          <CardDescription>Lieferantenverwaltung, Preise und Konditionen</CardDescription>
+          <CardDescription>
+            Lieferantenverwaltung, Preise und Konditionen
+          </CardDescription>
         </CardHeader>
         <CardContent className="grid gap-6">
           <SupplierListEditor
             suppliers={local.suppliers ?? []}
-            onChange={(next) => update((prev) => ({ ...prev, suppliers: next }))}
+            onChange={(next) =>
+              update((prev) => ({ ...prev, suppliers: next }))
+            }
             contactOptions={supplierOptions}
             onCreateContact={onCreateSupplier}
             currencyFallback={currencyFallback}
@@ -633,7 +835,9 @@ export function ArticleMetadataForm({
             <Label>Tagessatz (Vermietung)</Label>
             <PriceFields
               value={local.dailyRentalRate}
-              onChange={(next) => update((prev) => ({ ...prev, dailyRentalRate: next }))}
+              onChange={(next) =>
+                update((prev) => ({ ...prev, dailyRentalRate: next }))
+              }
               currencyFallback={currencyFallback}
             />
           </div>
@@ -648,7 +852,9 @@ export function ArticleMetadataForm({
       <Card>
         <CardHeader>
           <CardTitle>Notizen</CardTitle>
-          <CardDescription>Freitext für Besonderheiten und Hinweise</CardDescription>
+          <CardDescription>
+            Freitext für Besonderheiten und Hinweise
+          </CardDescription>
         </CardHeader>
         <CardContent>
           <Textarea
@@ -663,13 +869,17 @@ export function ArticleMetadataForm({
   }
 
   function renderSectionAddCard() {
-    const hiddenSections = SECTION_DEFINITIONS.filter((section) => !activeSections.includes(section.id));
+    const hiddenSections = SECTION_DEFINITIONS.filter(
+      (section) => !activeSections.includes(section.id)
+    );
     if (hiddenSections.length === 0) return null;
     return (
       <Card className="border-dashed">
         <CardHeader>
           <CardTitle>Weitere Metadaten hinzufügen</CardTitle>
-          <CardDescription>Aktiviere zusätzliche Bereiche nach Bedarf</CardDescription>
+          <CardDescription>
+            Aktiviere zusätzliche Bereiche nach Bedarf
+          </CardDescription>
         </CardHeader>
         <CardContent className="flex flex-wrap gap-2">
           {hiddenSections.map((section) => (
@@ -703,37 +913,45 @@ export function ArticleMetadataForm({
 
 function hasPhysicalData(metadata: ArticleMetadata) {
   return Boolean(
-    metadata.is19Inch ||
+    metadata.is19InchRackmountable ||
       metadata.heightUnits ||
       metadata.weightKg ||
-      metadata.dimensionsCm,
+      metadata.dimensionsCm
   );
 }
 
 function hasPowerData(metadata: ArticleMetadata) {
   const power = metadata.power;
   if (!power) return false;
-  return Object.values(power).some((value) => value !== undefined && value !== null);
+  return Object.values(power).some(
+    (value) => value !== undefined && value !== null
+  );
 }
 
 function hasPowerDefaults(admin: adminCompanyMetadata) {
-  return Object.values(admin.standardData.power).some((value) => value !== undefined && value !== null && value !== "");
+  return Object.values(admin.standardData.power).some(
+    (value) => value !== undefined && value !== null && value !== ""
+  );
 }
 
 function hasCaseData(metadata: ArticleMetadata) {
   return Boolean(
-    metadata.case?.is19Inch ||
+    metadata.case?.is19InchRack ||
       metadata.case?.heightUnits ||
       metadata.case?.maxDeviceDepthCm ||
       metadata.case?.innerDimensionsCm ||
       metadata.case?.restrictedContentTypes?.length ||
       metadata.case?.contentMaxWeightKg ||
-      metadata.fitsInRestrictedCaseTypes?.length,
+      metadata.fitsInRestrictedCaseTypes?.length ||
+      metadata.case?.isGeneralCase
   );
 }
 
 function hasConnectivityData(metadata: ArticleMetadata) {
-  return Boolean((metadata.connectivity?.length ?? 0) > 0 || (metadata.interfaces?.length ?? 0) > 0);
+  return Boolean(
+    (metadata.connectivity?.length ?? 0) > 0 ||
+      (metadata.interfaces?.length ?? 0) > 0
+  );
 }
 
 interface IgnoreToggleProps {
@@ -745,7 +963,10 @@ interface IgnoreToggleProps {
 
 function IgnoreToggle({ id, label, checked, onChange }: IgnoreToggleProps) {
   return (
-    <label className="flex items-center gap-2 text-xs text-muted-foreground" htmlFor={id}>
+    <label
+      className="flex items-center gap-2 text-xs text-muted-foreground"
+      htmlFor={id}
+    >
       <Checkbox
         id={id}
         checked={checked}
@@ -766,13 +987,26 @@ interface PowerInputProps {
   onChange: (value: string | undefined) => void;
 }
 
-function PowerInput({ id, label, value, placeholder, ignored, onIgnoreChange, onChange }: PowerInputProps) {
+function PowerInput({
+  id,
+  label,
+  value,
+  placeholder,
+  ignored,
+  onIgnoreChange,
+  onChange,
+}: PowerInputProps) {
   return (
     <div className="grid gap-1.5">
       <div className="flex items-center justify-between">
         <Label htmlFor={id}>{label}</Label>
         {(placeholder || ignored) && (
-          <IgnoreToggle id={`${id}-ignore`} label="Ignorieren" checked={ignored} onChange={onIgnoreChange} />
+          <IgnoreToggle
+            id={`${id}-ignore`}
+            label="Ignorieren"
+            checked={ignored}
+            onChange={onIgnoreChange}
+          />
         )}
       </div>
       <Input
@@ -798,12 +1032,24 @@ interface PowerNumberInputProps {
   onChange: (value: number | undefined) => void;
 }
 
-function PowerNumberInput({ id, label, value, ignored, onIgnoreChange, onChange }: PowerNumberInputProps) {
+function PowerNumberInput({
+  id,
+  label,
+  value,
+  ignored,
+  onIgnoreChange,
+  onChange,
+}: PowerNumberInputProps) {
   return (
     <div className="grid gap-1.5">
       <div className="flex items-center justify-between">
         <Label htmlFor={id}>{label}</Label>
-        <IgnoreToggle id={`${id}-ignore`} label="Ignorieren" checked={ignored} onChange={onIgnoreChange} />
+        <IgnoreToggle
+          id={`${id}-ignore`}
+          label="Ignorieren"
+          checked={ignored}
+          onChange={onIgnoreChange}
+        />
       </div>
       <Input
         id={id}

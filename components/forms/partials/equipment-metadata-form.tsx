@@ -355,13 +355,15 @@ export function EquipmentMetadataForm({
     const inherited = inheritedArticle?.case ?? {};
     
     // Determine which mode based on inherited or current values
-    const caseIsRack = caseData.is19Inch ?? inherited.is19Inch ?? false;
-    const equipmentIsRackmountable = local.is19Inch ?? inheritedArticle?.is19Inch ?? false;
+    const caseIsRack = caseData.is19InchRack ?? inherited.is19InchRack ?? false;
+    const equipmentIsRackmountable = local.is19InchRackmountable ?? inheritedArticle?.is19InchRackmountable ?? false;
     const mode = caseIsRack ? "case-is-rack" : equipmentIsRackmountable ? "equipment-is-rackmountable" : "none";
     const caseHasRackDataActive = hasCaseRackData(local, inheritedArticle);
     const caseHasGeneralDataActive = hasCaseGeneralData(local, inheritedArticle);
     const showRackCaseFields = caseIsRack || caseHasRackDataActive;
     const showGeneralCaseFields = showRackCaseFields || caseHasGeneralDataActive;
+
+    console.log("CaseData:", caseData, "Inherited", inherited, "Mode", mode, "showRackCaseFields", showRackCaseFields, "showGeneralCaseFields", showGeneralCaseFields);
     
     return (
       <Card>
@@ -379,7 +381,7 @@ export function EquipmentMetadataForm({
                   type="radio"
                   id="case-mode-none"
                   name="case-mode"
-                  checked={mode === "none"}
+                  defaultChecked={mode === "none"}
                   onChange={() => {
                     update((prev) => {
                       const prevCase = prev.case ?? {};
@@ -406,15 +408,15 @@ export function EquipmentMetadataForm({
                   type="radio"
                   id="case-mode-case-rack"
                   name="case-mode"
-                  checked={mode === "case-is-rack"}
+                  defaultChecked={mode === "case-is-rack"}
                   onChange={() => {
                     update((prev) => {
                       const prevCase = prev.case ?? {};
                       return {
                         ...prev,
-                        is19Inch: false,
+                        is19InchRackmountable: false,
                         heightUnits: undefined,
-                        case: { ...prevCase, is19Inch: true },
+                        case: { ...prevCase, is19InchRack: true },
                       };
                     });
                   }}
@@ -428,16 +430,17 @@ export function EquipmentMetadataForm({
                   type="radio"
                   id="case-mode-equipment-rack"
                   name="case-mode"
-                  checked={mode === "equipment-is-rackmountable"}
+                  defaultChecked={mode === "equipment-is-rackmountable"}
                   onChange={() => {
+                    
                     update((prev) => {
                       const prevCase = prev.case ?? {};
                       return {
                         ...prev,
-                        is19Inch: true,
+                        is19InchRackmountable: true,
                         case: {
                           ...prevCase,
-                          is19Inch: false,
+                          is19InchRack: false,
                           heightUnits: undefined,
                           maxDeviceDepthCm: undefined,
                         },
@@ -453,7 +456,7 @@ export function EquipmentMetadataForm({
           </div>
 
           {/* Case is Rack Fields */}
-          {showRackCaseFields && (
+          {mode == "case-is-rack" && (
             <div className={`grid grid-cols-1 gap-4 sm:grid-cols-2 ${mode === "case-is-rack" ? "border-l-4 border-blue-500 pl-4" : ""}`}>
               <InheritedNumberField
                 id="emf-case-hu"
@@ -878,10 +881,10 @@ function hasNumber(value: number | null | undefined) {
 
 function hasCaseRackData(metadata: EquipmentMetadata, inheritedArticle?: ArticleMetadata | null) {
   return Boolean(
-    metadata.case?.is19Inch === true ||
+    metadata.case?.is19InchRack === true ||
     hasNumber(metadata.case?.heightUnits ?? null) ||
     hasNumber(metadata.case?.maxDeviceDepthCm ?? null) ||
-    inheritedArticle?.case?.is19Inch === true ||
+    inheritedArticle?.case?.is19InchRack === true ||
     hasNumber(inheritedArticle?.case?.heightUnits ?? null) ||
     hasNumber(inheritedArticle?.case?.maxDeviceDepthCm ?? null)
   );
@@ -902,9 +905,9 @@ function hasCaseGeneralData(metadata: EquipmentMetadata, inheritedArticle?: Arti
 
 function hasEquipmentRackData(metadata: EquipmentMetadata, inheritedArticle?: ArticleMetadata | null) {
   return Boolean(
-    metadata.is19Inch === true ||
+    metadata.is19InchRackmountable === true ||
     hasNumber(metadata.heightUnits ?? null) ||
-    inheritedArticle?.is19Inch === true ||
+    inheritedArticle?.is19InchRackmountable === true ||
     hasNumber(inheritedArticle?.heightUnits ?? null)
   );
 }

@@ -45,9 +45,7 @@ export const defaultAdminCompanyMetadataDE: adminCompanyMetadata = {
 
 export const defaultArticleMetadataDE: ArticleMetadata = {
   type: "",
-  is19Inch: false,
-  heightUnits: 0,
-  case: { is19Inch: false, heightUnits: 0 },
+  is19InchRackmountable: false,
   // power: undefined - leave empty so placeholders show instead of prefilled values
 };
 
