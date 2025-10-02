@@ -750,3 +750,22 @@ Files: lib/tools/deleteCompany.ts, tests/vitest/delete-company.test.ts. Next: ru
 - Template now visible at comfortable size in large modal
 - File: components/asset-tag-templates/template-preview.tsx
 - TypeScript compilation: ✅ PASSED
+
+## 2025-10-03 00:45 – Optimized Asset Tag Template form layout with two-column grid
+- **PROBLEM**: All form cards had full width, wasting horizontal space
+- User feedback: "Alle haben grade volle breite, ist aber garnicht notwendig. Da passen auch zwei nebeneinander, außer die elements, die brauchen platz."
+- **SOLUTION**: Restructured form layout with responsive grid
+- Basic Information + Dimensions: Two columns side-by-side (md:grid-cols-2)
+- Styling + Code Generation: Full width but internal 3-column grid for compact fields
+- Available Template Codes: Full width (needs space for reference table)
+- Elements: Full width (needs space for complex configuration)
+- Layout changes:
+  * Wrapped first two cards in grid grid-cols-1 md:grid-cols-2
+  * Adjusted Dimensions card internal grid for better fit
+  * Changed Styling grid to 3 columns on medium+ screens
+  * Changed Code Generation grid to 3 columns on medium+ screens
+  * Elements and Template Codes remain full width
+- Better use of horizontal space on desktop screens
+- Mobile view remains single column (responsive)
+- File: components/forms/asset-tag-template-create-form.tsx
+- TypeScript compilation: ✅ PASSED

@@ -189,53 +189,58 @@ export function AssetTagTemplateCreateForm() {
         </Card>
       )}
       
-      {/* Basic Information */}
-      <Card>
-        <CardHeader>
-          <CardTitle>Basic Information</CardTitle>
-          <CardDescription>Template name and description</CardDescription>
-        </CardHeader>
-        <CardContent className="space-y-3">
-          <div>
-            <label className="block text-sm font-medium mb-1">Name</label>
-            <Input placeholder="My Template" {...form.register('name')} />
-          </div>
-          <div>
-            <label className="block text-sm font-medium mb-1">Description</label>
-            <Input placeholder="Optional description" {...form.register('description')} />
-          </div>
-        </CardContent>
-      </Card>
+      {/* Two column layout for smaller cards */}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+        {/* Basic Information */}
+        <Card>
+          <CardHeader>
+            <CardTitle>Basic Information</CardTitle>
+            <CardDescription>Template name and description</CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-3">
+            <div>
+              <label className="block text-sm font-medium mb-1">Name</label>
+              <Input placeholder="My Template" {...form.register('name')} />
+            </div>
+            <div>
+              <label className="block text-sm font-medium mb-1">Description</label>
+              <Input placeholder="Optional description" {...form.register('description')} />
+            </div>
+          </CardContent>
+        </Card>
 
-      {/* Dimensions */}
-      <Card>
-        <CardHeader>
-          <CardTitle>Dimensions</CardTitle>
-          <CardDescription>Physical size and margins</CardDescription>
-        </CardHeader>
-        <CardContent className="grid grid-cols-2 gap-4">
-          <div>
-            <label className="block text-sm font-medium mb-1">Width (mm)</label>
-            <Input type="number" {...form.register('tagWidthMm', { valueAsNumber: true })} />
-          </div>
-          <div>
-            <label className="block text-sm font-medium mb-1">Height (mm)</label>
-            <Input type="number" {...form.register('tagHeightMm', { valueAsNumber: true })} />
-          </div>
-          <div>
-            <label className="block text-sm font-medium mb-1">Margin (mm)</label>
-            <Input type="number" step="0.1" {...form.register('marginMm', { valueAsNumber: true })} />
-          </div>
-        </CardContent>
-      </Card>
+        {/* Dimensions */}
+        <Card>
+          <CardHeader>
+            <CardTitle>Dimensions</CardTitle>
+            <CardDescription>Physical size and margins</CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-3">
+            <div className="grid grid-cols-2 gap-3">
+              <div>
+                <label className="block text-sm font-medium mb-1">Width (mm)</label>
+                <Input type="number" {...form.register('tagWidthMm', { valueAsNumber: true })} />
+              </div>
+              <div>
+                <label className="block text-sm font-medium mb-1">Height (mm)</label>
+                <Input type="number" {...form.register('tagHeightMm', { valueAsNumber: true })} />
+              </div>
+            </div>
+            <div>
+              <label className="block text-sm font-medium mb-1">Margin (mm)</label>
+              <Input type="number" step="0.1" {...form.register('marginMm', { valueAsNumber: true })} />
+            </div>
+          </CardContent>
+        </Card>
+      </div>
 
-      {/* Styling */}
+      {/* Styling - Full width */}
       <Card>
         <CardHeader>
           <CardTitle>Styling</CardTitle>
           <CardDescription>Colors and typography</CardDescription>
         </CardHeader>
-        <CardContent className="grid grid-cols-2 gap-4">
+        <CardContent className="grid grid-cols-2 md:grid-cols-3 gap-4">
           <div>
             <label className="block text-sm font-medium mb-1">Background Color</label>
             <Input type="color" {...form.register('backgroundColor')} />
@@ -263,13 +268,13 @@ export function AssetTagTemplateCreateForm() {
         </CardContent>
       </Card>
 
-      {/* Code Generation */}
+      {/* Code Generation - Full width */}
       <Card>
         <CardHeader>
           <CardTitle>Code Generation</CardTitle>
           <CardDescription>Build printed_code from rules</CardDescription>
         </CardHeader>
-        <CardContent className="grid grid-cols-2 gap-4">
+        <CardContent className="grid grid-cols-2 md:grid-cols-3 gap-4">
           <div>
             <label className="block text-sm font-medium mb-1">Prefix</label>
             <Input placeholder="e.g., EQ" {...form.register('prefix')} />
