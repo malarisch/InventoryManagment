@@ -1,3 +1,9 @@
+## 2025-01-XX 16:45 – Continued Bug Fixes: Asset Tags & Company Settings
+- Fixed AssetTagCreateForm to auto-prefill code using buildAssetTagCode helper (no manual prompt needed)
+- Fixed company settings not reflecting changes until reload - now refetches data and triggers page refresh
+- Total fixes in session: 15 bugs (PostgREST syntax, case columns, asset tags, company settings)
+- Next: Continue with remaining form improvements and UX enhancements
+
 ## 2025-01-XX 15:30 – Fixed PostgREST Query Syntax Errors
 - Fixed PostgREST foreign key join syntax: changed `articles:article_id(name)` to `articles(name)` across 5 files
 - Supabase auto-detects FK relationships without explicit column reference
