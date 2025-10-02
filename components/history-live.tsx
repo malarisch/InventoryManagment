@@ -158,6 +158,8 @@ export function HistoryLive({
     };
   }, [supabase, normalizedTables, dataId]);
 
+  // Load equipment details for DETAIL_TABLES rows
+  // NOTE: deliberately omitting equipmentDetails from deps to prevent infinite loop
   useEffect(() => {
     const equipIds = rows
       .filter((row) => DETAIL_TABLES.has(row.table_name))
@@ -190,8 +192,11 @@ export function HistoryLive({
     return () => {
       cancelled = true;
     };
-  }, [rows, equipmentDetails, supabase]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [rows, supabase]);
 
+  // Load case details for DETAIL_TABLES rows
+  // NOTE: deliberately omitting caseDetails from deps to prevent infinite loop
   useEffect(() => {
     const caseIds = rows
       .filter((row) => DETAIL_TABLES.has(row.table_name))
@@ -219,7 +224,8 @@ export function HistoryLive({
     return () => {
       cancelled = true;
     };
-  }, [rows, caseDetails, supabase]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [rows, supabase]);
 
   const previewKeys = ["id", "name", "article_id", "default_location", "asset_tag", "current_location", "company_id"] as const;
 
