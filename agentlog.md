@@ -1,3 +1,18 @@
+## 2025-10-03 13:30 – Jobs: Replaced contact dropdown with SearchPicker in both forms
+- **TASK**: Implement contact picker with search table (todo #1 of 6)
+- User requested: Better UX for contact selection in job forms (becomes unwieldy with many contacts)
+- **SOLUTION**: Replaced standard <select> dropdown with SearchPicker component in both job-create-form.tsx and job-edit-form.tsx
+- Added SearchPicker import to both forms
+- Created contactItems useMemo mapping contacts to SearchItem format with fuzzy search matchers:
+  * ID (weight 5), display_name (20), company_name (20), first_name (15), last_name (15)
+- Filter maintains customer-type-only constraint (contact_type === "customer")
+- SearchPicker displays selected contact name in button label
+- Preserved "Neuen Kontakt anlegen" button functionality
+- Files: components/forms/job-create-form.tsx, job-edit-form.tsx, agentlog.md
+- TypeScript compilation: ✅ PASSED (`npm run test:tsc`)
+- Commit: d89d41a "feat: Replace contact dropdown with SearchPicker in job forms"
+- Next: Task 2/6 - Jobs edit: 2/3 layout with Quick book sidebar
+
 ## 2025-10-03 00:05 – Fixed undo to restore backed-up section data
 - **PROBLEM**: Undo button showed section again but data was lost
 - User feedback: "Der Undo Button tuts nicht - er zeigt war die Card wieder an, aber die Daten weg."
