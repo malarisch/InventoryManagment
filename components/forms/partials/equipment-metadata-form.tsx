@@ -865,32 +865,36 @@ function hasConnectivityData(metadata: EquipmentMetadata) {
 
 function hasDimensions(dims?: DimensionsCm | null) {
   if (!dims) return false;
-  return dims.width !== undefined || dims.height !== undefined || dims.depth !== undefined;
+  return dims.width != null || dims.height != null || dims.depth != null;
 }
 
 function hasRestrictedTypes(types?: string[] | null) {
   return (types?.length ?? 0) > 0;
 }
 
+function hasNumber(value: number | null | undefined) {
+  return value !== null && value !== undefined;
+}
+
 function hasCaseRackData(metadata: EquipmentMetadata, inheritedArticle?: ArticleMetadata | null) {
   return Boolean(
-    metadata.case?.is19Inch !== undefined ||
-    metadata.case?.heightUnits !== undefined ||
-    metadata.case?.maxDeviceDepthCm !== undefined ||
-    inheritedArticle?.case?.is19Inch !== undefined ||
-    inheritedArticle?.case?.heightUnits !== undefined ||
-    inheritedArticle?.case?.maxDeviceDepthCm !== undefined
+    metadata.case?.is19Inch === true ||
+    hasNumber(metadata.case?.heightUnits ?? null) ||
+    hasNumber(metadata.case?.maxDeviceDepthCm ?? null) ||
+    inheritedArticle?.case?.is19Inch === true ||
+    hasNumber(inheritedArticle?.case?.heightUnits ?? null) ||
+    hasNumber(inheritedArticle?.case?.maxDeviceDepthCm ?? null)
   );
 }
 
 function hasCaseGeneralData(metadata: EquipmentMetadata, inheritedArticle?: ArticleMetadata | null) {
   return Boolean(
-    metadata.case?.hasLock !== undefined ||
-    metadata.case?.contentMaxWeightKg !== undefined ||
+    metadata.case?.hasLock === true ||
+    hasNumber(metadata.case?.contentMaxWeightKg ?? null) ||
     hasDimensions(metadata.case?.innerDimensionsCm) ||
     hasRestrictedTypes(metadata.case?.restrictedContentTypes) ||
-    inheritedArticle?.case?.hasLock !== undefined ||
-    inheritedArticle?.case?.contentMaxWeightKg !== undefined ||
+    inheritedArticle?.case?.hasLock === true ||
+    hasNumber(inheritedArticle?.case?.contentMaxWeightKg ?? null) ||
     hasDimensions(inheritedArticle?.case?.innerDimensionsCm) ||
     hasRestrictedTypes(inheritedArticle?.case?.restrictedContentTypes)
   );
@@ -898,10 +902,10 @@ function hasCaseGeneralData(metadata: EquipmentMetadata, inheritedArticle?: Arti
 
 function hasEquipmentRackData(metadata: EquipmentMetadata, inheritedArticle?: ArticleMetadata | null) {
   return Boolean(
-    metadata.is19Inch !== undefined ||
-    metadata.heightUnits !== undefined ||
-    inheritedArticle?.is19Inch !== undefined ||
-    inheritedArticle?.heightUnits !== undefined
+    metadata.is19Inch === true ||
+    hasNumber(metadata.heightUnits ?? null) ||
+    inheritedArticle?.is19Inch === true ||
+    hasNumber(inheritedArticle?.heightUnits ?? null)
   );
 }
 

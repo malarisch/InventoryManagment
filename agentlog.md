@@ -1,3 +1,13 @@
+## 2025-10-02 19:55 – Restored conditional Case card visibility
+- **PROBLEM**: Case section and 19" rack fields always rendered, even without case metadata
+- Detection treated `false`/`null` values as data → auto-activation + field display stuck on
+- **SOLUTION**: Added `hasNumber` helper, tightened rack/general detectors to require meaningful values (true or numeric)
+- Radio handlers already set explicit booleans; now default `none` doesn't count as data, card stays hidden unless requested
+- Case rack/general grids only render when mode active or inherited data exists; ensures clean UI for equipments without case setup
+- Files: equipment-metadata-form.tsx, agentlog.md
+- TypeScript compilation: ✅ PASSED
+- Next: Validate equipment without case metadata starts with hidden card; inherited setups still auto-open
+
 ## 2025-10-02 19:40 – Show inherited Case details without manual toggle
 - **PROBLEM**: Case card still empty until any radio option was clicked; parent default kept overriding user choice
 - Radio handlers set values to null/undefined, so fallback to inherited data reapplied immediately; general case fields only rendered when mode `case-is-rack`
