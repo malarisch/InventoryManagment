@@ -21,29 +21,31 @@ interface AssetTagTemplatePreviewProps {
   onElementsChange?: (elements: AssetTagTemplateElement[]) => void;
   /** Maximum width for canvas scaling (default: 400) */
   maxWidth?: number;
+  /** Preview data for template placeholders */
+  previewData?: Record<string, string>;
 }
 
 // px per mm (approx 96 dpi)
 const MM_TO_PX = 3.779527559;
 
-export function AssetTagTemplatePreview({ template, editable = false, onElementsChange, maxWidth = 400 }: AssetTagTemplatePreviewProps) {
+// Default mock data - exported for use in form
+export const DEFAULT_PREVIEW_DATA = {
+  printed_code: 'EQ-2024-0815',
+  equipment_name: 'Sony FX6 Cinema Camera',
+  article_name: 'Professional Cinema Camera',
+  location_name: 'Studio A - Rack 3',
+  case_name: 'Camera Case 1',
+  company_name: 'EventTech Solutions GmbH',
+  current_date: new Date().toLocaleDateString('de-DE'),
+  qr_url: 'https://app.example.com/equipment/EQ-2024-0815',
+};
+
+export function AssetTagTemplatePreview({ template, editable = false, onElementsChange, maxWidth = 400, previewData = DEFAULT_PREVIEW_DATA }: AssetTagTemplatePreviewProps) {
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
   const overlayCanvasRef = useRef<HTMLCanvasElement | null>(null); // for selection boxes
   const [dragIndex, setDragIndex] = useState<number | null>(null);
   const dragOffset = useRef<{dx: number; dy: number}>({ dx: 0, dy: 0 });
   const [modalOpen, setModalOpen] = useState(false);
-
-  // Sample placeholder data for preview with realistic mock values
-  const previewData = useMemo(() => ({
-    printed_code: 'EQ-2024-0815',
-    equipment_name: 'Sony FX6 Cinema Camera',
-    article_name: 'Professional Cinema Camera',
-    location_name: 'Studio A - Rack 3',
-    case_name: 'Camera Case 1',
-    company_name: 'EventTech Solutions GmbH',
-    current_date: new Date().toLocaleDateString('de-DE'),
-    qr_url: 'https://app.example.com/equipment/EQ-2024-0815',
-  }), []);
 
   const widthPx = template.tagWidthMm * MM_TO_PX;
   const heightPx = template.tagHeightMm * MM_TO_PX;
@@ -251,19 +253,6 @@ export function AssetTagTemplatePreview({ template, editable = false, onElements
             />
           )}
         </div>
-      </div>
-      <div className="text-sm text-gray-600">
-        <p><strong>Sample placeholders used:</strong></p>
-        <ul className="list-disc list-inside space-y-1 mt-2 text-xs">
-          <li><code>{'{{printed_code}}'}</code> → {previewData.printed_code}</li>
-          <li><code>{'{{equipment_name}}'}</code> → {previewData.equipment_name}</li>
-          <li><code>{'{{article_name}}'}</code> → {previewData.article_name}</li>
-          <li><code>{'{{location_name}}'}</code> → {previewData.location_name}</li>
-          <li><code>{'{{case_name}}'}</code> → {previewData.case_name}</li>
-          <li><code>{'{{company_name}}'}</code> → {previewData.company_name}</li>
-          <li><code>{'{{current_date}}'}</code> → {previewData.current_date}</li>
-          <li><code>{'{{qr_url}}'}</code> → {previewData.qr_url}</li>
-        </ul>
       </div>
     </div>
 

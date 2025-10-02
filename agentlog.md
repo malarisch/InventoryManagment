@@ -805,3 +805,27 @@ Files: lib/tools/deleteCompany.ts, tests/vitest/delete-company.test.ts. Next: ru
 - Users can see realistic output before creating elements
 - File: components/asset-tag-templates/template-preview.tsx
 - TypeScript compilation: ✅ PASSED
+
+## 2025-10-03 01:15 – Moved mock values to Template Codes card, removed from Preview
+- **PROBLEM**: Mock values shown in Preview card, codes reference in separate card redundant
+- User feedback: "Pack die Mock values mit in die Template Codes. Entferne die codes direkt in der Preview card"
+- **SOLUTION**: Restructured to show code + mock value together in Template Codes card
+- Removed sample placeholders list from Preview component
+- Changes to template-preview.tsx:
+  * Removed list display from component JSX
+  * Made previewData optional prop with default
+  * Exported DEFAULT_PREVIEW_DATA for use in form
+  * Moved mock data to top-level constant
+- Changes to asset-tag-template-create-form.tsx:
+  * Imported DEFAULT_PREVIEW_DATA
+  * Restructured Template Codes card to show both code and example
+  * Each entry now shows: code placeholder, description, and "→ mock value"
+  * Used flex-col layout for better readability
+  * Text size: text-xs for compact display
+- Benefits:
+  * Single source of truth for reference codes and examples
+  * Cleaner Preview card (just canvas and controls)
+  * Better information hierarchy - codes with examples in one place
+  * Easier to understand what each placeholder will render
+- Files: template-preview.tsx, asset-tag-template-create-form.tsx
+- TypeScript compilation: ✅ PASSED
