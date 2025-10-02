@@ -12,7 +12,7 @@ export async function JobBookedAssetsCard({ jobId }: { jobId: number }) {
   const supabase = await createClient();
   const { data, error } = await supabase
     .from("job_booked_assets")
-    .select("*, equipments:equipment_id(id, article_id, articles:article_id(name)), cases:case_id(id)")
+    .select("*, equipments:equipment_id(id, article_id, articles(name)), cases:case_id(id)")
     .eq("job_id", jobId)
     .order("created_at", { ascending: false });
 

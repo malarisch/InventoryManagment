@@ -29,7 +29,7 @@ export function JobBookedAssetsList({ jobId, initial }: { jobId: number; initial
       setLoading(true);
       const { data, error } = await supabase
         .from("job_booked_assets")
-        .select("*, equipments:equipment_id(id, article_id, articles:article_id(name)), cases:case_id(id)")
+        .select("*, equipments:equipment_id(id, article_id, articles(name)), cases:case_id(id)")
         .eq("job_id", jobId)
         .order("created_at", { ascending: false });
       if (!active) return;
@@ -51,7 +51,7 @@ export function JobBookedAssetsList({ jobId, initial }: { jobId: number; initial
           if (!newRowId) return;
           const { data } = await supabase
             .from("job_booked_assets")
-            .select("*, equipments:equipment_id(id, article_id, articles:article_id(name)), cases:case_id(id)")
+            .select("*, equipments:equipment_id(id, article_id, articles(name)), cases:case_id(id)")
             .eq("id", newRowId)
             .limit(1)
             .single();
@@ -70,7 +70,7 @@ export function JobBookedAssetsList({ jobId, initial }: { jobId: number; initial
           if (!updatedId) return;
           const { data } = await supabase
             .from("job_booked_assets")
-            .select("*, equipments:equipment_id(id, article_id, articles:article_id(name)), cases:case_id(id)")
+            .select("*, equipments:equipment_id(id, article_id, articles(name)), cases:case_id(id)")
             .eq("id", updatedId)
             .limit(1)
             .single();
@@ -129,7 +129,7 @@ export function JobBookedAssetsList({ jobId, initial }: { jobId: number; initial
     const { data, error } = await supabase
       .from("job_booked_assets")
       .insert(payload)
-      .select("*, equipments:equipment_id(id, article_id, articles:article_id(name)), cases:case_id(id)")
+      .select("*, equipments:equipment_id(id, article_id, articles(name)), cases:case_id(id)")
       .single();
     if (error) {
       setStatus(error.message);

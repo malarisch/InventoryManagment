@@ -47,7 +47,7 @@ Diese To-Do List enthält Aufgaben, die an der Software zu bearbeiten sind. Soba
   - Die Termine Card darf ein "Ganztägig" checkbox bekommen, dann verschwindet das Ende (wird intern = start gesetzt).
   - Wenn nicht ganztägig fehlen die Uhrzeiten!
   - Kontaktauswahl ist ein Standard-Dropdown. Das wird sehr schnell sehr lang. Implementiere auch hier deine schicke Dropdown-Search-Table.
-  - Edit page: Gebuchte assets zeigt statt der Tabelle Fehler beim Laden: Could not find a relationship between 'equipments' and 'article_id' in the schema cache
+
   - Edit page: Die Dateneingabe darf gern nur 2/3 der Seite einnehmen, auf dem dritten Drittel erst die Quick book card, darunter die gebuchte equipments card.
   - Edit Page: Kontakt card nicht anzeigen. Stattdessen in der Kurzbeschreibung den Kontaktnamen mit link zur Kontaktseite, daneben ein "Ändern" knopf welcher die Contact Card in einem Modal öffnet. 
 
@@ -88,6 +88,7 @@ Diese To-Do List enthält Aufgaben, die an der Software zu bearbeiten sind. Soba
 
 
 ## Done
+- **Fix: Job Edit Page Booked Assets Query Error**: Fixed PostgREST query syntax from `articles:article_id(name)` to `articles(name)` in both job-booked-assets.client.tsx and job-booked-assets.tsx - Supabase auto-detects foreign key relationships without explicit column reference.
 - **Fix: Company Settings Types Input**: Fixed issue where spaces and line breaks were immediately deleted in article/case/location type textareas by changing to process (split/trim/filter) only on blur instead of every keystroke.
 - **Fix: Company Settings Types with Spaces**: Fixed custom types (articleTypes, caseTypes, locationTypes) by filtering out empty strings after trim, allowing spaces within type names and line breaks between types while removing blank lines.
 - **Fix: Infinite Loop on Table Pages**: Fixed DataTable component causing constant refresh loop on table pages (e.g. /management/equipments) by serializing array dependencies (filters, searchableFields) in useEffect. Array references were being recreated on every render causing infinite re-fetches (~40 requests/second).
