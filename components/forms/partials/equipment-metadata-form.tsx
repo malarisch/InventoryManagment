@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useRef, useState } from "react";
-import type { ArticleMetadata, DimensionsCm, EquipmentMetadata, Person } from "@/components/metadataTypes.types";
+import type { ArticleMetadata, DimensionsCm, EquipmentMetadata } from "@/components/metadataTypes.types";
 import type { adminCompanyMetadata } from "@/components/metadataTypes.types";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -116,7 +116,7 @@ export function EquipmentMetadataForm({
     ensureSectionActive("case", hasCaseData(local, inheritedArticle));
     ensureSectionActive("connectivity", hasConnectivityData(local));
     ensureSectionActive("suppliers", (local.suppliers?.length ?? 0) > 0);
-    ensureSectionActive("assignment", !!local.assignedTo);
+    ensureSectionActive("assignment", !!local.assignedToContactId);
     // Activate notes section if equipment has own notes OR if inherited article notes exist
     const hasOwnNotes = !!local.notes;
     const hasInheritedNotes = !!inheritedArticle?.notes && inheritedArticle.notes.trim().length > 0;
@@ -776,67 +776,79 @@ export function EquipmentMetadataForm({
 
   function renderAssignmentCard() {
     if (!activeSections.includes("assignment")) return null;
-    const person = local.assignedTo ?? ({} as Person);
+    
     return (
       <Card>
         <CardHeader>
           <CardTitle>Zuweisung</CardTitle>
           <CardDescription>Verantwortung für dieses Equipment</CardDescription>
         </CardHeader>
-        <CardContent className="grid gap-4 sm:grid-cols-2">
+        <CardContent className="grid gap-4">
           <div className="grid gap-1.5">
-            <Label htmlFor="assigned-first-name">Vorname</Label>
-            <Input
-              id="assigned-first-name"
-              value={person.firstName ?? ""}
-              onChange={(event) => update((prev) => ({
-                ...prev,
-                assignedTo: { ...(prev.assignedTo ?? {}), firstName: event.target.value },
-              }))}
-            />
+            <Label htmlFor="assigned-contact">Zugewiesene Person</Label>
+            <select
+              id="assigned-contact"
+              className="h-9 rounded-md border bg-background px-3 text-sm"
+              value={local.assignedToContactId ?? ""}
+              onChange={(event) => {
+                const value = event.target.value;
+                update((prev) => ({
+                  ...prev,
+                  assignedToContactId: value ? Number(value) : undefined,
+                }));
+              }}
+            >
+              <option value="">Keine Zuweisung</option>
+              {supplierOptions?.map((contact) => (
+                <option key={contact.id} value={contact.id}>
+                  {contact.label}
+                </option>
+              ))}
+            </select>
+            {onCreateSupplier && (
+              <Button
+                type="button"
+                variant="ghost"
+                size="sm"
+                className="mt-1 w-fit"
+                onClick={onCreateSupplier}
+              >
+                + Neuen Kontakt anlegen
+              </Button>
+            )}
           </div>
-          <div className="grid gap-1.5">
-            <Label htmlFor="assigned-last-name">Nachname</Label>
-            <Input
-              id="assigned-last-name"
-              value={person.lastName ?? ""}
-              onChange={(event) => update((prev) => ({
+          
+          {local.assignedToContactId && (
+            <div className="grid gap-1.5">
+              <Label htmlFor="assigned-notes">Notizen zur Zuweisung</Label>
+              <Textarea
+                id="assigned-notes"
+                value={local.assignedToNotes ?? ""}
+                onChange={(event) => update((prev) => ({
+                  ...prev,
+                  assignedToNotes: event.target.value,
+                }))}
+                rows={3}
+                placeholder="z.B. Verantwortungsbereich, besondere Hinweise..."
+              />
+            </div>
+          )}
+          
+          {local.assignedToContactId && (
+            <Button
+              type="button"
+              variant="ghost"
+              size="sm"
+              className="w-fit"
+              onClick={() => update((prev) => ({
                 ...prev,
-                assignedTo: { ...(prev.assignedTo ?? {}), lastName: event.target.value },
+                assignedToContactId: undefined,
+                assignedToNotes: undefined,
               }))}
-            />
-          </div>
-          <div className="grid gap-1.5">
-            <Label htmlFor="assigned-position">Rolle</Label>
-            <Input
-              id="assigned-position"
-              value={person.position ?? ""}
-              onChange={(event) => update((prev) => ({
-                ...prev,
-                assignedTo: { ...(prev.assignedTo ?? {}), position: event.target.value },
-              }))}
-            />
-          </div>
-          <div className="grid gap-1.5">
-            <Label htmlFor="assigned-notes">Notizen</Label>
-            <Textarea
-              id="assigned-notes"
-              value={person.notes ?? ""}
-              onChange={(event) => update((prev) => ({
-                ...prev,
-                assignedTo: { ...(prev.assignedTo ?? {}), notes: event.target.value },
-              }))}
-              rows={3}
-            />
-          </div>
-          <Button
-            type="button"
-            variant="ghost"
-            className="col-span-full justify-start"
-            onClick={() => update((prev) => ({ ...prev, assignedTo: undefined }))}
-          >
-            Zuweisung entfernen
-          </Button>
+            >
+              Zuweisung entfernen
+            </Button>
+          )}
         </CardContent>
       </Card>
     );

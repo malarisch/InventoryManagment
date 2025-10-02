@@ -1,3 +1,15 @@
+## 2025-10-02 22:10 – Replaced assignment Person structure with contact picker
+- **PROBLEM**: Equipment metadata used Person parallel structure for assignedTo instead of referencing contacts table
+- User requested: Replace with contact picker (FK to contacts), keep notes field for assignment-specific info
+- **SOLUTION**: Modified EquipmentMetadata type and form to use contact references
+- Changed `assignedTo?: Person` to `assignedToContactId?: number` + `assignedToNotes?: string`
+- renderAssignmentCard now shows dropdown with existing contacts from supplierOptions
+- Includes "Neuen Kontakt anlegen" button and "Zuweisung entfernen" action
+- Assignment notes only visible when contact is selected, with placeholder text
+- Files: components/metadataTypes.types.ts, components/forms/partials/equipment-metadata-form.tsx, agentlog.md
+- TypeScript compilation: ✅ PASSED (`npm run test:tsc`)
+- Next: Continue with Company Settings Kontaktperson fix
+
 ## 2025-10-02 22:00 – Implemented additive note inheritance for Equipment
 - **PROBLEM**: Equipment notes overwrote article notes instead of showing both
 - User requested: Show article notes as read-only card + separate editable card for equipment-specific notes

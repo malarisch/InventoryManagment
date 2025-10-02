@@ -230,8 +230,10 @@ export interface EquipmentMetadata extends Partial<ArticleMetadata> {
   suppliers?: SupplierReference[];
   depreciationMethod?: "straight-line" | "declining-balance" | "sum-of-the-years-digits";
   depreciationPeriodMonths?: number; // in months
-  assignedTo?: Person; // Person responsible for the equipment
-    notes?: string; // Additional notes about the equipment
+  /** Assignment to a contact person */
+  assignedToContactId?: number; // FK to contacts table
+  assignedToNotes?: string; // Notes about the assignment
+  notes?: string; // Additional notes about the equipment
 }
 
 /** Optional notes for a case object. */
