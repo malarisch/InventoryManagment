@@ -42,6 +42,10 @@ export function DataTable<T extends { id: number }>(
   const [q, setQ] = useState(initialQuery);
   const dq = useDeferredValue(q);
 
+  // Serialize array dependencies to prevent infinite loops
+  const filtersKey = useMemo(() => JSON.stringify(filters), [filters]);
+  const searchableFieldsKey = useMemo(() => JSON.stringify(searchableFields), [searchableFields]);
+
   useEffect(() => {
     let isActive = true;
     async function load() {
@@ -85,7 +89,9 @@ export function DataTable<T extends { id: number }>(
     return () => {
       isActive = false;
     };
-  }, [page, pageSize, dq, supabase, tableName, searchableFields, select, filters]);
+    // Use serialized keys instead of array references to prevent infinite loops
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [page, pageSize, dq, supabase, tableName, filtersKey, searchableFieldsKey, select]);
 
   const totalPages = useMemo(() => {
     if (!count || count <= 0) return 1;
