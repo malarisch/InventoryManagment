@@ -3,6 +3,15 @@
 import { useEffect, useRef, useState, useCallback, useMemo } from 'react';
 import type { AssetTagTemplate, AssetTagTemplateElement } from '@/components/asset-tag-templates/types';
 import { generateSVG } from '@/lib/asset-tags/svg-generator';
+import { Button } from '@/components/ui/button';
+import { Maximize2 } from 'lucide-react';
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog';
 
 interface AssetTagTemplatePreviewProps {
   template: AssetTagTemplate;
@@ -10,16 +19,19 @@ interface AssetTagTemplatePreviewProps {
   editable?: boolean;
   /** Callback with updated elements after drag */
   onElementsChange?: (elements: AssetTagTemplateElement[]) => void;
+  /** Maximum width for canvas scaling (default: 400) */
+  maxWidth?: number;
 }
 
 // px per mm (approx 96 dpi)
 const MM_TO_PX = 3.779527559;
 
-export function AssetTagTemplatePreview({ template, editable = false, onElementsChange }: AssetTagTemplatePreviewProps) {
+export function AssetTagTemplatePreview({ template, editable = false, onElementsChange, maxWidth = 400 }: AssetTagTemplatePreviewProps) {
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
   const overlayCanvasRef = useRef<HTMLCanvasElement | null>(null); // for selection boxes
   const [dragIndex, setDragIndex] = useState<number | null>(null);
   const dragOffset = useRef<{dx: number; dy: number}>({ dx: 0, dy: 0 });
+  const [modalOpen, setModalOpen] = useState(false);
 
   // Sample placeholder data for preview – keep consistent with previous implementation
   const previewData = useMemo(() => ({
@@ -32,6 +44,15 @@ export function AssetTagTemplatePreview({ template, editable = false, onElements
   const widthPx = template.tagWidthMm * MM_TO_PX;
   const heightPx = template.tagHeightMm * MM_TO_PX;
   const marginPx = (template.marginMm || 0) * MM_TO_PX;
+
+  // Calculate scale to fit within maxWidth while maintaining aspect ratio
+  const scale = useMemo(() => {
+    if (widthPx <= maxWidth) return 1;
+    return maxWidth / widthPx;
+  }, [widthPx, maxWidth]);
+
+  const displayWidth = widthPx * scale;
+  const displayHeight = heightPx * scale;
 
   const elements: AssetTagTemplateElement[] = useMemo(()=> template.elements || [], [template.elements]);
 
@@ -72,7 +93,7 @@ export function AssetTagTemplatePreview({ template, editable = false, onElements
     };
     img.src = url;
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [svgContent, widthPx, heightPx, editable]);
+  }, [svgContent, widthPx, heightPx, editable, scale]);
 
   // Bounding box calculation helper (minimal logic duplication just for interaction layer)
   const measureElement = useCallback((ctx: CanvasRenderingContext2D, el: AssetTagTemplateElement) => {
@@ -143,7 +164,8 @@ export function AssetTagTemplatePreview({ template, editable = false, onElements
 
     const handlePointerDown = (e: PointerEvent) => {
   const rect = base.getBoundingClientRect();
-      const x = e.clientX - rect.left; const y = e.clientY - rect.top;
+      const x = (e.clientX - rect.left) / scale; 
+      const y = (e.clientY - rect.top) / scale;
       const idx = findElementAt(x, y);
       if (idx !== null) {
         setDragIndex(idx);
@@ -157,7 +179,8 @@ export function AssetTagTemplatePreview({ template, editable = false, onElements
     const handlePointerMove = (e: PointerEvent) => {
       if (dragIndex === null) return;
   const rect = base.getBoundingClientRect();
-      const x = e.clientX - rect.left; const y = e.clientY - rect.top;
+      const x = (e.clientX - rect.left) / scale; 
+      const y = (e.clientY - rect.top) / scale;
       const newElements = [...elements];
       const el = { ...newElements[dragIndex] };
       // Convert px back to mm (subtract margin first)
@@ -183,26 +206,44 @@ export function AssetTagTemplatePreview({ template, editable = false, onElements
       window.removeEventListener('pointermove', handlePointerMove);
       window.removeEventListener('pointerup', handlePointerUp);
     };
-  }, [editable, elements, dragIndex, marginPx, onElementsChange, template.tagWidthMm, template.tagHeightMm, findElementAt]);
+  }, [editable, elements, dragIndex, marginPx, onElementsChange, template.tagWidthMm, template.tagHeightMm, findElementAt, scale]);
 
   // Redraw overlay when interaction state changes
   useEffect(() => { drawOverlay(); }, [drawOverlay]);
 
   return (
+    <>
     <div className="space-y-4 select-none">
       <div className="flex items-center justify-between">
         <h4 className="font-medium">Template Preview {editable && <span className="text-xs text-gray-500">(drag elements)</span>}</h4>
+        <Button type="button" variant="outline" size="sm" onClick={() => setModalOpen(true)}>
+          <Maximize2 className="w-4 h-4 mr-2" />
+          Vergrößern
+        </Button>
       </div>
-      <div className="border rounded-lg p-4">
+      <div className="border rounded-lg p-4 overflow-auto">
         <div className="relative inline-block" style={{ lineHeight: 0 }}>
           <canvas
             ref={canvasRef}
-            style={{ border: '1px solid #d1d5db', background: '#ffffff', display: 'block' }}
+            style={{ 
+              border: '1px solid #d1d5db', 
+              background: '#ffffff', 
+              display: 'block',
+              width: `${displayWidth}px`,
+              height: `${displayHeight}px`,
+            }}
           />
           {editable && (
             <canvas
               ref={overlayCanvasRef}
-              style={{ position: 'absolute', inset: 0, cursor: dragIndex !== null ? 'grabbing' : 'grab', background: 'transparent' }}
+              style={{ 
+                position: 'absolute', 
+                inset: 0, 
+                cursor: dragIndex !== null ? 'grabbing' : 'grab', 
+                background: 'transparent',
+                width: `${displayWidth}px`,
+                height: `${displayHeight}px`,
+              }}
             />
           )}
         </div>
@@ -217,5 +258,47 @@ export function AssetTagTemplatePreview({ template, editable = false, onElements
         </ul>
       </div>
     </div>
+
+    {/* Full-size modal */}
+    <Dialog open={modalOpen} onOpenChange={setModalOpen}>
+      <DialogContent className="max-w-4xl max-h-[90vh] overflow-auto">
+        <DialogHeader>
+          <DialogTitle>Template Preview (Full Size)</DialogTitle>
+          <DialogDescription>
+            Actual size: {template.tagWidthMm}mm × {template.tagHeightMm}mm
+          </DialogDescription>
+        </DialogHeader>
+        <div className="border rounded-lg p-4 overflow-auto">
+          <div className="relative inline-block" style={{ lineHeight: 0 }}>
+            <canvas
+              style={{ 
+                border: '1px solid #d1d5db', 
+                background: '#ffffff', 
+                display: 'block',
+                width: `${widthPx}px`,
+                height: `${heightPx}px`,
+              }}
+              ref={(canvas) => {
+                if (!canvas || !svgContent) return;
+                canvas.width = widthPx;
+                canvas.height = heightPx;
+                const ctx = canvas.getContext('2d');
+                if (!ctx) return;
+                const blob = new Blob([svgContent], { type: 'image/svg+xml;charset=utf-8' });
+                const url = URL.createObjectURL(blob);
+                const img = new Image();
+                img.onload = () => {
+                  ctx.clearRect(0, 0, widthPx, heightPx);
+                  ctx.drawImage(img, 0, 0);
+                  URL.revokeObjectURL(url);
+                };
+                img.src = url;
+              }}
+            />
+          </div>
+        </div>
+      </DialogContent>
+    </Dialog>
+    </>
   );
 }
