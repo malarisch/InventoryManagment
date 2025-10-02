@@ -82,14 +82,19 @@ export function EquipmentMetadataForm({
 
   const [activeSections, setActiveSections] = useState<SectionId[]>(() => SECTION_DEFINITIONS.filter((section) => section.defaultActive).map((section) => section.id));
 
-  useEffect(() => setLocal(value), [value]);
+  useEffect(() => {
+    if (local !== value) {
+      setLocal(value);
+    }
+  }, [value]);
+
+  useEffect(() => {
+    if (local === value) return;
+    onChange(local);
+  }, [local, value, onChange]);
 
   function update(updater: (prev: EquipmentMetadata) => EquipmentMetadata) {
-    setLocal((prev) => {
-      const next = updater(prev);
-      onChange(next);
-      return next;
-    });
+    setLocal((prev) => updater(prev));
   }
 
   function ensureSectionActive(section: SectionId, hasData: boolean) {

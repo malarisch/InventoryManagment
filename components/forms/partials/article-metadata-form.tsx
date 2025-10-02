@@ -81,14 +81,19 @@ export function ArticleMetadataForm({
     return Array.from(new Set<SectionId>(["general", ...defaults]));
   });
 
-  useEffect(() => setLocal(value), [value]);
+  useEffect(() => {
+    if (local !== value) {
+      setLocal(value);
+    }
+  }, [value]);
+
+  useEffect(() => {
+    if (local === value) return;
+    onChange(local);
+  }, [local, value, onChange]);
 
   function update(updater: (prev: ArticleMetadata) => ArticleMetadata) {
-    setLocal((prev) => {
-      const next = updater(prev);
-      onChange(next);
-      return next;
-    });
+    setLocal((prev) => updater(prev));
   }
 
   function ensureSectionActive(section: SectionId, hasData: boolean) {
