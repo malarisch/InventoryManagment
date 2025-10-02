@@ -88,6 +88,7 @@ Diese To-Do List enthält Aufgaben, die an der Software zu bearbeiten sind. Soba
 
 
 ## Done
+- **Fix: Company Settings Types Input**: Fixed issue where spaces and line breaks were immediately deleted in article/case/location type textareas by changing to process (split/trim/filter) only on blur instead of every keystroke.
 - **Fix: Company Settings Types with Spaces**: Fixed custom types (articleTypes, caseTypes, locationTypes) by filtering out empty strings after trim, allowing spaces within type names and line breaks between types while removing blank lines.
 - **Fix: Infinite Loop on Table Pages**: Fixed DataTable component causing constant refresh loop on table pages (e.g. /management/equipments) by serializing array dependencies (filters, searchableFields) in useEffect. Array references were being recreated on every render causing infinite re-fetches (~40 requests/second).
 - **Fix: Infinite Loop on Overview Pages (History)**: Fixed history-live component causing ~40 requests/second by removing equipmentDetails and caseDetails from useEffect dependencies.
