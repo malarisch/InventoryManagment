@@ -1,3 +1,24 @@
+## 2025-10-02 23:15 – Enhanced metadata section removal with undo and data clearing
+- **PROBLEM**: After implementing remove buttons, two issues identified:
+  1. No undo button after removing section
+  2. Data remained in metadata object when section removed
+- User feedback: "Wenn eine Section entfernt wurde fehlt der Undo button. Außerdem werden die Daten nicht auf undefined gesetzt."
+- **SOLUTION**: Extended removeSection() to clear section-specific data fields
+- Added recentlyRemoved state to track last removed section
+- Implemented undoRemoveSection() to restore removed section
+- Added yellow undo banner that appears for 10 seconds after removal
+- Data clearing logic per section type:
+  - physical: weightKg, dimensionsCm → undefined
+  - power: power object → undefined
+  - case: case object, is19InchRackmountable, fitsInRestrictedCaseTypes → undefined
+  - connectivity: connectivity, interfaces arrays → undefined
+  - suppliers: suppliers, dailyRentalRate → undefined
+  - notes: notes field → undefined
+- Auto-dismisses undo option after 10 seconds
+- Files: components/forms/partials/article-metadata-form.tsx, agentlog.md
+- TypeScript compilation: ✅ PASSED (`npm run test:tsc`)
+- Next: Continue with remaining fixes from todos.md
+
 ## 2025-10-02 23:00 – Added remove buttons to collapsible metadata section cards
 - **PROBLEM**: Once metadata sections were added, they couldn't be removed/collapsed again
 - User requested: Buttons to remove/collapse added metadata cards with undo capability

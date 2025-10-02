@@ -138,6 +138,8 @@ export function ArticleMetadataForm({
     ).map((section) => section.id);
     return Array.from(new Set<SectionId>(["general", ...defaults]));
   });
+  
+  const [recentlyRemoved, setRecentlyRemoved] = useState<SectionId | null>(null);
 
   // Sync from parent: only update local if change came from outside
   useEffect(() => {
@@ -162,7 +164,51 @@ export function ArticleMetadataForm({
   function removeSection(sectionId: SectionId) {
     // Keep "general" always visible
     if (sectionId === "general") return;
+    
+    // Clear data for this section
+    update((prev) => {
+      const updated = { ...prev };
+      switch (sectionId) {
+        case "physical":
+          updated.weightKg = undefined;
+          updated.dimensionsCm = undefined;
+          break;
+        case "power":
+          updated.power = undefined;
+          break;
+        case "case":
+          updated.case = undefined;
+          updated.is19InchRackmountable = undefined;
+          updated.fitsInRestrictedCaseTypes = undefined;
+          break;
+        case "connectivity":
+          updated.connectivity = undefined;
+          updated.interfaces = undefined;
+          break;
+        case "suppliers":
+          updated.suppliers = undefined;
+          updated.dailyRentalRate = undefined;
+          break;
+        case "notes":
+          updated.notes = undefined;
+          break;
+      }
+      return updated;
+    });
+    
     setActiveSections((current) => current.filter((id) => id !== sectionId));
+    setRecentlyRemoved(sectionId);
+    
+    // Auto-clear undo after 10 seconds
+    setTimeout(() => {
+      setRecentlyRemoved((current) => current === sectionId ? null : current);
+    }, 10000);
+  }
+
+  function undoRemoveSection() {
+    if (!recentlyRemoved) return;
+    setActiveSections((current) => [...current, recentlyRemoved]);
+    setRecentlyRemoved(null);
   }
 
   function canRemoveSection(sectionId: SectionId): boolean {
@@ -1017,6 +1063,24 @@ export function ArticleMetadataForm({
   return (
     <>
       {renderGeneralCard()}
+      
+      {/* Undo Banner */}
+      {recentlyRemoved && (
+        <div className="flex items-center justify-between rounded-md border border-yellow-500/50 bg-yellow-50 dark:bg-yellow-950/20 px-4 py-3">
+          <span className="text-sm">
+            Bereich entfernt: <strong>{SECTION_DEFINITIONS.find(s => s.id === recentlyRemoved)?.title}</strong>
+          </span>
+          <Button
+            type="button"
+            variant="outline"
+            size="sm"
+            onClick={undoRemoveSection}
+          >
+            Rückgängig
+          </Button>
+        </div>
+      )}
+      
       {renderPhysicalCard()}
       {renderPowerCard()}
       {renderCaseCard()}
