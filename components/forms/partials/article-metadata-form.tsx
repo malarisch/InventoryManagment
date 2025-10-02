@@ -182,8 +182,8 @@ export function ArticleMetadataForm({
     ensureSectionActive("notes", !!local.notes);
   }, [local, adminMeta]);
 
-  function setTextField<K extends keyof ArticleMetadata>(key: K, raw: string) {
-    const trimmed = raw.trim();
+  function setTextField<K extends keyof ArticleMetadata>(key: K, raw: string, trim = true) {
+    const trimmed = trim ? raw.trim() : raw;
     update((prev) => ({
       ...prev,
       [key]: trimmed.length === 0 ? undefined : trimmed,
@@ -871,7 +871,8 @@ export function ArticleMetadataForm({
             id="amf-notes"
             className="min-h-[120px]"
             value={local.notes ?? ""}
-            onChange={(event) => setTextField("notes", event.target.value)}
+            onChange={(event) => setTextField("notes", event.target.value, false)}
+            onBlur={(event) => setTextField("notes", event.target.value, true)}
           />
         </CardContent>
       </Card>
