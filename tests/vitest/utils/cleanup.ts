@@ -15,7 +15,7 @@ export interface TestCleanupTracker {
   equipmentIds: number[];
   locationIds: number[];
   caseIds: number[];
-  customerIds: number[];
+  contactIds: number[];
   jobIds: number[];
 }
 
@@ -31,7 +31,7 @@ export function createCleanupTracker(): TestCleanupTracker {
     equipmentIds: [],
     locationIds: [],
     caseIds: [],
-    customerIds: [],
+    contactIds: [],
     jobIds: [],
   };
 }
@@ -66,8 +66,8 @@ export async function cleanupTestData(tracker: TestCleanupTracker): Promise<void
       await admin.from("articles").delete().in("id", tracker.articleIds);
     }
 
-    if (tracker.customerIds.length > 0) {
-      await admin.from("customers").delete().in("id", tracker.customerIds);
+    if (tracker.contactIds.length > 0) {
+      await admin.from("contacts").delete().in("id", tracker.contactIds);
     }
 
     if (tracker.locationIds.length > 0) {

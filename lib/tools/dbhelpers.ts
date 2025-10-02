@@ -70,17 +70,21 @@ export async function getCompanyAndUserId(companyName: string) {
 }
 
 export async function createCustomer(companyName: string): Promise<number> {
-  // Create a test customer for jobs
+  // Create a test customer contact for jobs
   const ids = await getCompanyAndUserId(companyName);
-  if (!ids) throw new Error('Cannot create customer without valid companyId and userId');
+  if (!ids) throw new Error('Cannot create contact without valid companyId and userId');
   const { companyId, userId } = ids;
   const timestamp = Date.now();
 
-  const customer = await prisma.customers.create({
+  const contact = await prisma.contacts.create({
     data: {
-      type: 'personal',
+      contact_type: 'customer',
+      customer_type: 'private',
       forename: 'Test',
       surname: `Customer ${timestamp}`,
+      first_name: 'Test',
+      last_name: `Customer ${timestamp}`,
+      display_name: `Test Customer ${timestamp}`,
       email: `customer${timestamp}@example.com`,
       company_id: BigInt(companyId),
       created_by: userId,
@@ -88,7 +92,7 @@ export async function createCustomer(companyName: string): Promise<number> {
     select: { id: true },
   });
 
-  return Number(customer.id);
+  return Number(contact.id);
 }
 export async function articleMock(companyName: string, options : {createEquipments: number, createLocation: boolean} = {createEquipments: 0, createLocation: false}) {
     const ids = await getCompanyAndUserId(companyName);

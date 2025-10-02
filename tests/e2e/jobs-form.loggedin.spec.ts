@@ -113,10 +113,10 @@ test.describe('Jobs Form Tests', () => {
       await locationField.fill(`Test Location ${timestamp}`);
     }
     
-    // Select customer if field exists
-    const customerSelect = page.locator('select[name="customer_id"], select[name="customer"]');
-    if (await customerSelect.isVisible()) {
-      await customerSelect.selectOption({ index: 1 }); // Select first customer
+    // Select contact if field exists
+    const contactSelect = page.locator('select[name="contact_id"], select[name="contact"]');
+    if (await contactSelect.isVisible()) {
+      await contactSelect.selectOption({ index: 1 });
     }
     
     // Fill start date

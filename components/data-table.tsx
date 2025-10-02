@@ -17,6 +17,7 @@ interface DataTableProps<T> {
   searchableFields?: { field: string; type: 'text' | 'number' }[];
   initialQuery?: string;
   select?: string;
+  filters?: { column: string; operator?: string; value: string | number | boolean | null }[];
 }
 
 export function DataTable<T extends { id: number }>(
@@ -28,7 +29,8 @@ export function DataTable<T extends { id: number }>(
     className,
     searchableFields = [],
     initialQuery = '',
-    select = '*'
+    select = '*',
+    filters = []
   }: DataTableProps<T>
 ) {
   const supabase = useMemo(() => createClient(), []);
@@ -48,6 +50,10 @@ export function DataTable<T extends { id: number }>(
       const from = (page - 1) * pageSize;
       const to = from + pageSize - 1;
       let query = supabase.from(tableName).select(select, { count: 'exact' }).order('created_at', { ascending: false });
+
+      filters.forEach(({ column, operator = 'eq', value }) => {
+        query = query.filter(column, operator, value as never);
+      });
 
       const term = dq.trim();
       if (term.length > 0) {
@@ -79,7 +85,7 @@ export function DataTable<T extends { id: number }>(
     return () => {
       isActive = false;
     };
-  }, [page, pageSize, dq, supabase, tableName, searchableFields, select]);
+  }, [page, pageSize, dq, supabase, tableName, searchableFields, select, filters]);
 
   const totalPages = useMemo(() => {
     if (!count || count <= 0) return 1;

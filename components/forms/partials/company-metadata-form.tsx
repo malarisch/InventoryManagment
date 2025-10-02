@@ -206,7 +206,7 @@ export function CompanyMetadataForm({
         <div className="grid gap-1.5">
           <Label htmlFor="cmf-p-type">Stromtyp</Label>
           <select id="cmf-p-type" className="h-9 rounded-md border bg-background px-3 text-sm"
-            value={value.standardData.power.powerType}
+            value={value.standardData.power.powerType ?? "AC"}
             onChange={(e) => setStandard("power", { ...value.standardData.power, powerType: e.target.value as "AC" | "DC" | "PoE" | "Battery" | "Other" })}
           >
             <option>AC</option>

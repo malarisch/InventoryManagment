@@ -13,19 +13,19 @@ import { Button } from "@/components/ui/button";
 import { useRouter } from "next/navigation";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 
-type Customer = Tables<"customers">;
+type Contact = Tables<"contacts">;
 
-export function CustomerEditForm({ customer }: { customer: Customer }) {
+export function CustomerEditForm({ customer }: { customer: Contact }) {
   console.log('CustomerEditForm received customer:', JSON.stringify(customer, null, 2));
   const supabase = useMemo(() => createClient(), []);
   const router = useRouter();
-  const [type, setType] = useState<string>(customer.type ?? "");
+  const [customerType, setCustomerType] = useState<string>(customer.customer_type ?? "");
   const [companyName, setCompanyName] = useState<string>(customer.company_name ?? "");
-  const [forename, setForename] = useState<string>(customer.forename ?? "");
-  const [surname, setSurname] = useState<string>(customer.surname ?? "");
+  const [forename, setForename] = useState<string>(customer.forename ?? customer.first_name ?? "");
+  const [surname, setSurname] = useState<string>(customer.surname ?? customer.last_name ?? "");
   const [email, setEmail] = useState<string>(customer.email ?? "");
-  const [address, setAddress] = useState<string>(customer.address ?? "");
-  const [postalCode, setPostalCode] = useState<string>(customer.postal_code ?? "");
+  const [address, setAddress] = useState<string>(customer.address ?? customer.street ?? "");
+  const [postalCode, setPostalCode] = useState<string>(customer.postal_code ?? customer.zip_code ?? "");
   const [country, setCountry] = useState<string>(customer.country ?? "");
   const [metaText, setMetaText] = useState<string>(() => {
     try { return customer.metadata ? JSON.stringify(customer.metadata, null, 2) : toPrettyJSON(defaultCustomerMetadataDE); } catch { return toPrettyJSON(defaultCustomerMetadataDE); }
@@ -38,15 +38,15 @@ export function CustomerEditForm({ customer }: { customer: Customer }) {
 
   // Validation function
   function validateForm(): string | null {
-    if (!type) {
+    if (!customerType) {
       return "Bitte wählen Sie einen Typ aus (Unternehmen oder Privat)";
     }
-    
-    if (type === "company") {
+
+    if (customerType === "company") {
       if (!companyName.trim()) {
         return "Firmenname ist für Unternehmen erforderlich";
       }
-    } else if (type === "private") {
+    } else if (customerType === "private") {
       if (!forename.trim() || !surname.trim()) {
         return "Vor- und Nachname sind für Privatkunden erforderlich";
       }
@@ -79,16 +79,23 @@ export function CustomerEditForm({ customer }: { customer: Customer }) {
       metadata = buildCustomerMetadata(metaObj) as unknown as Json;
     }
     const { error } = await supabase
-      .from("customers")
+      .from("contacts")
       .update({
-        type: type.trim() || null,
+        customer_type: customerType.trim() || null,
         company_name: companyName.trim() || null,
         forename: forename.trim() || null,
         surname: surname.trim() || null,
+        first_name: forename.trim() || null,
+        last_name: surname.trim() || null,
         email: email.trim() || null,
         address: address.trim() || null,
+        street: address.trim() || null,
         postal_code: postalCode.trim() || null,
+        zip_code: postalCode.trim() || null,
         country: country.trim() || null,
+        display_name: customerType === "company"
+          ? (companyName.trim() || customer.display_name)
+          : (`${forename} ${surname}`.trim() || customer.display_name),
         metadata,
       })
       .eq("id", customer.id);
@@ -111,24 +118,24 @@ export function CustomerEditForm({ customer }: { customer: Customer }) {
             <Label className="text-base font-medium">Typ *</Label>
             <div className="flex space-x-4">
               <label className="flex items-center space-x-2">
-                <input type="radio" value="company" checked={type === "company"} onChange={(e) => setType(e.target.value)} className="w-4 h-4" />
+                <input type="radio" value="company" checked={customerType === "company"} onChange={(e) => setCustomerType(e.target.value)} className="w-4 h-4" />
                 <span>Unternehmen</span>
               </label>
               <label className="flex items-center space-x-2">
-                <input type="radio" value="private" checked={type === "private"} onChange={(e) => setType(e.target.value)} className="w-4 h-4" />
+                <input type="radio" value="private" checked={customerType === "private"} onChange={(e) => setCustomerType(e.target.value)} className="w-4 h-4" />
                 <span>Privat</span>
               </label>
             </div>
           </div>
 
-          {type === "company" && (
+          {customerType === "company" && (
             <div className="grid gap-2">
               <Label htmlFor="company_name">Firmenname *</Label>
               <Input id="company_name" name="company_name" value={companyName} onChange={(e) => setCompanyName(e.target.value)} placeholder="Firmenname" />
             </div>
           )}
 
-          {type === "private" && (
+          {customerType === "private" && (
             <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
               <div className="grid gap-2">
                 <Label htmlFor="forename">Vorname *</Label>
@@ -141,7 +148,7 @@ export function CustomerEditForm({ customer }: { customer: Customer }) {
             </div>
           )}
 
-          {type && (
+          {customerType && (
             <>
               <div className="grid gap-2">
                 <Label htmlFor="email">E-Mail</Label>
@@ -182,13 +189,13 @@ export function CustomerEditForm({ customer }: { customer: Customer }) {
               <textarea id="metadata" className="min-h-[120px] w-full rounded-md border bg-background p-2 text-sm font-mono" value={metaText} onChange={(e) => setMetaText(e.target.value)} spellCheck={false} />
             </div>
           ) : (
-            <CustomerMetadataForm value={metaObj} onChange={setMetaObj} customerType={type as "company" | "private"} />
+            <CustomerMetadataForm value={metaObj} onChange={setMetaObj} customerType={customerType as "company" | "private"} />
           )}
         </CardContent>
       </Card>
 
       <div className="md:col-span-12 flex items-center gap-3 justify-end">
-        <Button type="submit" disabled={saving || !type}>{saving ? "Speichern…" : "Speichern"}</Button>
+        <Button type="submit" disabled={saving || !customerType}>{saving ? "Speichern…" : "Speichern"}</Button>
         {message && <span className="text-sm text-green-600">{message}</span>}
         {error && <span className="text-sm text-red-600">{error}</span>}
       </div>

@@ -13,8 +13,13 @@ export function JobMetadataForm({
   onChange: (val: JobMetadata) => void;
 }) {
   const [local, setLocal] = useState<JobMetadata>(value);
-  useEffect(() => setLocal(value), [value]);
-  useEffect(() => onChange(local), [local, onChange]);
+  useEffect(() => {
+    setLocal((prev) => (prev !== value ? value : prev));
+  }, [value]);
+  useEffect(() => {
+    if (local === value) return;
+    onChange(local);
+  }, [local, value, onChange]);
 
   function set<K extends keyof JobMetadata>(key: K, v: JobMetadata[K]) {
     setLocal((s) => ({ ...s, [key]: v }));

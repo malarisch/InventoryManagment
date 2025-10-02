@@ -21,7 +21,7 @@ import { ExpandableHistoryTable } from "@/components/expandable-history-table";
  * Jobs row enriched with the optional customer relation for dashboard usage.
  */
 type UpcomingJobRow = Tables<"jobs"> & {
-  customers: JobCustomer | null;
+  contacts: JobCustomer | null;
 };
 
 /**
@@ -44,18 +44,18 @@ export default async function ManagementHomePage() {
     equipmentsCountResult,
     articlesCountResult,
     jobsCountResult,
-    customersCountResult,
+    contactsCountResult,
     upcomingResult,
     historyResult,
   ] = await Promise.all([
     supabase.from("equipments").select("id", { count: "exact", head: true }),
     supabase.from("articles").select("id", { count: "exact", head: true }),
     supabase.from("jobs").select("id", { count: "exact", head: true }),
-    supabase.from("customers").select("id", { count: "exact", head: true }),
+    supabase.from("contacts").select("id", { count: "exact", head: true }).eq("contact_type", "customer"),
     supabase
       .from("jobs")
       .select(
-        "id,name,startdate,enddate,type,job_location,customers:customer_id(id,company_name,forename,surname)",
+        "id,name,startdate,enddate,type,job_location,contacts:contact_id(id,display_name,company_name,forename,surname,first_name,last_name,contact_type)",
       )
       .or(`startdate.gte.${isoNow},and(startdate.is.null,enddate.gte.${isoNow})`)
       .order("startdate", { ascending: true, nullsFirst: false })
@@ -87,11 +87,11 @@ export default async function ManagementHomePage() {
       error: jobsCountResult.error?.message ?? null,
     },
     {
-      key: "customers",
+      key: "contacts",
       label: "Kunden",
       hint: "Aktive Kontakte.",
-      value: customersCountResult.count ?? 0,
-      error: customersCountResult.error?.message ?? null,
+      value: contactsCountResult.count ?? 0,
+      error: contactsCountResult.error?.message ?? null,
     },
   ] as const;
 
@@ -227,7 +227,7 @@ export default async function ManagementHomePage() {
                         <p className="font-semibold text-foreground">
                           {job.name?.trim() || `Job #${job.id}`}
                         </p>
-                        <p className="text-sm text-muted-foreground">{jobCustomerDisplay(job.customers)}</p>
+                        <p className="text-sm text-muted-foreground">{jobCustomerDisplay(job.contacts)}</p>
                       </div>
                       {job.type ? <Badge variant="secondary">{job.type}</Badge> : null}
                     </div>

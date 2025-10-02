@@ -8,14 +8,24 @@ import { DataTable } from '@/components/data-table';
 import { safeParseDate, formatDate } from '@/lib/dates';
 
 type JobRow = Tables<"jobs"> & {
-  customers?: { id: number; company_name: string | null; forename: string | null; surname: string | null } | null;
+  contacts?: {
+    id: number;
+    display_name: string | null;
+    company_name: string | null;
+    forename: string | null;
+    surname: string | null;
+    first_name: string | null;
+    last_name: string | null;
+    contact_type: string | null;
+  } | null;
 };
 
-function customerDisplay(c: JobRow["customers"] | null | undefined): string {
+function contactDisplay(c: JobRow["contacts"] | null | undefined): string {
   if (!c) return "—";
   const company = c.company_name?.trim();
-  const fn = c.forename?.trim();
-  const sn = c.surname?.trim();
+  const fn = (c.forename ?? c.first_name)?.trim();
+  const sn = (c.surname ?? c.last_name)?.trim();
+  if (c.display_name?.trim()) return c.display_name.trim();
   if (company) return company;
   const person = [fn, sn].filter(Boolean).join(" ").trim();
   return person || `#${c.id}`;
@@ -31,12 +41,12 @@ export function JobTable({ pageSize = 10, className }: Props) {
     { key: 'id', label: 'ID', render: (row: JobRow) => <Link className="underline-offset-2 hover:underline" href={`/management/jobs/${row.id}`}>{row.id}</Link> },
     { key: 'name', label: 'Name', render: (row: JobRow) => <Link className="underline-offset-2 hover:underline" href={`/management/jobs/${row.id}`}>{row.name ?? "—"}</Link> },
     { key: 'type', label: 'Typ', render: (row: JobRow) => row.type ?? "—" },
-    { key: 'customer_id', label: 'Kunde', render: (row: JobRow) => (
-        row.customers?.id ? (
-          <Link className="underline-offset-2 hover:underline" href={`/management/customers/${row.customers.id}`}>
-            {customerDisplay(row.customers)}
+    { key: 'contact_id', label: 'Kontakt', render: (row: JobRow) => (
+        row.contacts?.id ? (
+          <Link className="underline-offset-2 hover:underline" href={`/management/customers/${row.contacts.id}`}>
+            {contactDisplay(row.contacts)}
           </Link>
-        ) : customerDisplay(row.customers)
+        ) : contactDisplay(row.contacts)
       ) },
     { key: 'startdate', label: 'Zeitraum', render: (row: JobRow) => (
         <>{row.startdate ? formatDate(safeParseDate(row.startdate)) : "—"}
@@ -64,9 +74,9 @@ export function JobTable({ pageSize = 10, className }: Props) {
         { field: 'name', type: 'text' },
         { field: 'type', type: 'text' },
         { field: 'job_location', type: 'text' },
-        { field: 'customer_id', type: 'number' },
+        { field: 'contact_id', type: 'number' },
       ]}
-      select="*, customers:customer_id(id,company_name,forename,surname)"
+      select="*, contacts:contact_id(id,display_name,company_name,forename,surname,first_name,last_name,contact_type)"
     />
   );
 }

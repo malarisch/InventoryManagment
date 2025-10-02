@@ -1,6 +1,14 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
+  // Enable standalone output for Docker deployments
+  output: 'standalone',
+  serverExternalPackages: ["@supabase/ssr"],
+  // Use separate tsconfig for build to exclude test files
+  typescript: {
+    tsconfigPath: (process.env.NODE_ENV == 'production' ? './tsconfig.build.json' : "./tsconfig.json"),
+  },
+  
   images: {
     remotePatterns: [
       {

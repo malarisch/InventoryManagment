@@ -17,7 +17,7 @@ export function CustomerCreateForm() {
   const supabase = useMemo(() => createClient(), []);
   const router = useRouter();
   const { company } = useCompany();
-  const [type, setType] = useState<string>("");
+  const [customerType, setCustomerType] = useState<string>("");
   const [companyName, setCompanyName] = useState<string>("");
   const [forename, setForename] = useState<string>("");
   const [surname, setSurname] = useState<string>("");
@@ -33,15 +33,15 @@ export function CustomerCreateForm() {
 
   // Validation function
   function validateForm(): string | null {
-    if (!type) {
+    if (!customerType) {
       return "Bitte wählen Sie einen Typ aus (Unternehmen oder Privat)";
     }
-    
-    if (type === "company") {
+
+    if (customerType === "company") {
       if (!companyName.trim()) {
         return "Firmenname ist für Unternehmen erforderlich";
       }
-    } else if (type === "private") {
+    } else if (customerType === "private") {
       if (!forename.trim() || !surname.trim()) {
         return "Vor- und Nachname sind für Privatkunden erforderlich";
       }
@@ -64,7 +64,7 @@ export function CustomerCreateForm() {
     }
     
     try {
-      console.log('Form submission - state values:', { forename, surname, email, type, companyName });
+      console.log('Form submission - state values:', { forename, surname, email, customerType, companyName });
       
       const { data: auth } = await supabase.auth.getUser();
       const userId = auth.user?.id ?? null;
@@ -79,30 +79,39 @@ export function CustomerCreateForm() {
         metadata = buildCustomerMetadata(metaObj) as unknown as Json;
       }
       
-      const insertData = {
-        type: type.trim() || null,
+      const contactInsert = {
+        contact_type: "customer",
+        customer_type: customerType.trim() || null,
         company_name: companyName.trim() || null,
         forename: forename.trim() || null,
         surname: surname.trim() || null,
+        first_name: forename.trim() || null,
+        last_name: surname.trim() || null,
+        display_name: customerType === "company"
+          ? companyName.trim() || "Unbenannte Firma"
+          : `${forename} ${surname}`.trim() || "Unbenannter Kunde",
         email: email.trim() || null,
         address: address.trim() || null,
+        street: address.trim() || null,
         postal_code: postalCode.trim() || null,
+        zip_code: postalCode.trim() || null,
         country: country.trim() || null,
         metadata,
+        files: null,
         company_id: company.id,
         created_by: userId,
       };
-      console.log('Data being inserted:', insertData);
-      
+      console.log('Contact insert payload:', contactInsert);
+
       const { data, error } = await supabase
-        .from("customers")
-        .insert(insertData)
+        .from("contacts")
+        .insert(contactInsert)
         .select("*")
         .single();
       if (error) throw error;
-      const customer = (data as Tables<"customers">);
-      console.log('Customer created:', customer);
-      router.push(`/management/customers/${customer.id}`);
+      const contact = (data as Tables<"contacts">);
+      console.log('Customer contact created:', contact);
+      router.push(`/management/customers/${contact.id}`);
     } catch (e: unknown) {
       setError(e instanceof Error ? e.message : String(e));
       setSaving(false);
@@ -124,8 +133,8 @@ export function CustomerCreateForm() {
                 <input
                   type="radio"
                   value="company"
-                  checked={type === "company"}
-                  onChange={(e) => setType(e.target.value)}
+                  checked={customerType === "company"}
+                  onChange={(e) => setCustomerType(e.target.value)}
                   className="w-4 h-4"
                 />
                 <span>Unternehmen</span>
@@ -134,8 +143,8 @@ export function CustomerCreateForm() {
                 <input
                   type="radio"
                   value="private"
-                  checked={type === "private"}
-                  onChange={(e) => setType(e.target.value)}
+                  checked={customerType === "private"}
+                  onChange={(e) => setCustomerType(e.target.value)}
                   className="w-4 h-4"
                 />
                 <span>Privat</span>
@@ -143,14 +152,14 @@ export function CustomerCreateForm() {
             </div>
           </div>
 
-          {type === "company" && (
+          {customerType === "company" && (
             <div className="grid gap-2">
               <Label htmlFor="company_name">Firmenname *</Label>
               <Input id="company_name" name="company_name" value={companyName} onChange={(e) => setCompanyName(e.target.value)} placeholder="Firmenname" />
             </div>
           )}
 
-          {type === "private" && (
+          {customerType === "private" && (
             <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
               <div className="grid gap-2">
                 <Label htmlFor="forename">Vorname *</Label>
@@ -163,7 +172,7 @@ export function CustomerCreateForm() {
             </div>
           )}
 
-          {type && (
+          {customerType && (
             <>
               <div className="grid gap-2">
                 <Label htmlFor="email">E-Mail</Label>
@@ -210,7 +219,7 @@ export function CustomerCreateForm() {
       </Card>
 
       <div className="md:col-span-12 flex items-center gap-3 justify-end">
-        <Button type="submit" disabled={saving || !type}>{saving ? "Erstellen…" : "Erstellen"}</Button>
+        <Button type="submit" disabled={saving || !customerType}>{saving ? "Erstellen…" : "Erstellen"}</Button>
         {error && <span className="text-sm text-red-600">{error}</span>}
       </div>
     </form>

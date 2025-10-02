@@ -7,7 +7,7 @@ type Created = {
   articleIds: bigint[];
   equipmentIds: bigint[];
   caseId: bigint;
-  customerIds: bigint[];
+  contactIds: bigint[];
   jobId: bigint;
   assetTagTemplateId: bigint;
   assetTagIds: bigint[];
@@ -163,22 +163,28 @@ async function main() {
     },
   });
 
-  // Customers
-  const custPrivate = await prisma.customers.create({
+  // Kontakte (ehem. Kunden)
+  const custPrivate = await prisma.contacts.create({
     data: {
-      type: "private",
+      contact_type: "customer",
+      customer_type: "private",
       forename: "Max",
       surname: "Mustermann",
+      first_name: "Max",
+      last_name: "Mustermann",
+      display_name: "Max Mustermann",
       email: "max@example.com",
       company_id: company.id,
       created_by: user.id,
       metadata: { preferredContactMethod: "email" },
     },
   });
-  const custCompany = await prisma.customers.create({
+  const custCompany = await prisma.contacts.create({
     data: {
-      type: "company",
+      contact_type: "customer",
+      customer_type: "company",
       company_name: "Event GmbH",
+      display_name: "Event GmbH",
       email: "office@event.example",
       company_id: company.id,
       created_by: user.id,
@@ -198,7 +204,7 @@ async function main() {
       enddate: end as unknown as Date,
       company_id: company.id,
       created_by: user.id,
-      customer_id: custCompany.id,
+      contact_id: custCompany.id,
       meta: { stage: "Main" },
     },
   });
@@ -214,7 +220,7 @@ async function main() {
     articleIds: [artMixer.id, artSpeaker.id],
     equipmentIds: [eq1.id, eq2.id],
     caseId: kase.id,
-    customerIds: [custPrivate.id, custCompany.id],
+    contactIds: [custPrivate.id, custCompany.id],
     jobId: job.id,
     assetTagTemplateId: tmpl.id,
     assetTagIds: [tag1.id, tag2.id],

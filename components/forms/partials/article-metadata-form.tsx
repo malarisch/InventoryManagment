@@ -1,28 +1,73 @@
 "use client";
 
-import {useEffect, useMemo, useState} from "react";
-import type {ArticleMetadata} from "@/components/metadataTypes.types";
-import {Input} from "@/components/ui/input";
-import {Label} from "@/components/ui/label";
-import {Checkbox} from "@/components/ui/checkbox";
-import {useCompany} from "@/app/management/_libs/companyHook";
-import {normalizeAdminCompanyMetadata, powerPlaceholders} from "@/lib/metadata/inherit";
-import {type SearchItem, SearchPicker} from "@/components/search/search-picker";
+import { useEffect, useMemo, useState } from "react";
+import type { ArticleMetadata } from "@/components/metadataTypes.types";
+import type { adminCompanyMetadata } from "@/components/metadataTypes.types";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Checkbox } from "@/components/ui/checkbox";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Textarea } from "@/components/ui/textarea";
+import { useCompany } from "@/app/management/_libs/companyHook";
+import { normalizeAdminCompanyMetadata, powerPlaceholders } from "@/lib/metadata/inherit";
+import { type SearchItem, SearchPicker } from "@/components/search/search-picker";
+import { StringListInput } from "@/components/forms/metadata/string-list-input";
+import { DimensionsFieldset } from "@/components/forms/metadata/dimensions-fieldset";
+import { SupplierListEditor, type ContactOption } from "@/components/forms/metadata/supplier-list-editor";
+import { PriceFields } from "@/components/forms/metadata/price-fields";
+
+export interface ArticleMetadataFormProps {
+  value: ArticleMetadata;
+  onChange: (val: ArticleMetadata) => void;
+  companyMetadata?: adminCompanyMetadata | null;
+  supplierOptions?: ContactOption[];
+  onCreateSupplier?: () => void;
+}
+
+type SectionId =
+  | "general"
+  | "physical"
+  | "power"
+  | "case"
+  | "connectivity"
+  | "suppliers"
+  | "notes";
+
+interface SectionDefinition {
+  id: SectionId;
+  title: string;
+  description: string;
+  defaultActive?: boolean;
+}
+
+const SECTION_DEFINITIONS: SectionDefinition[] = [
+  { id: "general", title: "Allgemein", description: "Typ, Hersteller, Buchungsoptionen", defaultActive: true },
+  { id: "physical", title: "Physische Eigenschaften", description: "Gewicht, Maße und Rack-Optionen", defaultActive: true },
+  { id: "power", title: "Stromversorgung", description: "Spannung, Frequenz und Anschluss", defaultActive: true },
+  { id: "case", title: "Case Setup", description: "Rack Cases, Einschränkungen und Inhalt" },
+  { id: "connectivity", title: "Konnektivität & Schnittstellen", description: "Netzwerk-Features und Ports" },
+  { id: "suppliers", title: "Lieferanten & Preise", description: "Lieferanten, Preise und Konditionen" },
+  { id: "notes", title: "Notizen", description: "Freitext für Besonderheiten" },
+];
 
 export function ArticleMetadataForm({
   value,
   onChange,
-}: {
-  value: ArticleMetadata;
-  onChange: (val: ArticleMetadata) => void;
-}) {
+  companyMetadata,
+  supplierOptions,
+  onCreateSupplier,
+}: ArticleMetadataFormProps) {
   const [local, setLocal] = useState<ArticleMetadata>(value);
   const { company } = useCompany();
-  const defaults = useMemo(() => powerPlaceholders(normalizeAdminCompanyMetadata(company?.metadata ?? null)), [company]);
+
+  const adminMeta = useMemo(() => normalizeAdminCompanyMetadata(companyMetadata ?? company?.metadata ?? null), [companyMetadata, company]);
+  const powerDefaults = useMemo(() => powerPlaceholders(adminMeta), [adminMeta]);
+  const currencyFallback = adminMeta.standardData.currency ?? "EUR";
 
   const articleTypeItems: SearchItem<"type", string>[] = useMemo(() => {
     const customTypes = normalizeAdminCompanyMetadata(company?.metadata ?? null).customTypes;
-    return customTypes.articleTypes.map(type => ({
+    return customTypes.articleTypes.map((type) => ({
       id: type,
       category: "type",
       title: type,
@@ -31,111 +76,651 @@ export function ArticleMetadataForm({
     }));
   }, [company]);
 
-  useEffect(() => setLocal(value), [value]);
-  useEffect(() => onChange(local), [local, onChange]);
+  const [activeSections, setActiveSections] = useState<SectionId[]>(() => {
+    const defaults = SECTION_DEFINITIONS.filter((section) => section.defaultActive).map((section) => section.id);
+    return Array.from(new Set<SectionId>(["general", ...defaults]));
+  });
 
-  function set<K extends keyof ArticleMetadata>(key: K, v: ArticleMetadata[K]) {
-    setLocal((s) => ({ ...s, [key]: v }));
+  useEffect(() => {
+    setLocal((prev) => (prev !== value ? value : prev));
+  }, [value]);
+
+  useEffect(() => {
+    if (local === value) return;
+    onChange(local);
+  }, [local, value, onChange]);
+
+  function update(updater: (prev: ArticleMetadata) => ArticleMetadata) {
+    setLocal((prev) => updater(prev));
+  }
+
+  function ensureSectionActive(section: SectionId, hasData: boolean) {
+    if (!hasData) return;
+    setActiveSections((current) => (current.includes(section) ? current : [...current, section]));
+  }
+
+  // Auto-enable sections when metadata values appear from outside (e.g., JSON mode, inheritance)
+  useEffect(() => {
+    ensureSectionActive("physical", hasPhysicalData(local));
+    ensureSectionActive("power", hasPowerData(local) || hasPowerDefaults(adminMeta));
+    ensureSectionActive("case", hasCaseData(local));
+    ensureSectionActive("connectivity", hasConnectivityData(local));
+    ensureSectionActive("suppliers", (local.suppliers?.length ?? 0) > 0 || !!local.dailyRentalRate);
+    ensureSectionActive("notes", !!local.notes);
+  }, [local, adminMeta]);
+
+  function setTextField<K extends keyof ArticleMetadata>(key: K, raw: string) {
+    const trimmed = raw.trim();
+    update((prev) => ({
+      ...prev,
+      [key]: trimmed.length === 0 ? undefined : trimmed,
+    }));
+  }
+
+  function setNumberField(key: keyof ArticleMetadata, raw: string) {
+    const trimmed = raw.trim();
+    const parsed = trimmed.length === 0 ? undefined : Number(trimmed);
+    update((prev) => ({
+      ...prev,
+      [key]: parsed,
+    }));
+  }
+
+  function updatePower(partial: Partial<NonNullable<ArticleMetadata["power"]>>) {
+    update((prev) => {
+      const nextPower = { ...(prev.power ?? {}) } as NonNullable<ArticleMetadata["power"]>;
+      for (const [key, value] of Object.entries(partial)) {
+        if (value === undefined) {
+          delete nextPower[key as keyof typeof nextPower];
+        } else {
+          nextPower[key as keyof typeof nextPower] = value as never;
+        }
+      }
+      const cleaned = Object.values(nextPower).every((value) => value === undefined)
+        ? undefined
+        : nextPower;
+      return {
+        ...prev,
+        power: cleaned,
+      };
+    });
+  }
+
+  function renderGeneralCard() {
+    return (
+      <Card>
+        <CardHeader>
+          <CardTitle>Allgemein</CardTitle>
+          <CardDescription>Typ, Hersteller und Identifikatoren</CardDescription>
+        </CardHeader>
+        <CardContent className="grid gap-4 sm:grid-cols-2">
+          <div className="grid gap-1.5">
+            <Label>Typ (erforderlich)</Label>
+            <SearchPicker
+              items={articleTypeItems}
+              onSelect={(item) => setTextField("type", item.data)}
+              placeholder="Typ auswählen..."
+              buttonLabel={local.type ?? "Typ auswählen"}
+              categoryLabels={{ type: "Artikeltypen" }}
+              resetOnSelect={false}
+            />
+          </div>
+          <div className="grid gap-1.5">
+            <Label htmlFor="amf-manufacturer">Hersteller</Label>
+            <Input
+              id="amf-manufacturer"
+              value={local.manufacturer ?? ""}
+              onChange={(event) => setTextField("manufacturer", event.target.value)}
+            />
+          </div>
+          <div className="grid gap-1.5">
+            <Label htmlFor="amf-model">Modell</Label>
+            <Input
+              id="amf-model"
+              value={local.model ?? ""}
+              onChange={(event) => setTextField("model", event.target.value)}
+            />
+          </div>
+          <div className="grid gap-1.5">
+            <Label htmlFor="amf-mpn">Hersteller-Teilenummer</Label>
+            <Input
+              id="amf-mpn"
+              value={local.manufacturerPartNumber ?? ""}
+              onChange={(event) => setTextField("manufacturerPartNumber", event.target.value)}
+            />
+          </div>
+          <div className="grid gap-1.5">
+            <Label htmlFor="amf-ean">EAN</Label>
+            <Input
+              id="amf-ean"
+              value={local.EAN ?? ""}
+              onChange={(event) => setTextField("EAN", event.target.value)}
+            />
+          </div>
+          <div className="grid gap-1.5">
+            <Label htmlFor="amf-upc">UPC</Label>
+            <Input
+              id="amf-upc"
+              value={local.UPC ?? ""}
+              onChange={(event) => setTextField("UPC", event.target.value)}
+            />
+          </div>
+          <div className="col-span-full flex items-center gap-3 rounded-md border border-dashed p-3">
+            <Checkbox
+              id="amf-no-stock"
+              checked={!!local.canBeBookedWithoutStock}
+              onCheckedChange={(checked) => update((prev) => ({ ...prev, canBeBookedWithoutStock: !!checked }))}
+            />
+            <Label htmlFor="amf-no-stock" className="text-sm">Kann ohne Lagerbestand gebucht werden</Label>
+          </div>
+        </CardContent>
+      </Card>
+    );
+  }
+
+  function renderPhysicalCard() {
+    if (!activeSections.includes("physical")) return null;
+    return (
+      <Card>
+        <CardHeader>
+          <CardTitle>Physische Eigenschaften</CardTitle>
+          <CardDescription>Rack-Eigenschaften, Gewicht und Maße</CardDescription>
+        </CardHeader>
+        <CardContent className="grid gap-4">
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
+            <div className="flex items-center space-x-2">
+              <Checkbox
+                id="amf-is-rack"
+                checked={!!local.is19Inch}
+                onCheckedChange={(checked) => update((prev) => ({ ...prev, is19Inch: !!checked }))}
+              />
+              <Label htmlFor="amf-is-rack">19-Zoll Rackmontage</Label>
+            </div>
+            <div className="grid gap-1.5">
+              <Label htmlFor="amf-u">Höheneinheiten (U)</Label>
+              <Input
+                id="amf-u"
+                type="number"
+                min={0}
+                value={local.heightUnits ?? ""}
+                onChange={(event) => setNumberField("heightUnits", event.target.value)}
+              />
+            </div>
+            <div className="grid gap-1.5">
+              <Label htmlFor="amf-weight">Gewicht (kg)</Label>
+              <Input
+                id="amf-weight"
+                type="number"
+                min={0}
+                step="0.1"
+                value={local.weightKg ?? ""}
+                onChange={(event) => setNumberField("weightKg", event.target.value)}
+              />
+            </div>
+          </div>
+          <DimensionsFieldset
+            value={local.dimensionsCm}
+            onChange={(next) => update((prev) => ({ ...prev, dimensionsCm: next }))}
+          />
+        </CardContent>
+      </Card>
+    );
+  }
+
+  function renderPowerCard() {
+    if (!activeSections.includes("power")) return null;
+    const power = local.power ?? {};
+    const inherited = adminMeta.standardData.power;
+    const connectorPlaceholder = inherited.powerConnectorType ?? adminMeta.standardData.power.powerConnectorType ?? undefined;
+    return (
+      <Card>
+        <CardHeader>
+          <CardTitle>Stromversorgung</CardTitle>
+          <CardDescription>Geerbte Werte werden als Platzhalter angezeigt</CardDescription>
+        </CardHeader>
+        <CardContent className="grid gap-4 sm:grid-cols-3">
+          <div className="grid gap-1.5">
+            <div className="flex items-center justify-between">
+              <Label htmlFor="amf-power-type">Stromtyp</Label>
+              {inherited.powerType && (
+                <IgnoreToggle
+                  id="amf-power-type-ignore"
+                  label="Ignorieren"
+                  checked={power.powerType === null}
+                  onChange={(checked) => updatePower({ powerType: checked ? null : undefined })}
+                />
+              )}
+            </div>
+            <select
+              id="amf-power-type"
+              className="h-9 rounded-md border bg-background px-3 text-sm"
+              value={power.powerType ?? inherited.powerType ?? "AC"}
+              onChange={(event) => updatePower({ powerType: event.target.value as "AC" | "DC" | "PoE" | "Battery" | "Other" })}
+              disabled={power.powerType === null}
+            >
+              <option>AC</option>
+              <option>DC</option>
+              <option>PoE</option>
+              <option>Battery</option>
+              <option>Other</option>
+            </select>
+          </div>
+          <PowerInput
+            id="amf-v"
+            label="Spannung (V)"
+            value={power.voltageRangeV ?? ""}
+            placeholder={power.voltageRangeV ? undefined : powerDefaults.voltageRangeV}
+            ignored={power.voltageRangeV === null}
+            onIgnoreChange={(checked) => updatePower({ voltageRangeV: checked ? null : undefined })}
+            onChange={(raw) => updatePower({ voltageRangeV: raw })}
+          />
+          <PowerInput
+            id="amf-f"
+            label="Frequenz (Hz)"
+            value={power.frequencyHz ?? ""}
+            placeholder={power.frequencyHz ? undefined : powerDefaults.frequencyHz}
+            ignored={power.frequencyHz === null}
+            onIgnoreChange={(checked) => updatePower({ frequencyHz: checked ? null : undefined })}
+            onChange={(raw) => updatePower({ frequencyHz: raw })}
+          />
+          <PowerInput
+            id="amf-pc"
+            label="Anschlusstyp"
+            value={power.powerConnectorType ?? ""}
+            placeholder={connectorPlaceholder}
+            ignored={power.powerConnectorType === null}
+            onIgnoreChange={(checked) => updatePower({ powerConnectorType: checked ? null : undefined })}
+            onChange={(raw) => updatePower({ powerConnectorType: raw })}
+          />
+          <PowerNumberInput
+            id="amf-max-power"
+            label="Max. Leistung (W)"
+            value={power.maxPowerW}
+            ignored={power.maxPowerW === null}
+            onIgnoreChange={(checked) => updatePower({ maxPowerW: checked ? null : undefined })}
+            onChange={(amount) => updatePower({ maxPowerW: amount })}
+          />
+        </CardContent>
+      </Card>
+    );
+  }
+
+  function renderCaseCard() {
+    if (!activeSections.includes("case")) return null;
+    const caseMeta = local.case ?? { is19Inch: false, heightUnits: 0 };
+    return (
+      <Card>
+        <CardHeader>
+          <CardTitle>Case Setup</CardTitle>
+          <CardDescription>Konfiguration des passenden Cases</CardDescription>
+        </CardHeader>
+        <CardContent className="grid gap-4">
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
+            <div className="flex items-center gap-2">
+              <Checkbox
+                id="case-is-rack"
+                checked={!!caseMeta.is19Inch}
+                onCheckedChange={(checked) => update((prev) => ({ ...prev, case: { ...(prev.case ?? {}), is19Inch: !!checked } }))}
+              />
+              <Label htmlFor="case-is-rack">Case ist 19-Zoll Rack</Label>
+            </div>
+            <div className="grid gap-1.5">
+              <Label htmlFor="case-height">Case Höheneinheiten</Label>
+              <Input
+                id="case-height"
+                type="number"
+                min={0}
+                value={caseMeta.heightUnits ?? ""}
+                onChange={(event) => {
+                  const value = event.target.value.trim();
+                  update((prev) => ({
+                    ...prev,
+                    case: {
+                      ...(prev.case ?? {}),
+                      heightUnits: value === "" ? undefined : Number(value),
+                    },
+                  }));
+                }}
+              />
+            </div>
+            <div className="grid gap-1.5">
+              <Label htmlFor="case-depth">Max. Gerätetiefe (cm)</Label>
+              <Input
+                id="case-depth"
+                type="number"
+                min={0}
+                value={caseMeta.maxDeviceDepthCm ?? ""}
+                onChange={(event) => {
+                  const value = event.target.value.trim();
+                  update((prev) => ({
+                    ...prev,
+                    case: {
+                      ...(prev.case ?? {}),
+                      maxDeviceDepthCm: value === "" ? undefined : Number(value),
+                    },
+                  }));
+                }}
+              />
+            </div>
+          </div>
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+            <div className="grid gap-1.5">
+              <Label htmlFor="case-content-weight">Max. Inhaltgewicht (kg)</Label>
+              <Input
+                id="case-content-weight"
+                type="number"
+                min={0}
+                step="0.1"
+                value={caseMeta.contentMaxWeightKg ?? ""}
+                onChange={(event) => {
+                  const value = event.target.value.trim();
+                  update((prev) => ({
+                    ...prev,
+                    case: {
+                      ...(prev.case ?? {}),
+                      contentMaxWeightKg: value === "" ? undefined : Number(value),
+                    },
+                  }));
+                }}
+              />
+            </div>
+            <div className="grid gap-1.5">
+              <Label htmlFor="case-lock">Case hat Schloss</Label>
+              <select
+                id="case-lock"
+                className="h-9 rounded-md border bg-background px-3 text-sm"
+                value={caseMeta.hasLock === undefined ? "unknown" : caseMeta.hasLock ? "yes" : "no"}
+                onChange={(event) => {
+                  const value = event.target.value;
+                  update((prev) => ({
+                    ...prev,
+                    case: {
+                      ...(prev.case ?? {}),
+                      hasLock: value === "unknown" ? undefined : value === "yes",
+                    },
+                  }));
+                }}
+              >
+                <option value="unknown">Unbekannt</option>
+                <option value="yes">Ja</option>
+                <option value="no">Nein</option>
+              </select>
+            </div>
+          </div>
+          <div className="grid gap-1.5">
+            <Label>Innenmaße (cm)</Label>
+            <DimensionsFieldset
+              value={local.case?.innerDimensionsCm}
+              onChange={(next) => update((prev) => ({
+                ...prev,
+                case: {
+                  ...(prev.case ?? {}),
+                  innerDimensionsCm: next,
+                },
+              }))}
+            />
+          </div>
+          <div className="grid gap-1.5">
+            <Label htmlFor="case-restricted">Erlaubte Inhalte (Typen)</Label>
+            <StringListInput
+              values={local.case?.restrictedContentTypes ?? []}
+              onChange={(next) => update((prev) => ({
+                ...prev,
+                case: {
+                  ...(prev.case ?? {}),
+                  restrictedContentTypes: next,
+                },
+              }))}
+              placeholder="z. B. Elektronik"
+            />
+          </div>
+          <div className="grid gap-1.5">
+            <Label htmlFor="case-fits">Kompatible Restriktions-Typen</Label>
+            <StringListInput
+              values={local.fitsInRestrictedCaseTypes ?? []}
+              onChange={(next) => update((prev) => ({ ...prev, fitsInRestrictedCaseTypes: next }))}
+              placeholder="z. B. YAMAHA MINI"
+            />
+          </div>
+        </CardContent>
+      </Card>
+    );
+  }
+
+  function renderConnectivityCard() {
+    if (!activeSections.includes("connectivity")) return null;
+    return (
+      <Card>
+        <CardHeader>
+          <CardTitle>Konnektivität & Schnittstellen</CardTitle>
+          <CardDescription>Verfügbare Funkstandards und Ports</CardDescription>
+        </CardHeader>
+        <CardContent className="grid gap-4">
+          <div className="grid gap-1.5">
+            <Label htmlFor="connectivity-list">Konnektivität</Label>
+            <StringListInput
+              values={local.connectivity ?? []}
+              onChange={(next) => update((prev) => ({ ...prev, connectivity: next }))}
+              placeholder="z. B. WiFi, Bluetooth"
+            />
+          </div>
+          <div className="grid gap-1.5">
+            <Label htmlFor="interfaces-list">Schnittstellen</Label>
+            <StringListInput
+              values={local.interfaces ?? []}
+              onChange={(next) => update((prev) => ({ ...prev, interfaces: next }))}
+              placeholder="z. B. USB-C, HDMI"
+            />
+          </div>
+        </CardContent>
+      </Card>
+    );
+  }
+
+  function renderSuppliersCard() {
+    if (!activeSections.includes("suppliers")) return null;
+    return (
+      <Card>
+        <CardHeader>
+          <CardTitle>Lieferanten & Preise</CardTitle>
+          <CardDescription>Lieferantenverwaltung, Preise und Konditionen</CardDescription>
+        </CardHeader>
+        <CardContent className="grid gap-6">
+          <SupplierListEditor
+            suppliers={local.suppliers ?? []}
+            onChange={(next) => update((prev) => ({ ...prev, suppliers: next }))}
+            contactOptions={supplierOptions}
+            onCreateContact={onCreateSupplier}
+            currencyFallback={currencyFallback}
+          />
+          <div className="grid gap-1.5">
+            <Label>Tagessatz (Vermietung)</Label>
+            <PriceFields
+              value={local.dailyRentalRate}
+              onChange={(next) => update((prev) => ({ ...prev, dailyRentalRate: next }))}
+              currencyFallback={currencyFallback}
+            />
+          </div>
+        </CardContent>
+      </Card>
+    );
+  }
+
+  function renderNotesCard() {
+    if (!activeSections.includes("notes")) return null;
+    return (
+      <Card>
+        <CardHeader>
+          <CardTitle>Notizen</CardTitle>
+          <CardDescription>Freitext für Besonderheiten und Hinweise</CardDescription>
+        </CardHeader>
+        <CardContent>
+          <Textarea
+            id="amf-notes"
+            className="min-h-[120px]"
+            value={local.notes ?? ""}
+            onChange={(event) => setTextField("notes", event.target.value)}
+          />
+        </CardContent>
+      </Card>
+    );
+  }
+
+  function renderSectionAddCard() {
+    const hiddenSections = SECTION_DEFINITIONS.filter((section) => !activeSections.includes(section.id));
+    if (hiddenSections.length === 0) return null;
+    return (
+      <Card className="border-dashed">
+        <CardHeader>
+          <CardTitle>Weitere Metadaten hinzufügen</CardTitle>
+          <CardDescription>Aktiviere zusätzliche Bereiche nach Bedarf</CardDescription>
+        </CardHeader>
+        <CardContent className="flex flex-wrap gap-2">
+          {hiddenSections.map((section) => (
+            <Button
+              key={section.id}
+              type="button"
+              variant="secondary"
+              onClick={() => setActiveSections((prev) => [...prev, section.id])}
+            >
+              {section.title}
+            </Button>
+          ))}
+        </CardContent>
+      </Card>
+    );
   }
 
   return (
-    <div className="grid gap-6 rounded-md border p-4">
-      <h3 className="text-lg font-medium">Allgemein</h3>
-      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-        <div className="grid gap-1.5">
-          <Label>Typ (erforderlich)</Label>
-          <SearchPicker
-            items={articleTypeItems}
-            onSelect={(item) => set("type", item.data)}
-            placeholder="Typ auswählen..."
-            buttonLabel={local.type}
-            categoryLabels={{ type: "Artikeltypen" }}
-            resetOnSelect={false}
-          />
-        </div>
-        <div className="grid gap-1.5">
-          <Label htmlFor="amf-manufacturer">Hersteller</Label>
-          <Input id="amf-manufacturer" value={local.manufacturer ?? ""} onChange={(e) => set("manufacturer", e.target.value)} />
-        </div>
-        <div className="grid gap-1.5">
-          <Label htmlFor="amf-model">Modell</Label>
-          <Input id="amf-model" value={local.model ?? ""} onChange={(e) => set("model", e.target.value)} />
-        </div>
-        <div className="grid gap-1.5">
-          <Label htmlFor="amf-mpn">Hersteller-Teilenummer</Label>
-          <Input id="amf-mpn" value={local.manufacturerPartNumber ?? ""} onChange={(e) => set("manufacturerPartNumber", e.target.value)} />
-        </div>
-        <div className="grid gap-1.5">
-          <Label htmlFor="amf-ean">EAN</Label>
-          <Input id="amf-ean" value={local.EAN ?? ""} onChange={(e) => set("EAN", e.target.value)} />
-        </div>
-        <div className="grid gap-1.5">
-          <Label htmlFor="amf-upc">UPC</Label>
-          <Input id="amf-upc" value={local.UPC ?? ""} onChange={(e) => set("UPC", e.target.value)} />
-        </div>
-      </div>
+    <>
+      {renderGeneralCard()}
+      {renderPhysicalCard()}
+      {renderPowerCard()}
+      {renderCaseCard()}
+      {renderConnectivityCard()}
+      {renderSuppliersCard()}
+      {renderNotesCard()}
+      {renderSectionAddCard()}
+    </>
+  );
+}
 
-      <h3 className="text-lg font-medium">Physische Eigenschaften</h3>
-      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-        <div className="flex items-center space-x-2">
-          <Checkbox id="amf-is-rack" checked={local.is19Inch} onCheckedChange={(checked) => set("is19Inch", !!checked)} />
-          <Label htmlFor="amf-is-rack">19-Zoll Rackmontage</Label>
-        </div>
-        <div className="grid gap-1.5">
-          <Label htmlFor="amf-u">Höheneinheiten (U)</Label>
-          <Input id="amf-u" type="number" min={0} value={local.heightUnits ?? ""} onChange={(e) => set("heightUnits", Number(e.target.value))} />
-        </div>
-        <div className="grid gap-1.5">
-          <Label htmlFor="amf-weight">Gewicht (kg)</Label>
-          <Input id="amf-weight" type="number" min={0} value={local.weightKg ?? ""} onChange={(e) => set("weightKg", Number(e.target.value))} />
-        </div>
-      </div>
+function hasPhysicalData(metadata: ArticleMetadata) {
+  return Boolean(
+    metadata.is19Inch ||
+      metadata.heightUnits ||
+      metadata.weightKg ||
+      metadata.dimensionsCm,
+  );
+}
 
-      <h3 className="text-lg font-medium">Stromversorgung</h3>
-      <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
-        <div className="grid gap-1.5">
-          <Label htmlFor="amf-power-type">Stromtyp</Label>
-          <select id="amf-power-type" className="h-9 rounded-md border bg-background px-3 text-sm"
-            value={local.power?.powerType || "Other"}
-            onChange={(e) => set("power", { ...local.power, powerType: e.target.value as "AC" | "DC" | "PoE" | "Battery" | "Other" })}
-          >
-            <option>AC</option>
-            <option>DC</option>
-            <option>PoE</option>
-            <option>Battery</option>
-            <option>Other</option>
-          </select>
-        </div>
-        <div className="grid gap-1.5">
-          <Label htmlFor="amf-v">Spannung (V) {local.power?.voltageRangeV ? "" : `(Standard: ${defaults.voltageRangeV || ""})`}</Label>
-          <Input id="amf-v" placeholder={local.power?.voltageRangeV ? undefined : defaults.voltageRangeV} value={local.power?.voltageRangeV ?? ""} onChange={(e) => set("power", { ...local.power, voltageRangeV: e.target.value })} />
-        </div>
-        <div className="grid gap-1.5">
-          <Label htmlFor="amf-f">Frequenz (Hz) {local.power?.frequencyHz ? "" : `(Standard: ${defaults.frequencyHz || ""})`}</Label>
-          <Input id="amf-f" placeholder={local.power?.frequencyHz ? undefined : defaults.frequencyHz} value={local.power?.frequencyHz ?? ""} onChange={(e) => set("power", { ...local.power, frequencyHz: e.target.value })} />
-        </div>
-        <div className="grid gap-1.5">
-          <Label htmlFor="amf-pc">Anschlusstyp</Label>
-          <Input id="amf-pc" value={local.power?.powerConnectorType ?? ""} onChange={(e) => set("power", { ...local.power, powerConnectorType: e.target.value })} />
-        </div>
-        <div className="grid gap-1.5">
-          <Label htmlFor="amf-max-power">Max. Leistung (W)</Label>
-          <Input id="amf-max-power" type="number" min={0} value={local.power?.maxPowerW ?? ""} onChange={(e) => set("power", { ...local.power, maxPowerW: Number(e.target.value) })} />
-        </div>
-      </div>
+function hasPowerData(metadata: ArticleMetadata) {
+  const power = metadata.power;
+  if (!power) return false;
+  return Object.values(power).some((value) => value !== undefined && value !== null);
+}
 
-      <div className="flex items-center space-x-2">
-        <Checkbox id="amf-no-stock" checked={local.canBeBookedWithoutStock} onCheckedChange={(checked) => set("canBeBookedWithoutStock", !!checked)} />
-        <Label htmlFor="amf-no-stock">Kann ohne Lagerbestand gebucht werden</Label>
-      </div>
+function hasPowerDefaults(admin: adminCompanyMetadata) {
+  return Object.values(admin.standardData.power).some((value) => value !== undefined && value !== null && value !== "");
+}
 
-      {/* TODO: Implement UI for case, fitsInRestrictedCaseTypes, dimensionsCm, connectivity, interfaces, suppliers, dailyRentalRate */}
+function hasCaseData(metadata: ArticleMetadata) {
+  return Boolean(
+    metadata.case?.is19Inch ||
+      metadata.case?.heightUnits ||
+      metadata.case?.maxDeviceDepthCm ||
+      metadata.case?.innerDimensionsCm ||
+      metadata.case?.restrictedContentTypes?.length ||
+      metadata.case?.contentMaxWeightKg ||
+      metadata.fitsInRestrictedCaseTypes?.length,
+  );
+}
 
-      <div className="grid gap-1.5">
-        <Label htmlFor="amf-notes">Notizen</Label>
-        <textarea id="amf-notes" className="min-h-[80px] w-full rounded-md border bg-background p-2 text-sm"
-            value={local.notes ?? ""} onChange={(e) => set("notes", e.target.value)} />
+function hasConnectivityData(metadata: ArticleMetadata) {
+  return Boolean((metadata.connectivity?.length ?? 0) > 0 || (metadata.interfaces?.length ?? 0) > 0);
+}
+
+interface IgnoreToggleProps {
+  id: string;
+  label: string;
+  checked: boolean;
+  onChange: (checked: boolean) => void;
+}
+
+function IgnoreToggle({ id, label, checked, onChange }: IgnoreToggleProps) {
+  return (
+    <label className="flex items-center gap-2 text-xs text-muted-foreground" htmlFor={id}>
+      <Checkbox
+        id={id}
+        checked={checked}
+        onCheckedChange={(checkedValue) => onChange(!!checkedValue)}
+      />
+      {label}
+    </label>
+  );
+}
+
+interface PowerInputProps {
+  id: string;
+  label: string;
+  value: string;
+  placeholder?: string;
+  ignored: boolean;
+  onIgnoreChange: (checked: boolean) => void;
+  onChange: (value: string | undefined) => void;
+}
+
+function PowerInput({ id, label, value, placeholder, ignored, onIgnoreChange, onChange }: PowerInputProps) {
+  return (
+    <div className="grid gap-1.5">
+      <div className="flex items-center justify-between">
+        <Label htmlFor={id}>{label}</Label>
+        {(placeholder || ignored) && (
+          <IgnoreToggle id={`${id}-ignore`} label="Ignorieren" checked={ignored} onChange={onIgnoreChange} />
+        )}
       </div>
+      <Input
+        id={id}
+        value={value ?? ""}
+        placeholder={ignored ? undefined : placeholder}
+        disabled={ignored}
+        onChange={(event) => {
+          const raw = event.target.value;
+          onChange(raw.trim().length === 0 ? undefined : raw);
+        }}
+      />
+    </div>
+  );
+}
+
+interface PowerNumberInputProps {
+  id: string;
+  label: string;
+  value: number | undefined | null;
+  ignored: boolean;
+  onIgnoreChange: (checked: boolean) => void;
+  onChange: (value: number | undefined) => void;
+}
+
+function PowerNumberInput({ id, label, value, ignored, onIgnoreChange, onChange }: PowerNumberInputProps) {
+  return (
+    <div className="grid gap-1.5">
+      <div className="flex items-center justify-between">
+        <Label htmlFor={id}>{label}</Label>
+        <IgnoreToggle id={`${id}-ignore`} label="Ignorieren" checked={ignored} onChange={onIgnoreChange} />
+      </div>
+      <Input
+        id={id}
+        type="number"
+        min={0}
+        step="0.1"
+        value={value ?? ""}
+        onChange={(event) => {
+          const raw = event.target.value.trim();
+          onChange(raw === "" ? undefined : Number(raw));
+        }}
+        disabled={ignored}
+      />
     </div>
   );
 }

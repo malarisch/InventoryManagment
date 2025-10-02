@@ -1,0 +1,54 @@
+# Multi-stage Dockerfile for InventoryManagment Next.js App
+# Based on GitHub Actions setup and Next.js best practices
+
+# Stage 1: Dependencies
+FROM node:22-alpine AS deps
+WORKDIR /app
+
+# Install dependencies based on package-lock.json
+COPY package.json package-lock.json ./
+RUN npm ci --omit=dev --ignore-scripts
+
+# Stage 2: Build
+FROM node:22-alpine AS builder
+WORKDIR /app
+
+# Copy dependencies from deps stage
+COPY --from=deps /app/node_modules ./node_modules
+COPY . .
+
+
+# Generate Prisma Client (needed for build)
+RUN npx prisma generate
+ENV NEXT_TELEMETRY_DISABLED=1
+ENV PAGES_DYNAMIC=true
+
+RUN npm run build
+
+# Stage 3: Production runtime
+FROM node:22-alpine AS runner
+WORKDIR /app
+
+ENV NODE_ENV=production
+ENV NEXT_TELEMETRY_DISABLED=1
+
+# Create non-root user
+RUN addgroup --system --gid 1001 nodejs && \
+    adduser --system --uid 1001 nextjs
+
+# Copy built app and dependencies
+COPY --from=builder --chown=nextjs:nodejs /app/.next/standalone ./
+COPY --from=builder --chown=nextjs:nodejs /app/.next/static ./.next/static
+
+# Copy Prisma client (generated during build)
+COPY --from=builder /app/lib/generated/prisma ./lib/generated/prisma
+
+USER nextjs
+
+EXPOSE 3000
+
+ENV PORT=3000
+ENV HOSTNAME="0.0.0.0"
+
+# Start Next.js
+CMD ["node", "server.js"]
