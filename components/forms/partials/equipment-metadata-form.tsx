@@ -29,6 +29,7 @@ type SectionId =
   | "general"
   | "physical"
   | "power"
+  | "case"
   | "lifecycle"
   | "connectivity"
   | "suppliers"
@@ -46,6 +47,7 @@ const SECTION_DEFINITIONS: SectionDefinition[] = [
   { id: "general", title: "Allgemein", description: "Typ, Seriennummer und Hersteller", defaultActive: true },
   { id: "physical", title: "Physische Eigenschaften", description: "Rack, Gewicht und Maße", defaultActive: true },
   { id: "power", title: "Stromversorgung", description: "Spannung, Frequenz und Anschluss", defaultActive: true },
+  { id: "case", title: "Case Setup", description: "Rack-Koffer und innere Abmessungen" },
   { id: "lifecycle", title: "Lebenszyklus", description: "Kauf, Garantie und Wartung", defaultActive: true },
   { id: "connectivity", title: "Konnektivität & Schnittstellen", description: "Netzwerk und Ports" },
   { id: "suppliers", title: "Lieferanten & Preise", description: "Lieferanten und Konditionen" },
@@ -350,6 +352,168 @@ export function EquipmentMetadataForm({
     );
   }
 
+  function renderCaseCard() {
+    if (!activeSections.includes("case")) return null;
+    const caseData = local.case ?? {};
+    const inherited = inheritedArticle?.case ?? {};
+    
+    return (
+      <Card>
+        <CardHeader>
+          <CardTitle>Case Setup</CardTitle>
+          <CardDescription>Konfiguration für Rack-Koffer und Transport-Cases</CardDescription>
+        </CardHeader>
+        <CardContent className="grid gap-4">
+          <div className="grid gap-3 sm:grid-cols-2">
+            <div className="flex items-center gap-2">
+              <input
+                type="checkbox"
+                id="emf-case-is19"
+                checked={caseData.is19Inch ?? inherited.is19Inch ?? false}
+                onChange={(e) => {
+                  const checked = e.target.checked;
+                  setLocal((prev) => ({
+                    ...prev,
+                    case: { ...prev.case, is19Inch: checked, ...(checked ? {} : { heightUnits: undefined }) },
+                  }));
+                  onChange({ ...local, case: { ...local.case, is19Inch: checked, ...(checked ? {} : { heightUnits: undefined }) } });
+                }}
+              />
+              <Label htmlFor="emf-case-is19">Ist 19&quot; Rack</Label>
+            </div>
+            <div className="flex items-center gap-2">
+              <input
+                type="checkbox"
+                id="emf-case-lock"
+                checked={caseData.hasLock ?? inherited.hasLock ?? false}
+                onChange={(e) => {
+                  const checked = e.target.checked;
+                  setLocal((prev) => ({ ...prev, case: { ...prev.case, hasLock: checked } }));
+                  onChange({ ...local, case: { ...local.case, hasLock: checked } });
+                }}
+              />
+              <Label htmlFor="emf-case-lock">Hat Schloss</Label>
+            </div>
+          </div>
+
+          {(caseData.is19Inch ?? inherited.is19Inch) && (
+            <div className="grid gap-3 sm:grid-cols-2">
+              <div className="grid gap-1.5">
+                <Label htmlFor="emf-case-hu">Höheneinheiten (U)</Label>
+                <Input
+                  id="emf-case-hu"
+                  type="number"
+                  min={1}
+                  step={1}
+                  placeholder={String(inherited.heightUnits ?? "")}
+                  value={caseData.heightUnits ?? ""}
+                  onChange={(e) => {
+                    const val = e.target.value === "" ? undefined : Number(e.target.value);
+                    setLocal((prev) => ({ ...prev, case: { ...prev.case, heightUnits: val } }));
+                    onChange({ ...local, case: { ...local.case, heightUnits: val } });
+                  }}
+                />
+              </div>
+              <div className="grid gap-1.5">
+                <Label htmlFor="emf-case-depth">Max. Gerätetiefe (cm)</Label>
+                <Input
+                  id="emf-case-depth"
+                  type="number"
+                  min={0}
+                  step={0.1}
+                  placeholder={String(inherited.maxDeviceDepthCm ?? "")}
+                  value={caseData.maxDeviceDepthCm ?? ""}
+                  onChange={(e) => {
+                    const val = e.target.value === "" ? undefined : Number(e.target.value);
+                    setLocal((prev) => ({ ...prev, case: { ...prev.case, maxDeviceDepthCm: val } }));
+                    onChange({ ...local, case: { ...local.case, maxDeviceDepthCm: val } });
+                  }}
+                />
+              </div>
+            </div>
+          )}
+
+          <div className="grid gap-3 sm:grid-cols-3">
+            <div className="grid gap-1.5">
+              <Label htmlFor="emf-case-inner-w">Innenmaße Breite (cm)</Label>
+              <Input
+                id="emf-case-inner-w"
+                type="number"
+                min={0}
+                step={0.1}
+                placeholder={String(inherited.innerDimensionsCm?.width ?? "")}
+                value={caseData.innerDimensionsCm?.width ?? ""}
+                onChange={(e) => {
+                  const val = e.target.value === "" ? undefined : Number(e.target.value);
+                  if (val === undefined) return;
+                  const existingDims = caseData.innerDimensionsCm ?? inherited.innerDimensionsCm ?? { width: 0, height: 0, depth: 0 };
+                  const newDims = { ...existingDims, width: val };
+                  setLocal((prev) => ({ ...prev, case: { ...prev.case, innerDimensionsCm: newDims } }));
+                  onChange({ ...local, case: { ...local.case, innerDimensionsCm: newDims } });
+                }}
+              />
+            </div>
+            <div className="grid gap-1.5">
+              <Label htmlFor="emf-case-inner-h">Innenmaße Höhe (cm)</Label>
+              <Input
+                id="emf-case-inner-h"
+                type="number"
+                min={0}
+                step={0.1}
+                placeholder={String(inherited.innerDimensionsCm?.height ?? "")}
+                value={caseData.innerDimensionsCm?.height ?? ""}
+                onChange={(e) => {
+                  const val = e.target.value === "" ? undefined : Number(e.target.value);
+                  if (val === undefined) return;
+                  const existingDims = caseData.innerDimensionsCm ?? inherited.innerDimensionsCm ?? { width: 0, height: 0, depth: 0 };
+                  const newDims = { ...existingDims, height: val };
+                  setLocal((prev) => ({ ...prev, case: { ...prev.case, innerDimensionsCm: newDims } }));
+                  onChange({ ...local, case: { ...local.case, innerDimensionsCm: newDims } });
+                }}
+              />
+            </div>
+            <div className="grid gap-1.5">
+              <Label htmlFor="emf-case-inner-d">Innenmaße Tiefe (cm)</Label>
+              <Input
+                id="emf-case-inner-d"
+                type="number"
+                min={0}
+                step={0.1}
+                placeholder={String(inherited.innerDimensionsCm?.depth ?? "")}
+                value={caseData.innerDimensionsCm?.depth ?? ""}
+                onChange={(e) => {
+                  const val = e.target.value === "" ? undefined : Number(e.target.value);
+                  if (val === undefined) return;
+                  const existingDims = caseData.innerDimensionsCm ?? inherited.innerDimensionsCm ?? { width: 0, height: 0, depth: 0 };
+                  const newDims = { ...existingDims, depth: val };
+                  setLocal((prev) => ({ ...prev, case: { ...prev.case, innerDimensionsCm: newDims } }));
+                  onChange({ ...local, case: { ...local.case, innerDimensionsCm: newDims } });
+                }}
+              />
+            </div>
+          </div>
+
+          <div className="grid gap-1.5">
+            <Label htmlFor="emf-case-max-weight">Maximales Inhaltsgewicht (kg)</Label>
+            <Input
+              id="emf-case-max-weight"
+              type="number"
+              min={0}
+              step={0.1}
+              placeholder={String(inherited.contentMaxWeightKg ?? "")}
+              value={caseData.contentMaxWeightKg ?? ""}
+              onChange={(e) => {
+                const val = e.target.value === "" ? undefined : Number(e.target.value);
+                setLocal((prev) => ({ ...prev, case: { ...prev.case, contentMaxWeightKg: val } }));
+                onChange({ ...local, case: { ...local.case, contentMaxWeightKg: val } });
+              }}
+            />
+          </div>
+        </CardContent>
+      </Card>
+    );
+  }
+
   function renderLifecycleCard() {
     if (!activeSections.includes("lifecycle")) return null;
     return (
@@ -586,6 +750,7 @@ export function EquipmentMetadataForm({
       {renderGeneralCard()}
       {renderPhysicalCard()}
       {renderPowerCard()}
+      {renderCaseCard()}
       {renderLifecycleCard()}
       {renderConnectivityCard()}
       {renderSuppliersCard()}

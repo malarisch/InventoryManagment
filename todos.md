@@ -27,7 +27,6 @@ Diese To-Do List enthält Aufgaben, die an der Software zu bearbeiten sind. Soba
   - Die Optionen "Ist 19" Rack" und "19" Rackmontage" schließen sich logisch aus. "Case hat schloss" als Checkbox ausführen. Führe die Caseoptionen in einer Karte zusammen, also Höheneinheiten und "19-Zoll Rackmontage" mit ins Case Setup, die Felder für ein Rack nur Anzeigen wenn "Case ist 19" Rack" und andersrum die anderen nur wenn "Ist 19 Zoll Montagefähig". 
 - Edit Pages:
 - New Equipment:
-  - Auswählbarkeit der Case Setup Karte fehlt.
 - Contacts 
   - Das Contact creation form heißt noch Customers und lässt nur Kunden zu. Außerdem fehlen in dem aktuellen Formular Unternehmen die Ansprechperson.
   - Edit hat eine komplete parallelstruktur in den Metadaten. Implementiere die neue Datenstruktur in dem Formular.
@@ -77,6 +76,7 @@ Diese To-Do List enthält Aufgaben, die an der Software zu bearbeiten sind. Soba
 
 
 ## Done
+- **Fix: Equipment Form Case Setup Card**: Added "Case Setup" section to equipment metadata form with 19" rack checkbox, lock checkbox, conditional rack fields (height units, max device depth), inner dimensions (width/height/depth), and max content weight. Inherits from article metadata.
 - **Fix: DataTable Search Bug**: Fixed bug where DataTable would show no results when search term type didn't match searchable field types (e.g., typing text when only number fields configured). Removed artificial `id.eq.0` filter that was hiding all results. Now shows all results when search filters don't match.
 - **Fix: Case Edit Page Reorganization**: Reorganized into 4 separate cards (Basisdaten, Case-Equipment, Equipments im Case, Ungetrackte Artikel). Added article names in equipment lists. Added "Created by" and "Created at" in page header. Added case equipment picker dropdown. Equipment/Article IDs now link to detail pages.
 - **Fix: Case Create Equipment Selection**: Selected equipments now show in dedicated chip list above the table. Added count in card description. Made table rows clickable. Equipments no longer disappear when selected.
