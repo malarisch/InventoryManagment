@@ -3,8 +3,6 @@
 Diese To-Do List enthält Aufgaben, die an der Software zu bearbeiten sind. Sobald eine Aufgabe bearbeited wurde soll diese hier in der Datei unten in die Done-List eingefügt und aus der To-Do list entfernt werden. Denk daran für alles, was du tust, auch Tests zu implementieren! Vor dem Committen Tests ausführen und checken ob alles läuft, wenn nicht erst alles fixen und dann committen. Für jedes Todo ein Commit. Speichere so viel wie möglich in deine Memories, damit du schneller darauf zugreifen kannst.
 
 ## To-Do
-- Jobs sollen eine Preisübersicht bekommen, anhand der zu ihnen gebuchten Assets. Ebenso Gewicht und Truckspace. Berechnet an den Werten der eingebuchten Assets.
-
 
 ### Fixes
 - Werkstatt
@@ -12,6 +10,7 @@ Diese To-Do List enthält Aufgaben, die an der Software zu bearbeiten sind. Soba
   - Erweitere das Werkstatt Job konzept: Eine Card, mit Beschreibung, Möglichkeit Fotos anzuhängen, und einer "Blockieren" checkbox, die verhindert, dass das Equip auf neue Jobs gebucht wird. Wenn ein kommender Job Equipmens gebucht hat, die geblockt sind, zeige eine Warnung im Dashboard und der Job tabelle an.
   -  
 ## Done
+- **Jobs Asset Summary**: Added summary card with total price (daily rental), weight (kg/tons), and truckspace (volume L/m³) calculated from booked assets. Responsive 4-column grid in sidebar. (Commit 3ffdf3f)
 - **Jobs Contact in Header with Modal**: Removed contact card from form, moved to job header with link and "Ändern" button. Modal opens with SearchPicker for quick contact changes. Server-side contact display fetch. (Commit cc202d9)
 - **Jobs Edit Page 2/3 Layout**: Reorganized job detail page with 2-column grid - left 2/3 for form/files/history, right 1/3 sidebar for Quick book + booked assets cards. Responsive on mobile. (Commit 2c18c72)
 - **Jobs Contact Picker with Search**: Replaced standard dropdown with SearchPicker in job-create-form and job-edit-form for better UX with many contacts. Fuzzy search with weighted matchers (ID, names) for customer-type contacts. (Commit d89d41a)

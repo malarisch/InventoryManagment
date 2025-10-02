@@ -1,3 +1,22 @@
+## 2025-10-03 14:20 – Jobs: Added asset summary card with price, weight, and truckspace
+- **TASK**: Asset summary calculations for jobs (todo #6 of 6 remaining)
+- User requested: "Jobs sollen eine Preisübersicht bekommen, anhand der zu ihnen gebuchten Assets. Ebenso Gewicht und Truckspace."
+- **SOLUTION**: Created comprehensive JobAssetSummaryCard component
+- Fetches all booked assets (equipments + cases) with metadata
+- Calculates 4 key metrics:
+  * Total count with equipment/case breakdown
+  * Total daily rental price (sum of article dailyRentalRate, formatted with currency)
+  * Total weight in kg/tons (from equipment or article metadata, equipment takes precedence)
+  * Total truckspace as volume in L/m³ (calculated from dimensions: width × height × depth)
+- Price formatting: converts cents to main unit, uses Intl.NumberFormat for locale
+- Weight/volume auto-formats: kg→tons at 1000kg, L→m³ at 1000L
+- Responsive 4-column grid on desktop, stacks on mobile
+- Placed in job detail sidebar (top of right column, above Quick book)
+- Files: components/job-asset-summary.tsx, app/management/jobs/[id]/page.tsx, agentlog.md
+- TypeScript compilation: ✅ PASSED (`npm run test:tsc`)
+- Commit: 3ffdf3f "feat: Add job asset summary with price, weight, and truckspace"
+- Next: Task 4/6 - Workshop: Equipment page overview of open workshop jobs
+
 ## 2025-10-03 14:00 – Jobs: Moved contact to header with modal editor
 - **TASK**: Contact in header with modal instead of separate card (todo #3 of 6)
 - User requested: "Kontakt card nicht anzeigen. Stattdessen in der Kurzbeschreibung den Kontaktnamen mit link zur Kontaktseite, daneben ein 'Ändern' knopf welcher die Contact Card in einem Modal öffnet."
