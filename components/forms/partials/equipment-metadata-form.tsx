@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import type { ArticleMetadata, DimensionsCm, EquipmentMetadata, Person } from "@/components/metadataTypes.types";
 import type { adminCompanyMetadata } from "@/components/metadataTypes.types";
 import { Input } from "@/components/ui/input";
@@ -65,6 +65,9 @@ export function EquipmentMetadataForm({
 }: EquipmentMetadataFormProps) {
   const [local, setLocal] = useState<EquipmentMetadata>(value);
   const { company } = useCompany();
+  
+  // Track whether the last change originated from user interaction
+  const isInternalUpdateRef = useRef(false);
 
   const adminMeta = useMemo(() => normalizeAdminCompanyMetadata(companyMetadata ?? company?.metadata ?? null), [companyMetadata, company]);
   const powerDefaults = useMemo(() => powerPlaceholders(adminMeta), [adminMeta]);
@@ -84,19 +87,24 @@ export function EquipmentMetadataForm({
 
   const [activeSections, setActiveSections] = useState<SectionId[]>(() => SECTION_DEFINITIONS.filter((section) => section.defaultActive).map((section) => section.id));
 
-  // Sync local state with incoming value prop
+  // Sync from parent: only update local if change came from outside
   useEffect(() => {
-    setLocal(value);
+    if (!isInternalUpdateRef.current) {
+      setLocal(value);
+    }
+    isInternalUpdateRef.current = false;
   }, [value]);
 
-  // Propagate local changes to parent - use a separate function to avoid including onChange in deps
+  // Notify parent when local changes from user interaction
+  useEffect(() => {
+    if (isInternalUpdateRef.current) {
+      onChange(local);
+    }
+  }, [local, onChange]);
+
   function update(updater: (prev: EquipmentMetadata) => EquipmentMetadata) {
-    setLocal((prev) => {
-      const next = updater(prev);
-      // Call onChange directly here instead of in useEffect
-      onChange(next);
-      return next;
-    });
+    isInternalUpdateRef.current = true;
+    setLocal((prev) => updater(prev));
   }
 
   function ensureSectionActive(section: SectionId, hasData: boolean) {

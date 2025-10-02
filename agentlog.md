@@ -1,3 +1,15 @@
+## 2025-10-02 21:30 – Fixed render-phase update error in metadata forms
+- **PROBLEM**: "Cannot update a component while rendering a different component" error when editing metadata
+- Previous fix called onChange inside setState callback, which updates parent during child render (React violation)
+- **SOLUTION**: Use ref-based change tracking to distinguish internal vs external updates
+- `isInternalUpdateRef` flag tracks whether change originated from user interaction or parent prop update
+- Two useEffect hooks work in harmony: one syncs parent→local (skips if internal), other notifies parent (only if internal)
+- update/set functions set flag before setState; flag auto-resets after each value prop change
+- Defers onChange calls to effect phase, avoiding render-phase parent updates
+- Files: article-metadata-form.tsx, equipment-metadata-form.tsx, job-metadata-form.tsx, customer-metadata-form.tsx, agentlog.md
+- TypeScript compilation: ✅ PASSED (`npm run test:tsc`)
+- Next: User verification that forms work without errors or infinite loops
+
 ## 2025-10-02 21:15 – Fixed infinite loop in metadata forms
 - **PROBLEM**: Article/Equipment/Job/Customer metadata forms caused infinite render loops when toggling JSON mode or editing rapidly
 - Root cause: Two competing useEffect hooks creating circular dependency (setLocal triggers onChange, which updates value prop, which triggers setLocal again)
