@@ -58,59 +58,72 @@ export default async function JobDetailPage({ params }: { params: Promise<{ id: 
           <Link href="/management/jobs" className="hover:underline">← Zurück zur Übersicht</Link>
         </div>
         <JobNameProvider initialName={title}>
-        <Card>
-          <CardHeader>
-            <CardTitle>
-              <JobNameHeading data-testid="job-title" fallback={title} />
-            </CardTitle>
-            <CardDescription>
-              Job-ID #{job.id} • Erstellt am {createdDisplay} • Erstellt von {creatorDisplay}
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
-              <DeleteWithUndo table="jobs" id={job.id} payload={job as Record<string, unknown>} redirectTo="/management/jobs" />
-              <div className="flex items-center gap-2">
-                <Button variant="outline" asChild className="flex items-center gap-2">
-                  <Link href={`/management/scanner?mode=job-book&jobId=${job.id}`}>
-                    <ClipboardList className="h-4 w-4" />
-                    Kameramodus buchen
-                  </Link>
-                </Button>
-                <Button variant="outline" asChild className="flex items-center gap-2">
-                  <Link href={`/management/scanner?mode=job-pack&jobId=${job.id}`}>
-                    <PackageCheck className="h-4 w-4" />
-                    Kameramodus packen
-                  </Link>
-                </Button>
-              </div>
-            </div>
-            <JobEditForm job={job} />
-          </CardContent>
-        </Card>
+        
+        {/* 2-column layout: 2/3 for main content, 1/3 for sidebar */}
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
+          {/* Left column: Main content (2/3) */}
+          <div className="lg:col-span-2 space-y-4">
+            <Card>
+              <CardHeader>
+                <CardTitle>
+                  <JobNameHeading data-testid="job-title" fallback={title} />
+                </CardTitle>
+                <CardDescription>
+                  Job-ID #{job.id} • Erstellt am {createdDisplay} • Erstellt von {creatorDisplay}
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
+                  <DeleteWithUndo table="jobs" id={job.id} payload={job as Record<string, unknown>} redirectTo="/management/jobs" />
+                  <div className="flex items-center gap-2">
+                    <Button variant="outline" asChild className="flex items-center gap-2">
+                      <Link href={`/management/scanner?mode=job-book&jobId=${job.id}`}>
+                        <ClipboardList className="h-4 w-4" />
+                        Kameramodus buchen
+                      </Link>
+                    </Button>
+                    <Button variant="outline" asChild className="flex items-center gap-2">
+                      <Link href={`/management/scanner?mode=job-pack&jobId=${job.id}`}>
+                        <PackageCheck className="h-4 w-4" />
+                        Kameramodus packen
+                      </Link>
+                    </Button>
+                  </div>
+                </div>
+                <JobEditForm job={job} />
+              </CardContent>
+            </Card>
+
+            <Card>
+              <CardHeader>
+                <CardTitle>Dateien</CardTitle>
+                <CardDescription>Anhänge und Dokumente zu diesem Job</CardDescription>
+              </CardHeader>
+              <CardContent>
+                <FileManager table="jobs" rowId={job.id} companyId={job.company_id} isPublic={false} initial={(job as Record<string, unknown>).files} />
+              </CardContent>
+            </Card>
+
+            <HistoryCard table="jobs" dataId={id} extraTables={["job_booked_assets", "job_assets_on_job"]} />
+          </div>
+
+          {/* Right column: Sidebar (1/3) */}
+          <div className="lg:col-span-1 space-y-4">
+            <Card>
+              <CardHeader>
+                <CardTitle>Schnell buchen</CardTitle>
+                <CardDescription>Nach Artikelmenge, Equipment-ID oder Case.</CardDescription>
+              </CardHeader>
+              <CardContent>
+                <JobQuickBook jobId={id} />
+              </CardContent>
+            </Card>
+
+            <JobBookedAssetsCard jobId={id} />
+          </div>
+        </div>
+        
         </JobNameProvider>
-
-        <Card>
-          <CardHeader>
-            <CardTitle>Dateien</CardTitle>
-            <CardDescription>Anhänge und Dokumente zu diesem Job</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <FileManager table="jobs" rowId={job.id} companyId={job.company_id} isPublic={false} initial={(job as Record<string, unknown>).files} />
-          </CardContent>
-        </Card>
-
-        <JobBookedAssetsCard jobId={id} />
-        <Card>
-          <CardHeader>
-            <CardTitle>Schnell buchen</CardTitle>
-            <CardDescription>Nach Artikelmenge, Equipment-ID oder Case.</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <JobQuickBook jobId={id} />
-          </CardContent>
-        </Card>
-        <HistoryCard table="jobs" dataId={id} extraTables={["job_booked_assets", "job_assets_on_job"]} />
       </div>
     </main>
   );
