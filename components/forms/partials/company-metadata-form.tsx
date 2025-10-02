@@ -159,6 +159,9 @@ export function CompanyMetadataForm({
             onChange={(e) => {
               const t = e.target.value;
               setArticleTypesText(t);
+            }}
+            onBlur={(e) => {
+              const t = e.target.value;
               set("customTypes", { ...value.customTypes, articleTypes: t.split("\n").map(s => s.trim()).filter(s => s.length > 0) });
             }} />
         </div>
@@ -170,6 +173,9 @@ export function CompanyMetadataForm({
             onChange={(e) => {
               const t = e.target.value;
               setCaseTypesText(t);
+            }}
+            onBlur={(e) => {
+              const t = e.target.value;
               set("customTypes", { ...value.customTypes, caseTypes: t.split("\n").map(s => s.trim()).filter(s => s.length > 0) });
             }} />
         </div>
@@ -181,6 +187,9 @@ export function CompanyMetadataForm({
             onChange={(e) => {
               const t = e.target.value;
               setLocationTypesText(t);
+            }}
+            onBlur={(e) => {
+              const t = e.target.value;
               set("customTypes", { ...value.customTypes, locationTypes: t.split("\n").map(s => s.trim()).filter(s => s.length > 0) });
             }} />
         </div>
