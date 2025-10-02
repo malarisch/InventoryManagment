@@ -9,7 +9,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { createClient } from '@/lib/supabase/client';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 // Using simple inputs instead of shadcn form/select for now
 import { AssetTagTemplate, AssetTagTemplateElement } from '@/components/asset-tag-templates/types';
@@ -64,6 +64,7 @@ type FormValues = z.infer<typeof formSchema>;
 export function AssetTagTemplateCreateForm() {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [debouncedTemplate, setDebouncedTemplate] = useState<AssetTagTemplate | null>(null);
   const router = useRouter();
   const supabase = createClient();
 
@@ -89,6 +90,43 @@ export function AssetTagTemplateCreateForm() {
     control: form.control,
     name: 'elements',
   });
+
+  // Debounce template updates for preview (avoid server request storm during drag)
+  useEffect(() => {
+    const subscription = form.watch((value) => {
+      const timer = setTimeout(() => {
+        const w = value as FormValues;
+        const previewTemplate: AssetTagTemplate = {
+          name: w.name ?? '',
+          description: w.description,
+          tagWidthMm: w.tagWidthMm ?? 100,
+          tagHeightMm: w.tagHeightMm ?? 50,
+          marginMm: w.marginMm as number | undefined,
+          backgroundColor: w.backgroundColor,
+          textColor: w.textColor,
+          borderColor: w.borderColor,
+          borderWidthMm: w.borderWidthMm as number | undefined,
+          textSizePt: w.textSizePt as number | undefined,
+          isMonochrome: w.isMonochrome,
+          prefix: w.prefix,
+          numberLength: w.numberLength as number | undefined,
+          suffix: w.suffix,
+          numberingScheme: w.numberingScheme,
+          stringTemplate: w.stringTemplate,
+          codeType: w.codeType,
+          codeSizeMm: w.codeSizeMm as number | undefined,
+          elements: (w.elements || []).map(e => ({
+            ...e,
+            size: e.size as number | undefined,
+            height: e.height as number | undefined,
+          })),
+        };
+        setDebouncedTemplate(previewTemplate);
+      }, 300); // 300ms debounce
+      return () => clearTimeout(timer);
+    });
+    return () => subscription.unsubscribe();
+  }, [form]);
 
   const onSubmit = async (raw: unknown) => {
     const values = raw as FormValues; // zodResolver guarantees shape
@@ -181,15 +219,16 @@ export function AssetTagTemplateCreateForm() {
   };
 
   return (
-    <form onSubmit={form.handleSubmit(onSubmit)} className="grid grid-cols-1 md:grid-cols-12 gap-6">
+    <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
+      <form onSubmit={form.handleSubmit(onSubmit)} className="lg:col-span-8 space-y-6">
       {error && (
-        <Card className="col-span-full border-red-200">
+        <Card className="border-red-200">
           <CardContent className="bg-red-50 text-red-700 px-4 py-3">{error}</CardContent>
         </Card>
       )}
       
       {/* Basic Information */}
-      <Card className="md:col-span-4">
+      <Card>
         <CardHeader>
           <CardTitle>Basic Information</CardTitle>
           <CardDescription>Template name and description</CardDescription>
@@ -207,7 +246,7 @@ export function AssetTagTemplateCreateForm() {
       </Card>
 
       {/* Dimensions */}
-      <Card className="md:col-span-4">
+      <Card>
         <CardHeader>
           <CardTitle>Dimensions</CardTitle>
           <CardDescription>Physical size and margins</CardDescription>
@@ -229,7 +268,7 @@ export function AssetTagTemplateCreateForm() {
       </Card>
 
       {/* Styling */}
-      <Card className="md:col-span-4">
+      <Card>
         <CardHeader>
           <CardTitle>Styling</CardTitle>
           <CardDescription>Colors and typography</CardDescription>
@@ -263,7 +302,7 @@ export function AssetTagTemplateCreateForm() {
       </Card>
 
       {/* Code Generation */}
-      <Card className="md:col-span-6">
+      <Card>
         <CardHeader>
           <CardTitle>Code Generation</CardTitle>
           <CardDescription>Build printed_code from rules</CardDescription>
@@ -307,8 +346,52 @@ export function AssetTagTemplateCreateForm() {
         </CardContent>
       </Card>
 
+      {/* Available Template Codes */}
+      <Card>
+        <CardHeader>
+          <CardTitle>Available Template Codes</CardTitle>
+          <CardDescription>Use these placeholders in element values</CardDescription>
+        </CardHeader>
+        <CardContent>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-sm">
+            <div className="flex items-center gap-2">
+              <code className="bg-muted px-2 py-1 rounded">{'{printed_code}'}</code>
+              <span className="text-muted-foreground">Asset Tag Code</span>
+            </div>
+            <div className="flex items-center gap-2">
+              <code className="bg-muted px-2 py-1 rounded">{'{equipment_name}'}</code>
+              <span className="text-muted-foreground">Equipment Name</span>
+            </div>
+            <div className="flex items-center gap-2">
+              <code className="bg-muted px-2 py-1 rounded">{'{article_name}'}</code>
+              <span className="text-muted-foreground">Article Name</span>
+            </div>
+            <div className="flex items-center gap-2">
+              <code className="bg-muted px-2 py-1 rounded">{'{location_name}'}</code>
+              <span className="text-muted-foreground">Location Name</span>
+            </div>
+            <div className="flex items-center gap-2">
+              <code className="bg-muted px-2 py-1 rounded">{'{case_name}'}</code>
+              <span className="text-muted-foreground">Case Name</span>
+            </div>
+            <div className="flex items-center gap-2">
+              <code className="bg-muted px-2 py-1 rounded">{'{company_name}'}</code>
+              <span className="text-muted-foreground">Company Name</span>
+            </div>
+            <div className="flex items-center gap-2">
+              <code className="bg-muted px-2 py-1 rounded">{'{current_date}'}</code>
+              <span className="text-muted-foreground">Current Date</span>
+            </div>
+            <div className="flex items-center gap-2">
+              <code className="bg-muted px-2 py-1 rounded">{'{qr_url}'}</code>
+              <span className="text-muted-foreground">QR Code URL</span>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+
       {/* Elements */}
-      <Card className="md:col-span-12">
+      <Card>
         <CardHeader>
           <CardTitle>Elements</CardTitle>
           <CardDescription>Add and configure template elements</CardDescription>
@@ -366,59 +449,38 @@ export function AssetTagTemplateCreateForm() {
         </CardContent>
       </Card>
 
-      {/* Live Preview */}
-      <Card className="md:col-span-6 md:sticky md:top-20">
-        <CardHeader>
-          <CardTitle>Live Preview</CardTitle>
-          <CardDescription>Drag to arrange elements</CardDescription>
-        </CardHeader>
-        <CardContent>
-          {(() => {
-            const w = form.watch();
-            const previewTemplate: AssetTagTemplate = {
-              name: w.name,
-              description: w.description,
-              tagWidthMm: w.tagWidthMm,
-              tagHeightMm: w.tagHeightMm,
-              marginMm: w.marginMm as number | undefined,
-              backgroundColor: w.backgroundColor,
-              textColor: w.textColor,
-              borderColor: w.borderColor,
-              borderWidthMm: w.borderWidthMm as number | undefined,
-              textSizePt: w.textSizePt as number | undefined,
-              isMonochrome: w.isMonochrome,
-              prefix: w.prefix,
-              numberLength: w.numberLength as number | undefined,
-              suffix: w.suffix,
-              numberingScheme: w.numberingScheme,
-              stringTemplate: w.stringTemplate,
-              codeType: w.codeType,
-              codeSizeMm: w.codeSizeMm as number | undefined,
-              elements: (w.elements || []).map(e => ({
-                ...e,
-                size: e.size as number | undefined,
-                height: e.height as number | undefined,
-              })),
-            };
-            return (
-              <AssetTagTemplatePreview
-                template={previewTemplate}
-                editable
-                onElementsChange={(els: AssetTagTemplateElement[]) =>
-                  form.setValue('elements', els as unknown as FormValues['elements'], { shouldDirty: true, shouldTouch: true })
-                }
-              />
-            );
-          })()}
-        </CardContent>
-      </Card>
-
       {/* Actions */}
-      <div className="md:col-span-12 flex justify-end">
+      <div className="flex justify-end gap-3">
         <Button type="submit" disabled={isLoading}>
           {isLoading ? 'Creating...' : 'Create Template'}
         </Button>
       </div>
     </form>
+
+      {/* Live Preview - Sticky on large screens */}
+      <div className="lg:col-span-4">
+      <Card className="lg:sticky lg:top-20">
+        <CardHeader>
+          <CardTitle>Live Preview</CardTitle>
+          <CardDescription>Drag to arrange elements</CardDescription>
+        </CardHeader>
+        <CardContent>
+          {debouncedTemplate ? (
+            <AssetTagTemplatePreview
+              template={debouncedTemplate}
+              editable
+              onElementsChange={(els: AssetTagTemplateElement[]) =>
+                form.setValue('elements', els as unknown as FormValues['elements'], { shouldDirty: true, shouldTouch: true })
+              }
+            />
+          ) : (
+            <div className="flex items-center justify-center h-48 text-muted-foreground">
+              Loading preview...
+            </div>
+          )}
+        </CardContent>
+      </Card>
+      </div>
+    </div>
   );
 }

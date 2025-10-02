@@ -60,7 +60,10 @@ export async function generateSVG(
         }
         case 'qrcode': {
           try {
-            const qr = await QRCode.toDataURL(value || '');
+            const qr = await QRCode.toDataURL(value || '', {
+              margin: 0, // Remove default margin/padding
+              width: size * mmToPx, // Match element size exactly
+            });
             svg += `<image href="${qr}" x="${x}" y="${y}" width="${size}" height="${size}" />`;
           } catch {
             svg += `<rect x="${x}" y="${y}" width="${size*mmToPx}" height="${size*mmToPx}" fill="none" stroke="${color}" stroke-width="1"/>`;

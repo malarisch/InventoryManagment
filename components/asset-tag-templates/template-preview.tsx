@@ -98,14 +98,18 @@ export function AssetTagTemplatePreview({ template, editable = false, onElements
     if (el.type === 'text') {
       ctx.font = `${size}px Arial, sans-serif`;
       const metrics = ctx.measureText(el.value || '');
-      return { w: metrics.width, h: size };
+      // Use actualBoundingBox if available for more accurate text box
+      const height = metrics.actualBoundingBoxAscent && metrics.actualBoundingBoxDescent
+        ? metrics.actualBoundingBoxAscent + metrics.actualBoundingBoxDescent
+        : size * 1.2; // Fallback: font size * 1.2 for typical line height
+      return { w: metrics.width, h: height };
     } else if (el.type === 'qrcode') {
-      return { w: size, h: size };
+      return { w: size * MM_TO_PX, h: size * MM_TO_PX }; // size is in mm, convert to px
     } else if (el.type === 'barcode') {
       return { w: size * 2, h: size * 0.6 + 10 };
     } else if (el.type === 'image') {
       const h = el.height || size;
-      return { w: size, h };
+      return { w: size * MM_TO_PX, h: h * MM_TO_PX };
     }
     return { w: size, h: size };
   }, [template.textSizePt]);
