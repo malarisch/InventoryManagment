@@ -7,34 +7,8 @@ Diese To-Do List enthält Aufgaben, die an der Software zu bearbeiten sind. Soba
 
 
 ### Fixes
-- Allgemein: Die Dateien Component sollte in einer eigenen Card auf oberster Ebene mit History zusammen angezeigt werden, nicht in der Entity card.
-- Editiere die supabase config.toml, damit die Storage Buckets angelegt werden. Konsultiere dazu die Doku von Supabase um zu sehen, wie das geht.
-- Notizen sollen Additiv vererbt werden, nicht überschrieben. Also auf einem Equipment sollen die Notizen von seinem Artikel als "Read Only" card angezeigt werden, sowie die normale Card für die eigenen Assets.
-- Metadaten: "Zuweisung" darf gern ein Kontakt Picker enthalten und keine parallelstruktur. Das eigene Notizfeld hiervon darf aber gern bleiben.
-- Cases:
-- Company Settings:
-  - Führe die "Kontaktperson" sektion als Kontakt Entität aus, nicht als JSON Parallelstruktur.
-  - Zerlege auch hier die Metadaten in einzelne Cards, die auf oberster Ebene angezeigt werden.
-- Asset Tag Templates: Page Layout kleiner Anpassungsbedarf. Update das Layout auf drei Spalten, während der Form Content in den ersten zwei Fließt, die Preview ist "Floating", damit man sie immer sieht (nur Desktop!!!!)
-
-  - Füge eine Übersicht über alle nutzbaren Template codes an.
-  - Die Preview wird server side gerendet - deswegen wird bei jeder kleinsten Änderung ne request gesendet. Wenn man was dragged bricht die Hölle aus, jede kleinste Mausbewegung löst eine riesige Welle requests aus.
-  - Preview: Die Dragging Box über Text ist unter dem Text und fasst ihn nicht ein
-  - Der QR Code füllt seine Dragging Box nicht voll aus - der generierte Code hat viel Padding! Zu viel!
-- New Article
-  - Irgendwie sind "Artikelname" und "Hersteller" + "Modell" redundant - überleg dir was. Eventuell in die Richtung zum Form validieren musst du Name oder Hersteller + Modell angeben.
-  - Es Fehlen Buttons um hinzugefügte Metadatenkarten wieder zu löschen. Wenn er geklickt wird "klappe die Karte zusammen" mit einem "Undo" button für diese Aktion.
-- Edit Pages:
-- New Equipment:
-- Contacts 
-  - Das Contact creation form heißt noch Customers und lässt nur Kunden zu. Außerdem fehlen in dem aktuellen Formular Unternehmen die Ansprechperson.
-  - Edit hat eine komplete parallelstruktur in den Metadaten. Implementiere die neue Datenstruktur in dem Formular.
 - Jobs:
-  - Doppeltes "Ort" feld in Metadaten und Basisdaten
-  - Die Termine Card darf ein "Ganztägig" checkbox bekommen, dann verschwindet das Ende (wird intern = start gesetzt).
-  - Wenn nicht ganztägig fehlen die Uhrzeiten!
   - Kontaktauswahl ist ein Standard-Dropdown. Das wird sehr schnell sehr lang. Implementiere auch hier deine schicke Dropdown-Search-Table.
-
   - Edit page: Die Dateneingabe darf gern nur 2/3 der Seite einnehmen, auf dem dritten Drittel erst die Quick book card, darunter die gebuchte equipments card.
   - Edit Page: Kontakt card nicht anzeigen. Stattdessen in der Kurzbeschreibung den Kontaktnamen mit link zur Kontaktseite, daneben ein "Ändern" knopf welcher die Contact Card in einem Modal öffnet. 
 
@@ -43,6 +17,23 @@ Diese To-Do List enthält Aufgaben, die an der Software zu bearbeiten sind. Soba
   - Erweitere das Werkstatt Job konzept: Eine Card, mit Beschreibung, Möglichkeit Fotos anzuhängen, und einer "Blockieren" checkbox, die verhindert, dass das Equip auf neue Jobs gebucht wird. Wenn ein kommender Job Equipmens gebucht hat, die geblockt sind, zeige eine Warnung im Dashboard und der Job tabelle an.
   -  
 ## Done
+- **FileManager auf separaten Cards**: Files und History auf oberster Ebene angezeigt, nicht mehr in Entity-Card eingebettet (Commit fd5a4df)
+- **Supabase Storage Buckets konfiguriert**: config.toml mit public/private buckets für company files (Commit 0c61daf)
+- **Notizen-Vererbung implementiert**: Equipment zeigt Artikel-Notizen als Read-Only Card + eigene Equipment-Notizen (Commit dcca2ec)
+- **Metadaten Zuweisung**: Contact Picker statt Person parallel structure, mit assignedToContactId + assignedToNotes (Commit 83f98e5)
+- **Jobs: Duplicate Ort entfernt**: location aus JobMetadata entfernt, nur job_location im base table (Commit cc800d0)
+- **Article Validierung**: Name ODER (Hersteller + Modell) erforderlich (Commit 2ecacf3)
+- **Jobs: All-day checkbox + time fields**: Ganztägig-Checkbox mit Start-/End-Uhrzeiten wenn nicht ganztägig (Commit 6eae65d)
+- **Company Settings Contact Person**: Kontaktperson als FK zu contacts statt JSON Person (Commit 11e631c)
+- **Article Metadata Remove Buttons**: X-Buttons mit Undo-Funktionalität und Data Backup/Restore (Commits 01cff7b, 0995057, 04b3d93)
+- **Company Settings Metadata Cards**: Metadaten in separate Cards auf oberster Ebene aufgeteilt (Commit 76b2540)
+- **Contact System vereinheitlicht**: customers → contacts, alle 5 Kontakttypen unterstützt (Commit c3d585e)
+- **Asset Tag Templates komplett überarbeitet**: 
+  - 3-Spalten Layout mit sticky preview (Commit 54c13bf, 585322e)
+  - Template Codes Referenz mit Mock-Werten (Commits 9cffbaf, 58b4cc9, 1177452)
+  - Client-side rendering statt server requests (Commit 6e92a4e)
+  - Canvas scaling + full-size modal (Commits 1e5f7bd, db8161c, 4991fbd, 4c729f9)
+  - QR code padding fix, text bounding box accuracy (Commit 9cffbaf)
 - Kameramodus für Smartphones mit eigenem /management/scanner implementiert: kontinuierlicher QR-Scan, Standort-, Job-Buchen- und Pack-Modi inklusive Buttons auf Location- und Job-Detailseiten sowie Cases-Standort-Unterstützung.
 - Wartungslogs für Equipments und Cases inklusive neuer Datenbanktabelle, Inline-Erfassung, Anzeige auf Detailseiten und erweiterter Werkstattübersicht mit letzten Wartungen und Werkstatt-Todos für Cases.
 - Überarbeite die Implementierung des Metadaten-Konzzepts. Metadaten-Karten sind jetzt modular, optional einblendbar, zeigen geerbte Werte als Platzhalter und erlauben Ignorieren via Checkbox. Alle typisierten Felder (Physik, Strom, Maße, Supplier, etc.) sind im UI verfügbar.
