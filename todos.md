@@ -11,8 +11,62 @@ Diese To-Do List enthält Aufgaben, die an der Software zu bearbeiten sind. Soba
 
 
 ### Fixes
+- Übersichtsseiten übersicht hängt in endlosschleife zwischen "Lädt..." und inhalt, macht fast 40 Requests die Sekunde (respekt!)
+- Unspezifisch: Formulare haben manchmal "Input lag" wenn man tippt. In der Konsole kommt dann [Violation] 'input' handler took 298ms
+- Allgemein: Die Dateien Component sollte in einer eigenen Card auf oberster Ebene mit History zusammen angezeigt werden, nicht in der Entity card.
+- Editiere die supabase config.toml, damit die Storage Buckets angelegt werden. Konsultiere dazu die Doku von Supabase um zu sehen, wie das geht.
+- Notizen sollen Additiv vererbt werden, nicht überschrieben. Also auf einem Equipment sollen die Notizen von seinem Artikel als "Read Only" card angezeigt werden, sowie die normale Card für die eigenen Assets.
+- Metadaten: Alle inputs von Dimensions haben die selbe HTML id
+- Metadaten: "Zuweisung" darf gern ein Kontakt Picker enthalten und keine parallelstruktur. Das eigene Notizfeld hiervon darf aber gern bleiben.
+- Files: Füge optisches Feedback bei Klick auf den "Link kopieren" butthin hinzu
+- Cases:
+  - Beim einfügen von Equipments in ein Case im create formular verschwinden die Equipments einfach, werden aber in keine "Hinzugefügt" tabelle oder so eingefgt
+  - Die Case Edit seite ist sehr unaufgräumt. Unterteile sie in mehrere Cards.
+  - Case Edit: Bei Equipments im Case wird nur die ID angezeigt aber nicht der Name des Artikels. In der Plan text ansicht oben das Gleiche, außerdem fehlen Created By und Created At. Ein Picker, um das Case Equipment zu ändern fehlt.
+  - Beim Hinzufügen ungetrackter Artikel in ein Case: Could not find the 'articles' column of 'cases' in the schema cache
+  - Beim Entfernen von Equipments aus einem Case: Could not find the 'equipments' column of 'cases' in the schema cache
+  - Case Edit Table: Die Tabelle ist leer, suche gibt keine Ergebnisse. Im Request log vom Browser ist ein 400: fetch.ts:15  GET http://127.0.0.1:54321/rest/v1/equipments?select=*%2Carticles%3Aarticle_id%28name%29&order=created_at.desc&limit=500 400 (Bad Request)
+- Company Settings:
+  - In den Typen lassen sich inzwischen zwar Zeilenumbrüche eingeben, dafür aber keine Leerzeichen mehr.
+  - Änderungen werden erst nach Reoad ins UX übernommen
+  - Führe die "Kontaktperson" sektion als Kontakt Entität aus, nicht als JSON Parallelstruktur.
+  - Zerlege auch hier die Metadaten in einzelne Cards, die auf oberster Ebene angezeigt werden.
+- Asset Tag Templates: Page Layout kleiner Anpassungsbedarf. Update das Layout auf drei Spalten, während der Form Content in den ersten zwei Fließt, die Preview ist "Floating", damit man sie immer sieht (nur Desktop!!!!)
 
+  - Füge eine Übersicht über alle nutzbaren Template codes an.
+  - Die Preview wird server side gerendet - deswegen wird bei jeder kleinsten Änderung ne request gesendet. Wenn man was dragged bricht die Hölle aus, jede kleinste Mausbewegung löst eine riesige Welle requests aus.
+  - Preview: Die Dragging Box über Text ist unter dem Text und fasst ihn nicht ein
+  - Der QR Code füllt seine Dragging Box nicht voll aus - der generierte Code hat viel Padding! Zu viel!
+- New Article
+  - Irgendwie sind "Artikelname" und "Hersteller" + "Modell" redundant - überleg dir was. Eventuell in die Richtung zum Form validieren musst du Name oder Hersteller + Modell angeben.
+  - Die Karten "Physische Eigenschaften" und "Stromversorgung" können gern standardmäßig geschlossen sein
+  - Die Standardwerte in der Stromversorgung dürfen gern als Placeholder drin sein, aber nicht vorausgefüllt. Ist sonst super nervig, da vieles Zeug garkeinen direkten Stromanschluss hat (passive Lautsprecher, etc.)
+  - Es Fehlen Buttons um hinzugefügte Metadatenkarten wieder zu löschen. Wenn er geklickt wird "klappe die Karte zusammen" mit einem "Undo" button für diese Aktion.
+  - Die Optionen "Ist 19" Rack" und "19" Rackmontage" schließen sich logisch aus. "Case hat schloss" als Checkbox ausführen. Führe die Caseoptionen in einer Karte zusammen, also Höheneinheiten und "19-Zoll Rackmontage" mit ins Case Setup, die Felder für ein Rack nur Anzeigen wenn "Case ist 19" Rack" und andersrum die anderen nur wenn "Ist 19 Zoll Montagefähig". 
+- Edit Pages:
+  - Bei "Asset Tag hinzufügen" wenn keiner besteht wird ein user Prompt angezeigt, bei dem der Code manuell eintragbar ist. Macht keinen Sinn, zu Codegenerierung gibts inzwischen ne super Helper funktion. Direkt prefillen, keine Nachfragen.
+- New Equipment:
+  - Auswählbarkeit der Case Setup Karte fehlt.
+- History Log:
+  - Wenn etwas von undefined auf einen Wert gesetzt wird zeig einfach nur "[attribut]: [wert]" und nicht undefined -> Wert
+  - Die Werte sollten collapsable sein und standardmäßig collapsed
+- Edit Location: Titel Zeigt "Standort #id" statt den namen. Im titel sollte stehen "Standort: [name]". Die ID darunter, wo jetzt der Name steht.
+- Contacts 
+  - Das Contact creation form heißt noch Customers und lässt nur Kunden zu. Außerdem fehlen in dem aktuellen Formular Unternehmen die Ansprechperson.
+  - Edit hat eine komplete parallelstruktur in den Metadaten. Implementiere die neue Datenstruktur in dem Formular.
+- Jobs:
+  - Doppeltes "Ort" feld in Metadaten und Basisdaten
+  - Die Termine Card darf ein "Ganztägig" checkbox bekommen, dann verschwindet das Ende (wird intern = start gesetzt).
+  - Wenn nicht ganztägig fehlen die Uhrzeiten!
+  - Kontaktauswahl ist ein Standard-Dropdown. Das wird sehr schnell sehr lang. Implementiere auch hier deine schicke Dropdown-Search-Table.
+  - Edit page: Gebuchte assets zeigt statt der Tabelle Fehler beim Laden: Could not find a relationship between 'equipments' and 'article_id' in the schema cache
+  - Edit page: Die Dateneingabe darf gern nur 2/3 der Seite einnehmen, auf dem dritten Drittel erst die Quick book card, darunter die gebuchte equipments card.
+  - Edit Page: Kontakt card nicht anzeigen. Stattdessen in der Kurzbeschreibung den Kontaktnamen mit link zur Kontaktseite, daneben ein "Ändern" knopf welcher die Contact Card in einem Modal öffnet. 
 
+- Werkstatt
+  - Auf den Equipment Pages fehlt eine Übersicht der offnen Werkstatt jobs
+  - Erweitere das Werkstatt Job konzept: Eine Card, mit Beschreibung, Möglichkeit Fotos anzuhängen, und einer "Blockieren" checkbox, die verhindert, dass das Equip auf neue Jobs gebucht wird. Wenn ein kommender Job Equipmens gebucht hat, die geblockt sind, zeige eine Warnung im Dashboard und der Job tabelle an.
+  -  
 ## Done
 - Überarbeite die Implementierung des Metadaten-Konzzepts. Metadaten-Karten sind jetzt modular, optional einblendbar, zeigen geerbte Werte als Platzhalter und erlauben Ignorieren via Checkbox. Alle typisierten Felder (Physik, Strom, Maße, Supplier, etc.) sind im UI verfügbar.
 - Implementiere das Konzept "Kontakte" inkl. Datenbanktabelle, RLS, Supabase/Prisma-Typen. Jobs besitzen nun ein `contact_id`-Feld mit Picker und Dialog zur Anlage. Artikel- und Equipment-Metadaten referenzieren Supplier-Kontakte über Auswahlkarten.
