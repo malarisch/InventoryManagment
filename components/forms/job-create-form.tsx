@@ -25,6 +25,9 @@ export function JobCreateForm() {
   const [location, setLocation] = useState<string>("");
   const [startDate, setStartDate] = useState<string>("");
   const [endDate, setEndDate] = useState<string>("");
+  const [startTime, setStartTime] = useState<string>("");
+  const [endTime, setEndTime] = useState<string>("");
+  const [isAllDay, setIsAllDay] = useState<boolean>(false);
   const [contactId, setContactId] = useState<number | "">("");
   const [contacts, setContacts] = useState<Contact[]>([]);
   const [metaText, setMetaText] = useState<string>(() => toPrettyJSON(defaultJobMetadataDE));
@@ -108,8 +111,25 @@ export function JobCreateForm() {
       const userId = auth.user?.id ?? null;
       if (!company || !userId) throw new Error("Fehlende Company oder Nutzer");
 
-      const formStartDate = startDate || null;
-      const formEndDate = endDate || null;
+      // Combine date and time values
+      let finalStartDate: string | null = null;
+      let finalEndDate: string | null = null;
+      
+      if (startDate) {
+        if (isAllDay || !startTime) {
+          finalStartDate = startDate;
+        } else {
+          finalStartDate = `${startDate}T${startTime}:00`;
+        }
+      }
+      
+      if (endDate) {
+        if (isAllDay || !endTime) {
+          finalEndDate = endDate;
+        } else {
+          finalEndDate = `${endDate}T${endTime}:00`;
+        }
+      }
 
       let meta: Json | null = null;
       if (!advanced) {
@@ -132,8 +152,8 @@ export function JobCreateForm() {
           name: name.trim() || null,
           type: type.trim() || null,
           job_location: location.trim() || null,
-          startdate: formStartDate || null,
-          enddate: formEndDate || null,
+          startdate: finalStartDate,
+          enddate: finalEndDate,
           contact_id: contactId === "" ? null : Number(contactId),
           meta,
           company_id: company.id,
@@ -178,15 +198,73 @@ export function JobCreateForm() {
           <CardTitle>Termine</CardTitle>
           <CardDescription>Start und Ende</CardDescription>
         </CardHeader>
-        <CardContent className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-          <div className="grid gap-2">
-            <Label htmlFor="startdate">Start</Label>
-            <DatePicker id="startdate" name="startdate" value={startDate} onChange={setStartDate} />
+        <CardContent className="space-y-3">
+          <div className="flex items-center gap-2">
+            <input
+              type="checkbox"
+              id="is_all_day"
+              checked={isAllDay}
+              onChange={(e) => {
+                const checked = e.target.checked;
+                setIsAllDay(checked);
+                if (checked) {
+                  // Set end date to match start date for all-day events
+                  setEndDate(startDate);
+                  setStartTime("");
+                  setEndTime("");
+                }
+              }}
+            />
+            <Label htmlFor="is_all_day" className="cursor-pointer">Ganztägig</Label>
           </div>
-          <div className="grid gap-2">
-            <Label htmlFor="enddate">Ende</Label>
-            <DatePicker id="enddate" name="enddate" value={endDate} onChange={setEndDate} />
+          <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+            <div className="grid gap-2">
+              <Label htmlFor="startdate">Start-Datum</Label>
+              <DatePicker 
+                id="startdate" 
+                name="startdate" 
+                value={startDate} 
+                onChange={(val) => {
+                  setStartDate(val);
+                  if (isAllDay) {
+                    setEndDate(val);
+                  }
+                }}
+              />
+            </div>
+            <div className="grid gap-2">
+              <Label htmlFor="enddate">End-Datum</Label>
+              <DatePicker 
+                id="enddate" 
+                name="enddate" 
+                value={endDate} 
+                onChange={setEndDate}
+                disabled={isAllDay}
+              />
+            </div>
           </div>
+          {!isAllDay && (
+            <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+              <div className="grid gap-2">
+                <Label htmlFor="starttime">Start-Uhrzeit</Label>
+                <Input 
+                  type="time" 
+                  id="starttime" 
+                  value={startTime} 
+                  onChange={(e) => setStartTime(e.target.value)} 
+                />
+              </div>
+              <div className="grid gap-2">
+                <Label htmlFor="endtime">End-Uhrzeit</Label>
+                <Input 
+                  type="time" 
+                  id="endtime" 
+                  value={endTime} 
+                  onChange={(e) => setEndTime(e.target.value)} 
+                />
+              </div>
+            </div>
+          )}
         </CardContent>
       </Card>
       <Card className="md:col-span-3">

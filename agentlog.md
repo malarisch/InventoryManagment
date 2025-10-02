@@ -1,3 +1,16 @@
+## 2025-10-02 22:30 – Added all-day checkbox and time fields to Job forms
+- **PROBLEM**: Jobs only had date fields without time support or all-day event handling
+- User requested: Add "Ganztägig" checkbox where Ende = Start, and time fields when not all-day
+- **SOLUTION**: Enhanced Termine card in both create and edit forms
+- Added `isAllDay` state with checkbox - when checked, end date matches start date and times are cleared
+- Added conditional time input fields (Start-Uhrzeit, End-Uhrzeit) visible only when not all-day
+- Helper function `extractTimeFromISO` to parse existing time values from database
+- onSubmit combines date + time into ISO format: `YYYY-MM-DDTHH:mm:ss` or just `YYYY-MM-DD` for all-day
+- End date picker disabled when all-day is checked
+- Files: components/forms/job-edit-form.tsx, components/forms/job-create-form.tsx, agentlog.md
+- TypeScript compilation: ✅ PASSED (`npm run test:tsc`)
+- Next: Continue with remaining fixes
+
 ## 2025-10-02 22:20 – Added form validation for Article name vs manufacturer+model redundancy
 - **PROBLEM**: Article name and manufacturer+model are redundant fields - users were confused about which to fill
 - User requested: Validate that either Name OR (Hersteller AND Modell) is provided, not both required
