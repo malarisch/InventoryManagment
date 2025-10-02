@@ -728,3 +728,13 @@ Files: lib/tools/deleteCompany.ts, tests/vitest/delete-company.test.ts. Next: ru
 - Added gray background to distinguish canvas from modal
 - File: components/asset-tag-templates/template-preview.tsx
 - TypeScript compilation: ✅ PASSED
+
+## 2025-10-03 00:25 – Added !important to force modal max-width override
+- **PROBLEM**: Modal size didn't actually change after previous fix
+- User feedback: "Die größe vom Modal selber hat sich nicht geändert"
+- **ROOT CAUSE**: shadcn/ui DialogContent has default sm:max-w-lg that overrode max-w-[90vw]
+- Tailwind specificity: responsive variants (sm:) can override custom values
+- **SOLUTION**: Added ! (important) prefix to force override: !max-w-[90vw]
+- This ensures 90vw width takes precedence over default sm:max-w-lg (512px)
+- File: components/asset-tag-templates/template-preview.tsx
+- TypeScript compilation: ✅ PASSED

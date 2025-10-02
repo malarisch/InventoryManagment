@@ -261,7 +261,7 @@ export function AssetTagTemplatePreview({ template, editable = false, onElements
 
     {/* Full-size modal */}
     <Dialog open={modalOpen} onOpenChange={setModalOpen}>
-      <DialogContent className="max-w-[90vw] w-full max-h-[90vh] overflow-auto">
+      <DialogContent className="!max-w-[90vw] w-full max-h-[90vh] overflow-auto">
         <DialogHeader>
           <DialogTitle>Template Preview (Full Size)</DialogTitle>
           <DialogDescription>
