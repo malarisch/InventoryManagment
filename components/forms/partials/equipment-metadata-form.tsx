@@ -362,18 +362,12 @@ export function EquipmentMetadataForm({
                   name="case-mode"
                   checked={mode === "none"}
                   onChange={() => {
-                    setLocal((prev) => ({
+                    update((prev) => ({
                       ...prev,
                       is19Inch: null,
                       heightUnits: undefined,
                       case: { ...prev.case, is19Inch: undefined, heightUnits: undefined, maxDeviceDepthCm: undefined },
                     }));
-                    onChange({
-                      ...local,
-                      is19Inch: null,
-                      heightUnits: undefined,
-                      case: { ...local.case, is19Inch: undefined, heightUnits: undefined, maxDeviceDepthCm: undefined },
-                    });
                   }}
                 />
                 <Label htmlFor="case-mode-none" className="font-normal cursor-pointer">
@@ -387,13 +381,12 @@ export function EquipmentMetadataForm({
                   name="case-mode"
                   checked={mode === "case-is-rack"}
                   onChange={() => {
-                    setLocal((prev) => ({
+                    update((prev) => ({
                       ...prev,
                       is19Inch: null,
                       heightUnits: undefined,
                       case: { ...prev.case, is19Inch: true },
                     }));
-                    onChange({ ...local, is19Inch: null, heightUnits: undefined, case: { ...local.case, is19Inch: true } });
                   }}
                 />
                 <Label htmlFor="case-mode-case-rack" className="font-normal cursor-pointer">
@@ -407,16 +400,11 @@ export function EquipmentMetadataForm({
                   name="case-mode"
                   checked={mode === "equipment-is-rackmountable"}
                   onChange={() => {
-                    setLocal((prev) => ({
+                    update((prev) => ({
                       ...prev,
                       is19Inch: true,
                       case: { ...prev.case, is19Inch: undefined, heightUnits: undefined, maxDeviceDepthCm: undefined },
                     }));
-                    onChange({
-                      ...local,
-                      is19Inch: true,
-                      case: { ...local.case, is19Inch: undefined, heightUnits: undefined, maxDeviceDepthCm: undefined },
-                    });
                   }}
                 />
                 <Label htmlFor="case-mode-equipment-rack" className="font-normal cursor-pointer">
@@ -436,12 +424,10 @@ export function EquipmentMetadataForm({
                 placeholder={inherited.heightUnits ?? undefined}
                 ignored={caseData.heightUnits === null}
                 onIgnoreChange={(checked) => {
-                  setLocal((prev) => ({ ...prev, case: { ...prev.case, heightUnits: checked ? null : undefined } }));
-                  onChange({ ...local, case: { ...local.case, heightUnits: checked ? null : undefined } });
+                  update((prev) => ({ ...prev, case: { ...prev.case, heightUnits: checked ? null : undefined } }));
                 }}
                 onChange={(val) => {
-                  setLocal((prev) => ({ ...prev, case: { ...prev.case, heightUnits: val } }));
-                  onChange({ ...local, case: { ...local.case, heightUnits: val } });
+                  update((prev) => ({ ...prev, case: { ...prev.case, heightUnits: val } }));
                 }}
               />
               <InheritedNumberField
@@ -452,12 +438,10 @@ export function EquipmentMetadataForm({
                 placeholder={inherited.maxDeviceDepthCm ?? undefined}
                 ignored={caseData.maxDeviceDepthCm === null}
                 onIgnoreChange={(checked) => {
-                  setLocal((prev) => ({ ...prev, case: { ...prev.case, maxDeviceDepthCm: checked ? null : undefined } }));
-                  onChange({ ...local, case: { ...local.case, maxDeviceDepthCm: checked ? null : undefined } });
+                  update((prev) => ({ ...prev, case: { ...prev.case, maxDeviceDepthCm: checked ? null : undefined } }));
                 }}
                 onChange={(val) => {
-                  setLocal((prev) => ({ ...prev, case: { ...prev.case, maxDeviceDepthCm: val } }));
-                  onChange({ ...local, case: { ...local.case, maxDeviceDepthCm: val } });
+                  update((prev) => ({ ...prev, case: { ...prev.case, maxDeviceDepthCm: val } }));
                 }}
               />
             </div>
@@ -473,12 +457,10 @@ export function EquipmentMetadataForm({
                 placeholder={inheritedArticle?.heightUnits ?? undefined}
                 ignored={local.heightUnits === null}
                 onIgnoreChange={(checked) => {
-                  setLocal((prev) => ({ ...prev, heightUnits: checked ? null : undefined }));
-                  onChange({ ...local, heightUnits: checked ? null : undefined });
+                  update((prev) => ({ ...prev, heightUnits: checked ? null : undefined }));
                 }}
                 onChange={(val) => {
-                  setLocal((prev) => ({ ...prev, heightUnits: val }));
-                  onChange({ ...local, heightUnits: val });
+                  update((prev) => ({ ...prev, heightUnits: val }));
                 }}
               />
             </div>
@@ -501,14 +483,13 @@ export function EquipmentMetadataForm({
                       onChange={(e) => {
                         const val = e.target.value === "" ? undefined : Number(e.target.value);
                         if (val === undefined) {
-                          setLocal((prev) => ({ ...prev, case: { ...prev.case, innerDimensionsCm: undefined } }));
-                          onChange({ ...local, case: { ...local.case, innerDimensionsCm: undefined } });
+                          update((prev) => ({ ...prev, case: { ...prev.case, innerDimensionsCm: undefined } }));
                           return;
                         }
-                        const existingDims = caseData.innerDimensionsCm ?? inherited.innerDimensionsCm ?? { width: 0, height: 0 };
-                        const newDims = { ...existingDims, width: val };
-                        setLocal((prev) => ({ ...prev, case: { ...prev.case, innerDimensionsCm: newDims } }));
-                        onChange({ ...local, case: { ...local.case, innerDimensionsCm: newDims } });
+                        update((prev) => {
+                          const existingDims = prev.case?.innerDimensionsCm ?? inherited.innerDimensionsCm ?? { width: 0, height: 0 };
+                          return { ...prev, case: { ...prev.case, innerDimensionsCm: { ...existingDims, width: val } } };
+                        });
                       }}
                     />
                   </div>
@@ -523,14 +504,13 @@ export function EquipmentMetadataForm({
                       onChange={(e) => {
                         const val = e.target.value === "" ? undefined : Number(e.target.value);
                         if (val === undefined) {
-                          setLocal((prev) => ({ ...prev, case: { ...prev.case, innerDimensionsCm: undefined } }));
-                          onChange({ ...local, case: { ...local.case, innerDimensionsCm: undefined } });
+                          update((prev) => ({ ...prev, case: { ...prev.case, innerDimensionsCm: undefined } }));
                           return;
                         }
-                        const existingDims = caseData.innerDimensionsCm ?? inherited.innerDimensionsCm ?? { width: 0, height: 0 };
-                        const newDims = { ...existingDims, height: val };
-                        setLocal((prev) => ({ ...prev, case: { ...prev.case, innerDimensionsCm: newDims } }));
-                        onChange({ ...local, case: { ...local.case, innerDimensionsCm: newDims } });
+                        update((prev) => {
+                          const existingDims = prev.case?.innerDimensionsCm ?? inherited.innerDimensionsCm ?? { width: 0, height: 0 };
+                          return { ...prev, case: { ...prev.case, innerDimensionsCm: { ...existingDims, height: val } } };
+                        });
                       }}
                     />
                   </div>
@@ -545,14 +525,13 @@ export function EquipmentMetadataForm({
                       onChange={(e) => {
                         const val = e.target.value === "" ? undefined : Number(e.target.value);
                         if (val === undefined) {
-                          setLocal((prev) => ({ ...prev, case: { ...prev.case, innerDimensionsCm: undefined } }));
-                          onChange({ ...local, case: { ...local.case, innerDimensionsCm: undefined } });
+                          update((prev) => ({ ...prev, case: { ...prev.case, innerDimensionsCm: undefined } }));
                           return;
                         }
-                        const existingDims = caseData.innerDimensionsCm ?? inherited.innerDimensionsCm ?? { width: 0, height: 0 };
-                        const newDims = { ...existingDims, depth: val };
-                        setLocal((prev) => ({ ...prev, case: { ...prev.case, innerDimensionsCm: newDims } }));
-                        onChange({ ...local, case: { ...local.case, innerDimensionsCm: newDims } });
+                        update((prev) => {
+                          const existingDims = prev.case?.innerDimensionsCm ?? inherited.innerDimensionsCm ?? { width: 0, height: 0 };
+                          return { ...prev, case: { ...prev.case, innerDimensionsCm: { ...existingDims, depth: val } } };
+                        });
                       }}
                     />
                   </div>
@@ -568,12 +547,10 @@ export function EquipmentMetadataForm({
                   placeholder={inherited.contentMaxWeightKg ?? undefined}
                   ignored={caseData.contentMaxWeightKg === null}
                   onIgnoreChange={(checked) => {
-                    setLocal((prev) => ({ ...prev, case: { ...prev.case, contentMaxWeightKg: checked ? null : undefined } }));
-                    onChange({ ...local, case: { ...local.case, contentMaxWeightKg: checked ? null : undefined } });
+                    update((prev) => ({ ...prev, case: { ...prev.case, contentMaxWeightKg: checked ? null : undefined } }));
                   }}
                   onChange={(val) => {
-                    setLocal((prev) => ({ ...prev, case: { ...prev.case, contentMaxWeightKg: val } }));
-                    onChange({ ...local, case: { ...local.case, contentMaxWeightKg: val } });
+                    update((prev) => ({ ...prev, case: { ...prev.case, contentMaxWeightKg: val } }));
                   }}
                 />
                 <InheritedCheckbox
@@ -583,12 +560,10 @@ export function EquipmentMetadataForm({
                   placeholder={!!inherited.hasLock}
                   ignored={caseData.hasLock === null}
                   onIgnoreChange={(checked) => {
-                    setLocal((prev) => ({ ...prev, case: { ...prev.case, hasLock: checked ? null : undefined } }));
-                    onChange({ ...local, case: { ...local.case, hasLock: checked ? null : undefined } });
+                    update((prev) => ({ ...prev, case: { ...prev.case, hasLock: checked ? null : undefined } }));
                   }}
                   onChange={(checked) => {
-                    setLocal((prev) => ({ ...prev, case: { ...prev.case, hasLock: checked } }));
-                    onChange({ ...local, case: { ...local.case, hasLock: checked } });
+                    update((prev) => ({ ...prev, case: { ...prev.case, hasLock: checked } }));
                   }}
                 />
               </div>

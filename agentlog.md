@@ -1,3 +1,12 @@
+## 2025-10-02 18:15 – Fixed Infinite Loop in Equipment Case & Rack Setup
+- **CRITICAL FIX**: Removed double state updates causing "Maximum update depth exceeded" error
+- Changed all `setLocal` + `onChange` callback pairs to use only `update()` function
+- The useEffect at line 91-93 automatically calls onChange when local state changes
+- Fixed in: Radio button handlers, InheritedNumberField callbacks, InheritedCheckbox callbacks, Input onChange handlers
+- Files: equipment-metadata-form.tsx, agentlog.md
+- Bug: Selecting "Equipment ist 19" rackmontierbar" caused page to freeze with infinite re-renders
+- Next: Test form interaction and continue with remaining todos
+
 ## 2025-10-02 18:00 – Complete Refactor: Case & Rack Setup Forms (Article + Equipment)
 - **COMPLETE IMPLEMENTATION** of Case & Rack Setup consolidation across both forms
 - Removed "19-Zoll Rackmontage" from Physical Card, moved to unified "Case & Rack Setup" card
