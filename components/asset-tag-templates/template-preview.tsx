@@ -263,9 +263,9 @@ export function AssetTagTemplatePreview({ template, editable = false, onElements
     <Dialog open={modalOpen} onOpenChange={setModalOpen}>
       <DialogContent className="!max-w-[90vw] w-full max-h-[90vh] overflow-auto">
         <DialogHeader>
-          <DialogTitle>Template Preview (Full Size)</DialogTitle>
+          <DialogTitle>Template Preview (Vergrößert)</DialogTitle>
           <DialogDescription>
-            Actual size: {template.tagWidthMm}mm × {template.tagHeightMm}mm
+            Actual size: {template.tagWidthMm}mm × {template.tagHeightMm}mm (3x scaled for viewing)
           </DialogDescription>
         </DialogHeader>
         <div className="border rounded-lg p-4 overflow-auto bg-gray-50 flex items-center justify-center">
@@ -275,8 +275,8 @@ export function AssetTagTemplatePreview({ template, editable = false, onElements
                 border: '1px solid #d1d5db', 
                 background: '#ffffff', 
                 display: 'block',
-                width: `${widthPx}px`,
-                height: `${heightPx}px`,
+                width: `${widthPx * 3}px`,
+                height: `${heightPx * 3}px`,
               }}
               ref={(canvas) => {
                 if (!canvas || !svgContent) return;

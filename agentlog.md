@@ -738,3 +738,15 @@ Files: lib/tools/deleteCompany.ts, tests/vitest/delete-company.test.ts. Next: ru
 - This ensures 90vw width takes precedence over default sm:max-w-lg (512px)
 - File: components/asset-tag-templates/template-preview.tsx
 - TypeScript compilation: ✅ PASSED
+
+## 2025-10-03 00:35 – Scaled modal canvas to 3x size for better visibility
+- **PROBLEM**: Modal was bigger but canvas still showed template in tiny original size
+- User feedback: "Das Modal ist jetzt größer, das Tag canvas wird aber nicht skaliert"
+- **SOLUTION**: Applied 3x CSS scaling to modal canvas display
+- Changed canvas style: width/height from ${widthPx}px to ${widthPx * 3}px
+- Canvas internal resolution stays at original size, only display size scaled
+- Updated title: "Template Preview (Full Size)" → "Template Preview (Vergrößert)"
+- Updated description: Added "(3x scaled for viewing)" note
+- Template now visible at comfortable size in large modal
+- File: components/asset-tag-templates/template-preview.tsx
+- TypeScript compilation: ✅ PASSED
