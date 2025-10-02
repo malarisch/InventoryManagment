@@ -90,17 +90,18 @@ export function EquipmentMetadataForm({
 
   const [activeSections, setActiveSections] = useState<SectionId[]>(() => SECTION_DEFINITIONS.filter((section) => section.defaultActive).map((section) => section.id));
 
+  // Sync from parent value to local state when value prop changes
   useEffect(() => {
-    setLocal((prev) => (prev !== value ? value : prev));
+    setLocal(value);
   }, [value]);
 
-  useEffect(() => {
-    if (local === value) return;
-    onChangeRef.current(local);
-  }, [local, value]);
-
   function update(updater: (prev: EquipmentMetadata) => EquipmentMetadata) {
-    setLocal((prev) => updater(prev));
+    setLocal((prev) => {
+      const updated = updater(prev);
+      // Call onChange immediately with the new value
+      onChangeRef.current(updated);
+      return updated;
+    });
   }
 
   function ensureSectionActive(section: SectionId, hasData: boolean) {

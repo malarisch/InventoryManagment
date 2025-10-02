@@ -1,3 +1,14 @@
+## 2025-10-02 18:45 – Final Fix: Removed bidirectional sync, made onChange synchronous
+- **ROOT CAUSE**: Bidirectional sync with `local === value` check always false due to object recreation
+- `buildEquipmentMetadata()` returns new object → `local === value` always false → infinite loop
+- **SOLUTION**: Remove complex sync logic, simplify to unidirectional + synchronous onChange
+- Parent → Child: useEffect syncs value prop to local state
+- Child → Parent: update() calls onChangeRef.current(updated) synchronously before setState
+- No more useEffect watching local state → no infinite loop possible
+- Files: equipment-metadata-form.tsx, agentlog.md
+- TypeScript compilation: ✅ PASSED
+- Next: User testing
+
 ## 2025-10-02 18:30 – Fixed Infinite Loop (ACTUAL FIX): useRef for onChange stability
 - **ROOT CAUSE IDENTIFIED**: onChange callback from parent recreated on every render
 - Parent passes inline function: `onChange={(value) => setMetaObj(buildEquipmentMetadata(value))}`
