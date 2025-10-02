@@ -718,3 +718,13 @@ Files: lib/tools/deleteCompany.ts, tests/vitest/delete-company.test.ts. Next: ru
 - 2025-01-23 21:00 – Asset Tag Template Preview auf clientseitig umgestellt. Entfernt: Server-Request für Preview (verhindert lag), Debouncing (machte dragging laggy). Jetzt: Direkte clientseitige SVG-Generierung via generateSVG() ohne API-Call. Preview updates instant beim Dragging. Dateien: components/asset-tag-templates/template-preview.tsx (Server-Request entfernt), components/forms/asset-tag-template-create-form.tsx (Debouncing entfernt, zurück zu direktem form.watch()). TypeScript kompiliert sauber.
 
 - 2025-01-23 21:15 – Asset Tag Template Preview Skalierung + Modal. Canvas skaliert jetzt automatisch auf maxWidth (default 400px) mit korrekter Aspect Ratio. Große Templates gehen nicht mehr über Bildschirmrand hinaus. Hinzugefügt: "Vergrößern" Button öffnet Modal mit Full-Size Preview (actual size in px). Maus-Koordinaten beim Dragging an Skalierung angepasst (division by scale). Dateien: components/asset-tag-templates/template-preview.tsx (scale calculation, CSS width/height, Modal mit Dialog component, scaled pointer events). TypeScript kompiliert sauber.
+
+## 2025-10-03 00:15 – Modal size increased to 90% viewport width
+- **PROBLEM**: "Vergrößern" modal showed same small size as preview
+- User feedback: "Sadly, the 'Make it bigger' modal is just as small. It should easily use 50% screensize."
+- **SOLUTION**: Changed DialogContent from max-w-4xl to max-w-[90vw] w-full
+- Modal now uses 90% of viewport width instead of fixed 56rem
+- Added centering with flex items-center justify-center to content area
+- Added gray background to distinguish canvas from modal
+- File: components/asset-tag-templates/template-preview.tsx
+- TypeScript compilation: ✅ PASSED

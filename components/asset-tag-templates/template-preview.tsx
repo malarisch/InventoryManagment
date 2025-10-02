@@ -261,14 +261,14 @@ export function AssetTagTemplatePreview({ template, editable = false, onElements
 
     {/* Full-size modal */}
     <Dialog open={modalOpen} onOpenChange={setModalOpen}>
-      <DialogContent className="max-w-4xl max-h-[90vh] overflow-auto">
+      <DialogContent className="max-w-[90vw] w-full max-h-[90vh] overflow-auto">
         <DialogHeader>
           <DialogTitle>Template Preview (Full Size)</DialogTitle>
           <DialogDescription>
             Actual size: {template.tagWidthMm}mm × {template.tagHeightMm}mm
           </DialogDescription>
         </DialogHeader>
-        <div className="border rounded-lg p-4 overflow-auto">
+        <div className="border rounded-lg p-4 overflow-auto bg-gray-50 flex items-center justify-center">
           <div className="relative inline-block" style={{ lineHeight: 0 }}>
             <canvas
               style={{ 
