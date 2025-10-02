@@ -8,6 +8,7 @@ import {DeleteWithUndo} from "@/components/forms/delete-with-undo";
 import {FileManager} from "@/components/files/file-manager";
 import { WorkshopTodoCreateInline } from "@/components/forms/workshop-todo-create-inline";
 import { MaintenanceLogsCard } from "@/components/maintenance/maintenance-logs-card";
+import { fetchUserDisplayAdmin } from "@/lib/users/userDisplay.server";
 
 type CaseRow = Tables<"cases"> & {
   current_location_location?: { id: number; name: string | null } | null;
@@ -37,7 +38,10 @@ export default async function CaseDetailPage({ params }: { params: Promise<{ id:
   const row = data as CaseRow;
   const caseCompanyId = typeof row.company_id === "number" ? row.company_id : null;
 
-  // Artikel-Namen werden im Edit-Formular clientseitig nachgeladen
+  // Fetch creator display name
+  const creatorDisplay = row.created_by ? await fetchUserDisplayAdmin(row.created_by) : null;
+  const createdAt = row.created_at ? new Date(row.created_at).toLocaleString("de-DE") : null;
+
 
   return (
     <main className="min-h-screen w-full flex flex-col items-center p-5">
@@ -50,10 +54,10 @@ export default async function CaseDetailPage({ params }: { params: Promise<{ id:
           <CardHeader>
             <CardTitle>{row.name ?? `Case #${row.id}`}</CardTitle>
             <CardDescription>
+              {row.description && (<><div className="mb-2">{row.description}</div></>)}
               Case-Equipment: {row.case_equipment ? (
                 <Link className="underline-offset-2 hover:underline" href={`/management/equipments/${row.case_equipment}`}>#{row.case_equipment}</Link>
               ) : "—"}
-              {row.description ? (<><br />{row.description}</>) : null}
               <br />
               Standort: {row.current_location ? (
                 <Link
@@ -63,6 +67,9 @@ export default async function CaseDetailPage({ params }: { params: Promise<{ id:
                   {row.current_location_location?.name ?? `#${row.current_location}`}
                 </Link>
               ) : "—"}
+              <br />
+              Erstellt von: {creatorDisplay ?? "—"}
+              {createdAt && ` am ${createdAt}`}
               {row.asset_tag ? (
                 <div className="mt-2">
                   <Link

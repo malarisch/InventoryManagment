@@ -422,3 +422,5 @@ Files: lib/tools/deleteCompany.ts, tests/vitest/delete-company.test.ts. Next: ru
 2025-01-25 10:04 — **Fix: Article Form UX Improvements**: Collapsed Physical/Power cards by default (SECTION_DEFINITIONS), removed power pre-fill from defaultArticleMetadataDE (now shows placeholders). Fixes UX complaint about passive equipment. Files: article-metadata-form.tsx, lib/metadata/defaults.ts, todos.md.
 
 2025-01-25 10:15 — **Fix: Case Create Equipment Selection**: Added chip list above table showing selected equipments with remove (×) buttons. Updated card description to show count. Made table rows clickable. Fixed disappearing equipment issue (was hidden by filter). Files: case-create-form.tsx, todos.md.
+
+2025-01-25 10:30 — **Fix: Case Edit Page Reorganization**: Split CaseEditItemsForm into 4 separate cards (Basisdaten, Case-Equipment, Equipments im Case, Ungetrackte Artikel). Added case equipment picker. Equipment/Article IDs now clickable links. Added creator display name and created_at timestamp in page header CardDescription. Files: case-edit-items-form.tsx, cases/[id]/page.tsx, todos.md.
