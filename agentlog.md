@@ -1,3 +1,14 @@
+## 2025-10-02 22:00 – Implemented additive note inheritance for Equipment
+- **PROBLEM**: Equipment notes overwrote article notes instead of showing both
+- User requested: Show article notes as read-only card + separate editable card for equipment-specific notes
+- **SOLUTION**: Modified equipment-metadata-form renderNotesCard to display both note types
+- Inherited article notes shown in blue-bordered read-only card with explanation
+- Equipment-specific notes in separate editable textarea card (renamed to "Equipment-Notizen")
+- Auto-activates notes section if either own notes OR inherited notes exist
+- Files: components/forms/partials/equipment-metadata-form.tsx, agentlog.md
+- TypeScript compilation: ✅ PASSED (`npm run test:tsc`)
+- Next: Continue with Zuweisung als Kontakt Picker
+
 ## 2025-10-02 21:50 – Configured storage buckets in Supabase config.toml
 - **PROBLEM**: Storage buckets were not declaratively configured in config.toml
 - User requested: Add bucket configuration to config.toml following Supabase docs

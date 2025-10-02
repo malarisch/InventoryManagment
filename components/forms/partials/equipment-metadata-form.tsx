@@ -117,7 +117,10 @@ export function EquipmentMetadataForm({
     ensureSectionActive("connectivity", hasConnectivityData(local));
     ensureSectionActive("suppliers", (local.suppliers?.length ?? 0) > 0);
     ensureSectionActive("assignment", !!local.assignedTo);
-    ensureSectionActive("notes", !!local.notes);
+    // Activate notes section if equipment has own notes OR if inherited article notes exist
+    const hasOwnNotes = !!local.notes;
+    const hasInheritedNotes = !!inheritedArticle?.notes && inheritedArticle.notes.trim().length > 0;
+    ensureSectionActive("notes", hasOwnNotes || hasInheritedNotes);
   }, [local, inheritedArticle]);
 
   function setTextField<K extends keyof EquipmentMetadata>(key: K, raw: string) {
@@ -841,21 +844,46 @@ export function EquipmentMetadataForm({
 
   function renderNotesCard() {
     if (!activeSections.includes("notes")) return null;
+
+    // Show inherited article notes as read-only if they exist
+    const inheritedNotes = inheritedArticle?.notes;
+    const hasInheritedNotes = inheritedNotes && inheritedNotes.trim().length > 0;
+
     return (
-      <Card>
-        <CardHeader>
-          <CardTitle>Notizen</CardTitle>
-          <CardDescription>Freitext für Hinweise</CardDescription>
-        </CardHeader>
-        <CardContent>
-          <Textarea
-            id="emf-notes"
-            className="min-h-[120px]"
-            value={local.notes ?? ""}
-            onChange={(event) => setTextField("notes", event.target.value)}
-          />
-        </CardContent>
-      </Card>
+      <>
+        {hasInheritedNotes && (
+          <Card className="border-blue-200 bg-blue-50/50">
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <span className="text-blue-600">📝</span>
+                Notizen vom Artikel
+              </CardTitle>
+              <CardDescription>
+                Diese Notizen sind vom zugeordneten Artikel geerbt und können hier nicht bearbeitet werden
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="rounded-md bg-background p-3 text-sm text-muted-foreground whitespace-pre-wrap border">
+                {inheritedNotes}
+              </div>
+            </CardContent>
+          </Card>
+        )}
+        <Card>
+          <CardHeader>
+            <CardTitle>Equipment-Notizen</CardTitle>
+            <CardDescription>Freitext für gerätespezifische Hinweise</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <Textarea
+              id="emf-notes"
+              className="min-h-[120px]"
+              value={local.notes ?? ""}
+              onChange={(event) => setTextField("notes", event.target.value)}
+            />
+          </CardContent>
+        </Card>
+      </>
     );
   }
 
