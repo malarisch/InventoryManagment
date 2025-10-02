@@ -159,6 +159,16 @@ export function ArticleMetadataForm({
     setLocal((prev) => updater(prev));
   }
 
+  function removeSection(sectionId: SectionId) {
+    // Keep "general" always visible
+    if (sectionId === "general") return;
+    setActiveSections((current) => current.filter((id) => id !== sectionId));
+  }
+
+  function canRemoveSection(sectionId: SectionId): boolean {
+    return sectionId !== "general";
+  }
+
   function ensureSectionActive(section: SectionId, hasData: boolean) {
     if (!hasData) return;
     setActiveSections((current) =>
@@ -313,8 +323,24 @@ export function ArticleMetadataForm({
     return (
       <Card>
         <CardHeader>
-          <CardTitle>Physische Eigenschaften</CardTitle>
-          <CardDescription>Gewicht und Maße</CardDescription>
+          <div className="flex items-start justify-between gap-2">
+            <div>
+              <CardTitle>Physische Eigenschaften</CardTitle>
+              <CardDescription>Gewicht und Maße</CardDescription>
+            </div>
+            {canRemoveSection("physical") && (
+              <Button
+                type="button"
+                variant="ghost"
+                size="sm"
+                onClick={() => removeSection("physical")}
+                className="h-8 w-8 p-0"
+                title="Bereich entfernen"
+              >
+                ✕
+              </Button>
+            )}
+          </div>
         </CardHeader>
         <CardContent className="grid gap-4">
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
@@ -355,10 +381,26 @@ export function ArticleMetadataForm({
     return (
       <Card>
         <CardHeader>
-          <CardTitle>Stromversorgung</CardTitle>
-          <CardDescription>
-            Geerbte Werte werden als Platzhalter angezeigt
-          </CardDescription>
+          <div className="flex items-start justify-between gap-2">
+            <div>
+              <CardTitle>Stromversorgung</CardTitle>
+              <CardDescription>
+                Geerbte Werte werden als Platzhalter angezeigt
+              </CardDescription>
+            </div>
+            {canRemoveSection("power") && (
+              <Button
+                type="button"
+                variant="ghost"
+                size="sm"
+                onClick={() => removeSection("power")}
+                className="h-8 w-8 p-0"
+                title="Bereich entfernen"
+              >
+                ✕
+              </Button>
+            )}
+          </div>
         </CardHeader>
         <CardContent className="grid gap-4 sm:grid-cols-3">
           <div className="grid gap-1.5">
@@ -464,10 +506,26 @@ export function ArticleMetadataForm({
     return (
       <Card>
         <CardHeader>
-          <CardTitle>Case & Rack Setup</CardTitle>
-          <CardDescription>
-            Konfiguration für Cases und Rackmontage-Eigenschaften
-          </CardDescription>
+          <div className="flex items-start justify-between gap-2">
+            <div>
+              <CardTitle>Case & Rack Setup</CardTitle>
+              <CardDescription>
+                Konfiguration für Cases und Rackmontage-Eigenschaften
+              </CardDescription>
+            </div>
+            {canRemoveSection("case") && (
+              <Button
+                type="button"
+                variant="ghost"
+                size="sm"
+                onClick={() => removeSection("case")}
+                className="h-8 w-8 p-0"
+                title="Bereich entfernen"
+              >
+                ✕
+              </Button>
+            )}
+          </div>
         </CardHeader>
         <CardContent className="grid gap-4">
           {/* Mode Selection - Radio Buttons */}
@@ -792,8 +850,24 @@ export function ArticleMetadataForm({
     return (
       <Card>
         <CardHeader>
-          <CardTitle>Konnektivität & Schnittstellen</CardTitle>
-          <CardDescription>Verfügbare Funkstandards und Ports</CardDescription>
+          <div className="flex items-start justify-between gap-2">
+            <div>
+              <CardTitle>Konnektivität & Schnittstellen</CardTitle>
+              <CardDescription>Verfügbare Funkstandards und Ports</CardDescription>
+            </div>
+            {canRemoveSection("connectivity") && (
+              <Button
+                type="button"
+                variant="ghost"
+                size="sm"
+                onClick={() => removeSection("connectivity")}
+                className="h-8 w-8 p-0"
+                title="Bereich entfernen"
+              >
+                ✕
+              </Button>
+            )}
+          </div>
         </CardHeader>
         <CardContent className="grid gap-4">
           <div className="grid gap-1.5">
@@ -826,10 +900,26 @@ export function ArticleMetadataForm({
     return (
       <Card>
         <CardHeader>
-          <CardTitle>Lieferanten & Preise</CardTitle>
-          <CardDescription>
-            Lieferantenverwaltung, Preise und Konditionen
-          </CardDescription>
+          <div className="flex items-start justify-between gap-2">
+            <div>
+              <CardTitle>Lieferanten & Preise</CardTitle>
+              <CardDescription>
+                Lieferantenverwaltung, Preise und Konditionen
+              </CardDescription>
+            </div>
+            {canRemoveSection("suppliers") && (
+              <Button
+                type="button"
+                variant="ghost"
+                size="sm"
+                onClick={() => removeSection("suppliers")}
+                className="h-8 w-8 p-0"
+                title="Bereich entfernen"
+              >
+                ✕
+              </Button>
+            )}
+          </div>
         </CardHeader>
         <CardContent className="grid gap-6">
           <SupplierListEditor
@@ -861,10 +951,26 @@ export function ArticleMetadataForm({
     return (
       <Card>
         <CardHeader>
-          <CardTitle>Notizen</CardTitle>
-          <CardDescription>
-            Freitext für Besonderheiten und Hinweise
-          </CardDescription>
+          <div className="flex items-start justify-between gap-2">
+            <div>
+              <CardTitle>Notizen</CardTitle>
+              <CardDescription>
+                Freitext für Besonderheiten und Hinweise
+              </CardDescription>
+            </div>
+            {canRemoveSection("notes") && (
+              <Button
+                type="button"
+                variant="ghost"
+                size="sm"
+                onClick={() => removeSection("notes")}
+                className="h-8 w-8 p-0"
+                title="Bereich entfernen"
+              >
+                ✕
+              </Button>
+            )}
+          </div>
         </CardHeader>
         <CardContent>
           <Textarea

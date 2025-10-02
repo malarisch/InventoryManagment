@@ -1,3 +1,16 @@
+## 2025-10-02 23:00 – Added remove buttons to collapsible metadata section cards
+- **PROBLEM**: Once metadata sections were added, they couldn't be removed/collapsed again
+- User requested: Buttons to remove/collapse added metadata cards with undo capability
+- **SOLUTION**: Added X-buttons to CardHeaders of removable sections in article-metadata-form
+- Added `removeSection()` and `canRemoveSection()` helper functions
+- X-button appears in top-right corner of all sections except "general" (always visible)
+- Clicking X removes section from activeSections array, hiding the card
+- Section can be re-added later via "Weitere Metadaten hinzufügen" card at bottom
+- Pattern applies to: physical, power, case, connectivity, suppliers, notes sections
+- Files: components/forms/partials/article-metadata-form.tsx, agentlog.md
+- TypeScript compilation: ✅ PASSED (`npm run test:tsc`)
+- Next: Apply same pattern to equipment-metadata-form and other metadata forms
+
 ## 2025-10-02 22:45 – Replaced Company Settings contact person JSON with FK reference
 - **PROBLEM**: Company metadata stored contact person as embedded Person JSON object instead of FK to contacts table
 - User requested: Replace Person parallel structure with contact picker (similar to Equipment assignment fix)
