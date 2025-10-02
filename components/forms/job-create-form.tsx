@@ -12,8 +12,10 @@ import { DatePicker } from "@/components/ui/date-picker";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { defaultJobMetadataDE, toPrettyJSON } from "@/lib/metadata/defaults";
 import { JobMetadataForm } from "@/components/forms/partials/job-metadata-form";
+import { ContactFormDialog } from "@/components/forms/contacts/contact-form-dialog";
 
 type Customer = Tables<"customers">;
+type Contact = Tables<"contacts">;
 
 export function JobCreateForm() {
   const supabase = useMemo(() => createClient(), []);
@@ -25,16 +27,20 @@ export function JobCreateForm() {
   const [startDate, setStartDate] = useState<string>("");
   const [endDate, setEndDate] = useState<string>("");
   const [customerId, setCustomerId] = useState<number | "">("");
-  const [metaText, setMetaText] = useState<string>(() => toPrettyJSON(defaultJobMetadataDE));
+  const [contactId, setContactId] = useState<number | "">("");
   const [customers, setCustomers] = useState<Customer[]>([]);
+  const [contacts, setContacts] = useState<Contact[]>([]);
+  const [metaText, setMetaText] = useState<string>(() => toPrettyJSON(defaultJobMetadataDE));
   const [metaObj, setMetaObj] = useState(defaultJobMetadataDE);
   const [advanced, setAdvanced] = useState(false);
+  const [wasAdvanced, setWasAdvanced] = useState(false);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [contactDialogOpen, setContactDialogOpen] = useState(false);
 
   useEffect(() => {
     let active = true;
-    async function load() {
+    async function loadCustomers() {
       const { data } = await supabase
         .from("customers")
         .select("id, company_name, forename, surname")
@@ -42,54 +48,113 @@ export function JobCreateForm() {
       if (!active) return;
       setCustomers((data as Customer[]) ?? []);
     }
-    load();
-    return () => { active = false; };
+    loadCustomers();
+    return () => {
+      active = false;
+    };
   }, [supabase]);
 
-  async function onSubmit(e: React.FormEvent<HTMLFormElement>) {
-    e.preventDefault();
+  useEffect(() => {
+    let active = true;
+    async function loadContacts() {
+      if (!company?.id) return;
+      const { data, error } = await supabase
+        .from("contacts")
+        .select("*")
+        .eq("company_id", company.id)
+        .order("display_name", { ascending: true });
+      if (!active) return;
+      if (error) {
+        console.error("Failed to load contacts", error);
+        return;
+      }
+      setContacts((data as Contact[]) ?? []);
+    }
+    loadContacts();
+    return () => {
+      active = false;
+    };
+  }, [supabase, company?.id]);
+
+  useEffect(() => {
+    if (advanced && !wasAdvanced) {
+      try {
+        setMetaText(JSON.stringify(metaObj, null, 2));
+      } catch {
+        // ignore serialization issues
+      }
+    }
+    if (!advanced && wasAdvanced) {
+      try {
+        if (metaText.trim()) {
+          const parsed = JSON.parse(metaText) as typeof metaObj;
+          setMetaObj(parsed);
+        }
+      } catch {
+        // ignore parse errors and keep previous structured state
+      }
+    }
+    setWasAdvanced(advanced);
+  }, [advanced, wasAdvanced, metaObj, metaText]);
+
+  const metadataCard = advanced ? (
+    <Card>
+      <CardHeader>
+        <CardTitle>Job-Metadaten (JSON)</CardTitle>
+        <CardDescription>Direktes Bearbeiten der JSON-Struktur</CardDescription>
+      </CardHeader>
+      <CardContent className="grid gap-2">
+        <textarea
+          id="meta"
+          className="min-h-[120px] w-full rounded-md border bg-background p-2 text-sm font-mono"
+          value={metaText}
+          onChange={(event) => setMetaText(event.target.value)}
+          spellCheck={false}
+        />
+      </CardContent>
+    </Card>
+  ) : (
+    <JobMetadataForm value={metaObj} onChange={setMetaObj} />
+  );
+
+  async function onSubmit(event: React.FormEvent<HTMLFormElement>) {
+    event.preventDefault();
     setSaving(true);
     setError(null);
-    
+
     try {
       const { data: auth } = await supabase.auth.getUser();
       const userId = auth.user?.id ?? null;
       if (!company || !userId) throw new Error("Fehlende Company oder Nutzer");
-      
-      const formName = name;
-      const formType = type;
-      const formJobLocation = location;
-      const formCustomerId = customerId;
 
       const formStartDate = startDate || null;
       const formEndDate = endDate || null;
 
       let meta: Json | null = null;
       if (!advanced) {
-        // Use object from JobMetadataForm
         meta = metaObj as unknown as Json;
       } else {
-        // Advanced JSON mode
-        try {
-          if (metaText.trim()) {
+        if (metaText.trim()) {
+          try {
             meta = JSON.parse(metaText) as Json;
+          } catch {
+            setError("Ungültiges JSON in Metadaten");
+            setSaving(false);
+            return;
           }
-        } catch {
-          setError("Ungültiges JSON in Metadaten");
-          setSaving(false);
-          return;
         }
       }
 
       const { data, error } = await supabase
         .from("jobs")
         .insert({
-          name: formName.trim() || null,
-          type: formType.trim() || null,
-          job_location: formJobLocation.trim() || null,
+          name: name.trim() || null,
+          type: type.trim() || null,
+          job_location: location.trim() || null,
           startdate: formStartDate || null,
           enddate: formEndDate || null,
-          customer_id: formCustomerId === "" ? null : Number(formCustomerId),
+          customer_id: customerId === "" ? null : Number(customerId),
+          contact_id: contactId === "" ? null : Number(contactId),
           meta,
           company_id: company.id,
           created_by: userId,
@@ -99,8 +164,8 @@ export function JobCreateForm() {
       if (error) throw error;
       const id = (data as Tables<"jobs">).id;
       router.push(`/management/jobs/${id}`);
-    } catch (e: unknown) {
-      setError(e instanceof Error ? e.message : String(e));
+    } catch (err) {
+      setError(err instanceof Error ? err.message : String(err));
       setSaving(false);
     }
   }
@@ -115,15 +180,15 @@ export function JobCreateForm() {
         <CardContent className="space-y-3">
           <div className="grid gap-2">
             <Label htmlFor="name">Name</Label>
-            <Input id="name" name="name" value={name} onChange={(e) => setName(e.target.value)} placeholder="Jobname" />
+            <Input id="name" name="name" value={name} onChange={(event) => setName(event.target.value)} placeholder="Jobname" />
           </div>
           <div className="grid gap-2">
             <Label htmlFor="type">Typ</Label>
-            <Input id="type" name="type" value={type} onChange={(e) => setType(e.target.value)} placeholder="z. B. Produktion, Service, …" />
+            <Input id="type" name="type" value={type} onChange={(event) => setType(event.target.value)} placeholder="z. B. Produktion, Service, …" />
           </div>
           <div className="grid gap-2">
             <Label htmlFor="job_location">Ort</Label>
-            <Input id="job_location" name="job_location" value={location} onChange={(e) => setLocation(e.target.value)} placeholder="Ort / Venue" />
+            <Input id="job_location" name="job_location" value={location} onChange={(event) => setLocation(event.target.value)} placeholder="Ort / Venue" />
           </div>
         </CardContent>
       </Card>
@@ -158,12 +223,12 @@ export function JobCreateForm() {
               name="customer_id"
               className="h-9 rounded-md border bg-background px-3 text-sm"
               value={customerId}
-              onChange={(e) => setCustomerId(e.target.value === "" ? "" : Number(e.target.value))}
+              onChange={(event) => setCustomerId(event.target.value === "" ? "" : Number(event.target.value))}
             >
               <option value="">— Kein Kunde —</option>
-              {customers.map((c) => (
-                <option key={c.id} value={c.id}>
-                  {c.company_name || `${c.forename ?? ""} ${c.surname ?? ""}`.trim() || `#${c.id}`}
+              {customers.map((customer) => (
+                <option key={customer.id} value={customer.id}>
+                  {customer.company_name || `${customer.forename ?? ""} ${customer.surname ?? ""}`.trim() || `#${customer.id}`}
                 </option>
               ))}
             </select>
@@ -171,31 +236,65 @@ export function JobCreateForm() {
         </CardContent>
       </Card>
 
-      <Card className="md:col-span-12">
+      <Card className="md:col-span-3">
         <CardHeader>
-          <CardTitle>Job‑Metadaten</CardTitle>
-          <CardDescription>Strukturierte Felder oder JSON</CardDescription>
+          <CardTitle>Kontakt</CardTitle>
+          <CardDescription>Auftraggeber auswählen oder anlegen</CardDescription>
         </CardHeader>
         <CardContent className="space-y-3">
-          <label className="flex items-center gap-2 text-xs">
-            <input type="checkbox" checked={advanced} onChange={(e) => setAdvanced(e.target.checked)} />
-            Expertenmodus (JSON bearbeiten)
-          </label>
-          {advanced ? (
-            <div className="grid gap-2">
-              <Label htmlFor="meta">Meta (JSON)</Label>
-              <textarea id="meta" className="min-h-[120px] w-full rounded-md border bg-background p-2 text-sm font-mono" value={metaText} onChange={(e) => setMetaText(e.target.value)} spellCheck={false} />
-            </div>
-          ) : (
-            <JobMetadataForm value={metaObj} onChange={setMetaObj} />
-          )}
+          <div className="grid gap-2">
+            <Label htmlFor="contact_id">Kontakt</Label>
+            <select
+              id="contact_id"
+              name="contact_id"
+              className="h-9 rounded-md border bg-background px-3 text-sm"
+              value={contactId}
+              onChange={(event) => setContactId(event.target.value === "" ? "" : Number(event.target.value))}
+            >
+              <option value="">— Kein Kontakt —</option>
+              {contacts.map((contact) => (
+                <option key={contact.id} value={contact.id}>
+                  {contact.display_name} {contact.contact_type ? `(${contact.contact_type})` : ""}
+                </option>
+              ))}
+            </select>
+          </div>
+          <Button type="button" variant="secondary" onClick={() => setContactDialogOpen(true)}>
+            Neuen Kontakt anlegen
+          </Button>
         </CardContent>
       </Card>
+
+      <Card className="md:col-span-4">
+        <CardHeader>
+          <CardTitle>Metadaten-Modus</CardTitle>
+          <CardDescription>Zwischen Formular und JSON wechseln</CardDescription>
+        </CardHeader>
+        <CardContent>
+          <label className="flex items-center gap-2 text-sm">
+            <input type="checkbox" checked={advanced} onChange={(event) => setAdvanced(event.target.checked)} />
+            Expertenmodus (JSON bearbeiten)
+          </label>
+        </CardContent>
+      </Card>
+
+      <div className="md:col-span-12 grid grid-cols-1 gap-6">{metadataCard}</div>
 
       <div className="md:col-span-12 flex items-center gap-3 justify-end">
         <Button type="submit" disabled={saving}>{saving ? "Erstellen…" : "Erstellen"}</Button>
         {error && <span className="text-sm text-red-600">{error}</span>}
       </div>
+
+      <ContactFormDialog
+        open={contactDialogOpen}
+        onOpenChange={setContactDialogOpen}
+        companyId={company?.id ?? null}
+        defaultType="customer"
+        onCreated={(contact) => {
+          setContacts((prev) => [...prev, contact]);
+          setContactId(contact.id);
+        }}
+      />
     </form>
   );
 }

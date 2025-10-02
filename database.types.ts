@@ -309,6 +309,99 @@ export type Database = {
           },
         ]
       }
+      contacts: {
+        Row: {
+          city: string | null
+          company_id: number
+          contact_type: string
+          country: string | null
+          created_at: string
+          created_by: string | null
+          display_name: string
+          email: string | null
+          first_name: string | null
+          has_signal: boolean
+          has_telegram: boolean
+          has_whatsapp: boolean
+          id: number
+          last_name: string | null
+          metadata: Json | null
+          notes: string | null
+          organization: string | null
+          phone: string | null
+          role: string | null
+          state: string | null
+          street: string | null
+          website: string | null
+          zip_code: string | null
+        }
+        Insert: {
+          city?: string | null
+          company_id: number
+          contact_type?: string
+          country?: string | null
+          created_at?: string
+          created_by?: string | null
+          display_name: string
+          email?: string | null
+          first_name?: string | null
+          has_signal?: boolean
+          has_telegram?: boolean
+          has_whatsapp?: boolean
+          id?: never
+          last_name?: string | null
+          metadata?: Json | null
+          notes?: string | null
+          organization?: string | null
+          phone?: string | null
+          role?: string | null
+          state?: string | null
+          street?: string | null
+          website?: string | null
+          zip_code?: string | null
+        }
+        Update: {
+          city?: string | null
+          company_id?: number
+          contact_type?: string
+          country?: string | null
+          created_at?: string
+          created_by?: string | null
+          display_name?: string
+          email?: string | null
+          first_name?: string | null
+          has_signal?: boolean
+          has_telegram?: boolean
+          has_whatsapp?: boolean
+          id?: never
+          last_name?: string | null
+          metadata?: Json | null
+          notes?: string | null
+          organization?: string | null
+          phone?: string | null
+          role?: string | null
+          state?: string | null
+          street?: string | null
+          website?: string | null
+          zip_code?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "contacts_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "contacts_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       customers: {
         Row: {
           address: string | null
@@ -630,6 +723,7 @@ export type Database = {
       jobs: {
         Row: {
           company_id: number
+          contact_id: number | null
           created_at: string
           created_by: string | null
           customer_id: number | null
@@ -644,6 +738,7 @@ export type Database = {
         }
         Insert: {
           company_id: number
+          contact_id?: number | null
           created_at?: string
           created_by?: string | null
           customer_id?: number | null
@@ -658,6 +753,7 @@ export type Database = {
         }
         Update: {
           company_id?: number
+          contact_id?: number | null
           created_at?: string
           created_by?: string | null
           customer_id?: number | null
@@ -676,6 +772,13 @@ export type Database = {
             columns: ["company_id"]
             isOneToOne: false
             referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "jobs_contact_id_fkey"
+            columns: ["contact_id"]
+            isOneToOne: false
+            referencedRelation: "contacts"
             referencedColumns: ["id"]
           },
           {
