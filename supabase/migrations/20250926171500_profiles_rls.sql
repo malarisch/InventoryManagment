@@ -1577,7 +1577,4 @@ CREATE POLICY "Allow company members to manage public assets" ON "storage"."obje
 CREATE POLICY "Allow public read access to public assets" ON "storage"."objects" FOR SELECT USING (("bucket_id" = 'public-assets'::"text"));
 
 
-
-SET SESSION AUTHORIZATION "postgres";
 GRANT SELECT ON TABLE "auth"."users" TO "service_role";
-RESET SESSION AUTHORIZATION;
