@@ -9,6 +9,7 @@ import { fetchUserDisplayAdmin } from "@/lib/users/userDisplay.server";
 import { JobEditForm } from "@/components/forms/job-edit-form";
 import { HistoryCard } from "@/components/historyCard";
 import { JobBookedAssetsCard } from "@/components/job-booked-assets";
+import { JobAssetSummaryCard } from "@/components/job-asset-summary";
 import { JobQuickBook } from "@/components/forms/job-quick-book";
 import { DeleteWithUndo } from "@/components/forms/delete-with-undo";
 import { FileManager } from "@/components/files/file-manager";
@@ -136,6 +137,8 @@ export default async function JobDetailPage({ params }: { params: Promise<{ id: 
 
           {/* Right column: Sidebar (1/3) */}
           <div className="lg:col-span-1 space-y-4">
+            <JobAssetSummaryCard jobId={id} />
+            
             <Card>
               <CardHeader>
                 <CardTitle>Schnell buchen</CardTitle>
