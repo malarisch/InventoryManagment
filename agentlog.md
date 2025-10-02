@@ -1,3 +1,14 @@
+## 2025-10-02 22:20 – Added form validation for Article name vs manufacturer+model redundancy
+- **PROBLEM**: Article name and manufacturer+model are redundant fields - users were confused about which to fill
+- User requested: Validate that either Name OR (Hersteller AND Modell) is provided, not both required
+- **SOLUTION**: Added custom validation logic in both create and edit forms
+- onSubmit now checks: `hasName OR (hasManufacturer AND hasModel)` before allowing save
+- Error message: "Bitte 'Name' ODER 'Hersteller + Modell' angeben"
+- Removed `required` attribute from Name input in create form (now optional if manufacturer+model provided)
+- Files: components/forms/article-create-form.tsx, components/forms/article-edit-form.tsx, agentlog.md
+- TypeScript compilation: ✅ PASSED (`npm run test:tsc`)
+- Next: Continue with remaining fixes from todos.md
+
 ## 2025-10-02 22:15 – Removed duplicate location field from Jobs
 - **PROBLEM**: Jobs had duplicate location field - both in job_location (base table) and JobMetadata.location
 - User requested: Remove duplicate, keep only the base table field job_location

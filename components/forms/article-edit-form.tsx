@@ -166,6 +166,20 @@ export function ArticleEditForm({ article }: { article: Article }) {
     } else {
       metadata = metaObj as unknown as Json;
     }
+    
+    // Validate: Name OR (Manufacturer AND Model) must be provided
+    const trimmedName = name.trim();
+    const manufacturer = (metaObj.manufacturer ?? "").trim();
+    const model = (metaObj.model ?? "").trim();
+    
+    const hasName = trimmedName.length > 0;
+    const hasManufacturerAndModel = manufacturer.length > 0 && model.length > 0;
+    
+    if (!hasName && !hasManufacturerAndModel) {
+      setError("Bitte 'Name' ODER 'Hersteller + Modell' angeben");
+      setSaving(false);
+      return;
+    }
     const { error } = await supabase
       .from("articles")
       .update({

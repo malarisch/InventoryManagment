@@ -102,6 +102,20 @@ export function ArticleCreateForm() {
       } else {
         metadata = metaObj as unknown as Json;
       }
+      
+      // Validate: Name OR (Manufacturer AND Model) must be provided
+      const trimmedName = name.trim();
+      const manufacturer = (metaObj.manufacturer ?? "").trim();
+      const model = (metaObj.model ?? "").trim();
+      
+      const hasName = trimmedName.length > 0;
+      const hasManufacturerAndModel = manufacturer.length > 0 && model.length > 0;
+      
+      if (!hasName && !hasManufacturerAndModel) {
+        setError("Bitte 'Name' ODER 'Hersteller + Modell' angeben");
+        setSaving(false);
+        return;
+      }
       const { data, error } = await supabase
         .from("articles")
         .insert({
@@ -213,7 +227,7 @@ export function ArticleCreateForm() {
         <CardContent className="space-y-3">
           <div className="grid gap-2">
             <Label htmlFor="name">Name</Label>
-            <Input id="name" value={name} onChange={(e) => setName(e.target.value)} required placeholder="Artikelname" />
+            <Input id="name" value={name} onChange={(e) => setName(e.target.value)} placeholder="Artikelname" />
           </div>
           <div className="grid gap-2">
             <Label htmlFor="default_location">Default Location</Label>
