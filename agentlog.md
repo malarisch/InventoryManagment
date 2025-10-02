@@ -1,3 +1,14 @@
+## 2025-10-02 21:50 – Configured storage buckets in Supabase config.toml
+- **PROBLEM**: Storage buckets were not declaratively configured in config.toml
+- User requested: Add bucket configuration to config.toml following Supabase docs
+- **SOLUTION**: Added two bucket configurations to supabase/config.toml
+- `attachments` bucket: private, 50MiB limit, supports documents/images/archives (PDF, DOCX, XLSX, ZIP, images)
+- `public-assets` bucket: public, 10MiB limit, images only (PNG, JPEG, GIF, WebP, SVG)
+- Buckets will be created automatically when running `npx supabase db reset` or starting fresh local instance
+- Files: supabase/config.toml, agentlog.md
+- TypeScript compilation: ✅ PASSED (`npm run test:tsc`)
+- Next: Continue with notizen additiv vererben
+
 ## 2025-10-02 21:45 – Moved FileManager to separate cards on detail pages
 - **PROBLEM**: FileManager component was embedded inside entity cards, cluttered UI
 - User requested: FileManager should be in own card on top level alongside History
