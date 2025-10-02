@@ -1,3 +1,16 @@
+## 2025-10-03 13:45 – Jobs: Reorganized edit page with 2/3 layout and sidebar
+- **TASK**: Jobs edit page 2/3 layout with Quick book + booked assets in sidebar (todo #2 of 6)
+- User requested: "Die Dateneingabe darf gern nur 2/3 der Seite einnehmen, auf dem dritten Drittel erst die Quick book card, darunter die gebuchte equipments card."
+- **SOLUTION**: Restructured job detail page into responsive 2-column grid layout
+- Left column (lg:col-span-2, 2/3 width): Job edit form, Files card, History card
+- Right column (lg:col-span-1, 1/3 width): Quick book card, Booked assets card
+- Mobile responsive: stacks vertically on small screens, side-by-side on desktop (lg breakpoint)
+- Better screen space utilization, quick access to booking tools while editing job details
+- Files: app/management/jobs/[id]/page.tsx, agentlog.md
+- TypeScript compilation: ✅ PASSED (`npm run test:tsc`)
+- Commit: 2c18c72 "feat: Jobs edit page 2/3 layout with sidebar"
+- Next: Task 3/6 - Jobs edit: Contact in header with modal instead of separate card
+
 ## 2025-10-03 13:30 – Jobs: Replaced contact dropdown with SearchPicker in both forms
 - **TASK**: Implement contact picker with search table (todo #1 of 6)
 - User requested: Better UX for contact selection in job forms (becomes unwieldy with many contacts)

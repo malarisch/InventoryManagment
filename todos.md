@@ -8,7 +8,6 @@ Diese To-Do List enthält Aufgaben, die an der Software zu bearbeiten sind. Soba
 
 ### Fixes
 - Jobs:
-  - Edit page: Die Dateneingabe darf gern nur 2/3 der Seite einnehmen, auf dem dritten Drittel erst die Quick book card, darunter die gebuchte equipments card.
   - Edit Page: Kontakt card nicht anzeigen. Stattdessen in der Kurzbeschreibung den Kontaktnamen mit link zur Kontaktseite, daneben ein "Ändern" knopf welcher die Contact Card in einem Modal öffnet. 
 
 - Werkstatt
@@ -16,6 +15,7 @@ Diese To-Do List enthält Aufgaben, die an der Software zu bearbeiten sind. Soba
   - Erweitere das Werkstatt Job konzept: Eine Card, mit Beschreibung, Möglichkeit Fotos anzuhängen, und einer "Blockieren" checkbox, die verhindert, dass das Equip auf neue Jobs gebucht wird. Wenn ein kommender Job Equipmens gebucht hat, die geblockt sind, zeige eine Warnung im Dashboard und der Job tabelle an.
   -  
 ## Done
+- **Jobs Edit Page 2/3 Layout**: Reorganized job detail page with 2-column grid - left 2/3 for form/files/history, right 1/3 sidebar for Quick book + booked assets cards. Responsive on mobile. (Commit 2c18c72)
 - **Jobs Contact Picker with Search**: Replaced standard dropdown with SearchPicker in job-create-form and job-edit-form for better UX with many contacts. Fuzzy search with weighted matchers (ID, names) for customer-type contacts. (Commit d89d41a)
 - **FileManager auf separaten Cards**: Files und History auf oberster Ebene angezeigt, nicht mehr in Entity-Card eingebettet (Commit fd5a4df)
 - **Supabase Storage Buckets konfiguriert**: config.toml mit public/private buckets für company files (Commit 0c61daf)
