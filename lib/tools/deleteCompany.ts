@@ -45,7 +45,7 @@ export const deleteCompany = async (companies: Array<{ id: bigint }>) => {
       await tx.articles.deleteMany({ where: { company_id: companyId } });
 
       await tx.locations.deleteMany({ where: { company_id: companyId } });
-      await tx.customers.deleteMany({ where: { company_id: companyId } });
+      await tx.contacts.deleteMany({ where: { company_id: companyId } });
 
 
       // Asset tags before templates because of FK from asset_tags.printed_template -> asset_tag_templates.id

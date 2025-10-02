@@ -120,7 +120,7 @@ The cleanup tracker supports all major business entities:
 - **`equipmentIds`**: Physical inventory items
 - **`locationIds`**: Facility locations
 - **`caseIds`**: Equipment cases
-- **`customerIds`**: Customer contacts
+- **`contactIds`**: Customer contacts
 - **`jobIds`**: Scheduled work
 
 ## Best Practices

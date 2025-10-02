@@ -311,15 +311,20 @@ export type Database = {
       }
       contacts: {
         Row: {
+          address: string | null
           city: string | null
           company_id: number
+          company_name: string | null
           contact_type: string
           country: string | null
           created_at: string
           created_by: string | null
+          customer_type: string | null
           display_name: string
           email: string | null
+          files: Json | null
           first_name: string | null
+          forename: string | null
           has_signal: boolean
           has_telegram: boolean
           has_whatsapp: boolean
@@ -329,22 +334,29 @@ export type Database = {
           notes: string | null
           organization: string | null
           phone: string | null
+          postal_code: string | null
           role: string | null
           state: string | null
           street: string | null
+          surname: string | null
           website: string | null
           zip_code: string | null
         }
         Insert: {
+          address?: string | null
           city?: string | null
           company_id: number
+          company_name?: string | null
           contact_type?: string
           country?: string | null
           created_at?: string
           created_by?: string | null
+          customer_type?: string | null
           display_name: string
           email?: string | null
+          files?: Json | null
           first_name?: string | null
+          forename?: string | null
           has_signal?: boolean
           has_telegram?: boolean
           has_whatsapp?: boolean
@@ -354,22 +366,29 @@ export type Database = {
           notes?: string | null
           organization?: string | null
           phone?: string | null
+          postal_code?: string | null
           role?: string | null
           state?: string | null
           street?: string | null
+          surname?: string | null
           website?: string | null
           zip_code?: string | null
         }
         Update: {
+          address?: string | null
           city?: string | null
           company_id?: number
+          company_name?: string | null
           contact_type?: string
           country?: string | null
           created_at?: string
           created_by?: string | null
+          customer_type?: string | null
           display_name?: string
           email?: string | null
+          files?: Json | null
           first_name?: string | null
+          forename?: string | null
           has_signal?: boolean
           has_telegram?: boolean
           has_whatsapp?: boolean
@@ -379,9 +398,11 @@ export type Database = {
           notes?: string | null
           organization?: string | null
           phone?: string | null
+          postal_code?: string | null
           role?: string | null
           state?: string | null
           street?: string | null
+          surname?: string | null
           website?: string | null
           zip_code?: string | null
         }
@@ -395,72 +416,6 @@ export type Database = {
           },
           {
             foreignKeyName: "contacts_created_by_fkey"
-            columns: ["created_by"]
-            isOneToOne: false
-            referencedRelation: "profiles"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      customers: {
-        Row: {
-          address: string | null
-          company_id: number
-          company_name: string | null
-          country: string | null
-          created_at: string
-          created_by: string | null
-          email: string | null
-          files: Json | null
-          forename: string | null
-          id: number
-          metadata: Json | null
-          postal_code: string | null
-          surname: string | null
-          type: string | null
-        }
-        Insert: {
-          address?: string | null
-          company_id: number
-          company_name?: string | null
-          country?: string | null
-          created_at?: string
-          created_by?: string | null
-          email?: string | null
-          files?: Json | null
-          forename?: string | null
-          id?: number
-          metadata?: Json | null
-          postal_code?: string | null
-          surname?: string | null
-          type?: string | null
-        }
-        Update: {
-          address?: string | null
-          company_id?: number
-          company_name?: string | null
-          country?: string | null
-          created_at?: string
-          created_by?: string | null
-          email?: string | null
-          files?: Json | null
-          forename?: string | null
-          id?: number
-          metadata?: Json | null
-          postal_code?: string | null
-          surname?: string | null
-          type?: string | null
-        }
-        Relationships: [
-          {
-            foreignKeyName: "customers_company_id_fkey"
-            columns: ["company_id"]
-            isOneToOne: false
-            referencedRelation: "companies"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "customers_created_by_fkey"
             columns: ["created_by"]
             isOneToOne: false
             referencedRelation: "profiles"
@@ -726,7 +681,6 @@ export type Database = {
           contact_id: number | null
           created_at: string
           created_by: string | null
-          customer_id: number | null
           enddate: string | null
           files: Json | null
           id: number
@@ -741,7 +695,6 @@ export type Database = {
           contact_id?: number | null
           created_at?: string
           created_by?: string | null
-          customer_id?: number | null
           enddate?: string | null
           files?: Json | null
           id?: number
@@ -756,7 +709,6 @@ export type Database = {
           contact_id?: number | null
           created_at?: string
           created_by?: string | null
-          customer_id?: number | null
           enddate?: string | null
           files?: Json | null
           id?: number
@@ -786,13 +738,6 @@ export type Database = {
             columns: ["created_by"]
             isOneToOne: false
             referencedRelation: "profiles"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "jobs_customer_id_fkey"
-            columns: ["customer_id"]
-            isOneToOne: false
-            referencedRelation: "customers"
             referencedColumns: ["id"]
           },
         ]

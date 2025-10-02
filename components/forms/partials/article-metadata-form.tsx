@@ -82,9 +82,7 @@ export function ArticleMetadataForm({
   });
 
   useEffect(() => {
-    if (local !== value) {
-      setLocal(value);
-    }
+    setLocal((prev) => (prev !== value ? value : prev));
   }, [value]);
 
   useEffect(() => {

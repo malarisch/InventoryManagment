@@ -96,7 +96,13 @@ export function ContactFormDialog({ open, onOpenChange, companyId, onCreated, de
           display_name: displayName.trim(),
           first_name: firstName.trim() || null,
           last_name: lastName.trim() || null,
+          forename: firstName.trim() || null,
+          surname: lastName.trim() || null,
           organization: organization.trim() || null,
+          company_name: organization.trim() || null,
+          customer_type: contactType === 'customer'
+            ? (organization.trim() ? 'company' : 'private')
+            : null,
           email: email.trim() || null,
           phone: phone.trim() || null,
           has_signal: hasSignal,
@@ -109,6 +115,7 @@ export function ContactFormDialog({ open, onOpenChange, companyId, onCreated, de
           country: country.trim() || null,
           notes: notes.trim() || null,
           website: website.trim() || null,
+          files: null,
         })
         .select("*")
         .single<Tables<"contacts">>();

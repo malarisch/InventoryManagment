@@ -17,7 +17,7 @@
   - `equipments`: physical inventory linked to an `article_id`, optional `asset_tag`, optional `current_location` (FK `locations.id`), `has_asset_sticker`, `added_to_inventory_at`, `metadata`, `created_by`, and `company_id`.
   - `locations`: canonical place names per company with `name`, optional `description`, optional `asset_tag`, `created_by`, and timestamps.
   - `cases`: groupings of gear with optional `case_equipment` (FK `equipments.id`), an array of contained equipment IDs, `company_id`, and `created_by`.
-  - `customers`: contact records (`type`, personal/company details, address fields, `metadata`) tied to `company_id` and optional `created_by`.
+  - `contacts`: unified contact records (`contact_type`, optional `customer_type`, personal/company details, address fields, `metadata`, optional `files`) tied to `company_id` and optional `created_by`.
   - `jobs`: scheduled work linked to `company_id`, optional `customer_id`, optional `created_by`, scheduling fields, `name`, `type`, `job_location`, and `meta` JSON.
   - `job_booked_assets` and `job_assets_on_job`: materialized reservations/assignments of equipment or cases to jobs; columns include `job_id`, optional `equipment_id`/`case_id`, `company_id`, optional `created_by`, and timestamps.
   - `history`: append-only audit trail storing `table_name`, `data_id`, `old_data`, optional `change_made_by`, and `company_id`; readable to company members.

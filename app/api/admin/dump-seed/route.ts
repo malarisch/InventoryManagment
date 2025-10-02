@@ -65,7 +65,7 @@ export async function POST() {
       admin.from("asset_tags").select("*").order("id"),
       admin.from("locations").select("*").order("id"),
       admin.from("articles").select("*").order("id"),
-      admin.from("customers").select("*").order("id"),
+      admin.from("contacts").select("*").order("id"),
       admin.from("jobs").select("*").order("id"),
       admin.from("equipments").select("*").order("id"),
       admin.from("cases").select("*").order("id"),
@@ -112,7 +112,7 @@ export async function POST() {
     if (assetTags && assetTags.data) sql += buildInserts("public.asset_tags", assetTags.data as Record<string, unknown>[]);
     if (locations && locations.data) sql += buildInserts("public.locations", locations.data as Record<string, unknown>[]);
     if (articles && articles.data) sql += buildInserts("public.articles", articles.data as Record<string, unknown>[]);
-    if (customers && customers.data) sql += buildInserts("public.customers", customers.data as Record<string, unknown>[]);
+    if (customers && customers.data) sql += buildInserts("public.contacts", customers.data as Record<string, unknown>[]);
     if (jobs && jobs.data) sql += buildInserts("public.jobs", jobs.data as Record<string, unknown>[]);
     if (equipments && equipments.data) sql += buildInserts("public.equipments", equipments.data as Record<string, unknown>[]);
     if (cases && cases.data) sql += buildInserts("public.cases", cases.data as Record<string, unknown>[]);

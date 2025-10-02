@@ -4,7 +4,7 @@ import {
     asset_tags,
     cases,
     companies,
-    customers,
+    contacts,
     equipments,
     history,
     job_assets_on_job,
@@ -36,7 +36,7 @@ export async function getCompanyData(companyId: string) {
             articles: true,
             equipments: true,
             cases: true,
-            customers: true,
+            contacts: true,
             jobs: true,
             job_assets_on_job: true,
             job_booked_assets: true,
@@ -65,7 +65,7 @@ export async function importCompanyData(companyData: CompanyData, newUser: strin
             users_companies: _users_companies,
             articles: _articles,
             equipments: _equipments,
-            customers: _customers,
+            contacts: _contacts,
             jobs: _jobs,
             job_assets_on_job: _job_assets_on_job,
             job_booked_assets: _job_booked_assets,
@@ -79,7 +79,7 @@ export async function importCompanyData(companyData: CompanyData, newUser: strin
         } = companyData as Omit<companies, "updated_at"> & {
             articles: articles[],
             equipments: equipments[],
-            customers: customers[],
+            contacts: contacts[],
             jobs: jobs[],
             job_assets_on_job: job_assets_on_job[],
             job_booked_assets: job_booked_assets[],
@@ -139,7 +139,7 @@ export async function importCompanyData(companyData: CompanyData, newUser: strin
         const locationIdMap: Record<string, bigint> = {};
         const articleIdMap: Record<string, bigint> = {};
         const equipmentIdMap: Record<string, bigint> = {};
-        const customerIdMap: Record<string, bigint> = {};
+        const contactIdMap: Record<string, bigint> = {};
         const jobIdMap: Record<string, bigint> = {};
         const assetTagIdMap: Record<string, bigint> = {};
 
@@ -236,24 +236,58 @@ export async function importCompanyData(companyData: CompanyData, newUser: strin
             }
         }
 
-        // Kunden importieren
-        if (companyData.customers && companyData.customers.length > 0) {
-            for (const customer of companyData.customers) {
+        // Kontakte importieren (inkl. ehemaliger Kunden)
+        const contactsSource = (companyData as Record<string, unknown>).contacts as ReadonlyArray<contacts> | undefined
+          ?? (companyData as Record<string, unknown>).customers as ReadonlyArray<contacts & { customer_type?: string }> | undefined
+          ?? [];
+        if (contactsSource && contactsSource.length > 0) {
+            for (const contact of contactsSource) {
                 const {
                     id: oldId,
                     created_at: _createdAt,
-                    ...customerData
-                } = customer as Omit<customers, "updated_at">;
-                customerData.company_id = upsertedCompany.id;
+                    ...contactData
+                } = contact as Omit<contacts, "updated_at"> & { customer_type?: string; address?: string };
 
-                const newCustomer = await prisma.customers.create({
+                let display = contactData.display_name
+                  ?? contactData.company_name
+                  ?? `${contactData.forename ?? contactData.first_name ?? ''} ${contactData.surname ?? contactData.last_name ?? ''}`.trim();
+                if (!display || display.length === 0) {
+                  display = `Kontakt #${oldId}`;
+                }
+
+                const newContact = await prisma.contacts.create({
                     data: {
-                        ...customerData,
-                        metadata: customerData.metadata ?? Prisma.JsonNull,
-                        files: customerData.files ?? Prisma.JsonNull,
-                    }
+                        company_id: upsertedCompany.id,
+                        created_by: contactData.created_by ?? null,
+                        contact_type: contactData.contact_type ?? 'customer',
+                        customer_type: (contactData as { customer_type?: string }).customer_type ?? null,
+                        display_name: display,
+                        company_name: contactData.company_name ?? contactData.organization ?? null,
+                        organization: contactData.organization ?? contactData.company_name ?? null,
+                        forename: contactData.forename ?? contactData.first_name ?? null,
+                        surname: contactData.surname ?? contactData.last_name ?? null,
+                        first_name: contactData.first_name ?? contactData.forename ?? null,
+                        last_name: contactData.last_name ?? contactData.surname ?? null,
+                        email: contactData.email ?? null,
+                        phone: contactData.phone ?? null,
+                        has_signal: contactData.has_signal ?? false,
+                        has_whatsapp: contactData.has_whatsapp ?? false,
+                        has_telegram: contactData.has_telegram ?? false,
+                        role: contactData.role ?? null,
+                        street: contactData.street ?? (contactData as { address?: string }).address ?? null,
+                        address: (contactData as { address?: string }).address ?? contactData.street ?? null,
+                        city: contactData.city ?? null,
+                        state: contactData.state ?? null,
+                        zip_code: contactData.zip_code ?? contactData.postal_code ?? null,
+                        postal_code: contactData.postal_code ?? contactData.zip_code ?? null,
+                        country: contactData.country ?? null,
+                        notes: contactData.notes ?? null,
+                        website: contactData.website ?? null,
+                        metadata: (contactData.metadata as Prisma.JsonValue | null) ?? Prisma.JsonNull,
+                        files: ((contactData as { files?: Prisma.JsonValue | null }).files) ?? Prisma.JsonNull,
+                    },
                 });
-                customerIdMap[oldId.toString()] = newCustomer.id;
+                contactIdMap[oldId.toString()] = newContact.id;
             }
         }
 
@@ -264,13 +298,17 @@ export async function importCompanyData(companyData: CompanyData, newUser: strin
                     id: oldId,
                     created_at: _createdAt,
                     ...jobData
-                } = job as Omit<jobs, "updated_at">;
+                } = job as Omit<jobs, "updated_at"> & { customer_id?: bigint | null };
                 jobData.company_id = upsertedCompany.id;
 
-                // Kunden-ID aktualisieren
-                if (jobData.customer_id && customerIdMap[jobData.customer_id.toString()]) {
-                    jobData.customer_id = customerIdMap[jobData.customer_id.toString()];
+                // Kontakt-ID aktualisieren (Legacy customer_id wird auf contact_id gemappt)
+                if (jobData.customer_id && contactIdMap[jobData.customer_id.toString()]) {
+                    jobData.contact_id = contactIdMap[jobData.customer_id.toString()];
                 }
+                if (jobData.contact_id && contactIdMap[jobData.contact_id.toString()]) {
+                    jobData.contact_id = contactIdMap[jobData.contact_id.toString()];
+                }
+                delete (jobData as Record<string, unknown>).customer_id;
 
                 const newJob = await prisma.jobs.create({
                     data: {

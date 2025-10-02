@@ -10,13 +10,13 @@ import { HistoryCard } from "@/components/historyCard";
 import { DeleteWithUndo } from "@/components/forms/delete-with-undo";
 import { FileManager } from "@/components/files/file-manager";
 
-type Customer = Tables<"customers">;
+type Contact = Tables<"contacts">;
 
-function displayName(c: Customer): string {
-  const company = c.company_name?.trim();
+function displayName(contact: Contact): string {
+  const company = contact.company_name?.trim();
   if (company) return company;
-  const full = `${c.forename ?? ""} ${c.surname ?? ""}`.trim();
-  return full || `#${c.id}`;
+  const full = `${contact.forename ?? contact.first_name ?? ""} ${contact.surname ?? contact.last_name ?? ""}`.trim();
+  return full || contact.display_name || `#${contact.id}`;
 }
 
 export default async function CustomerDetailPage({ params }: { params: Promise<{ id: string }> }) {
@@ -26,7 +26,7 @@ export default async function CustomerDetailPage({ params }: { params: Promise<{
   const { data: auth } = await supabase.auth.getUser();
   const currentUserId = auth.user?.id ?? null;
   const { data, error } = await supabase
-    .from("customers")
+    .from("contacts")
     .select("*")
     .eq("id", id)
     .limit(1)
@@ -42,14 +42,13 @@ export default async function CustomerDetailPage({ params }: { params: Promise<{
     );
   }
 
-  const cust = data as Customer;
-  console.log('Customer detail page - customer data:', JSON.stringify(cust, null, 2));
-  const creator = await fetchUserDisplayAdmin(cust.created_by ?? undefined);
+  const contact = data as Contact;
+  const creator = await fetchUserDisplayAdmin(contact.created_by ?? undefined);
 
   const { data: jobsData } = await supabase
     .from("jobs")
     .select("id, name, startdate, enddate")
-    .eq("customer_id", id)
+    .eq("contact_id", id)
     .order("created_at", { ascending: false })
     .limit(50);
   const jobs = (jobsData as Array<{ id: number; name: string | null; startdate: string | null; enddate: string | null }> | null) ?? [];
@@ -62,22 +61,22 @@ export default async function CustomerDetailPage({ params }: { params: Promise<{
         </div>
         <Card>
           <CardHeader>
-            <CardTitle id="customer-title">{displayName(cust)}</CardTitle>
+            <CardTitle id="customer-title">{displayName(contact)}</CardTitle>
             <CardDescription>
-              #{cust.id} {cust.type ? `• ${cust.type}` : ""}
+              #{contact.id} {contact.customer_type ? `• ${contact.customer_type}` : ""}{contact.contact_type && contact.contact_type !== 'customer' ? ` (${contact.contact_type})` : ""}
               <br />
-              E-Mail: {cust.email ?? "—"} • Adresse: {cust.address ?? "—"}{cust.postal_code ? `, ${cust.postal_code}` : ""}{cust.country ? `, ${cust.country}` : ""}
+              E-Mail: {contact.email ?? "—"} • Adresse: {contact.address ?? contact.street ?? "—"}{contact.postal_code ? `, ${contact.postal_code}` : contact.zip_code ? `, ${contact.zip_code}` : ""}{contact.country ? `, ${contact.country}` : ""}
               <br />
-              Erstellt am: {formatDateTime(safeParseDate(cust.created_at))} {`• Erstellt von: ${creator ?? (cust.created_by === currentUserId ? 'Du' : fallbackDisplayFromId(cust.created_by)) ?? '—'}`}
+              Erstellt am: {formatDateTime(safeParseDate(contact.created_at))} {`• Erstellt von: ${creator ?? (contact.created_by === currentUserId ? 'Du' : fallbackDisplayFromId(contact.created_by)) ?? '—'}`}
             </CardDescription>
           </CardHeader>
           <CardContent>
             <div className="mb-4">
-              <DeleteWithUndo table="customers" id={cust.id} payload={cust as Record<string, unknown>} redirectTo="/management/customers" />
+              <DeleteWithUndo table="contacts" id={contact.id} payload={contact as Record<string, unknown>} redirectTo="/management/customers" />
             </div>
-            <CustomerEditForm customer={cust} />
+            <CustomerEditForm customer={contact} />
             <div className="mt-6">
-              <FileManager table="customers" rowId={cust.id} companyId={cust.company_id} isPublic={false} initial={(cust as Record<string, unknown>).files} />
+              <FileManager table="contacts" rowId={contact.id} companyId={contact.company_id} isPublic={false} initial={(contact as Record<string, unknown>).files} />
             </div>
           </CardContent>
         </Card>
@@ -100,7 +99,7 @@ export default async function CustomerDetailPage({ params }: { params: Promise<{
             )}
           </CardContent>
         </Card>
-        <HistoryCard table="customers" dataId={id} />
+        <HistoryCard table="contacts" dataId={id} />
       </div>
     </main>
   );

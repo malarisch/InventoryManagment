@@ -7,7 +7,7 @@ import { createClient } from '@/lib/supabase/client';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import Link from 'next/link';
 
-type SearchResultType = 'articles' | 'customers' | 'equipments' | 'jobs' | 'locations' | 'cases';
+type SearchResultType = 'articles' | 'contacts' | 'equipments' | 'jobs' | 'locations' | 'cases';
 
 type Base = { id: number } & Record<string, unknown>;
 type Result = Base & { type: SearchResultType };
@@ -31,9 +31,13 @@ export default function SearchPage() {
       setError(null);
 
       try {
-        const [articles, customers, equipments, jobs, locations, cases] = await Promise.all([
+        const [articles, contacts, equipments, jobs, locations, cases] = await Promise.all([
           supabase.from('articles').select('*').textSearch('name', query, { type: 'websearch' }),
-          supabase.from('customers').select('*').textSearch('forename', query, { type: 'websearch' }),
+          supabase
+            .from('contacts')
+            .select('id, display_name, company_name, forename, surname, first_name, last_name, contact_type, customer_type')
+            .eq('contact_type', 'customer')
+            .textSearch('display_name', query, { type: 'websearch' }),
           supabase.from('equipments').select('*, articles(name)').textSearch('id', query, { type: 'websearch' }),
           supabase.from('jobs').select('*').textSearch('name', query, { type: 'websearch' }),
           supabase.from('locations').select('*').textSearch('name', query, { type: 'websearch' }),
@@ -42,7 +46,7 @@ export default function SearchPage() {
 
         const allResults: Result[] = [
           ...((articles.data || []) as Base[]).map((r) => ({ ...r, type: 'articles' as const })),
-          ...((customers.data || []) as Base[]).map((r) => ({ ...r, type: 'customers' as const })),
+          ...((contacts.data || []) as Base[]).map((r) => ({ ...r, type: 'contacts' as const })),
           ...((equipments.data || []) as Base[]).map((r) => ({ ...r, type: 'equipments' as const })),
           ...((jobs.data || []) as Base[]).map((r) => ({ ...r, type: 'jobs' as const })),
           ...((locations.data || []) as Base[]).map((r) => ({ ...r, type: 'locations' as const })),
@@ -69,20 +73,32 @@ export default function SearchPage() {
       {error && <p className="text-red-500">{error}</p>}
 
       <div className="space-y-4">
-        {results.map((result) => (
-          <Card key={`${result.type}-${result.id}`}>
-            <CardHeader>
-              <CardTitle>
-                <Link href={`/management/${result.type}/${result.id}`}>
-                  {String((result as Record<string, unknown>).name ?? (result as Record<string, unknown>).forename ?? `ID: ${result.id}`)}
-                </Link>
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <p className="text-sm text-muted-foreground">{result.type}</p>
-            </CardContent>
-          </Card>
-        ))}
+        {results.map((result) => {
+          const record = result as Record<string, unknown>;
+          let title = String(record.name ?? record.display_name ?? record.company_name ?? record.forename ?? record.first_name ?? `ID: ${result.id}`);
+          if (result.type === 'contacts' && typeof record.display_name === 'string' && record.display_name.trim().length > 0) {
+            title = record.display_name as string;
+          }
+          if (!title || title.trim().length === 0) {
+            title = `ID: ${result.id}`;
+          }
+          const href = result.type === 'contacts'
+            ? `/management/customers/${result.id}`
+            : `/management/${result.type}/${result.id}`;
+          const typeLabel = result.type === 'contacts' ? 'Kontakt' : result.type;
+          return (
+            <Card key={`${result.type}-${result.id}`}>
+              <CardHeader>
+                <CardTitle>
+                  <Link href={href}>{title}</Link>
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <p className="text-sm text-muted-foreground">{typeLabel}</p>
+              </CardContent>
+            </Card>
+          );
+        })}
       </div>
     </div>
   );

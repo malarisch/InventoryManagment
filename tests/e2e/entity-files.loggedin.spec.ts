@@ -251,11 +251,11 @@ test.describe('Entity Files Tests', () => {
     await page.fill('input[id="name"]', 'Test Job File Manager');
     await page.fill('input[id="type"]', 'Testing');
     
-    // Select a customer if available
-    const customerSelect = page.locator('select[id="customer_id"]');
-    const customerOptions = await customerSelect.locator('option').count();
-    if (customerOptions > 1) {
-      await customerSelect.selectOption({ index: 1 });
+    // Select a contact if available
+    const contactSelect = page.locator('select[id="contact_id"]');
+    const contactOptions = await contactSelect.locator('option').count();
+    if (contactOptions > 1) {
+      await contactSelect.selectOption({ index: 1 });
     }
     
     // Submit the form

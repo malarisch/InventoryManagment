@@ -14,9 +14,7 @@ export function JobMetadataForm({
 }) {
   const [local, setLocal] = useState<JobMetadata>(value);
   useEffect(() => {
-    if (local !== value) {
-      setLocal(value);
-    }
+    setLocal((prev) => (prev !== value ? value : prev));
   }, [value]);
   useEffect(() => {
     if (local === value) return;

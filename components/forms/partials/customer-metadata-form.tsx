@@ -17,9 +17,7 @@ export function CustomerMetadataForm({
   const [local, setLocal] = useState<CustomerMetadata>(value);
 
   useEffect(() => {
-    if (local !== value) {
-      setLocal(value);
-    }
+    setLocal((prev) => (prev !== value ? value : prev));
   }, [value]);
   useEffect(() => {
     if (local === value) return;

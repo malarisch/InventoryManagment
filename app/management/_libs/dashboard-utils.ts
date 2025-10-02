@@ -5,9 +5,12 @@ import { formatDate, safeParseDate } from "@/lib/dates";
  */
 export type JobCustomer = {
   id: number;
+  display_name: string | null;
   company_name: string | null;
   forename: string | null;
   surname: string | null;
+  first_name: string | null;
+  last_name: string | null;
 };
 
 /**
@@ -30,7 +33,7 @@ export const TABLE_LABELS: Record<string, string> = {
   articles: "Artikel",
   asset_tags: "Asset Tags",
   cases: "Cases",
-  customers: "Kunden",
+  contacts: "Kontakte",
   equipments: "Equipments",
   jobs: "Jobs",
   locations: "Standorte",
@@ -42,7 +45,7 @@ export const TABLE_LABELS: Record<string, string> = {
 export const TABLE_ROUTES: Record<string, string> = {
   articles: "/management/articles",
   cases: "/management/cases",
-  customers: "/management/customers",
+  contacts: "/management/customers",
   equipments: "/management/equipments",
   jobs: "/management/jobs",
   locations: "/management/locations",
@@ -59,7 +62,7 @@ export const HISTORY_PREVIEW_KEYS = [
   "article_id",
   "equipment_id",
   "location_id",
-  "customer_id",
+  "contact_id",
   "case_id",
   "company_id",
 ] as const;
@@ -141,10 +144,15 @@ export function buildHistorySummary(payload: HistoryPreviewRecord): string {
  */
 export function jobCustomerDisplay(customer: JobCustomer | null): string {
   if (!customer) return "Kein Kunde zugeordnet";
+  const display = customer.display_name?.trim();
+  if (display) return display;
   const company = customer.company_name?.trim();
   if (company) return company;
-  const fullName = [customer.forename, customer.surname].filter(Boolean).join(" ").trim();
-  return fullName.length > 0 ? fullName : `Kunde #${customer.id}`;
+  const fullName = [customer.forename ?? customer.first_name, customer.surname ?? customer.last_name]
+    .filter(Boolean)
+    .join(" ")
+    .trim();
+  return fullName.length > 0 ? fullName : `Kontakt #${customer.id}`;
 }
 
 /**

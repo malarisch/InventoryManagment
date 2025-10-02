@@ -83,9 +83,7 @@ export function EquipmentMetadataForm({
   const [activeSections, setActiveSections] = useState<SectionId[]>(() => SECTION_DEFINITIONS.filter((section) => section.defaultActive).map((section) => section.id));
 
   useEffect(() => {
-    if (local !== value) {
-      setLocal(value);
-    }
+    setLocal((prev) => (prev !== value ? value : prev));
   }, [value]);
 
   useEffect(() => {

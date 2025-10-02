@@ -16,7 +16,6 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { ContactFormDialog } from "@/components/forms/contacts/contact-form-dialog";
 
 type Job = Tables<"jobs">;
-type Customer = Tables<"customers">;
 type Contact = Tables<"contacts">;
 
 export function JobEditForm({ job }: { job: Job }) {
@@ -27,9 +26,7 @@ export function JobEditForm({ job }: { job: Job }) {
   const [location, setLocation] = useState<string>(job.job_location ?? "");
   const [startDate, setStartDate] = useState<string>(() => formatDateForInput(job.startdate));
   const [endDate, setEndDate] = useState<string>(() => formatDateForInput(job.enddate));
-  const [customerId, setCustomerId] = useState<number | "">(job.customer_id ?? "");
   const [contactId, setContactId] = useState<number | "">(job.contact_id ?? "");
-  const [customers, setCustomers] = useState<Customer[]>([]);
   const [contacts, setContacts] = useState<Contact[]>([]);
   const [metaText, setMetaText] = useState<string>(() => {
     try {
@@ -45,22 +42,6 @@ export function JobEditForm({ job }: { job: Job }) {
   const [message, setMessage] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [contactDialogOpen, setContactDialogOpen] = useState(false);
-
-  useEffect(() => {
-    let active = true;
-    async function loadCustomers() {
-      const { data } = await supabase
-        .from("customers")
-        .select("id, company_name, forename, surname")
-        .order("company_name", { ascending: true });
-      if (!active) return;
-      setCustomers((data as Customer[]) ?? []);
-    }
-    loadCustomers();
-    return () => {
-      active = false;
-    };
-  }, [supabase]);
 
   useEffect(() => {
     let active = true;
@@ -146,13 +127,12 @@ export function JobEditForm({ job }: { job: Job }) {
     }
     const { error } = await supabase
       .from("jobs")
-      .update({
+        .update({
         name: name.trim() || null,
         type: type.trim() || null,
         job_location: location.trim() || null,
         startdate: startDate || null,
         enddate: endDate || null,
-        customer_id: customerId === "" ? null : Number(customerId),
         contact_id: contactId === "" ? null : Number(contactId),
         meta,
       })
@@ -217,32 +197,6 @@ export function JobEditForm({ job }: { job: Job }) {
           </div>
         </CardContent>
       </Card>
-
-      <Card className="md:col-span-3">
-        <CardHeader>
-          <CardTitle>Kunde</CardTitle>
-          <CardDescription>Optional</CardDescription>
-        </CardHeader>
-        <CardContent>
-          <div className="grid gap-2">
-            <Label htmlFor="customer_id">Kunde</Label>
-            <select
-              id="customer_id"
-              className="h-9 rounded-md border bg-background px-3 text-sm"
-              value={customerId}
-              onChange={(event) => setCustomerId(event.target.value === "" ? "" : Number(event.target.value))}
-            >
-              <option value="">— Kein Kunde —</option>
-              {customers.map((customer) => (
-                <option key={customer.id} value={customer.id}>
-                  {customer.company_name || `${customer.forename ?? ""} ${customer.surname ?? ""}`.trim() || `#${customer.id}`}
-                </option>
-              ))}
-            </select>
-          </div>
-        </CardContent>
-      </Card>
-
       <Card className="md:col-span-3">
         <CardHeader>
           <CardTitle>Kontakt</CardTitle>
@@ -258,11 +212,13 @@ export function JobEditForm({ job }: { job: Job }) {
               onChange={(event) => setContactId(event.target.value === "" ? "" : Number(event.target.value))}
             >
               <option value="">— Kein Kontakt —</option>
-              {contacts.map((contact) => (
-                <option key={contact.id} value={contact.id}>
-                  {contact.display_name} {contact.contact_type ? `(${contact.contact_type})` : ""}
-                </option>
-              ))}
+              {contacts
+                .filter((contact) => contact.contact_type === "customer")
+                .map((contact) => (
+                  <option key={contact.id} value={contact.id}>
+                    {contact.display_name || contact.company_name || `${contact.first_name ?? ""} ${contact.last_name ?? ""}`.trim() || `#${contact.id}`}
+                  </option>
+                ))}
             </select>
           </div>
           <Button type="button" variant="secondary" onClick={() => setContactDialogOpen(true)}>

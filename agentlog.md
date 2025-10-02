@@ -388,3 +388,7 @@ Files: lib/tools/deleteCompany.ts, tests/vitest/delete-company.test.ts. Next: ru
 - Segmentierte Article/Equipment-Metadaten mit dynamischen Karten, Vererbungs-Platzhaltern und Supplier-Editor (components/forms/**, metadataTypes).
 - Neue contacts-Tabelle + jobs.contact_id Migrationen, Prisma/Types aktualisiert, Job-Formulare & Supplier-UI mit Kontakt-Auswahl/Neuanlage (supabase/migrations/**, prisma/schema.prisma, job*/article*/equipment* forms).
 - Regenerierte database.types.ts via supabase-gen-types.
+
+2025-10-02 20:25 — Merge customers into contacts
+- Added contacts migration (merge + data copy, job FK swap) and Prisma/types regen; dropped customers schema.
+- Updated UI/forms, search, dashboards, import/export, seeding, and tests to use contacts API + contact picker.

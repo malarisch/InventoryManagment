@@ -8,7 +8,7 @@ import { cn } from "@/lib/utils";
 import Link from "next/link";
 import type { LucideIcon } from "lucide-react";
 
-type SearchResultType = 'articles' | 'customers' | 'equipments' | 'jobs' | 'locations' | 'cases';
+type SearchResultType = 'articles' | 'contacts' | 'equipments' | 'jobs' | 'locations' | 'cases';
 
 type SearchResult = {
   id: number;
@@ -21,7 +21,7 @@ type SearchResult = {
 
 const typeIcons: Record<SearchResultType, LucideIcon> = {
   articles: Package,
-  customers: Users,
+  contacts: Users,
   equipments: Box,
   jobs: Briefcase,
   locations: MapPin,
@@ -30,7 +30,7 @@ const typeIcons: Record<SearchResultType, LucideIcon> = {
 
 const typeLabels: Record<SearchResultType, string> = {
   articles: "Artikel",
-  customers: "Kunden",
+  contacts: "Kunden",
   equipments: "Equipments", 
   jobs: "Jobs",
   locations: "Locations",
@@ -78,7 +78,7 @@ export function GlobalSearchModal({
       // Search across all tables using ilike (case insensitive LIKE)
       const [
         articlesResponse,
-        customersResponse, 
+        contactsResponse, 
         equipmentsResponse,
         jobsResponse,
         locationsResponse,
@@ -91,12 +91,13 @@ export function GlobalSearchModal({
           .eq('company_id', company.id)
           .ilike('name', `%${trimmedQuery}%`),
           
-        // Customers: search forename, surname, company name
+        // Contacts: search display_name, forename, surname, company
         supabase
-          .from('customers')
-          .select('id, forename, surname, company_name, type')
+          .from('contacts')
+          .select('id, display_name, forename, surname, first_name, last_name, company_name, customer_type, contact_type')
           .eq('company_id', company.id)
-          .or(`forename.ilike.%${trimmedQuery}%,surname.ilike.%${trimmedQuery}%,company_name.ilike.%${trimmedQuery}%`),
+          .eq('contact_type', 'customer')
+          .or(`display_name.ilike.%${trimmedQuery}%,forename.ilike.%${trimmedQuery}%,surname.ilike.%${trimmedQuery}%,first_name.ilike.%${trimmedQuery}%,last_name.ilike.%${trimmedQuery}%,company_name.ilike.%${trimmedQuery}%`),
           
         // Equipments: search by ID  
         supabase
@@ -141,17 +142,15 @@ export function GlobalSearchModal({
         });
       }
 
-      // Process customers
-      if (customersResponse.data) {
-        customersResponse.data.forEach((item) => {
-          const name = item.type === 'person' 
-            ? `${item.forename || ''} ${item.surname || ''}`.trim()
-            : item.company_name;
+      // Process contacts
+      if (contactsResponse.data) {
+        contactsResponse.data.forEach((item) => {
+          const baseName = item.display_name || item.company_name || `${item.forename ?? item.first_name ?? ''} ${item.surname ?? item.last_name ?? ''}`.trim();
           searchResults.push({
             id: item.id,
-            type: 'customers',
-            title: name || `Kunde #${item.id}`,
-            subtitle: item.type === 'person' ? 'Person' : 'Firma',
+            type: 'contacts',
+            title: baseName || `Kontakt #${item.id}`,
+            subtitle: item.customer_type ?? item.contact_type ?? undefined,
             url: `/management/customers/${item.id}`
           });
         });
