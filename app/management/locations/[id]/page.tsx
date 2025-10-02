@@ -63,9 +63,9 @@ export default async function LocationDetailPage({ params }: { params: Promise<{
         </div>
         <Card>
           <CardHeader>
-            <CardTitle>Standort #{loc.id}</CardTitle>
+            <CardTitle>Standort: {loc.name || `#${loc.id}`}</CardTitle>
             <CardDescription>
-              {loc.name}
+              ID: {loc.id}
               {" • Asset Tag: "}
               {loc.asset_tag ? (loc.asset_tags?.printed_code ?? `#${loc.asset_tag}`) : "—"}
               <br />

@@ -7,7 +7,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Badge } from "@/components/ui/badge";
-import { ClipboardCopy, Globe, Lock } from "lucide-react";
+import { ClipboardCopy, Globe, Lock, Check } from "lucide-react";
 import type { FileEntry } from "@/lib/files";
 import { normalizeFileArray } from "@/lib/files";
 
@@ -39,6 +39,17 @@ export function FileManager({
   const [items, setItems] = useState<FileEntry[]>(() => normalizeFileArray(initial));
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [copiedIndex, setCopiedIndex] = useState<number | null>(null);
+
+  async function copyLink(index: number, link: string) {
+    try {
+      await navigator.clipboard.writeText(link);
+      setCopiedIndex(index);
+      setTimeout(() => setCopiedIndex(null), 2000);
+    } catch (err) {
+      console.error('Failed to copy link:', err);
+    }
+  }
 
   async function uploadFile(file: File, name?: string, description?: string, isFilePublic?: boolean) {
     setBusy(true);
@@ -222,10 +233,16 @@ export function FileManager({
                     type="button" 
                     variant="outline" 
                     size="sm" 
-                    onClick={() => {navigator.clipboard.writeText(f.link)}} 
+                    onClick={() => copyLink(i, f.link)} 
                     disabled={busy}
                     title="Link Kopieren"
-                    ><ClipboardCopy className="w-4 h-4" /></Button>
+                    >
+                      {copiedIndex === i ? (
+                        <Check className="w-4 h-4 text-green-600" />
+                      ) : (
+                        <ClipboardCopy className="w-4 h-4" />
+                      )}
+                    </Button>
                   ) : null}
                   <Button 
                     type="button" 

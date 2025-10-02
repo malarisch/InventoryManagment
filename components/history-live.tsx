@@ -323,7 +323,13 @@ export function HistoryLive({
                     <div className="text-xs text-muted-foreground space-y-1">
                       {h.changes.map((c) => (
                         <div key={c.key}>
-                          <span className="font-medium">{c.key}</span>: {typeof c.from === 'object' ? JSON.stringify(c.from) : String(c.from)} → {typeof c.to === 'object' ? JSON.stringify(c.to) : String(c.to)}
+                          {c.from === undefined ? (
+                            // If from is undefined, only show the new value
+                            <><span className="font-medium">{c.key}</span>: {typeof c.to === 'object' ? JSON.stringify(c.to) : String(c.to)}</>
+                          ) : (
+                            // Otherwise show the change
+                            <><span className="font-medium">{c.key}</span>: {typeof c.from === 'object' ? JSON.stringify(c.from) : String(c.from)} → {typeof c.to === 'object' ? JSON.stringify(c.to) : String(c.to)}</>
+                          )}
                         </div>
                       ))}
                     </div>

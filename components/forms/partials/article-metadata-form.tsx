@@ -259,6 +259,7 @@ export function ArticleMetadataForm({
             </div>
           </div>
           <DimensionsFieldset
+            idPrefix="article-dimensions"
             value={local.dimensionsCm}
             onChange={(next) => update((prev) => ({ ...prev, dimensionsCm: next }))}
           />
@@ -450,6 +451,7 @@ export function ArticleMetadataForm({
           <div className="grid gap-1.5">
             <Label>Innenmaße (cm)</Label>
             <DimensionsFieldset
+              idPrefix="case-inner-dimensions"
               value={local.case?.innerDimensionsCm}
               onChange={(next) => update((prev) => ({
                 ...prev,

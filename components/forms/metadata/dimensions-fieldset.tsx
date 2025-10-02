@@ -8,9 +8,10 @@ interface DimensionsFieldsetProps {
   value: DimensionsCm | undefined;
   onChange: (next: DimensionsCm | undefined) => void;
   disabled?: boolean;
+  idPrefix?: string;
 }
 
-export function DimensionsFieldset({ value, onChange, disabled = false }: DimensionsFieldsetProps) {
+export function DimensionsFieldset({ value, onChange, disabled = false, idPrefix = "dimensions" }: DimensionsFieldsetProps) {
   function parseNumber(raw: string): number | undefined {
     if (raw.trim() === "") return undefined;
     const parsed = Number(raw.replace(",", "."));
@@ -49,9 +50,9 @@ export function DimensionsFieldset({ value, onChange, disabled = false }: Dimens
   return (
     <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
       <div className="grid gap-1.5">
-        <Label htmlFor="dimensions-width">Breite (cm)</Label>
+        <Label htmlFor={`${idPrefix}-width`}>Breite (cm)</Label>
         <Input
-          id="dimensions-width"
+          id={`${idPrefix}-width`}
           type="number"
           min={0}
           step="0.1"
@@ -61,9 +62,9 @@ export function DimensionsFieldset({ value, onChange, disabled = false }: Dimens
         />
       </div>
       <div className="grid gap-1.5">
-        <Label htmlFor="dimensions-height">Höhe (cm)</Label>
+        <Label htmlFor={`${idPrefix}-height`}>Höhe (cm)</Label>
         <Input
-          id="dimensions-height"
+          id={`${idPrefix}-height`}
           type="number"
           min={0}
           step="0.1"
@@ -73,9 +74,9 @@ export function DimensionsFieldset({ value, onChange, disabled = false }: Dimens
         />
       </div>
       <div className="grid gap-1.5">
-        <Label htmlFor="dimensions-depth">Tiefe (cm)</Label>
+        <Label htmlFor={`${idPrefix}-depth`}>Tiefe (cm)</Label>
         <Input
-          id="dimensions-depth"
+          id={`${idPrefix}-depth`}
           type="number"
           min={0}
           step="0.1"
