@@ -24,7 +24,6 @@ Diese To-Do List enthält Aufgaben, die an der Software zu bearbeiten sind. Soba
 - New Article
   - Irgendwie sind "Artikelname" und "Hersteller" + "Modell" redundant - überleg dir was. Eventuell in die Richtung zum Form validieren musst du Name oder Hersteller + Modell angeben.
   - Es Fehlen Buttons um hinzugefügte Metadatenkarten wieder zu löschen. Wenn er geklickt wird "klappe die Karte zusammen" mit einem "Undo" button für diese Aktion.
-  - Die Optionen "Ist 19" Rack" und "19" Rackmontage" schließen sich logisch aus. "Case hat schloss" als Checkbox ausführen. Führe die Caseoptionen in einer Karte zusammen, also Höheneinheiten und "19-Zoll Rackmontage" mit ins Case Setup, die Felder für ein Rack nur Anzeigen wenn "Case ist 19" Rack" und andersrum die anderen nur wenn "Ist 19 Zoll Montagefähig". 
 - Edit Pages:
 - New Equipment:
 - Contacts 
@@ -137,3 +136,5 @@ Diese To-Do List enthält Aufgaben, die an der Software zu bearbeiten sind. Soba
   - Company Switcher (Subliste mit allen Companies, Auswahl wird gespeichert)
   - Profileinstellungen (Link zu `/management/profile/settings`)
   - Abmelden (Supabase Sign-Out)
+
+- Fix: Equipment-Metadata Form Case Setup Card zeigt jetzt korrekt geerbte Werte vom Artikel mittels InheritedCheckbox und InheritedNumberField Komponenten für is19Inch, hasLock, heightUnits, maxDeviceDepthCm und contentMaxWeightKg. Innenmaße (innerDimensionsCm) nutzen reguläre Input Felder mit Platzhaltern da das DimensionsCm Objekt keine nullable Einzelfelder unterstützt.

@@ -1,3 +1,12 @@
+## 2025-10-02 17:30 – Fixed Case Setup Card Inheritance in Equipment Form
+- Refactored equipment-metadata-form.tsx renderCaseCard() to use InheritedCheckbox/InheritedNumberField components
+- is19Inch, hasLock, heightUnits, maxDeviceDepthCm, contentMaxWeightKg now properly display inherited values from article
+- innerDimensionsCm uses regular Input fields with placeholders (DimensionsCm type doesn't support nullable individual fields)
+- Case Setup card now follows same inheritance pattern as Physical/Power cards with ignore toggles
+- Files: equipment-metadata-form.tsx, todos.md
+- Total bugs fixed: 22
+- Next: Continue with remaining form improvements and UX enhancements
+
 ## 2025-10-02 17:00 – Fixed Input Lag & Updated Instructions
 - Fixed severe input lag (500ms+) in company settings form by memoizing CompanyMetadataForm component
 - Used React.memo and useCallback to prevent expensive re-renders when typing in name/description fields
