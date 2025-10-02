@@ -785,3 +785,23 @@ Files: lib/tools/deleteCompany.ts, tests/vitest/delete-company.test.ts. Next: ru
   * Sidebar now contains both preview and reference codes
 - File: components/forms/asset-tag-template-create-form.tsx
 - TypeScript compilation: ✅ PASSED
+
+## 2025-10-03 01:05 – Enhanced preview mock data with realistic values for all template codes
+- **PROBLEM**: Preview only showed 4 basic placeholders with simple mock values
+- User feedback: "Fülle die Codes nun im Preview mit angemessenen Mock Values"
+- **SOLUTION**: Extended previewData with all 8 available template codes
+- Added realistic German business context mock values:
+  * printed_code: EQ-2024-0815 (realistic asset tag format)
+  * equipment_name: Sony FX6 Cinema Camera (detailed equipment)
+  * article_name: Professional Cinema Camera (product category)
+  * location_name: Studio A - Rack 3 (specific location)
+  * case_name: Camera Case 1 (transport case)
+  * company_name: EventTech Solutions GmbH (German company format)
+  * current_date: Dynamic date in German format (de-DE locale)
+  * qr_url: https://app.example.com/equipment/EQ-2024-0815 (app link)
+- Updated sample placeholders list to show all 8 codes with values
+- Reduced list font to text-xs for better fit
+- Preview now demonstrates all available template functionality
+- Users can see realistic output before creating elements
+- File: components/asset-tag-templates/template-preview.tsx
+- TypeScript compilation: ✅ PASSED

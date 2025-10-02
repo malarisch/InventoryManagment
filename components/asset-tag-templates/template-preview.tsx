@@ -33,12 +33,16 @@ export function AssetTagTemplatePreview({ template, editable = false, onElements
   const dragOffset = useRef<{dx: number; dy: number}>({ dx: 0, dy: 0 });
   const [modalOpen, setModalOpen] = useState(false);
 
-  // Sample placeholder data for preview – keep consistent with previous implementation
+  // Sample placeholder data for preview with realistic mock values
   const previewData = useMemo(() => ({
-    printed_code: 'EQ001',
-    equipment_name: 'Camera Sony FX6',
-    article_name: 'Professional Camera',
-    location_name: 'Studio A',
+    printed_code: 'EQ-2024-0815',
+    equipment_name: 'Sony FX6 Cinema Camera',
+    article_name: 'Professional Cinema Camera',
+    location_name: 'Studio A - Rack 3',
+    case_name: 'Camera Case 1',
+    company_name: 'EventTech Solutions GmbH',
+    current_date: new Date().toLocaleDateString('de-DE'),
+    qr_url: 'https://app.example.com/equipment/EQ-2024-0815',
   }), []);
 
   const widthPx = template.tagWidthMm * MM_TO_PX;
@@ -250,11 +254,15 @@ export function AssetTagTemplatePreview({ template, editable = false, onElements
       </div>
       <div className="text-sm text-gray-600">
         <p><strong>Sample placeholders used:</strong></p>
-        <ul className="list-disc list-inside space-y-1 mt-2">
+        <ul className="list-disc list-inside space-y-1 mt-2 text-xs">
           <li><code>{'{{printed_code}}'}</code> → {previewData.printed_code}</li>
           <li><code>{'{{equipment_name}}'}</code> → {previewData.equipment_name}</li>
           <li><code>{'{{article_name}}'}</code> → {previewData.article_name}</li>
           <li><code>{'{{location_name}}'}</code> → {previewData.location_name}</li>
+          <li><code>{'{{case_name}}'}</code> → {previewData.case_name}</li>
+          <li><code>{'{{company_name}}'}</code> → {previewData.company_name}</li>
+          <li><code>{'{{current_date}}'}</code> → {previewData.current_date}</li>
+          <li><code>{'{{qr_url}}'}</code> → {previewData.qr_url}</li>
         </ul>
       </div>
     </div>
