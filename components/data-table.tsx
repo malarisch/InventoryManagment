@@ -60,7 +60,7 @@ export function DataTable<T extends { id: number }>(
       });
 
       const term = dq.trim();
-      if (term.length > 0) {
+      if (term.length > 0 && searchableFields.length > 0) {
         const filters: string[] = [];
         searchableFields.forEach(({ field, type }) => {
           if (type === 'number') {
@@ -70,7 +70,11 @@ export function DataTable<T extends { id: number }>(
             filters.push(`${field}.ilike.%${term}%`);
           }
         });
-        if (filters.length > 0) query = query.or(filters.join(',')); else query = query.or('id.eq.0');
+        if (filters.length > 0) {
+          query = query.or(filters.join(','));
+        }
+        // If no filters match the search term type, just show all results
+        // (don't artificially restrict to id.eq.0 which shows nothing)
       }
 
       const { data, error, count } = await query.range(from, to);

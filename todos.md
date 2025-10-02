@@ -12,7 +12,6 @@ Diese To-Do List enthält Aufgaben, die an der Software zu bearbeiten sind. Soba
 - Notizen sollen Additiv vererbt werden, nicht überschrieben. Also auf einem Equipment sollen die Notizen von seinem Artikel als "Read Only" card angezeigt werden, sowie die normale Card für die eigenen Assets.
 - Metadaten: "Zuweisung" darf gern ein Kontakt Picker enthalten und keine parallelstruktur. Das eigene Notizfeld hiervon darf aber gern bleiben.
 - Cases:
-  - Case Edit Table: Die Tabelle ist leer, suche gibt keine Ergebnisse.
 - Company Settings:
   - Führe die "Kontaktperson" sektion als Kontakt Entität aus, nicht als JSON Parallelstruktur.
   - Zerlege auch hier die Metadaten in einzelne Cards, die auf oberster Ebene angezeigt werden.
@@ -78,6 +77,7 @@ Diese To-Do List enthält Aufgaben, die an der Software zu bearbeiten sind. Soba
 
 
 ## Done
+- **Fix: DataTable Search Bug**: Fixed bug where DataTable would show no results when search term type didn't match searchable field types (e.g., typing text when only number fields configured). Removed artificial `id.eq.0` filter that was hiding all results. Now shows all results when search filters don't match.
 - **Fix: Case Edit Page Reorganization**: Reorganized into 4 separate cards (Basisdaten, Case-Equipment, Equipments im Case, Ungetrackte Artikel). Added article names in equipment lists. Added "Created by" and "Created at" in page header. Added case equipment picker dropdown. Equipment/Article IDs now link to detail pages.
 - **Fix: Case Create Equipment Selection**: Selected equipments now show in dedicated chip list above the table. Added count in card description. Made table rows clickable. Equipments no longer disappear when selected.
 - **Fix: Article Form Power/Physical Cards**: Physical Properties and Power Supply cards now collapsed by default. Power defaults show as placeholders instead of prefilled values (fixes annoyance with passive equipment).
