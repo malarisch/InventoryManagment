@@ -11,6 +11,7 @@ import { DeleteWithUndo } from "@/components/forms/delete-with-undo";
 import { FileManager } from "@/components/files/file-manager";
 import { AssetTagCreateForm } from "@/components/forms/asset-tag-create-form";
 import { WorkshopTodoCreateInline } from "@/components/forms/workshop-todo-create-inline";
+import { MaintenanceLogsCard } from "@/components/maintenance/maintenance-logs-card";
 
 type EquipmentRow = Tables<"equipments"> & {
   articles?: { name: string } | null;
@@ -100,6 +101,7 @@ export default async function EquipmentDetailPage({ params }: { params: Promise<
             </div>
           </CardContent>
         </Card>
+        <MaintenanceLogsCard companyId={Number(eq.company_id)} equipmentId={Number(eq.id)} />
       </div>
       <div className="w-full max-w-none mt-4">
         <HistoryCard table="equipments" dataId={id} />

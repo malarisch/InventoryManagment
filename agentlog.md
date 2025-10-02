@@ -392,3 +392,7 @@ Files: lib/tools/deleteCompany.ts, tests/vitest/delete-company.test.ts. Next: ru
 2025-10-02 20:25 — Merge customers into contacts
 - Added contacts migration (merge + data copy, job FK swap) and Prisma/types regen; dropped customers schema.
 - Updated UI/forms, search, dashboards, import/export, seeding, and tests to use contacts API + contact picker.
+2025-10-02 23:10 — Kameramodus & Wartungslogs
+- Neuer /management/scanner mit kontinuierlichem QR-Scan, Standort-/Job-Modi und Buttons auf Location/Job-Detailseiten (components/scanner/scanner-screen.tsx, components/camera/continuous-qr-scanner.tsx, app/management/scanner/page.tsx, app/management/{locations,jobs}/[id]/page.tsx).
+- Cases unterstützen Standorte + Maintenance Logs: Migrationen 20251002093000/20251002094500, Prisma update, MaintenanceLog Cards + Inline-Formulare (supabase/migrations/**, prisma/schema.prisma, components/forms/maintenance-log-create-inline.tsx, components/maintenance/maintenance-logs-card.tsx, app/management/cases/[id]/page.tsx, app/management/equipments/[id]/page.tsx).
+- Werkstatt-Übersicht ergänzt letzte Wartungen, Cases erhalten Werkstatt-Todo, Typen regeneriert und Lint/tsc erfolgreich (app/management/workshop/page.tsx, database.types.ts, npm run lint, npm run test:tsc).

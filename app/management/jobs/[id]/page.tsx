@@ -12,6 +12,8 @@ import { JobBookedAssetsCard } from "@/components/job-booked-assets";
 import { JobQuickBook } from "@/components/forms/job-quick-book";
 import { DeleteWithUndo } from "@/components/forms/delete-with-undo";
 import { FileManager } from "@/components/files/file-manager";
+import { Button } from "@/components/ui/button";
+import { ClipboardList, PackageCheck } from "lucide-react";
 
 type JobRow = Tables<"jobs">;
 
@@ -66,8 +68,22 @@ export default async function JobDetailPage({ params }: { params: Promise<{ id: 
             </CardDescription>
           </CardHeader>
           <CardContent>
-            <div className="mb-4">
+            <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
               <DeleteWithUndo table="jobs" id={job.id} payload={job as Record<string, unknown>} redirectTo="/management/jobs" />
+              <div className="flex items-center gap-2">
+                <Button variant="outline" asChild className="flex items-center gap-2">
+                  <Link href={`/management/scanner?mode=job-book&jobId=${job.id}`}>
+                    <ClipboardList className="h-4 w-4" />
+                    Kameramodus buchen
+                  </Link>
+                </Button>
+                <Button variant="outline" asChild className="flex items-center gap-2">
+                  <Link href={`/management/scanner?mode=job-pack&jobId=${job.id}`}>
+                    <PackageCheck className="h-4 w-4" />
+                    Kameramodus packen
+                  </Link>
+                </Button>
+              </div>
             </div>
             <JobEditForm job={job} />
             <div className="mt-6">

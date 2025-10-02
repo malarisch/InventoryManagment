@@ -3,10 +3,6 @@
 Diese To-Do List enthält Aufgaben, die an der Software zu bearbeiten sind. Sobald eine Aufgabe bearbeited wurde soll diese hier in der Datei unten in die Done-List eingefügt und aus der To-Do list entfernt werden. Denk daran für alles, was du tust, auch Tests zu implementieren! Vor dem Committen Tests ausführen und checken ob alles läuft, wenn nicht erst alles fixen und dann committen. Für jedes Todo ein Commit. Speichere so viel wie möglich in deine Memories, damit du schneller darauf zugreifen kannst.
 
 ## To-Do
-- Implementiere einen Kameramodus. Dieser ist für Smartphones optimiert und scannt asset tags. Weitere Modi:
-  - Equipments und Cases an eine Location "stellen" - also ein Knopf auf der Location seite den Scanner öffnet und alle folgenden gescannten Equipments und Artikel bekommen diese Location als aktuellen Standort.
-  - Gleiches prinzip, aber A) einmal um Assets zu einem Job zu buchen und B) beim Packen auch in den Job zu kommissionieren. Dafür existiert die zweite Tabelle.
-- Equipments und Cases sollen wartungslogs bekommen. In dem Zuge implementiere das Konzept "Werkstatt" - locations können gemäß der Typendefiniton eine Werkstatt sein. Füge einen "Werkstatt todo hinzufügen" hinzu. Erstelle eine Werkstattübersicht. Da werden alle Todos angezeigt, sowie Equipments, die sich in der Werkstatt befinden. Also ähnlich wie das Dashboard, nur auf Equipmentwartung sepzialisiert! (Anmerkung: ist schon teilweise implementiert)
 - Jobs sollen eine Preisübersicht bekommen, anhand der zu ihnen gebuchten Assets. Ebenso Gewicht und Truckspace. Berechnet an den Werten der eingebuchten Assets.
 
 
@@ -68,6 +64,8 @@ Diese To-Do List enthält Aufgaben, die an der Software zu bearbeiten sind. Soba
   - Erweitere das Werkstatt Job konzept: Eine Card, mit Beschreibung, Möglichkeit Fotos anzuhängen, und einer "Blockieren" checkbox, die verhindert, dass das Equip auf neue Jobs gebucht wird. Wenn ein kommender Job Equipmens gebucht hat, die geblockt sind, zeige eine Warnung im Dashboard und der Job tabelle an.
   -  
 ## Done
+- Kameramodus für Smartphones mit eigenem /management/scanner implementiert: kontinuierlicher QR-Scan, Standort-, Job-Buchen- und Pack-Modi inklusive Buttons auf Location- und Job-Detailseiten sowie Cases-Standort-Unterstützung.
+- Wartungslogs für Equipments und Cases inklusive neuer Datenbanktabelle, Inline-Erfassung, Anzeige auf Detailseiten und erweiterter Werkstattübersicht mit letzten Wartungen und Werkstatt-Todos für Cases.
 - Überarbeite die Implementierung des Metadaten-Konzzepts. Metadaten-Karten sind jetzt modular, optional einblendbar, zeigen geerbte Werte als Platzhalter und erlauben Ignorieren via Checkbox. Alle typisierten Felder (Physik, Strom, Maße, Supplier, etc.) sind im UI verfügbar.
 - Implementiere das Konzept "Kontakte" inkl. Datenbanktabelle, RLS, Supabase/Prisma-Typen. Jobs besitzen nun ein `contact_id`-Feld mit Picker und Dialog zur Anlage. Artikel- und Equipment-Metadaten referenzieren Supplier-Kontakte über Auswahlkarten.
 - **Globale Apple Spotlight-style Suche implementiert**: Cmd+K öffnet floating Modal mit Echtzeit-Suche über alle Entitäten (Artikel, Kunden, Equipment, Jobs, Locations, Cases). Ersetzt die kaputte Header-Suche.

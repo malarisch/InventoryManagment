@@ -1,5 +1,28 @@
 import { createClient } from '@/lib/supabase/server';
 import Link from 'next/link';
+import { safeParseDate, formatDateTime } from '@/lib/dates';
+import { fallbackDisplayFromId } from '@/lib/userDisplay';
+
+type ProfileLite = { id: string; first_name: string | null; last_name: string | null };
+
+type LogRow = {
+  id: number;
+  title: string;
+  notes: string | null;
+  performed_at: string;
+  performed_by: string | null;
+  equipment_id: number | null;
+  case_id: number | null;
+  performed_by_profile?: ProfileLite | null;
+};
+
+function combineName(profile?: ProfileLite | null): string | null {
+  if (!profile) return null;
+  const first = profile.first_name?.trim() ?? "";
+  const last = profile.last_name?.trim() ?? "";
+  const joined = `${first} ${last}`.trim();
+  return joined.length > 0 ? joined : null;
+}
 
 export default async function WorkshopPage() {
   const supabase = await createClient();
@@ -27,14 +50,26 @@ export default async function WorkshopPage() {
     .eq('is_workshop', true);
   const workshopIds = (workshopLocations ?? []).map((l: { id: number }) => l.id);
 
-  const [{ data: todos }, { data: equip }] = await Promise.all([
+  const logsRequest = companyId
+    ? supabase
+        .from('maintenance_logs')
+        .select('id, title, notes, performed_at, performed_by, equipment_id, case_id, performed_by_profile:profiles!maintenance_logs_performed_by_fkey(first_name,last_name,id)')
+        .eq('company_id', companyId)
+        .order('performed_at', { ascending: false })
+        .limit(20)
+    : Promise.resolve({ data: [] as LogRow[] | null });
+
+  const [{ data: todos }, { data: equip }, { data: logsData }] = await Promise.all([
     supabase.from('workshop_todos')
       .select('id, title, status, equipment_id, case_id, created_at')
       .order('created_at', { ascending: false }),
     supabase.from('equipments')
       .select('id, articles(name), current_location, locations!equipments_current_location_fkey(name)')
-      .in('current_location', workshopIds.length ? workshopIds : [0])
+      .in('current_location', workshopIds.length ? workshopIds : [0]),
+    logsRequest,
   ]);
+
+  const logs = (logsData as LogRow[] | null) ?? [];
 
   return (
     <main className="min-h-screen w-full flex flex-col items-center p-5">
@@ -58,7 +93,11 @@ export default async function WorkshopPage() {
                   </div>
                   <div className="text-sm">
                     {t.equipment_id ? <Link className="underline" href={`/management/equipments/${t.equipment_id}`}>Equipment #{t.equipment_id}</Link> : null}
-                    {t.case_id ? <span className="ml-2">Case #{t.case_id}</span> : null}
+                    {t.case_id ? (
+                      <Link className="ml-2 underline" href={`/management/cases/${t.case_id}`}>
+                        Case #{t.case_id}
+                      </Link>
+                    ) : null}
                   </div>
                 </div>
               ))
@@ -83,6 +122,35 @@ export default async function WorkshopPage() {
                     })()}</div>
                   </div>
                   <Link className="underline text-sm" href={`/management/equipments/${e.id}`}>Öffnen</Link>
+                </div>
+              ))
+            )}
+          </div>
+        </section>
+
+        <section className="space-y-3">
+          <h2 className="text-lg font-medium">Letzte Wartungen</h2>
+          <div className="rounded-md border divide-y">
+            {logs.length === 0 ? (
+              <div className="p-3 text-sm text-muted-foreground">Noch keine Wartungslogs vorhanden.</div>
+            ) : (
+              logs.map((log) => (
+                <div key={log.id} className="p-3 space-y-1">
+                  <div className="text-sm font-medium">{log.title}</div>
+                  <div className="text-xs text-muted-foreground">
+                    {formatDateTime(safeParseDate(log.performed_at))} • {combineName(log.performed_by_profile) ?? fallbackDisplayFromId(log.performed_by) ?? '—'}
+                  </div>
+                  {log.notes ? (
+                    <div className="text-sm text-muted-foreground whitespace-pre-line">{log.notes}</div>
+                  ) : null}
+                  <div className="text-xs text-muted-foreground">
+                    {log.equipment_id ? (
+                      <Link className="underline" href={`/management/equipments/${log.equipment_id}`}>Equipment #{log.equipment_id}</Link>
+                    ) : null}
+                    {log.case_id ? (
+                      <Link className="ml-3 underline" href={`/management/cases/${log.case_id}`}>Case #{log.case_id}</Link>
+                    ) : null}
+                  </div>
                 </div>
               ))
             )}

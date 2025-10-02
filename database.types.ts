@@ -209,6 +209,7 @@ export type Database = {
           contains_equipments: number[] | null
           created_at: string
           created_by: string | null
+          current_location: number | null
           description: string | null
           files: Json | null
           id: number
@@ -222,6 +223,7 @@ export type Database = {
           contains_equipments?: number[] | null
           created_at?: string
           created_by?: string | null
+          current_location?: number | null
           description?: string | null
           files?: Json | null
           id?: number
@@ -235,6 +237,7 @@ export type Database = {
           contains_equipments?: number[] | null
           created_at?: string
           created_by?: string | null
+          current_location?: number | null
           description?: string | null
           files?: Json | null
           id?: number
@@ -267,6 +270,13 @@ export type Database = {
             columns: ["created_by"]
             isOneToOne: false
             referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "cases_current_location_fkey"
+            columns: ["current_location"]
+            isOneToOne: false
+            referencedRelation: "locations"
             referencedColumns: ["id"]
           },
         ]
@@ -794,6 +804,81 @@ export type Database = {
           {
             foreignKeyName: "locations_created_by_fkey"
             columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      maintenance_logs: {
+        Row: {
+          case_id: number | null
+          company_id: number
+          created_at: string
+          created_by: string | null
+          equipment_id: number | null
+          id: number
+          notes: string | null
+          performed_at: string
+          performed_by: string | null
+          title: string
+        }
+        Insert: {
+          case_id?: number | null
+          company_id: number
+          created_at?: string
+          created_by?: string | null
+          equipment_id?: number | null
+          id?: never
+          notes?: string | null
+          performed_at?: string
+          performed_by?: string | null
+          title: string
+        }
+        Update: {
+          case_id?: number | null
+          company_id?: number
+          created_at?: string
+          created_by?: string | null
+          equipment_id?: number | null
+          id?: never
+          notes?: string | null
+          performed_at?: string
+          performed_by?: string | null
+          title?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "maintenance_logs_case_id_fkey"
+            columns: ["case_id"]
+            isOneToOne: false
+            referencedRelation: "cases"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "maintenance_logs_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "maintenance_logs_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "maintenance_logs_equipment_id_fkey"
+            columns: ["equipment_id"]
+            isOneToOne: false
+            referencedRelation: "equipments"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "maintenance_logs_performed_by_fkey"
+            columns: ["performed_by"]
             isOneToOne: false
             referencedRelation: "profiles"
             referencedColumns: ["id"]

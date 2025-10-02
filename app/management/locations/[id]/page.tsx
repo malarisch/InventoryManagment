@@ -11,6 +11,8 @@ import { HistoryCard } from "@/components/historyCard";
 import { DeleteWithUndo } from "@/components/forms/delete-with-undo";
 import { FileManager } from "@/components/files/file-manager";
 import { AssetTagCreateForm } from "@/components/forms/asset-tag-create-form";
+import { Button } from "@/components/ui/button";
+import { Scan } from "lucide-react";
 
 type LocationRow = Tables<"locations"> & { asset_tags?: { printed_code: string | null } | null };
 type EquipmentRow = Tables<"equipments"> & {
@@ -73,13 +75,21 @@ export default async function LocationDetailPage({ params }: { params: Promise<{
           <CardContent>
             <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
               <DeleteWithUndo table="locations" id={loc.id} payload={loc as Record<string, unknown>} redirectTo="/management/locations" />
-              {!loc.asset_tag && (
-                <AssetTagCreateForm 
-                  item={{ id: loc.id, name: loc.name || `Standort #${loc.id}` }} 
-                  table="locations" 
-                  companyId={loc.company_id} 
-                />
-              )}
+              <div className="flex items-center gap-2">
+                <Button variant="outline" asChild className="flex items-center gap-2">
+                  <Link href={`/management/scanner?mode=assign-location&locationId=${loc.id}`}>
+                    <Scan className="h-4 w-4" />
+                    Kameramodus
+                  </Link>
+                </Button>
+                {!loc.asset_tag && (
+                  <AssetTagCreateForm
+                    item={{ id: loc.id, name: loc.name || `Standort #${loc.id}` }}
+                    table="locations"
+                    companyId={loc.company_id}
+                  />
+                )}
+              </div>
             </div>
             <LocationEditForm location={loc} />
             <div className="mt-6">
