@@ -7,14 +7,12 @@ Diese To-Do List enthält Aufgaben, die an der Software zu bearbeiten sind. Soba
 
 
 ### Fixes
-- Jobs:
-  - Edit Page: Kontakt card nicht anzeigen. Stattdessen in der Kurzbeschreibung den Kontaktnamen mit link zur Kontaktseite, daneben ein "Ändern" knopf welcher die Contact Card in einem Modal öffnet. 
-
 - Werkstatt
   - Auf den Equipment Pages fehlt eine Übersicht der offnen Werkstatt jobs
   - Erweitere das Werkstatt Job konzept: Eine Card, mit Beschreibung, Möglichkeit Fotos anzuhängen, und einer "Blockieren" checkbox, die verhindert, dass das Equip auf neue Jobs gebucht wird. Wenn ein kommender Job Equipmens gebucht hat, die geblockt sind, zeige eine Warnung im Dashboard und der Job tabelle an.
   -  
 ## Done
+- **Jobs Contact in Header with Modal**: Removed contact card from form, moved to job header with link and "Ändern" button. Modal opens with SearchPicker for quick contact changes. Server-side contact display fetch. (Commit cc202d9)
 - **Jobs Edit Page 2/3 Layout**: Reorganized job detail page with 2-column grid - left 2/3 for form/files/history, right 1/3 sidebar for Quick book + booked assets cards. Responsive on mobile. (Commit 2c18c72)
 - **Jobs Contact Picker with Search**: Replaced standard dropdown with SearchPicker in job-create-form and job-edit-form for better UX with many contacts. Fuzzy search with weighted matchers (ID, names) for customer-type contacts. (Commit d89d41a)
 - **FileManager auf separaten Cards**: Files und History auf oberster Ebene angezeigt, nicht mehr in Entity-Card eingebettet (Commit fd5a4df)

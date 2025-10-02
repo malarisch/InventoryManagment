@@ -1,3 +1,19 @@
+## 2025-10-03 14:00 – Jobs: Moved contact to header with modal editor
+- **TASK**: Contact in header with modal instead of separate card (todo #3 of 6)
+- User requested: "Kontakt card nicht anzeigen. Stattdessen in der Kurzbeschreibung den Kontaktnamen mit link zur Kontaktseite, daneben ein 'Ändern' knopf welcher die Contact Card in einem Modal öffnet."
+- **SOLUTION**: Created inline contact management in job header
+- Built JobContactModal component with SearchPicker for quick contact changes
+- Built JobHeaderContact client component for header display + "Ändern" button
+- Removed entire contact card from JobEditForm (no longer in main form)
+- Server-side fetches contact display name on page load
+- Contact displays in CardDescription with link to contact detail page
+- Modal opens with current contact pre-selected, allows search/create new
+- Router.refresh() after save ensures immediate UI update
+- Files: components/forms/job-contact-modal.tsx, components/jobs/job-header-contact.tsx, components/forms/job-edit-form.tsx, app/management/jobs/[id]/page.tsx, agentlog.md
+- TypeScript compilation: ✅ PASSED (`npm run test:tsc`)
+- Commit: cc202d9 "feat: Move job contact to header with modal editor"
+- Next: Task 4/6 - Workshop: Equipment page overview of open workshop jobs
+
 ## 2025-10-03 13:45 – Jobs: Reorganized edit page with 2/3 layout and sidebar
 - **TASK**: Jobs edit page 2/3 layout with Quick book + booked assets in sidebar (todo #2 of 6)
 - User requested: "Die Dateneingabe darf gern nur 2/3 der Seite einnehmen, auf dem dritten Drittel erst die Quick book card, darunter die gebuchte equipments card."
