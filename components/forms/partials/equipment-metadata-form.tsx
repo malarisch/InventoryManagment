@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import type { ArticleMetadata, EquipmentMetadata, Person } from "@/components/metadataTypes.types";
 import type { adminCompanyMetadata } from "@/components/metadataTypes.types";
 import { Input } from "@/components/ui/input";
@@ -65,6 +65,12 @@ export function EquipmentMetadataForm({
 }: EquipmentMetadataFormProps) {
   const [local, setLocal] = useState<EquipmentMetadata>(value);
   const { company } = useCompany();
+  const onChangeRef = useRef(onChange);
+
+  // Keep onChange ref updated
+  useEffect(() => {
+    onChangeRef.current = onChange;
+  }, [onChange]);
 
   const adminMeta = useMemo(() => normalizeAdminCompanyMetadata(companyMetadata ?? company?.metadata ?? null), [companyMetadata, company]);
   const powerDefaults = useMemo(() => powerPlaceholders(adminMeta), [adminMeta]);
@@ -90,8 +96,8 @@ export function EquipmentMetadataForm({
 
   useEffect(() => {
     if (local === value) return;
-    onChange(local);
-  }, [local, value, onChange]);
+    onChangeRef.current(local);
+  }, [local, value]);
 
   function update(updater: (prev: EquipmentMetadata) => EquipmentMetadata) {
     setLocal((prev) => updater(prev));

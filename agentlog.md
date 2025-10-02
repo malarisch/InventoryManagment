@@ -1,3 +1,14 @@
+## 2025-10-02 18:30 – Fixed Infinite Loop (ACTUAL FIX): useRef for onChange stability
+- **ROOT CAUSE IDENTIFIED**: onChange callback from parent recreated on every render
+- Parent passes inline function: `onChange={(value) => setMetaObj(buildEquipmentMetadata(value))}`
+- This caused useEffect dependency to trigger infinitely
+- **SOLUTION**: Use useRef to store onChange callback, update ref when onChange changes
+- Changed useEffect dependencies from `[local, value, onChange]` to `[local, value]`
+- Use `onChangeRef.current(local)` instead of `onChange(local)` 
+- Files: equipment-metadata-form.tsx, agentlog.md
+- This is the CORRECT fix for the infinite loop issue
+- Next: Test form interaction thoroughly
+
 ## 2025-10-02 18:15 – Fixed Infinite Loop in Equipment Case & Rack Setup
 - **CRITICAL FIX**: Removed double state updates causing "Maximum update depth exceeded" error
 - Changed all `setLocal` + `onChange` callback pairs to use only `update()` function
