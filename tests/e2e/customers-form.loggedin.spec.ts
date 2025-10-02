@@ -11,7 +11,7 @@ const timestamp = Date.now();
   test('should display customers list page correctly', async ({ page }) => {
     
     
-    await page.goto('/management/customers');
+    await page.goto('/management/contacts');
     await page.waitForLoadState('networkidle');
     
     // Check page title and header
@@ -19,7 +19,7 @@ const timestamp = Date.now();
     await expect(page.locator('h1')).toContainText(/Kunden|Customers/);
     
     // Check for new customer button
-    const newButton = page.locator('a[href="/management/customers/new"], button:has-text("Neuer Kunde"), button:has-text("New Customer")');
+    const newButton = page.locator('a[href="/management/contacts/new"], button:has-text("Neuer Kunde"), button:has-text("New Customer")');
     await expect(newButton).toBeVisible();
     
     // Take screenshot for visual verification
@@ -29,7 +29,7 @@ const timestamp = Date.now();
   test('should create new customer with personal type', async ({ page }) => {
 
     
-    await page.goto('/management/customers/new');
+    await page.goto('/management/contacts/new');
     await page.waitForLoadState('networkidle');
     
     // Test empty form submission (should show validation errors)
@@ -37,7 +37,7 @@ const timestamp = Date.now();
     //    await page.waitForLoadState('networkidle');
 
     //await expect(page.locator('.error, [role="alert"], .text-red-500')).toBeVisible();
-    await expect(page.url()).toContain('/management/customers/new');
+    await expect(page.url()).toContain('/management/contacts/new');
     
     // Fill form using fallback selectors like the working article test
     const firstName = `Hans${timestamp}`;
@@ -165,7 +165,7 @@ const timestamp = Date.now();
       await page.waitForLoadState('networkidle');
       
       // Check if we're redirected to customers list (successful deletion)
-      if (page.url().includes('/management/customers') && !page.url().match(/\/management\/customers\/\d+/)) {
+      if (page.url().includes('/management/contacts') && !page.url().match(/\/management\/customers\/\d+/)) {
         console.log('✓ Customer deleted successfully - redirected to list');
         
         // Verify customer is no longer in the list
@@ -176,11 +176,11 @@ const timestamp = Date.now();
         const currentUrl = page.url();
         const customerId = currentUrl.match(/\/management\/customers\/(\d+)/)?.[1];
         if (customerId) {
-          await page.goto(`/management/customers/${customerId}`);
+          await page.goto(`/management/contacts/${customerId}`);
           await page.waitForLoadState('networkidle');
           
           // Should show 404 or error page
-          const response = await page.goto(`/management/customers/${customerId}`);
+          const response = await page.goto(`/management/contacts/${customerId}`);
           if (response && response.status() === 404) {
             console.log('✓ Customer deleted successfully - returns 404');
           } else {
@@ -199,7 +199,7 @@ const timestamp = Date.now();
     } else {
       // Not on detail page — navigate to list and open created customer
       const fullName = `${firstName} ${lastName}`;
-      await page.goto('/management/customers');
+      await page.goto('/management/contacts');
       await page.waitForLoadState('networkidle');
       const link = page.locator(`a:has-text("${fullName}")`).first();
       await expect(link).toBeVisible();
@@ -219,7 +219,7 @@ const timestamp = Date.now();
   test('should create new customer with company type', async ({ page }) => {
 
     
-    await page.goto('/management/customers/new');
+    await page.goto('/management/contacts/new');
     await page.waitForLoadState('networkidle');
     
     // FIRST: Select "Company" type to make the company_name field visible
@@ -255,7 +255,7 @@ const timestamp = Date.now();
     
     // Verify customer was created
     // Should redirect to detail page
-    if (page.url().includes('/management/customers/')) {
+    if (page.url().includes('/management/contacts/')) {
       // We're on detail page
       await expect(page.locator('#customer-title')).toContainText(companyName);
       
@@ -282,7 +282,7 @@ const timestamp = Date.now();
       await page.waitForLoadState('networkidle');
       
       // Check if we're redirected to customers list (successful deletion)
-      if (page.url().includes('/management/customers') && !page.url().match(/\/management\/customers\/\d+/)) {
+      if (page.url().includes('/management/contacts') && !page.url().match(/\/management\/customers\/\d+/)) {
         console.log('✓ Company customer deleted successfully - redirected to list');
         
         // Verify customer is no longer in the list
@@ -292,11 +292,11 @@ const timestamp = Date.now();
         const currentUrl = page.url();
         const customerId = currentUrl.match(/\/management\/customers\/(\d+)/)?.[1];
         if (customerId) {
-          await page.goto(`/management/customers/${customerId}`);
+          await page.goto(`/management/contacts/${customerId}`);
           await page.waitForLoadState('networkidle');
           
           // Should show 404 or error page
-          const response = await page.goto(`/management/customers/${customerId}`);
+          const response = await page.goto(`/management/contacts/${customerId}`);
           if (response && response.status() === 404) {
             console.log('✓ Company customer deleted successfully - returns 404');
           } else {
@@ -324,7 +324,7 @@ const timestamp = Date.now();
 
     
     // First create a customer to test
-    await page.goto('/management/customers/new');
+    await page.goto('/management/contacts/new');
     await page.waitForLoadState('networkidle');
     
     // Select private type first
@@ -340,8 +340,8 @@ const timestamp = Date.now();
     await page.waitForLoadState('networkidle');
     
     // If we're not on detail page, find and click the customer
-    if (!page.url().includes('/management/customers/')) {
-      await page.goto('/management/customers');
+    if (!page.url().includes('/management/contacts/')) {
+      await page.goto('/management/contacts');
       await page.waitForLoadState('networkidle');
       await page.click(`text="${customerName}"`);
     }
@@ -369,19 +369,19 @@ const timestamp = Date.now();
 
     
     // Test customers list on mobile
-    await page.goto('/management/customers');
+    await page.goto('/management/contacts');
     await page.waitForLoadState('networkidle');
     
     // Check responsive layout
     await expect(page.locator('h1')).toBeVisible();
-    const newButton = page.locator('a[href="/management/customers/new"], button:has-text("Neuer Kunde")');
+    const newButton = page.locator('a[href="/management/contacts/new"], button:has-text("Neuer Kunde")');
     await expect(newButton).toBeVisible();
     
     // Take mobile screenshot
     await page.screenshot({ path: 'test-results/customers-list-mobile.png', fullPage: true });
     
     // Test form on mobile
-    await page.goto('/management/customers/new');
+    await page.goto('/management/contacts/new');
     await page.waitForLoadState('networkidle');
     
     // Select private type first
@@ -407,7 +407,7 @@ const timestamp = Date.now();
   test('should validate required fields correctly', async ({ page }) => {
 
     
-    await page.goto('/management/customers/new');
+    await page.goto('/management/contacts/new');
     await page.waitForLoadState('networkidle');
     
     // Verify that submit button is disabled without selecting type

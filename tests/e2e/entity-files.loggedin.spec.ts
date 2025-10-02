@@ -211,7 +211,7 @@ test.describe('Entity Files Tests', () => {
 
     
     // Create a customer first
-    await page.goto('/management/customers/new');
+    await page.goto('/management/contacts/new');
     await page.waitForLoadState('networkidle');
         await page.check('input[value="private"]');
 

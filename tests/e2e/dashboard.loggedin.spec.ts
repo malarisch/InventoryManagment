@@ -77,11 +77,11 @@ test.describe('Management Dashboard Tests', () => {
     }
     
     // Test navigation to customers
-    const customersLink = page.locator('nav a[href="/management/customers"]').first();
+    const customersLink = page.locator('nav a[href="/management/contacts"]').first();
     if (await customersLink.isVisible()) {
       await customersLink.click();
-      await page.waitForURL('**/management/customers');
-      await expect(page.url()).toContain('/management/customers');
+      await page.waitForURL('**/management/contacts');
+      await expect(page.url()).toContain('/management/contacts');
       
       // Go back to dashboard
       await page.goto('/management');

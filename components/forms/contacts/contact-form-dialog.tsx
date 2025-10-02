@@ -9,6 +9,7 @@ import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Checkbox } from "@/components/ui/checkbox";
+import { SearchPicker, type SearchItem } from "@/components/search/search-picker";
 
 const CONTACT_TYPES = [
   { value: "general", label: "Allgemein" },
@@ -24,12 +25,14 @@ export interface ContactFormDialogProps {
   companyId: number | null;
   onCreated: (contact: Tables<"contacts">) => void;
   defaultType?: string;
+  contactOptions?: Array<{ id: number; display_name: string }>;
 }
 
-export function ContactFormDialog({ open, onOpenChange, companyId, onCreated, defaultType = "general" }: ContactFormDialogProps) {
+export function ContactFormDialog({ open, onOpenChange, companyId, onCreated, defaultType = "general", contactOptions = [] }: ContactFormDialogProps) {
   const supabase = useMemo(() => createClient(), []);
   const [displayName, setDisplayName] = useState("");
   const [contactType, setContactType] = useState(defaultType);
+  const [contactPersonId, setContactPersonId] = useState<number | null>(null);
   const [firstName, setFirstName] = useState("");
   const [lastName, setLastName] = useState("");
   const [organization, setOrganization] = useState("");
@@ -50,6 +53,7 @@ export function ContactFormDialog({ open, onOpenChange, companyId, onCreated, de
   function resetForm() {
     setDisplayName("");
     setContactType(defaultType);
+    setContactPersonId(null);
     setFirstName("");
     setLastName("");
     setOrganization("");
@@ -94,15 +98,14 @@ export function ContactFormDialog({ open, onOpenChange, companyId, onCreated, de
           created_by: auth.user.id,
           contact_type: contactType,
           display_name: displayName.trim(),
+          contact_person_id: contactType === 'company' ? contactPersonId : null,
           first_name: firstName.trim() || null,
           last_name: lastName.trim() || null,
           forename: firstName.trim() || null,
           surname: lastName.trim() || null,
           organization: organization.trim() || null,
           company_name: organization.trim() || null,
-          customer_type: contactType === 'customer'
-            ? (organization.trim() ? 'company' : 'private')
-            : null,
+          customer_type: null,
           email: email.trim() || null,
           phone: phone.trim() || null,
           has_signal: hasSignal,
@@ -183,6 +186,29 @@ export function ContactFormDialog({ open, onOpenChange, companyId, onCreated, de
             <Label htmlFor="contact-organization">Firma / Organisation</Label>
             <Input id="contact-organization" value={organization} onChange={(event) => setOrganization(event.target.value)} />
           </div>
+          {contactType === 'company' && contactOptions.length > 0 && (
+            <div className="grid gap-1.5">
+              <Label>Ansprechperson</Label>
+              <SearchPicker
+                items={contactOptions.map(c => ({
+                  id: c.id.toString(),
+                  category: "contact" as const,
+                  title: c.display_name,
+                  matchers: [{ value: c.display_name }],
+                  data: c.id,
+                }))}
+                onSelect={(item) => setContactPersonId(item.data)}
+                placeholder="Ansprechperson auswählen..."
+                buttonLabel={
+                  contactPersonId 
+                    ? contactOptions.find(c => c.id === contactPersonId)?.display_name ?? "Ansprechperson auswählen"
+                    : "Ansprechperson auswählen"
+                }
+                categoryLabels={{ contact: "Kontakte" }}
+                resetOnSelect={false}
+              />
+            </div>
+          )}
           <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
             <div className="grid gap-1.5">
               <Label htmlFor="contact-email">E-Mail</Label>
