@@ -224,28 +224,10 @@ export function ArticleMetadataForm({
       <Card>
         <CardHeader>
           <CardTitle>Physische Eigenschaften</CardTitle>
-          <CardDescription>Rack-Eigenschaften, Gewicht und Maße</CardDescription>
+          <CardDescription>Gewicht und Maße</CardDescription>
         </CardHeader>
         <CardContent className="grid gap-4">
-          <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
-            <div className="flex items-center space-x-2">
-              <Checkbox
-                id="amf-is-rack"
-                checked={!!local.is19Inch}
-                onCheckedChange={(checked) => update((prev) => ({ ...prev, is19Inch: !!checked }))}
-              />
-              <Label htmlFor="amf-is-rack">19-Zoll Rackmontage</Label>
-            </div>
-            <div className="grid gap-1.5">
-              <Label htmlFor="amf-u">Höheneinheiten (U)</Label>
-              <Input
-                id="amf-u"
-                type="number"
-                min={0}
-                value={local.heightUnits ?? ""}
-                onChange={(event) => setNumberField("heightUnits", event.target.value)}
-              />
-            </div>
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
             <div className="grid gap-1.5">
               <Label htmlFor="amf-weight">Gewicht (kg)</Label>
               <Input
@@ -348,142 +330,254 @@ export function ArticleMetadataForm({
 
   function renderCaseCard() {
     if (!activeSections.includes("case")) return null;
-    const caseMeta = local.case ?? { is19Inch: false, heightUnits: 0 };
+    const caseMeta = local.case ?? {};
+    
+    // Determine which mode: "none", "case-is-rack", or "equipment-is-rackmountable"
+    const mode = caseMeta.is19Inch ? "case-is-rack" : local.is19Inch ? "equipment-is-rackmountable" : "none";
+    
     return (
       <Card>
         <CardHeader>
-          <CardTitle>Case Setup</CardTitle>
-          <CardDescription>Konfiguration des passenden Cases</CardDescription>
+          <CardTitle>Case & Rack Setup</CardTitle>
+          <CardDescription>Konfiguration für Cases und Rackmontage-Eigenschaften</CardDescription>
         </CardHeader>
         <CardContent className="grid gap-4">
-          <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
-            <div className="flex items-center gap-2">
-              <Checkbox
-                id="case-is-rack"
-                checked={!!caseMeta.is19Inch}
-                onCheckedChange={(checked) => update((prev) => ({ ...prev, case: { ...(prev.case ?? {}), is19Inch: !!checked } }))}
-              />
-              <Label htmlFor="case-is-rack">Case ist 19-Zoll Rack</Label>
-            </div>
-            <div className="grid gap-1.5">
-              <Label htmlFor="case-height">Case Höheneinheiten</Label>
-              <Input
-                id="case-height"
-                type="number"
-                min={0}
-                value={caseMeta.heightUnits ?? ""}
-                onChange={(event) => {
-                  const value = event.target.value.trim();
-                  update((prev) => ({
-                    ...prev,
-                    case: {
-                      ...(prev.case ?? {}),
-                      heightUnits: value === "" ? undefined : Number(value),
-                    },
-                  }));
-                }}
-              />
-            </div>
-            <div className="grid gap-1.5">
-              <Label htmlFor="case-depth">Max. Gerätetiefe (cm)</Label>
-              <Input
-                id="case-depth"
-                type="number"
-                min={0}
-                value={caseMeta.maxDeviceDepthCm ?? ""}
-                onChange={(event) => {
-                  const value = event.target.value.trim();
-                  update((prev) => ({
-                    ...prev,
-                    case: {
-                      ...(prev.case ?? {}),
-                      maxDeviceDepthCm: value === "" ? undefined : Number(value),
-                    },
-                  }));
-                }}
-              />
-            </div>
-          </div>
-          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-            <div className="grid gap-1.5">
-              <Label htmlFor="case-content-weight">Max. Inhaltgewicht (kg)</Label>
-              <Input
-                id="case-content-weight"
-                type="number"
-                min={0}
-                step="0.1"
-                value={caseMeta.contentMaxWeightKg ?? ""}
-                onChange={(event) => {
-                  const value = event.target.value.trim();
-                  update((prev) => ({
-                    ...prev,
-                    case: {
-                      ...(prev.case ?? {}),
-                      contentMaxWeightKg: value === "" ? undefined : Number(value),
-                    },
-                  }));
-                }}
-              />
-            </div>
-            <div className="grid gap-1.5">
-              <Label htmlFor="case-lock">Case hat Schloss</Label>
-              <select
-                id="case-lock"
-                className="h-9 rounded-md border bg-background px-3 text-sm"
-                value={caseMeta.hasLock === undefined ? "unknown" : caseMeta.hasLock ? "yes" : "no"}
-                onChange={(event) => {
-                  const value = event.target.value;
-                  update((prev) => ({
-                    ...prev,
-                    case: {
-                      ...(prev.case ?? {}),
-                      hasLock: value === "unknown" ? undefined : value === "yes",
-                    },
-                  }));
-                }}
-              >
-                <option value="unknown">Unbekannt</option>
-                <option value="yes">Ja</option>
-                <option value="no">Nein</option>
-              </select>
+          {/* Mode Selection - Radio Buttons */}
+          <div className="grid gap-3">
+            <Label>Rack-Konfiguration</Label>
+            <div className="flex flex-col gap-2">
+              <div className="flex items-center space-x-2">
+                <input
+                  type="radio"
+                  id="case-mode-none"
+                  name="case-mode"
+                  checked={mode === "none"}
+                  onChange={() => {
+                    update((prev) => ({
+                      ...prev,
+                      is19Inch: null,
+                      heightUnits: undefined,
+                      case: { ...(prev.case ?? {}), is19Inch: undefined, heightUnits: undefined, maxDeviceDepthCm: undefined },
+                    }));
+                  }}
+                />
+                <Label htmlFor="case-mode-none" className="font-normal cursor-pointer">
+                  Keine Rack-Eigenschaften
+                </Label>
+              </div>
+              <div className="flex items-center space-x-2">
+                <input
+                  type="radio"
+                  id="case-mode-case-rack"
+                  name="case-mode"
+                  checked={mode === "case-is-rack"}
+                  onChange={() => {
+                    update((prev) => ({
+                      ...prev,
+                      is19Inch: null,
+                      heightUnits: undefined,
+                      case: { ...(prev.case ?? {}), is19Inch: true },
+                    }));
+                  }}
+                />
+                <Label htmlFor="case-mode-case-rack" className="font-normal cursor-pointer">
+                  Case ist 19&quot; Rack
+                </Label>
+              </div>
+              <div className="flex items-center space-x-2">
+                <input
+                  type="radio"
+                  id="case-mode-equipment-rack"
+                  name="case-mode"
+                  checked={mode === "equipment-is-rackmountable"}
+                  onChange={() => {
+                    update((prev) => ({
+                      ...prev,
+                      is19Inch: true,
+                      case: { ...(prev.case ?? {}), is19Inch: undefined, heightUnits: undefined, maxDeviceDepthCm: undefined },
+                    }));
+                  }}
+                />
+                <Label htmlFor="case-mode-equipment-rack" className="font-normal cursor-pointer">
+                  Equipment ist 19&quot; rackmontierbar
+                </Label>
+              </div>
             </div>
           </div>
-          <div className="grid gap-1.5">
-            <Label>Innenmaße (cm)</Label>
-            <DimensionsFieldset
-              idPrefix="case-inner-dimensions"
-              value={local.case?.innerDimensionsCm}
-              onChange={(next) => update((prev) => ({
-                ...prev,
-                case: {
-                  ...(prev.case ?? {}),
-                  innerDimensionsCm: next,
-                },
-              }))}
-            />
-          </div>
-          <div className="grid gap-1.5">
-            <Label htmlFor="case-restricted">Erlaubte Inhalte (Typen)</Label>
-            <StringListInput
-              values={local.case?.restrictedContentTypes ?? []}
-              onChange={(next) => update((prev) => ({
-                ...prev,
-                case: {
-                  ...(prev.case ?? {}),
-                  restrictedContentTypes: next,
-                },
-              }))}
-              placeholder="z. B. Elektronik"
-            />
-          </div>
-          <div className="grid gap-1.5">
-            <Label htmlFor="case-fits">Kompatible Restriktions-Typen</Label>
-            <StringListInput
-              values={local.fitsInRestrictedCaseTypes ?? []}
-              onChange={(next) => update((prev) => ({ ...prev, fitsInRestrictedCaseTypes: next }))}
-              placeholder="z. B. YAMAHA MINI"
-            />
-          </div>
+
+          {/* Case is Rack Fields */}
+          {mode === "case-is-rack" && (
+            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 border-l-4 border-blue-500 pl-4">
+              <div className="grid gap-1.5">
+                <Label htmlFor="case-height">Case Höheneinheiten (U)</Label>
+                <Input
+                  id="case-height"
+                  type="number"
+                  min={1}
+                  value={caseMeta.heightUnits ?? ""}
+                  onChange={(event) => {
+                    const value = event.target.value.trim();
+                    update((prev) => ({
+                      ...prev,
+                      case: {
+                        ...(prev.case ?? {}),
+                        heightUnits: value === "" ? undefined : Number(value),
+                      },
+                    }));
+                  }}
+                />
+              </div>
+              <div className="grid gap-1.5">
+                <Label htmlFor="case-depth">Max. Gerätetiefe (cm)</Label>
+                <Input
+                  id="case-depth"
+                  type="number"
+                  min={0}
+                  step="0.1"
+                  value={caseMeta.maxDeviceDepthCm ?? ""}
+                  onChange={(event) => {
+                    const value = event.target.value.trim();
+                    update((prev) => ({
+                      ...prev,
+                      case: {
+                        ...(prev.case ?? {}),
+                        maxDeviceDepthCm: value === "" ? undefined : Number(value),
+                      },
+                    }));
+                  }}
+                />
+              </div>
+            </div>
+          )}
+
+          {/* Equipment is Rackmountable Fields */}
+          {mode === "equipment-is-rackmountable" && (
+            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 border-l-4 border-green-500 pl-4">
+              <div className="grid gap-1.5">
+                <Label htmlFor="equipment-height">Höheneinheiten (U)</Label>
+                <Input
+                  id="equipment-height"
+                  type="number"
+                  min={1}
+                  value={local.heightUnits ?? ""}
+                  onChange={(event) => setNumberField("heightUnits", event.target.value)}
+                />
+              </div>
+            </div>
+          )}
+
+          {/* Common Case Fields (shown when case mode is active) */}
+          {mode === "case-is-rack" && (
+            <>
+              <div className="grid gap-1.5">
+                <Label>Innenmaße (cm)</Label>
+                <div className="grid grid-cols-3 gap-3">
+                  <div className="grid gap-1.5">
+                    <Label htmlFor="case-inner-w" className="text-xs">Breite</Label>
+                    <Input
+                      id="case-inner-w"
+                      type="number"
+                      min={0}
+                      step="0.1"
+                      value={caseMeta.innerDimensionsCm?.width ?? ""}
+                      onChange={(event) => {
+                        const value = event.target.value.trim();
+                        const existingDims = caseMeta.innerDimensionsCm ?? { width: 0, height: 0 };
+                        update((prev) => ({
+                          ...prev,
+                          case: {
+                            ...(prev.case ?? {}),
+                            innerDimensionsCm: value === "" ? undefined : { ...existingDims, width: Number(value) },
+                          },
+                        }));
+                      }}
+                    />
+                  </div>
+                  <div className="grid gap-1.5">
+                    <Label htmlFor="case-inner-h" className="text-xs">Höhe</Label>
+                    <Input
+                      id="case-inner-h"
+                      type="number"
+                      min={0}
+                      step="0.1"
+                      value={caseMeta.innerDimensionsCm?.height ?? ""}
+                      onChange={(event) => {
+                        const value = event.target.value.trim();
+                        const existingDims = caseMeta.innerDimensionsCm ?? { width: 0, height: 0 };
+                        update((prev) => ({
+                          ...prev,
+                          case: {
+                            ...(prev.case ?? {}),
+                            innerDimensionsCm: value === "" ? undefined : { ...existingDims, height: Number(value) },
+                          },
+                        }));
+                      }}
+                    />
+                  </div>
+                  <div className="grid gap-1.5">
+                    <Label htmlFor="case-inner-d" className="text-xs">Tiefe</Label>
+                    <Input
+                      id="case-inner-d"
+                      type="number"
+                      min={0}
+                      step="0.1"
+                      value={caseMeta.innerDimensionsCm?.depth ?? ""}
+                      onChange={(event) => {
+                        const value = event.target.value.trim();
+                        const existingDims = caseMeta.innerDimensionsCm ?? { width: 0, height: 0 };
+                        update((prev) => ({
+                          ...prev,
+                          case: {
+                            ...(prev.case ?? {}),
+                            innerDimensionsCm: value === "" ? undefined : { ...existingDims, depth: Number(value) },
+                          },
+                        }));
+                      }}
+                    />
+                  </div>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+                <div className="grid gap-1.5">
+                  <Label htmlFor="case-content-weight">Max. Inhaltgewicht (kg)</Label>
+                  <Input
+                    id="case-content-weight"
+                    type="number"
+                    min={0}
+                    step="0.1"
+                    value={caseMeta.contentMaxWeightKg ?? ""}
+                    onChange={(event) => {
+                      const value = event.target.value.trim();
+                      update((prev) => ({
+                        ...prev,
+                        case: {
+                          ...(prev.case ?? {}),
+                          contentMaxWeightKg: value === "" ? undefined : Number(value),
+                        },
+                      }));
+                    }}
+                  />
+                </div>
+                <div className="flex items-center space-x-2">
+                  <Checkbox
+                    id="case-lock"
+                    checked={!!caseMeta.hasLock}
+                    onCheckedChange={(checked) =>
+                      update((prev) => ({
+                        ...prev,
+                        case: {
+                          ...(prev.case ?? {}),
+                          hasLock: !!checked,
+                        },
+                      }))
+                    }
+                  />
+                  <Label htmlFor="case-lock">Case hat Schloss</Label>
+                </div>
+              </div>
+            </>
+          )}
         </CardContent>
       </Card>
     );

@@ -137,4 +137,4 @@ Diese To-Do List enthält Aufgaben, die an der Software zu bearbeiten sind. Soba
   - Profileinstellungen (Link zu `/management/profile/settings`)
   - Abmelden (Supabase Sign-Out)
 
-- Fix: Equipment-Metadata Form Case Setup Card zeigt jetzt korrekt geerbte Werte vom Artikel mittels InheritedCheckbox und InheritedNumberField Komponenten für is19Inch, hasLock, heightUnits, maxDeviceDepthCm und contentMaxWeightKg. Innenmaße (innerDimensionsCm) nutzen reguläre Input Felder mit Platzhaltern da das DimensionsCm Objekt keine nullable Einzelfelder unterstützt.
+- Fix: Article & Equipment Metadata Forms vollständig refactored für Case & Rack Setup. Radio-Button Modus-Auswahl (Keine/Case ist Rack/Equipment ist rackmontierbar) mit gegenseitig ausschließender Logik. "19-Zoll Rackmontage" aus Physical Card entfernt und in Case Setup integriert. Konditionale Felder je nach Modus mit visueller Border-Farb-Codierung (blau=Case, grün=Equipment). Physical Card zeigt jetzt nur noch Gewicht und Maße. Alle Rack-Konfigurationen in einer einzigen "Case & Rack Setup" Karte zusammengefasst.

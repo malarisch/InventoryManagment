@@ -226,28 +226,10 @@ export function EquipmentMetadataForm({
       <Card>
         <CardHeader>
           <CardTitle>Physische Eigenschaften</CardTitle>
-          <CardDescription>Rack-Optionen, Gewicht und Maße</CardDescription>
+          <CardDescription>Gewicht und Maße</CardDescription>
         </CardHeader>
         <CardContent className="grid gap-4">
-          <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
-            <InheritedCheckbox
-              id="emf-is-rack"
-              label="19-Zoll Rackmontage"
-              checked={!!local.is19Inch}
-              placeholder={!!inheritedArticle?.is19Inch}
-              ignored={local.is19Inch === null}
-              onIgnoreChange={(checked) => update((prev) => ({ ...prev, is19Inch: checked ? null : undefined }))}
-              onChange={(checked) => update((prev) => ({ ...prev, is19Inch: checked }))}
-            />
-            <InheritedNumberField
-              id="emf-u"
-              label="Höheneinheiten (U)"
-              value={local.heightUnits}
-              placeholder={inheritedArticle?.heightUnits ?? undefined}
-              ignored={local.heightUnits === null}
-              onIgnoreChange={(checked) => update((prev) => ({ ...prev, heightUnits: checked ? null : undefined }))}
-              onChange={(value) => update((prev) => ({ ...prev, heightUnits: value }))}
-            />
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
             <InheritedNumberField
               id="emf-weight"
               label="Gewicht (kg)"
@@ -357,51 +339,96 @@ export function EquipmentMetadataForm({
     const caseData = local.case ?? {};
     const inherited = inheritedArticle?.case ?? {};
     
+    // Determine which mode based on inherited or current values
+    const caseIsRack = caseData.is19Inch ?? inherited.is19Inch ?? false;
+    const equipmentIsRackmountable = local.is19Inch ?? inheritedArticle?.is19Inch ?? false;
+    const mode = caseIsRack ? "case-is-rack" : equipmentIsRackmountable ? "equipment-is-rackmountable" : "none";
+    
     return (
       <Card>
         <CardHeader>
-          <CardTitle>Case Setup</CardTitle>
-          <CardDescription>Konfiguration für Rack-Koffer und Transport-Cases. Geerbte Werte werden als Platzhalter angezeigt</CardDescription>
+          <CardTitle>Case & Rack Setup</CardTitle>
+          <CardDescription>Konfiguration für Cases und Rackmontage-Eigenschaften. Geerbte Werte werden als Platzhalter angezeigt</CardDescription>
         </CardHeader>
         <CardContent className="grid gap-4">
-          <div className="grid gap-3 sm:grid-cols-2">
-            <InheritedCheckbox
-              id="emf-case-is19"
-              label="Ist 19&quot; Rack"
-              checked={!!caseData.is19Inch}
-              placeholder={!!inherited.is19Inch}
-              ignored={caseData.is19Inch === null}
-              onIgnoreChange={(checked) => {
-                setLocal((prev) => ({ ...prev, case: { ...prev.case, is19Inch: checked ? null : undefined } }));
-                onChange({ ...local, case: { ...local.case, is19Inch: checked ? null : undefined } });
-              }}
-              onChange={(checked) => {
-                setLocal((prev) => ({
-                  ...prev,
-                  case: { ...prev.case, is19Inch: checked, ...(checked ? {} : { heightUnits: undefined }) },
-                }));
-                onChange({ ...local, case: { ...local.case, is19Inch: checked, ...(checked ? {} : { heightUnits: undefined }) } });
-              }}
-            />
-            <InheritedCheckbox
-              id="emf-case-lock"
-              label="Hat Schloss"
-              checked={!!caseData.hasLock}
-              placeholder={!!inherited.hasLock}
-              ignored={caseData.hasLock === null}
-              onIgnoreChange={(checked) => {
-                setLocal((prev) => ({ ...prev, case: { ...prev.case, hasLock: checked ? null : undefined } }));
-                onChange({ ...local, case: { ...local.case, hasLock: checked ? null : undefined } });
-              }}
-              onChange={(checked) => {
-                setLocal((prev) => ({ ...prev, case: { ...prev.case, hasLock: checked } }));
-                onChange({ ...local, case: { ...local.case, hasLock: checked } });
-              }}
-            />
+          {/* Mode Selection - Radio Buttons */}
+          <div className="grid gap-3">
+            <Label>Rack-Konfiguration</Label>
+            <div className="flex flex-col gap-2">
+              <div className="flex items-center space-x-2">
+                <input
+                  type="radio"
+                  id="case-mode-none"
+                  name="case-mode"
+                  checked={mode === "none"}
+                  onChange={() => {
+                    setLocal((prev) => ({
+                      ...prev,
+                      is19Inch: null,
+                      heightUnits: undefined,
+                      case: { ...prev.case, is19Inch: undefined, heightUnits: undefined, maxDeviceDepthCm: undefined },
+                    }));
+                    onChange({
+                      ...local,
+                      is19Inch: null,
+                      heightUnits: undefined,
+                      case: { ...local.case, is19Inch: undefined, heightUnits: undefined, maxDeviceDepthCm: undefined },
+                    });
+                  }}
+                />
+                <Label htmlFor="case-mode-none" className="font-normal cursor-pointer">
+                  Keine Rack-Eigenschaften
+                </Label>
+              </div>
+              <div className="flex items-center space-x-2">
+                <input
+                  type="radio"
+                  id="case-mode-case-rack"
+                  name="case-mode"
+                  checked={mode === "case-is-rack"}
+                  onChange={() => {
+                    setLocal((prev) => ({
+                      ...prev,
+                      is19Inch: null,
+                      heightUnits: undefined,
+                      case: { ...prev.case, is19Inch: true },
+                    }));
+                    onChange({ ...local, is19Inch: null, heightUnits: undefined, case: { ...local.case, is19Inch: true } });
+                  }}
+                />
+                <Label htmlFor="case-mode-case-rack" className="font-normal cursor-pointer">
+                  Case ist 19&quot; Rack
+                </Label>
+              </div>
+              <div className="flex items-center space-x-2">
+                <input
+                  type="radio"
+                  id="case-mode-equipment-rack"
+                  name="case-mode"
+                  checked={mode === "equipment-is-rackmountable"}
+                  onChange={() => {
+                    setLocal((prev) => ({
+                      ...prev,
+                      is19Inch: true,
+                      case: { ...prev.case, is19Inch: undefined, heightUnits: undefined, maxDeviceDepthCm: undefined },
+                    }));
+                    onChange({
+                      ...local,
+                      is19Inch: true,
+                      case: { ...local.case, is19Inch: undefined, heightUnits: undefined, maxDeviceDepthCm: undefined },
+                    });
+                  }}
+                />
+                <Label htmlFor="case-mode-equipment-rack" className="font-normal cursor-pointer">
+                  Equipment ist 19&quot; rackmontierbar
+                </Label>
+              </div>
+            </div>
           </div>
 
-          {(caseData.is19Inch ?? inherited.is19Inch) && (
-            <div className="grid gap-3 sm:grid-cols-2">
+          {/* Case is Rack Fields */}
+          {mode === "case-is-rack" && (
+            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 border-l-4 border-blue-500 pl-4">
               <InheritedNumberField
                 id="emf-case-hu"
                 label="Höheneinheiten (U)"
@@ -436,94 +463,137 @@ export function EquipmentMetadataForm({
             </div>
           )}
 
-          <div className="space-y-2">
-            <Label>Innenmaße (cm)</Label>
-            <div className="grid gap-3 sm:grid-cols-3">
-              <div className="grid gap-1.5">
-                <Label htmlFor="emf-case-inner-w">Breite</Label>
-                <Input
-                  id="emf-case-inner-w"
-                  type="number"
-                  step="0.1"
-                  placeholder={String(inherited.innerDimensionsCm?.width ?? "")}
-                  value={caseData.innerDimensionsCm?.width ?? ""}
-                  onChange={(e) => {
-                    const val = e.target.value === "" ? undefined : Number(e.target.value);
-                    if (val === undefined) {
-                      setLocal((prev) => ({ ...prev, case: { ...prev.case, innerDimensionsCm: undefined } }));
-                      onChange({ ...local, case: { ...local.case, innerDimensionsCm: undefined } });
-                      return;
-                    }
-                    const existingDims = caseData.innerDimensionsCm ?? inherited.innerDimensionsCm ?? { width: 0, height: 0 };
-                    const newDims = { ...existingDims, width: val };
-                    setLocal((prev) => ({ ...prev, case: { ...prev.case, innerDimensionsCm: newDims } }));
-                    onChange({ ...local, case: { ...local.case, innerDimensionsCm: newDims } });
-                  }}
-                />
-              </div>
-              <div className="grid gap-1.5">
-                <Label htmlFor="emf-case-inner-h">Höhe</Label>
-                <Input
-                  id="emf-case-inner-h"
-                  type="number"
-                  step="0.1"
-                  placeholder={String(inherited.innerDimensionsCm?.height ?? "")}
-                  value={caseData.innerDimensionsCm?.height ?? ""}
-                  onChange={(e) => {
-                    const val = e.target.value === "" ? undefined : Number(e.target.value);
-                    if (val === undefined) {
-                      setLocal((prev) => ({ ...prev, case: { ...prev.case, innerDimensionsCm: undefined } }));
-                      onChange({ ...local, case: { ...local.case, innerDimensionsCm: undefined } });
-                      return;
-                    }
-                    const existingDims = caseData.innerDimensionsCm ?? inherited.innerDimensionsCm ?? { width: 0, height: 0 };
-                    const newDims = { ...existingDims, height: val };
-                    setLocal((prev) => ({ ...prev, case: { ...prev.case, innerDimensionsCm: newDims } }));
-                    onChange({ ...local, case: { ...local.case, innerDimensionsCm: newDims } });
-                  }}
-                />
-              </div>
-              <div className="grid gap-1.5">
-                <Label htmlFor="emf-case-inner-d">Tiefe</Label>
-                <Input
-                  id="emf-case-inner-d"
-                  type="number"
-                  step="0.1"
-                  placeholder={String(inherited.innerDimensionsCm?.depth ?? "")}
-                  value={caseData.innerDimensionsCm?.depth ?? ""}
-                  onChange={(e) => {
-                    const val = e.target.value === "" ? undefined : Number(e.target.value);
-                    if (val === undefined) {
-                      setLocal((prev) => ({ ...prev, case: { ...prev.case, innerDimensionsCm: undefined } }));
-                      onChange({ ...local, case: { ...local.case, innerDimensionsCm: undefined } });
-                      return;
-                    }
-                    const existingDims = caseData.innerDimensionsCm ?? inherited.innerDimensionsCm ?? { width: 0, height: 0 };
-                    const newDims = { ...existingDims, depth: val };
-                    setLocal((prev) => ({ ...prev, case: { ...prev.case, innerDimensionsCm: newDims } }));
-                    onChange({ ...local, case: { ...local.case, innerDimensionsCm: newDims } });
-                  }}
-                />
-              </div>
+          {/* Equipment is Rackmountable Fields */}
+          {mode === "equipment-is-rackmountable" && (
+            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 border-l-4 border-green-500 pl-4">
+              <InheritedNumberField
+                id="emf-equipment-height"
+                label="Höheneinheiten (U)"
+                value={local.heightUnits}
+                placeholder={inheritedArticle?.heightUnits ?? undefined}
+                ignored={local.heightUnits === null}
+                onIgnoreChange={(checked) => {
+                  setLocal((prev) => ({ ...prev, heightUnits: checked ? null : undefined }));
+                  onChange({ ...local, heightUnits: checked ? null : undefined });
+                }}
+                onChange={(val) => {
+                  setLocal((prev) => ({ ...prev, heightUnits: val }));
+                  onChange({ ...local, heightUnits: val });
+                }}
+              />
             </div>
-          </div>
+          )}
 
-          <InheritedNumberField
-            id="emf-case-max-weight"
-            label="Maximales Inhaltsgewicht (kg)"
-            step="0.1"
-            value={caseData.contentMaxWeightKg}
-            placeholder={inherited.contentMaxWeightKg ?? undefined}
-            ignored={caseData.contentMaxWeightKg === null}
-            onIgnoreChange={(checked) => {
-              setLocal((prev) => ({ ...prev, case: { ...prev.case, contentMaxWeightKg: checked ? null : undefined } }));
-              onChange({ ...local, case: { ...local.case, contentMaxWeightKg: checked ? null : undefined } });
-            }}
-            onChange={(val) => {
-              setLocal((prev) => ({ ...prev, case: { ...prev.case, contentMaxWeightKg: val } }));
-              onChange({ ...local, case: { ...local.case, contentMaxWeightKg: val } });
-            }}
-          />
+          {/* Common Case Fields (shown when case mode is active) */}
+          {mode === "case-is-rack" && (
+            <>
+              <div className="space-y-2">
+                <Label>Innenmaße (cm)</Label>
+                <div className="grid gap-3 sm:grid-cols-3">
+                  <div className="grid gap-1.5">
+                    <Label htmlFor="emf-case-inner-w">Breite</Label>
+                    <Input
+                      id="emf-case-inner-w"
+                      type="number"
+                      step="0.1"
+                      placeholder={String(inherited.innerDimensionsCm?.width ?? "")}
+                      value={caseData.innerDimensionsCm?.width ?? ""}
+                      onChange={(e) => {
+                        const val = e.target.value === "" ? undefined : Number(e.target.value);
+                        if (val === undefined) {
+                          setLocal((prev) => ({ ...prev, case: { ...prev.case, innerDimensionsCm: undefined } }));
+                          onChange({ ...local, case: { ...local.case, innerDimensionsCm: undefined } });
+                          return;
+                        }
+                        const existingDims = caseData.innerDimensionsCm ?? inherited.innerDimensionsCm ?? { width: 0, height: 0 };
+                        const newDims = { ...existingDims, width: val };
+                        setLocal((prev) => ({ ...prev, case: { ...prev.case, innerDimensionsCm: newDims } }));
+                        onChange({ ...local, case: { ...local.case, innerDimensionsCm: newDims } });
+                      }}
+                    />
+                  </div>
+                  <div className="grid gap-1.5">
+                    <Label htmlFor="emf-case-inner-h">Höhe</Label>
+                    <Input
+                      id="emf-case-inner-h"
+                      type="number"
+                      step="0.1"
+                      placeholder={String(inherited.innerDimensionsCm?.height ?? "")}
+                      value={caseData.innerDimensionsCm?.height ?? ""}
+                      onChange={(e) => {
+                        const val = e.target.value === "" ? undefined : Number(e.target.value);
+                        if (val === undefined) {
+                          setLocal((prev) => ({ ...prev, case: { ...prev.case, innerDimensionsCm: undefined } }));
+                          onChange({ ...local, case: { ...local.case, innerDimensionsCm: undefined } });
+                          return;
+                        }
+                        const existingDims = caseData.innerDimensionsCm ?? inherited.innerDimensionsCm ?? { width: 0, height: 0 };
+                        const newDims = { ...existingDims, height: val };
+                        setLocal((prev) => ({ ...prev, case: { ...prev.case, innerDimensionsCm: newDims } }));
+                        onChange({ ...local, case: { ...local.case, innerDimensionsCm: newDims } });
+                      }}
+                    />
+                  </div>
+                  <div className="grid gap-1.5">
+                    <Label htmlFor="emf-case-inner-d">Tiefe</Label>
+                    <Input
+                      id="emf-case-inner-d"
+                      type="number"
+                      step="0.1"
+                      placeholder={String(inherited.innerDimensionsCm?.depth ?? "")}
+                      value={caseData.innerDimensionsCm?.depth ?? ""}
+                      onChange={(e) => {
+                        const val = e.target.value === "" ? undefined : Number(e.target.value);
+                        if (val === undefined) {
+                          setLocal((prev) => ({ ...prev, case: { ...prev.case, innerDimensionsCm: undefined } }));
+                          onChange({ ...local, case: { ...local.case, innerDimensionsCm: undefined } });
+                          return;
+                        }
+                        const existingDims = caseData.innerDimensionsCm ?? inherited.innerDimensionsCm ?? { width: 0, height: 0 };
+                        const newDims = { ...existingDims, depth: val };
+                        setLocal((prev) => ({ ...prev, case: { ...prev.case, innerDimensionsCm: newDims } }));
+                        onChange({ ...local, case: { ...local.case, innerDimensionsCm: newDims } });
+                      }}
+                    />
+                  </div>
+                </div>
+              </div>
+
+              <div className="grid gap-4 sm:grid-cols-2">
+                <InheritedNumberField
+                  id="emf-case-max-weight"
+                  label="Maximales Inhaltsgewicht (kg)"
+                  step="0.1"
+                  value={caseData.contentMaxWeightKg}
+                  placeholder={inherited.contentMaxWeightKg ?? undefined}
+                  ignored={caseData.contentMaxWeightKg === null}
+                  onIgnoreChange={(checked) => {
+                    setLocal((prev) => ({ ...prev, case: { ...prev.case, contentMaxWeightKg: checked ? null : undefined } }));
+                    onChange({ ...local, case: { ...local.case, contentMaxWeightKg: checked ? null : undefined } });
+                  }}
+                  onChange={(val) => {
+                    setLocal((prev) => ({ ...prev, case: { ...prev.case, contentMaxWeightKg: val } }));
+                    onChange({ ...local, case: { ...local.case, contentMaxWeightKg: val } });
+                  }}
+                />
+                <InheritedCheckbox
+                  id="emf-case-lock"
+                  label="Case hat Schloss"
+                  checked={!!caseData.hasLock}
+                  placeholder={!!inherited.hasLock}
+                  ignored={caseData.hasLock === null}
+                  onIgnoreChange={(checked) => {
+                    setLocal((prev) => ({ ...prev, case: { ...prev.case, hasLock: checked ? null : undefined } }));
+                    onChange({ ...local, case: { ...local.case, hasLock: checked ? null : undefined } });
+                  }}
+                  onChange={(checked) => {
+                    setLocal((prev) => ({ ...prev, case: { ...prev.case, hasLock: checked } }));
+                    onChange({ ...local, case: { ...local.case, hasLock: checked } });
+                  }}
+                />
+              </div>
+            </>
+          )}
         </CardContent>
       </Card>
     );

@@ -1,3 +1,19 @@
+## 2025-10-02 18:00 – Complete Refactor: Case & Rack Setup Forms (Article + Equipment)
+- **COMPLETE IMPLEMENTATION** of Case & Rack Setup consolidation across both forms
+- Removed "19-Zoll Rackmontage" from Physical Card, moved to unified "Case & Rack Setup" card
+- Physical Card now only shows Gewicht (weight) and Maße (dimensions)
+- Implemented radio-button mode selection with mutually exclusive logic:
+  1. "Keine Rack-Eigenschaften" - clears all rack config
+  2. "Case ist 19" Rack" - shows case.heightUnits, case.maxDeviceDepthCm, innerDimensionsCm, hasLock, contentMaxWeightKg
+  3. "Equipment ist 19" rackmontierbar" - shows equipment heightUnits
+- Conditional field rendering with visual border color coding (blue=case rack, green=equipment rackmountable)
+- Mode detection based on case.is19Inch vs equipment is19Inch with proper inherited value handling
+- Equipment form uses InheritedCheckbox/InheritedNumberField for all rack fields with proper inheritance
+- Article form uses plain inputs but follows same structural pattern
+- Files: article-metadata-form.tsx, equipment-metadata-form.tsx, todos.md
+- Total bugs fixed: 23
+- Next: Continue with remaining form improvements
+
 ## 2025-10-02 17:30 – Fixed Case Setup Card Inheritance in Equipment Form
 - Refactored equipment-metadata-form.tsx renderCaseCard() to use InheritedCheckbox/InheritedNumberField components
 - is19Inch, hasLock, heightUnits, maxDeviceDepthCm, contentMaxWeightKg now properly display inherited values from article
