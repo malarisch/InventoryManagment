@@ -1,3 +1,16 @@
+## 2025-10-02 19:00 – Fixed "setState during render" error with lastSentRef pattern
+- **PROBLEM**: Synchronous onChange in setState callback caused React error
+- "Cannot update a component while rendering a different component"
+- onChange called during EquipmentMetadataForm render → triggered EquipmentEditForm setState
+- **SOLUTION**: Move onChange to separate useEffect, use lastSentRef to prevent loops
+- lastSentRef tracks last value sent to parent
+- Parent→Child: Update both local and lastSentRef when value prop changes
+- Child→Parent: useEffect calls onChange only when local !== lastSentRef
+- onChange happens AFTER render completes, not during setState
+- Files: equipment-metadata-form.tsx, agentlog.md
+- TypeScript compilation: ✅ PASSED
+- Next: User testing (hopefully final!)
+
 ## 2025-10-02 18:45 – Final Fix: Removed bidirectional sync, made onChange synchronous
 - **ROOT CAUSE**: Bidirectional sync with `local === value` check always false due to object recreation
 - `buildEquipmentMetadata()` returns new object → `local === value` always false → infinite loop
