@@ -1,3 +1,13 @@
+## 2025-10-02 19:25 – Broadened Case data detection for auto-activation
+- **PROBLEM**: Case card still hidden when only inner dimensions / weight / restrictions inherited
+- Previous hasCaseData() only checked basic rack flags, missing additional case details
+- **SOLUTION**: Extended detection to cover innerDimensionsCm, contentMaxWeightKg, restrictedContentTypes and heightUnits
+- Added helper utils for dimensions, arrays; now also considers equipment heightUnits values
+- Import `DimensionsCm` type; ensures both own and inherited metadata trigger activation
+- Files: equipment-metadata-form.tsx, agentlog.md
+- TypeScript compilation: ✅ PASSED
+- Next: User to verify card shows immediately with inherited case dimensions
+
 ## 2025-10-02 19:15 – Auto-activate Case & Rack Setup card when inherited data present
 - **PROBLEM**: Case & Rack card not shown by default when equipment has article with case data
 - Card only appeared after clicking radio button, inherited state not visible initially

@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useRef, useState } from "react";
-import type { ArticleMetadata, EquipmentMetadata, Person } from "@/components/metadataTypes.types";
+import type { ArticleMetadata, DimensionsCm, EquipmentMetadata, Person } from "@/components/metadataTypes.types";
 import type { adminCompanyMetadata } from "@/components/metadataTypes.types";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -841,26 +841,39 @@ function hasConnectivityData(metadata: EquipmentMetadata) {
 }
 
 function hasCaseData(metadata: EquipmentMetadata, inheritedArticle?: ArticleMetadata | null) {
+  const hasDimensions = (dims?: DimensionsCm | null) => {
+    if (!dims) return false;
+    return dims.width !== undefined || dims.height !== undefined || dims.depth !== undefined;
+  };
+
+  const hasRestrictedTypes = (types?: string[] | null) => (types?.length ?? 0) > 0;
+
   // Check if equipment itself has rack/case data
   const hasOwnCaseData = Boolean(
     metadata.case?.is19Inch !== undefined ||
     metadata.case?.heightUnits !== undefined ||
     metadata.case?.maxDeviceDepthCm !== undefined ||
-    metadata.case?.hasLock !== undefined
+    metadata.case?.hasLock !== undefined ||
+    metadata.case?.contentMaxWeightKg !== undefined ||
+    hasDimensions(metadata.case?.innerDimensionsCm) ||
+    hasRestrictedTypes(metadata.case?.restrictedContentTypes)
   );
-  
-  const hasOwnRackData = metadata.is19Inch !== undefined;
-  
+
+  const hasOwnRackData = metadata.is19Inch !== undefined || metadata.heightUnits !== undefined;
+
   // Check if inherited from article
   const hasInheritedCaseData = Boolean(
     inheritedArticle?.case?.is19Inch !== undefined ||
     inheritedArticle?.case?.heightUnits !== undefined ||
     inheritedArticle?.case?.maxDeviceDepthCm !== undefined ||
-    inheritedArticle?.case?.hasLock !== undefined
+    inheritedArticle?.case?.hasLock !== undefined ||
+    inheritedArticle?.case?.contentMaxWeightKg !== undefined ||
+    hasDimensions(inheritedArticle?.case?.innerDimensionsCm) ||
+    hasRestrictedTypes(inheritedArticle?.case?.restrictedContentTypes)
   );
-  
-  const hasInheritedRackData = inheritedArticle?.is19Inch !== undefined;
-  
+
+  const hasInheritedRackData = inheritedArticle?.is19Inch !== undefined || inheritedArticle?.heightUnits !== undefined;
+
   return hasOwnCaseData || hasOwnRackData || hasInheritedCaseData || hasInheritedRackData;
 }
 
