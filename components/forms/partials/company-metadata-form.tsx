@@ -159,7 +159,7 @@ export function CompanyMetadataForm({
             onChange={(e) => {
               const t = e.target.value;
               setArticleTypesText(t);
-              set("customTypes", { ...value.customTypes, articleTypes: t.split("\n").map(s => s.trim()) });
+              set("customTypes", { ...value.customTypes, articleTypes: t.split("\n").map(s => s.trim()).filter(s => s.length > 0) });
             }} />
         </div>
         <div className="grid gap-1.5">
@@ -170,7 +170,7 @@ export function CompanyMetadataForm({
             onChange={(e) => {
               const t = e.target.value;
               setCaseTypesText(t);
-              set("customTypes", { ...value.customTypes, caseTypes: t.split("\n").map(s => s.trim()) });
+              set("customTypes", { ...value.customTypes, caseTypes: t.split("\n").map(s => s.trim()).filter(s => s.length > 0) });
             }} />
         </div>
         <div className="grid gap-1.5">
@@ -181,7 +181,7 @@ export function CompanyMetadataForm({
             onChange={(e) => {
               const t = e.target.value;
               setLocationTypesText(t);
-              set("customTypes", { ...value.customTypes, locationTypes: t.split("\n").map(s => s.trim()) });
+              set("customTypes", { ...value.customTypes, locationTypes: t.split("\n").map(s => s.trim()).filter(s => s.length > 0) });
             }} />
         </div>
       </div>
