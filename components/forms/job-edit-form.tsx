@@ -14,6 +14,7 @@ import { safeParseDate } from "@/lib/dates";
 import { DatePicker } from "@/components/ui/date-picker";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { ContactFormDialog } from "@/components/forms/contacts/contact-form-dialog";
+import { SearchPicker, type SearchItem } from "@/components/search/search-picker";
 
 type Job = Tables<"jobs">;
 type Contact = Tables<"contacts">;
@@ -54,6 +55,32 @@ export function JobEditForm({ job }: { job: Job }) {
   const [message, setMessage] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [contactDialogOpen, setContactDialogOpen] = useState(false);
+
+  const contactItems = useMemo(() => {
+    return contacts
+      .filter((contact) => contact.contact_type === "customer")
+      .map((contact): SearchItem<"contact", Contact> => {
+        const displayName = contact.display_name || contact.company_name || `${contact.first_name ?? ""} ${contact.last_name ?? ""}`.trim() || `#${contact.id}`;
+        const matchers = [
+          { value: String(contact.id), weight: 5 },
+          contact.display_name && { value: contact.display_name, weight: 20 },
+          contact.company_name && { value: contact.company_name, weight: 20 },
+          contact.first_name && { value: contact.first_name, weight: 15 },
+          contact.last_name && { value: contact.last_name, weight: 15 },
+        ].filter(Boolean) as Array<{ value: string; weight: number }>;
+
+        return {
+          id: `contact-${contact.id}`,
+          category: "contact",
+          title: displayName,
+          description: `Kontakt #${contact.id}`,
+          meta: contact.contact_type,
+          priority: 0,
+          matchers,
+          data: contact,
+        };
+      });
+  }, [contacts]);
 
   useEffect(() => {
     let active = true;
@@ -296,21 +323,21 @@ export function JobEditForm({ job }: { job: Job }) {
         <CardContent className="space-y-3">
           <div className="grid gap-2">
             <Label htmlFor="contact_id">Kontakt</Label>
-            <select
-              id="contact_id"
-              className="h-9 rounded-md border bg-background px-3 text-sm"
-              value={contactId}
-              onChange={(event) => setContactId(event.target.value === "" ? "" : Number(event.target.value))}
-            >
-              <option value="">— Kein Kontakt —</option>
-              {contacts
-                .filter((contact) => contact.contact_type === "customer")
-                .map((contact) => (
-                  <option key={contact.id} value={contact.id}>
-                    {contact.display_name || contact.company_name || `${contact.first_name ?? ""} ${contact.last_name ?? ""}`.trim() || `#${contact.id}`}
-                  </option>
-                ))}
-            </select>
+            <SearchPicker
+              items={contactItems}
+              onSelect={(item) => setContactId(item.data.id)}
+              categoryLabels={{ contact: "Kontakte" }}
+              placeholder="Kontakt suchen..."
+              emptyLabel="Keine Kontakte gefunden"
+              buttonLabel={
+                contactId
+                  ? contacts.find((c) => c.id === contactId)?.display_name ||
+                    contacts.find((c) => c.id === contactId)?.company_name ||
+                    `Kontakt #${contactId}`
+                  : "Kontakt auswählen"
+              }
+              resetOnSelect={false}
+            />
           </div>
           <Button type="button" variant="secondary" onClick={() => setContactDialogOpen(true)}>
             Neuen Kontakt anlegen
