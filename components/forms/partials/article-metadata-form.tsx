@@ -43,8 +43,8 @@ interface SectionDefinition {
 
 const SECTION_DEFINITIONS: SectionDefinition[] = [
   { id: "general", title: "Allgemein", description: "Typ, Hersteller, Buchungsoptionen", defaultActive: true },
-  { id: "physical", title: "Physische Eigenschaften", description: "Gewicht, Maße und Rack-Optionen", defaultActive: true },
-  { id: "power", title: "Stromversorgung", description: "Spannung, Frequenz und Anschluss", defaultActive: true },
+  { id: "physical", title: "Physische Eigenschaften", description: "Gewicht, Maße und Rack-Optionen", defaultActive: false },
+  { id: "power", title: "Stromversorgung", description: "Spannung, Frequenz und Anschluss", defaultActive: false },
   { id: "case", title: "Case Setup", description: "Rack Cases, Einschränkungen und Inhalt" },
   { id: "connectivity", title: "Konnektivität & Schnittstellen", description: "Netzwerk-Features und Ports" },
   { id: "suppliers", title: "Lieferanten & Preise", description: "Lieferanten, Preise und Konditionen" },

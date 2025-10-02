@@ -48,7 +48,7 @@ export const defaultArticleMetadataDE: ArticleMetadata = {
   is19Inch: false,
   heightUnits: 0,
   case: { is19Inch: false, heightUnits: 0 },
-  power: powerDE,
+  // power: undefined - leave empty so placeholders show instead of prefilled values
 };
 
 export const defaultEquipmentMetadataDE: EquipmentMetadata = {
