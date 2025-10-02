@@ -420,3 +420,5 @@ Files: lib/tools/deleteCompany.ts, tests/vitest/delete-company.test.ts. Next: ru
 - Werkstatt-Übersicht ergänzt letzte Wartungen, Cases erhalten Werkstatt-Todo, Typen regeneriert und Lint/tsc erfolgreich (app/management/workshop/page.tsx, database.types.ts, npm run lint, npm run test:tsc).
 
 2025-01-25 10:04 — **Fix: Article Form UX Improvements**: Collapsed Physical/Power cards by default (SECTION_DEFINITIONS), removed power pre-fill from defaultArticleMetadataDE (now shows placeholders). Fixes UX complaint about passive equipment. Files: article-metadata-form.tsx, lib/metadata/defaults.ts, todos.md.
+
+2025-01-25 10:15 — **Fix: Case Create Equipment Selection**: Added chip list above table showing selected equipments with remove (×) buttons. Updated card description to show count. Made table rows clickable. Fixed disappearing equipment issue (was hidden by filter). Files: case-create-form.tsx, todos.md.

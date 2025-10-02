@@ -12,7 +12,6 @@ Diese To-Do List enthält Aufgaben, die an der Software zu bearbeiten sind. Soba
 - Notizen sollen Additiv vererbt werden, nicht überschrieben. Also auf einem Equipment sollen die Notizen von seinem Artikel als "Read Only" card angezeigt werden, sowie die normale Card für die eigenen Assets.
 - Metadaten: "Zuweisung" darf gern ein Kontakt Picker enthalten und keine parallelstruktur. Das eigene Notizfeld hiervon darf aber gern bleiben.
 - Cases:
-  - Beim einfügen von Equipments in ein Case im create formular verschwinden die Equipments einfach, werden aber in keine "Hinzugefügt" tabelle oder so eingefgt
   - Die Case Edit seite ist sehr unaufgräumt. Unterteile sie in mehrere Cards.
   - Case Edit: Bei Equipments im Case wird nur die ID angezeigt aber nicht der Name des Artikels. In der Plan text ansicht oben das Gleiche, außerdem fehlen Created By und Created At. Ein Picker, um das Case Equipment zu ändern fehlt.
   - Case Edit Table: Die Tabelle ist leer, suche gibt keine Ergebnisse.
@@ -81,6 +80,7 @@ Diese To-Do List enthält Aufgaben, die an der Software zu bearbeiten sind. Soba
 
 
 ## Done
+- **Fix: Case Create Equipment Selection**: Selected equipments now show in dedicated chip list above the table. Added count in card description. Made table rows clickable. Equipments no longer disappear when selected.
 - **Fix: Article Form Power/Physical Cards**: Physical Properties and Power Supply cards now collapsed by default. Power defaults show as placeholders instead of prefilled values (fixes annoyance with passive equipment).
 - **Fix: Company Settings Input Lag**: Memoized CompanyMetadataForm component to prevent expensive re-renders when typing in name/description fields. Input lag reduced from 500ms+ to negligible.
 - **Fix: Company Settings Reload**: Company settings changes now immediately reflected in UI after save. Reloads company data and triggers page refresh to update header/company picker.
