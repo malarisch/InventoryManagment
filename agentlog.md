@@ -769,3 +769,19 @@ Files: lib/tools/deleteCompany.ts, tests/vitest/delete-company.test.ts. Next: ru
 - Mobile view remains single column (responsive)
 - File: components/forms/asset-tag-template-create-form.tsx
 - TypeScript compilation: ✅ PASSED
+
+## 2025-10-03 00:55 – Moved Template Codes card to right column under preview
+- **PROBLEM**: Template Codes card took full width in left column
+- User feedback: "Die Template Codes dürfen rüberrutschen unter die preview"
+- **SOLUTION**: Moved Available Template Codes card to right column
+- Now appears below Live Preview in same sticky column
+- Added space-y-6 to right column wrapper for spacing between cards
+- Changed grid from 2 columns to single column for better fit in narrow sidebar
+- Reduced font size to text-xs for more compact display
+- Benefits:
+  * Better space utilization - codes visible alongside preview
+  * Reference material close to where it's needed (elements section)
+  * Left column has more room for complex forms
+  * Sidebar now contains both preview and reference codes
+- File: components/forms/asset-tag-template-create-form.tsx
+- TypeScript compilation: ✅ PASSED

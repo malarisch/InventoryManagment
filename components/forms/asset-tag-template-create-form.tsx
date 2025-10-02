@@ -313,50 +313,6 @@ export function AssetTagTemplateCreateForm() {
         </CardContent>
       </Card>
 
-      {/* Available Template Codes */}
-      <Card>
-        <CardHeader>
-          <CardTitle>Available Template Codes</CardTitle>
-          <CardDescription>Use these placeholders in element values</CardDescription>
-        </CardHeader>
-        <CardContent>
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-sm">
-            <div className="flex items-center gap-2">
-              <code className="bg-muted px-2 py-1 rounded">{'{printed_code}'}</code>
-              <span className="text-muted-foreground">Asset Tag Code</span>
-            </div>
-            <div className="flex items-center gap-2">
-              <code className="bg-muted px-2 py-1 rounded">{'{equipment_name}'}</code>
-              <span className="text-muted-foreground">Equipment Name</span>
-            </div>
-            <div className="flex items-center gap-2">
-              <code className="bg-muted px-2 py-1 rounded">{'{article_name}'}</code>
-              <span className="text-muted-foreground">Article Name</span>
-            </div>
-            <div className="flex items-center gap-2">
-              <code className="bg-muted px-2 py-1 rounded">{'{location_name}'}</code>
-              <span className="text-muted-foreground">Location Name</span>
-            </div>
-            <div className="flex items-center gap-2">
-              <code className="bg-muted px-2 py-1 rounded">{'{case_name}'}</code>
-              <span className="text-muted-foreground">Case Name</span>
-            </div>
-            <div className="flex items-center gap-2">
-              <code className="bg-muted px-2 py-1 rounded">{'{company_name}'}</code>
-              <span className="text-muted-foreground">Company Name</span>
-            </div>
-            <div className="flex items-center gap-2">
-              <code className="bg-muted px-2 py-1 rounded">{'{current_date}'}</code>
-              <span className="text-muted-foreground">Current Date</span>
-            </div>
-            <div className="flex items-center gap-2">
-              <code className="bg-muted px-2 py-1 rounded">{'{qr_url}'}</code>
-              <span className="text-muted-foreground">QR Code URL</span>
-            </div>
-          </div>
-        </CardContent>
-      </Card>
-
       {/* Elements */}
       <Card>
         <CardHeader>
@@ -424,8 +380,8 @@ export function AssetTagTemplateCreateForm() {
       </div>
     </form>
 
-      {/* Live Preview - Sticky on large screens */}
-      <div className="lg:col-span-4">
+      {/* Live Preview and Template Codes - Sticky on large screens */}
+      <div className="lg:col-span-4 space-y-6">
       <Card className="lg:sticky lg:top-20">
         <CardHeader>
           <CardTitle>Live Preview</CardTitle>
@@ -469,6 +425,50 @@ export function AssetTagTemplateCreateForm() {
               />
             );
           })()}
+        </CardContent>
+      </Card>
+
+      {/* Available Template Codes */}
+      <Card>
+        <CardHeader>
+          <CardTitle>Available Template Codes</CardTitle>
+          <CardDescription>Use these placeholders in element values</CardDescription>
+        </CardHeader>
+        <CardContent>
+          <div className="grid grid-cols-1 gap-2 text-sm">
+            <div className="flex items-center gap-2">
+              <code className="bg-muted px-2 py-1 rounded text-xs">{'{printed_code}'}</code>
+              <span className="text-muted-foreground text-xs">Asset Tag Code</span>
+            </div>
+            <div className="flex items-center gap-2">
+              <code className="bg-muted px-2 py-1 rounded text-xs">{'{equipment_name}'}</code>
+              <span className="text-muted-foreground text-xs">Equipment Name</span>
+            </div>
+            <div className="flex items-center gap-2">
+              <code className="bg-muted px-2 py-1 rounded text-xs">{'{article_name}'}</code>
+              <span className="text-muted-foreground text-xs">Article Name</span>
+            </div>
+            <div className="flex items-center gap-2">
+              <code className="bg-muted px-2 py-1 rounded text-xs">{'{location_name}'}</code>
+              <span className="text-muted-foreground text-xs">Location Name</span>
+            </div>
+            <div className="flex items-center gap-2">
+              <code className="bg-muted px-2 py-1 rounded text-xs">{'{case_name}'}</code>
+              <span className="text-muted-foreground text-xs">Case Name</span>
+            </div>
+            <div className="flex items-center gap-2">
+              <code className="bg-muted px-2 py-1 rounded text-xs">{'{company_name}'}</code>
+              <span className="text-muted-foreground text-xs">Company Name</span>
+            </div>
+            <div className="flex items-center gap-2">
+              <code className="bg-muted px-2 py-1 rounded text-xs">{'{current_date}'}</code>
+              <span className="text-muted-foreground text-xs">Current Date</span>
+            </div>
+            <div className="flex items-center gap-2">
+              <code className="bg-muted px-2 py-1 rounded text-xs">{'{qr_url}'}</code>
+              <span className="text-muted-foreground text-xs">QR Code URL</span>
+            </div>
+          </div>
         </CardContent>
       </Card>
       </div>
