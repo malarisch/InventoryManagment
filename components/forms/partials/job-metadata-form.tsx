@@ -42,10 +42,6 @@ export function JobMetadataForm({
       <h3 className="text-lg font-medium">Job-Details</h3>
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
         <div className="grid gap-1.5">
-          <Label htmlFor="jmf-location">Ort</Label>
-          <Input id="jmf-location" value={local.location ?? ""} onChange={(e) => set("location", e.target.value)} />
-        </div>
-        <div className="grid gap-1.5">
           <Label htmlFor="jmf-prio">Priorität</Label>
           <select id="jmf-prio" className="h-9 rounded-md border bg-background px-3 text-sm"
             value={local.priority ?? "medium"}

@@ -267,7 +267,6 @@ export interface JobMetadata {
   assignedTo?: Person[]; // Array of persons assigned to the job
   reportedBy?: Person; // Person who reported/created the job
   customer?: CustomerMetadata; // Customer related to the job
-  location?: string; // Location where the job is to be performed
   actualStart?: string; // ISO date string
   actualEnd?: string; // ISO date string
     actualCost?: Price; // Actual cost incurred

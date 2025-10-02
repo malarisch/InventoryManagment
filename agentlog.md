@@ -1,3 +1,13 @@
+## 2025-10-02 22:15 – Removed duplicate location field from Jobs
+- **PROBLEM**: Jobs had duplicate location field - both in job_location (base table) and JobMetadata.location
+- User requested: Remove duplicate, keep only the base table field job_location
+- **SOLUTION**: Removed `location?: string` from JobMetadata interface
+- Removed location input field from job-metadata-form.tsx
+- Job location now only managed through job_location field in job-edit-form
+- Files: components/metadataTypes.types.ts, components/forms/partials/job-metadata-form.tsx, agentlog.md
+- TypeScript compilation: ✅ PASSED (`npm run test:tsc`)
+- Next: Continue with remaining fixes
+
 ## 2025-10-02 22:10 – Replaced assignment Person structure with contact picker
 - **PROBLEM**: Equipment metadata used Person parallel structure for assignedTo instead of referencing contacts table
 - User requested: Replace with contact picker (FK to contacts), keep notes field for assignment-specific info
