@@ -352,19 +352,30 @@ export function EquipmentMetadataForm({
   function renderCaseCard() {
     if (!activeSections.includes("case")) return null;
     const caseData = local.case ?? {};
-    const inherited = inheritedArticle?.case ?? {};
-    
-    // Determine which mode based on inherited or current values
-    const caseIsRack = caseData.is19InchRack ?? inherited.is19InchRack ?? false;
-    const equipmentIsRackmountable = local.is19InchRackmountable ?? inheritedArticle?.is19InchRackmountable ?? false;
-    const mode = caseIsRack ? "case-is-rack" : equipmentIsRackmountable ? "equipment-is-rackmountable" : "none";
+    const inheritedCase = inheritedArticle?.case ?? {};
+
+    const explicitCaseRack = caseData.is19InchRack;
+    const explicitEquipmentRack = local.is19InchRackmountable;
+    const resolvedCaseRack = explicitCaseRack ?? inheritedCase.is19InchRack ?? false;
+    const resolvedEquipmentRack = explicitEquipmentRack ?? inheritedArticle?.is19InchRackmountable ?? false;
+
+    const mode: "none" | "case-is-rack" | "equipment-is-rackmountable" = (() => {
+      if (explicitCaseRack === true) return "case-is-rack";
+      if (explicitEquipmentRack === true) return "equipment-is-rackmountable";
+      if (explicitCaseRack === false && explicitEquipmentRack === false) return "none";
+      if (resolvedCaseRack) return "case-is-rack";
+      if (resolvedEquipmentRack) return "equipment-is-rackmountable";
+      return "none";
+    })();
+
+    const generalCaseActive = (caseData.isGeneralCase ?? inheritedCase.isGeneralCase) ?? false;
     const caseHasRackDataActive = hasCaseRackData(local, inheritedArticle);
     const caseHasGeneralDataActive = hasCaseGeneralData(local, inheritedArticle);
-    const showRackCaseFields = caseIsRack || caseHasRackDataActive;
-    const showGeneralCaseFields = showRackCaseFields || caseHasGeneralDataActive;
+    const showRackCaseFields =
+      mode === "case-is-rack" || (explicitCaseRack === undefined && caseHasRackDataActive);
+    const showGeneralCaseFields =
+      generalCaseActive || (caseData.isGeneralCase === undefined && caseHasGeneralDataActive);
 
-    console.log("CaseData:", caseData, "Inherited", inherited, "Mode", mode, "showRackCaseFields", showRackCaseFields, "showGeneralCaseFields", showGeneralCaseFields);
-    
     return (
       <Card>
         <CardHeader>
@@ -372,7 +383,42 @@ export function EquipmentMetadataForm({
           <CardDescription>Konfiguration für Cases und Rackmontage-Eigenschaften. Geerbte Werte werden als Platzhalter angezeigt</CardDescription>
         </CardHeader>
         <CardContent className="grid gap-4">
-          {/* Mode Selection - Radio Buttons */}
+          <div className="flex flex-col gap-2">
+            <div className="flex items-center space-x-2">
+              <Checkbox
+                id="case-mode-general"
+                checked={generalCaseActive}
+                onCheckedChange={(checked) => {
+                  const next = !!checked;
+                  update((prev) => {
+                    const prevCase = prev.case ?? {};
+                    const inheritedValue = inheritedCase.isGeneralCase;
+                    const nextValue = inheritedValue !== undefined && inheritedValue === next ? undefined : next;
+                    const updatedCase = {
+                      ...prevCase,
+                      isGeneralCase: nextValue,
+                    };
+                    if (!next) {
+                      updatedCase.innerDimensionsCm = undefined;
+                      updatedCase.contentMaxWeightKg = undefined;
+                      updatedCase.hasLock = undefined;
+                    }
+                    const cleanedCase = Object.values(updatedCase).every((value) => value === undefined)
+                      ? undefined
+                      : updatedCase;
+                    return { ...prev, case: cleanedCase };
+                  });
+                }}
+              />
+              <Label htmlFor="case-mode-general" className="font-normal cursor-pointer">
+                Hat Case Eigenschaften
+              </Label>
+              {inheritedCase.isGeneralCase !== undefined && caseData.isGeneralCase === undefined && (
+                <span className="text-xs text-muted-foreground">(geerbt)</span>
+              )}
+            </div>
+          </div>
+
           <div className="grid gap-3">
             <Label>Rack-Konfiguration</Label>
             <div className="flex flex-col gap-2">
@@ -381,17 +427,17 @@ export function EquipmentMetadataForm({
                   type="radio"
                   id="case-mode-none"
                   name="case-mode"
-                  defaultChecked={mode === "none"}
+                  checked={mode === "none"}
                   onChange={() => {
                     update((prev) => {
                       const prevCase = prev.case ?? {};
                       return {
                         ...prev,
-                        is19Inch: false,
+                        is19InchRackmountable: false,
                         heightUnits: undefined,
                         case: {
                           ...prevCase,
-                          is19Inch: false,
+                          is19InchRack: false,
                           heightUnits: undefined,
                           maxDeviceDepthCm: undefined,
                         },
@@ -408,13 +454,13 @@ export function EquipmentMetadataForm({
                   type="radio"
                   id="case-mode-case-rack"
                   name="case-mode"
-                  defaultChecked={mode === "case-is-rack"}
+                  checked={mode === "case-is-rack"}
                   onChange={() => {
                     update((prev) => {
                       const prevCase = prev.case ?? {};
                       return {
                         ...prev,
-                        is19InchRackmountable: false,
+                        is19InchRackmountable: null,
                         heightUnits: undefined,
                         case: { ...prevCase, is19InchRack: true },
                       };
@@ -430,9 +476,8 @@ export function EquipmentMetadataForm({
                   type="radio"
                   id="case-mode-equipment-rack"
                   name="case-mode"
-                  defaultChecked={mode === "equipment-is-rackmountable"}
+                  checked={mode === "equipment-is-rackmountable"}
                   onChange={() => {
-                    
                     update((prev) => {
                       const prevCase = prev.case ?? {};
                       return {
@@ -455,14 +500,13 @@ export function EquipmentMetadataForm({
             </div>
           </div>
 
-          {/* Case is Rack Fields */}
-          {mode == "case-is-rack" && (
+          {showRackCaseFields && (
             <div className={`grid grid-cols-1 gap-4 sm:grid-cols-2 ${mode === "case-is-rack" ? "border-l-4 border-blue-500 pl-4" : ""}`}>
               <InheritedNumberField
                 id="emf-case-hu"
                 label="Höheneinheiten (U)"
                 value={caseData.heightUnits}
-                placeholder={inherited.heightUnits ?? undefined}
+                placeholder={inheritedCase.heightUnits ?? undefined}
                 ignored={caseData.heightUnits === null}
                 onIgnoreChange={(checked) => {
                   update((prev) => ({ ...prev, case: { ...prev.case, heightUnits: checked ? null : undefined } }));
@@ -476,7 +520,7 @@ export function EquipmentMetadataForm({
                 label="Max. Gerätetiefe (cm)"
                 step="0.1"
                 value={caseData.maxDeviceDepthCm}
-                placeholder={inherited.maxDeviceDepthCm ?? undefined}
+                placeholder={inheritedCase.maxDeviceDepthCm ?? undefined}
                 ignored={caseData.maxDeviceDepthCm === null}
                 onIgnoreChange={(checked) => {
                   update((prev) => ({ ...prev, case: { ...prev.case, maxDeviceDepthCm: checked ? null : undefined } }));
@@ -488,7 +532,6 @@ export function EquipmentMetadataForm({
             </div>
           )}
 
-          {/* Equipment is Rackmountable Fields */}
           {mode === "equipment-is-rackmountable" && (
             <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 border-l-4 border-green-500 pl-4">
               <InheritedNumberField
@@ -507,7 +550,6 @@ export function EquipmentMetadataForm({
             </div>
           )}
 
-          {/* Common Case Fields */}
           {showGeneralCaseFields && (
             <div className={`grid gap-4 ${mode === "case-is-rack" ? "border-l-4 border-blue-500 pl-4" : ""}`}>
               <div className="space-y-2">
@@ -519,16 +561,16 @@ export function EquipmentMetadataForm({
                       id="emf-case-inner-w"
                       type="number"
                       step="0.1"
-                      placeholder={String(inherited.innerDimensionsCm?.width ?? "")}
+                      placeholder={String(inheritedCase.innerDimensionsCm?.width ?? "")}
                       value={caseData.innerDimensionsCm?.width ?? ""}
-                      onChange={(e) => {
-                        const val = e.target.value === "" ? undefined : Number(e.target.value);
+                      onChange={(event) => {
+                        const val = event.target.value === "" ? undefined : Number(event.target.value);
                         if (val === undefined) {
                           update((prev) => ({ ...prev, case: { ...prev.case, innerDimensionsCm: undefined } }));
                           return;
                         }
                         update((prev) => {
-                          const existingDims = prev.case?.innerDimensionsCm ?? inherited.innerDimensionsCm ?? { width: 0, height: 0 };
+                          const existingDims = prev.case?.innerDimensionsCm ?? inheritedCase.innerDimensionsCm ?? { width: 0, height: 0 };
                           return { ...prev, case: { ...prev.case, innerDimensionsCm: { ...existingDims, width: val } } };
                         });
                       }}
@@ -540,16 +582,16 @@ export function EquipmentMetadataForm({
                       id="emf-case-inner-h"
                       type="number"
                       step="0.1"
-                      placeholder={String(inherited.innerDimensionsCm?.height ?? "")}
+                      placeholder={String(inheritedCase.innerDimensionsCm?.height ?? "")}
                       value={caseData.innerDimensionsCm?.height ?? ""}
-                      onChange={(e) => {
-                        const val = e.target.value === "" ? undefined : Number(e.target.value);
+                      onChange={(event) => {
+                        const val = event.target.value === "" ? undefined : Number(event.target.value);
                         if (val === undefined) {
                           update((prev) => ({ ...prev, case: { ...prev.case, innerDimensionsCm: undefined } }));
                           return;
                         }
                         update((prev) => {
-                          const existingDims = prev.case?.innerDimensionsCm ?? inherited.innerDimensionsCm ?? { width: 0, height: 0 };
+                          const existingDims = prev.case?.innerDimensionsCm ?? inheritedCase.innerDimensionsCm ?? { width: 0, height: 0 };
                           return { ...prev, case: { ...prev.case, innerDimensionsCm: { ...existingDims, height: val } } };
                         });
                       }}
@@ -561,16 +603,16 @@ export function EquipmentMetadataForm({
                       id="emf-case-inner-d"
                       type="number"
                       step="0.1"
-                      placeholder={String(inherited.innerDimensionsCm?.depth ?? "")}
+                      placeholder={String(inheritedCase.innerDimensionsCm?.depth ?? "")}
                       value={caseData.innerDimensionsCm?.depth ?? ""}
-                      onChange={(e) => {
-                        const val = e.target.value === "" ? undefined : Number(e.target.value);
+                      onChange={(event) => {
+                        const val = event.target.value === "" ? undefined : Number(event.target.value);
                         if (val === undefined) {
                           update((prev) => ({ ...prev, case: { ...prev.case, innerDimensionsCm: undefined } }));
                           return;
                         }
                         update((prev) => {
-                          const existingDims = prev.case?.innerDimensionsCm ?? inherited.innerDimensionsCm ?? { width: 0, height: 0 };
+                          const existingDims = prev.case?.innerDimensionsCm ?? inheritedCase.innerDimensionsCm ?? { width: 0, height: 0 };
                           return { ...prev, case: { ...prev.case, innerDimensionsCm: { ...existingDims, depth: val } } };
                         });
                       }}
@@ -585,7 +627,7 @@ export function EquipmentMetadataForm({
                   label="Maximales Inhaltsgewicht (kg)"
                   step="0.1"
                   value={caseData.contentMaxWeightKg}
-                  placeholder={inherited.contentMaxWeightKg ?? undefined}
+                  placeholder={inheritedCase.contentMaxWeightKg ?? undefined}
                   ignored={caseData.contentMaxWeightKg === null}
                   onIgnoreChange={(checked) => {
                     update((prev) => ({ ...prev, case: { ...prev.case, contentMaxWeightKg: checked ? null : undefined } }));
@@ -598,7 +640,7 @@ export function EquipmentMetadataForm({
                   id="emf-case-lock"
                   label="Case hat Schloss"
                   checked={!!caseData.hasLock}
-                  placeholder={!!inherited.hasLock}
+                  placeholder={!!inheritedCase.hasLock}
                   ignored={caseData.hasLock === null}
                   onIgnoreChange={(checked) => {
                     update((prev) => ({ ...prev, case: { ...prev.case, hasLock: checked ? null : undefined } }));
@@ -892,10 +934,12 @@ function hasCaseRackData(metadata: EquipmentMetadata, inheritedArticle?: Article
 
 function hasCaseGeneralData(metadata: EquipmentMetadata, inheritedArticle?: ArticleMetadata | null) {
   return Boolean(
+    metadata.case?.isGeneralCase === true ||
     metadata.case?.hasLock === true ||
     hasNumber(metadata.case?.contentMaxWeightKg ?? null) ||
     hasDimensions(metadata.case?.innerDimensionsCm) ||
     hasRestrictedTypes(metadata.case?.restrictedContentTypes) ||
+    inheritedArticle?.case?.isGeneralCase === true ||
     inheritedArticle?.case?.hasLock === true ||
     hasNumber(inheritedArticle?.case?.contentMaxWeightKg ?? null) ||
     hasDimensions(inheritedArticle?.case?.innerDimensionsCm) ||

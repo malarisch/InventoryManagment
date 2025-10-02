@@ -1,3 +1,11 @@
+## 2025-10-02 20:30 – Equipment Case card parity with Article
+- Aligned equipment form case card with new article behavior: added general-case toggle, updated mode radios, and respected inherited placeholders
+- Refined rack/general visibility logic to honor explicit overrides, cleaned helpers to account for `isGeneralCase`
+- Updated metadata builder to use renamed rack fields and merge case data safely
+- Files: equipment-metadata-form.tsx, lib/metadata/builders.ts, agentlog.md
+- TypeScript compilation: ✅ PASSED (`npm run test:tsc`)
+- Next: Confirm UI parity in equipment form and adjust tests if needed
+
 ## 2025-10-02 19:55 – Restored conditional Case card visibility
 - **PROBLEM**: Case section and 19" rack fields always rendered, even without case metadata
 - Detection treated `false`/`null` values as data → auto-activation + field display stuck on

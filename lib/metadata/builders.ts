@@ -31,8 +31,14 @@ export function buildEquipmentMetadata(input: Partial<EquipmentMetadata>): Equip
     ...defaultEquipmentMetadataDE,
     ...safeInput,
     power: { ...defaultEquipmentMetadataDE.power, ...(safeInput.power || {}) },
-    is19Inch: safeInput.is19Inch ?? defaultEquipmentMetadataDE.is19Inch,
+    is19InchRackmountable: safeInput.is19InchRackmountable ?? defaultEquipmentMetadataDE.is19InchRackmountable,
     heightUnits: safeInput.heightUnits ?? defaultEquipmentMetadataDE.heightUnits,
+    case: safeInput.case
+      ? {
+          ...(defaultEquipmentMetadataDE.case ?? {}),
+          ...safeInput.case,
+        }
+      : defaultEquipmentMetadataDE.case,
     type: safeInput.type ?? defaultEquipmentMetadataDE.type,
   } as EquipmentMetadata;
 }
