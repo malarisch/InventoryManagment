@@ -7,14 +7,11 @@ Diese To-Do List enthält Aufgaben, die an der Software zu bearbeiten sind. Soba
 
 
 ### Fixes
-- Übersichtsseiten übersicht hängt in endlosschleife zwischen "Lädt..." und inhalt, macht fast 40 Requests die Sekunde (respekt!)
 - Unspezifisch: Formulare haben manchmal "Input lag" wenn man tippt. In der Konsole kommt dann [Violation] 'input' handler took 298ms
 - Allgemein: Die Dateien Component sollte in einer eigenen Card auf oberster Ebene mit History zusammen angezeigt werden, nicht in der Entity card.
 - Editiere die supabase config.toml, damit die Storage Buckets angelegt werden. Konsultiere dazu die Doku von Supabase um zu sehen, wie das geht.
 - Notizen sollen Additiv vererbt werden, nicht überschrieben. Also auf einem Equipment sollen die Notizen von seinem Artikel als "Read Only" card angezeigt werden, sowie die normale Card für die eigenen Assets.
-- Metadaten: Alle inputs von Dimensions haben die selbe HTML id
 - Metadaten: "Zuweisung" darf gern ein Kontakt Picker enthalten und keine parallelstruktur. Das eigene Notizfeld hiervon darf aber gern bleiben.
-- Files: Füge optisches Feedback bei Klick auf den "Link kopieren" butthin hinzu
 - Cases:
   - Beim einfügen von Equipments in ein Case im create formular verschwinden die Equipments einfach, werden aber in keine "Hinzugefügt" tabelle oder so eingefgt
   - Die Case Edit seite ist sehr unaufgräumt. Unterteile sie in mehrere Cards.
@@ -43,10 +40,6 @@ Diese To-Do List enthält Aufgaben, die an der Software zu bearbeiten sind. Soba
   - Bei "Asset Tag hinzufügen" wenn keiner besteht wird ein user Prompt angezeigt, bei dem der Code manuell eintragbar ist. Macht keinen Sinn, zu Codegenerierung gibts inzwischen ne super Helper funktion. Direkt prefillen, keine Nachfragen.
 - New Equipment:
   - Auswählbarkeit der Case Setup Karte fehlt.
-- History Log:
-  - Wenn etwas von undefined auf einen Wert gesetzt wird zeig einfach nur "[attribut]: [wert]" und nicht undefined -> Wert
-  - Die Werte sollten collapsable sein und standardmäßig collapsed
-- Edit Location: Titel Zeigt "Standort #id" statt den namen. Im titel sollte stehen "Standort: [name]". Die ID darunter, wo jetzt der Name steht.
 - Contacts 
   - Das Contact creation form heißt noch Customers und lässt nur Kunden zu. Außerdem fehlen in dem aktuellen Formular Unternehmen die Ansprechperson.
   - Edit hat eine komplete parallelstruktur in den Metadaten. Implementiere die neue Datenstruktur in dem Formular.
@@ -96,6 +89,12 @@ Diese To-Do List enthält Aufgaben, die an der Software zu bearbeiten sind. Soba
 
 
 ## Done
+- **Fix: Infinite Loop on Table Pages**: Fixed DataTable component causing constant refresh loop on table pages (e.g. /management/equipments) by serializing array dependencies (filters, searchableFields) in useEffect. Array references were being recreated on every render causing infinite re-fetches (~40 requests/second).
+- **Fix: Infinite Loop on Overview Pages (History)**: Fixed history-live component causing ~40 requests/second by removing equipmentDetails and caseDetails from useEffect dependencies.
+- **Fix: Duplicate HTML IDs in Dimension Inputs**: Fixed all dimension input fields having the same HTML id by adding idPrefix prop to DimensionsFieldset component.
+- **Fix: Link Copy Feedback**: Added checkmark visual feedback when clicking "Link kopieren" button in FileManager.
+- **Fix: History Log undefined Display**: Fixed history log showing "undefined -> value" - now shows only "[attribute]: [value]" when something changes from undefined.
+- **Fix: Edit Location Title**: Changed location detail page title from "Standort #id" to "Standort: [name]" with ID shown below.
 - Upgrade the project so that nextjs reads it's environment variables directly from supabase. Maybe create a npm script that reads the supabase status and outputs it to .env or something like that.
 - Update deine Instructions so, dass du deine Erinnerungen gut nutzt! Speichere viel rein und schau ob du über etwas etwas weißt, bevor du die komplette Codebase durchsuchst.
 - Kommentiere sämtlichen Code von dir im TSDoc Style (fortlaufend; neue Module sind dokumentiert).
