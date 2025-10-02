@@ -70,7 +70,7 @@ export function CaseEditItemsForm({
     setMessage(null);
     const { error } = await supabase
       .from("cases")
-      .update({ equipments: next.length ? next : null })
+      .update({ contains_equipments: next.length ? next : null })
       .eq("id", caseId);
     if (error) setError(error.message); else setMessage("Equipments aktualisiert.");
     setSaving(false);
@@ -83,7 +83,7 @@ export function CaseEditItemsForm({
     const payload = next.length ? (next as unknown as Json[]) : null;
     const { error } = await supabase
       .from("cases")
-      .update({ articles: payload })
+      .update({ contains_articles: payload })
       .eq("id", caseId);
     if (error) setError(error.message); else setMessage("Artikel aktualisiert.");
     setSaving(false);

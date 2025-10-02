@@ -16,8 +16,6 @@ Diese To-Do List enthält Aufgaben, die an der Software zu bearbeiten sind. Soba
   - Beim einfügen von Equipments in ein Case im create formular verschwinden die Equipments einfach, werden aber in keine "Hinzugefügt" tabelle oder so eingefgt
   - Die Case Edit seite ist sehr unaufgräumt. Unterteile sie in mehrere Cards.
   - Case Edit: Bei Equipments im Case wird nur die ID angezeigt aber nicht der Name des Artikels. In der Plan text ansicht oben das Gleiche, außerdem fehlen Created By und Created At. Ein Picker, um das Case Equipment zu ändern fehlt.
-  - Beim Hinzufügen ungetrackter Artikel in ein Case: Could not find the 'articles' column of 'cases' in the schema cache
-  - Beim Entfernen von Equipments aus einem Case: Could not find the 'equipments' column of 'cases' in the schema cache
   - Case Edit Table: Die Tabelle ist leer, suche gibt keine Ergebnisse.
 - Company Settings:
   - Änderungen werden erst nach Reoad ins UX übernommen
@@ -88,6 +86,7 @@ Diese To-Do List enthält Aufgaben, die an der Software zu bearbeiten sind. Soba
 
 
 ## Done
+- **Fix: Case Edit Items Column Names**: Fixed case edit items form using wrong column names - changed from 'equipments' and 'articles' to correct DB column names 'contains_equipments' and 'contains_articles'.
 - **Fix: PostgREST Query Syntax (Global)**: Fixed incorrect PostgREST foreign key syntax across multiple components (history-live.tsx, job-quick-book.tsx, case-edit-items-form.tsx) from `articles:article_id(name)` to `articles(name)`.
 - **Fix: Job Edit Page Booked Assets Query Error**: Fixed PostgREST query syntax from `articles:article_id(name)` to `articles(name)` in both job-booked-assets.client.tsx and job-booked-assets.tsx - Supabase auto-detects foreign key relationships without explicit column reference.
 - **Fix: Company Settings Types Input**: Fixed issue where spaces and line breaks were immediately deleted in article/case/location type textareas by changing to process (split/trim/filter) only on blur instead of every keystroke.
