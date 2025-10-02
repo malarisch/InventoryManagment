@@ -1,3 +1,16 @@
+## 2025-10-02 22:45 – Replaced Company Settings contact person JSON with FK reference
+- **PROBLEM**: Company metadata stored contact person as embedded Person JSON object instead of FK to contacts table
+- User requested: Replace Person parallel structure with contact picker (similar to Equipment assignment fix)
+- **SOLUTION**: Changed adminCompanyMetadata type and company-metadata-form UI
+- Replaced `standardData.person: Person` with `standardData.contactPersonId?: number`
+- Updated company-metadata-form to show dropdown with existing contacts + "Neuen Kontakt anlegen" button
+- Company-settings-form now loads contacts and passes to metadata form with ContactFormDialog
+- Updated defaults, builders, and inherit functions to use contactPersonId
+- Fixed vitest tests to remove person field from test fixtures
+- Files: components/metadataTypes.types.ts, lib/metadata/defaults.ts, lib/metadata/builders.ts, lib/metadata/inherit.ts, components/forms/partials/company-metadata-form.tsx, components/company-settings-form.tsx, tests/vitest/*.test.ts, agentlog.md
+- TypeScript compilation: ✅ PASSED (`npm run test:tsc`)
+- Next: Continue with remaining fixes
+
 ## 2025-10-02 22:30 – Added all-day checkbox and time fields to Job forms
 - **PROBLEM**: Jobs only had date fields without time support or all-day event handling
 - User requested: Add "Ganztägig" checkbox where Ende = Start, and time fields when not all-day

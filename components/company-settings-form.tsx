@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useState, useCallback } from "react";
 import { createClient } from "@/lib/supabase/client";
-import type { Json } from "@/database.types";
+import type { Json, Tables } from "@/database.types";
 import type { CompanyRecord } from "@/lib/companies";
 import type { adminCompanyMetadata } from "@/components/metadataTypes.types";
 import { defaultAdminCompanyMetadataDE, toPrettyJSON } from "@/lib/metadata/defaults";
@@ -13,7 +13,10 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
+import { ContactFormDialog } from "@/components/forms/contacts/contact-form-dialog";
 import React from "react";
+
+type Contact = Tables<"contacts">;
 
 // Memoized wrapper to prevent re-renders when parent state changes
 const MemoizedCompanyMetadataForm = React.memo(CompanyMetadataForm);
@@ -31,6 +34,8 @@ export function CompanySettingsForm() {
   const [error, setError] = useState<string | null>(null);
   const [message, setMessage] = useState<string | null>(null);
   const [dumpStatus, setDumpStatus] = useState<string | null>(null);
+  const [contacts, setContacts] = useState<Contact[]>([]);
+  const [contactDialogOpen, setContactDialogOpen] = useState(false);
 
   // Memoize the metadata form onChange to prevent re-renders
   const handleMetaObjChange = useCallback((val: adminCompanyMetadata) => {
@@ -105,6 +110,26 @@ export function CompanySettingsForm() {
     load();
     return () => { active = false; };
   }, [supabase]);
+
+  useEffect(() => {
+    let active = true;
+    async function loadContacts() {
+      if (!company) return;
+      const { data, error } = await supabase
+        .from("contacts")
+        .select("*")
+        .eq("company_id", company.id)
+        .order("display_name", { ascending: true });
+      if (!active) return;
+      if (error) {
+        console.error("Failed to load contacts", error);
+        return;
+      }
+      setContacts((data as Contact[]) ?? []);
+    }
+    loadContacts();
+    return () => { active = false; };
+  }, [supabase, company]);
 
   async function onSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -234,10 +259,24 @@ export function CompanySettingsForm() {
               />
             </div>
           ) : (
-            <MemoizedCompanyMetadataForm value={metaObj} onChange={handleMetaObjChange} />
+            <MemoizedCompanyMetadataForm 
+              value={metaObj} 
+              onChange={handleMetaObjChange}
+              contacts={contacts}
+              onCreateContact={() => setContactDialogOpen(true)}
+            />
           )}
         </CardContent>
       </Card>
+
+      <ContactFormDialog
+        open={contactDialogOpen}
+        onOpenChange={setContactDialogOpen}
+        companyId={company?.id ?? null}
+        onCreated={(contact) => {
+          setContacts((prev) => [...prev, contact]);
+        }}
+      />
 
       <Card className="md:col-span-12">
         <CardHeader>

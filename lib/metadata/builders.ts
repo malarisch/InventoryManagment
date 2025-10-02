@@ -61,7 +61,7 @@ export function buildAdminCompanyMetadata(input: Partial<adminCompanyMetadata>):
       currency: input.standardData?.currency ? String(input.standardData.currency).toUpperCase() : base.standardData.currency,
       defaultLocationId: input.standardData?.defaultLocationId,
       power: { ...base.standardData.power, ...(input.standardData?.power ?? {}) },
-      person: { ...base.standardData.person, ...(input.standardData?.person ?? {}) },
+      contactPersonId: input.standardData?.contactPersonId,
     },
     customTypes: input.customTypes ? {
       articleTypes: [...input.customTypes.articleTypes],

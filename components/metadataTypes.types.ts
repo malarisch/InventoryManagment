@@ -128,7 +128,8 @@ export interface adminCompanyMetadata {
     defaultLocationId?: number;
     /** Default power specs for equipment/locations. */
     power: Power;
-    person: Person;
+    /** Contact person ID - references contacts table instead of embedded Person object. */
+    contactPersonId?: number;
   };
   customTypes: { articleTypes: string[], caseTypes: string[], locationTypes: string[] };
   /** Optional company wide prefix applied before any specific entity prefix when generating asset tag codes. */

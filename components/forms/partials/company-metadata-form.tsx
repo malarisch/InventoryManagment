@@ -12,20 +12,28 @@ import { useMemo, useState, useEffect } from "react";
  * - value: adminCompanyMetadata (current metadata object)
  * - onChange: function to update metadata
  */
-import type { adminCompanyMetadata, Person, ContactInfo } from "@/components/metadataTypes.types";
+import type { adminCompanyMetadata } from "@/components/metadataTypes.types";
+import type { Tables } from "@/database.types";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { createClient } from "@/lib/supabase/client";
 import { useCompany } from "@/app/management/_libs/companyHook";
 import { SearchPicker, type SearchItem } from "@/components/search/search-picker";
 import { Textarea } from "@/components/ui/textarea";
+import { Button } from "@/components/ui/button";
+
+type Contact = Tables<"contacts">;
 
 export function CompanyMetadataForm({
   value,
   onChange,
+  contacts,
+  onCreateContact,
 }: {
   value: adminCompanyMetadata;
   onChange: (val: adminCompanyMetadata) => void;
+  contacts?: Contact[];
+  onCreateContact?: () => void;
 }) {
   const supabase = useMemo(() => createClient(), []);
   const { company } = useCompany();
@@ -64,17 +72,6 @@ export function CompanyMetadataForm({
 
   function setStandard<K extends keyof adminCompanyMetadata["standardData"]>(key: K, v: adminCompanyMetadata["standardData"][K]) {
     onChange({ ...value, standardData: { ...value.standardData, [key]: v } });
-  }
-
-  function setPerson<K extends keyof Person>(key: K, v: Person[K]) {
-    const newPerson = { ...value.standardData.person, [key]: v };
-    onChange({ ...value, standardData: { ...value.standardData, person: newPerson } });
-  }
-
-  function setContactInfo(v: Partial<ContactInfo>) {
-    const existing = value.standardData.person.contactInfo?.[0] ?? {};
-    const newContactInfo = [{ ...existing, ...v }];
-    setPerson("contactInfo", newContactInfo);
   }
 
   const selectedLocation = locationItems.find(it => it.id === String(value.standardData.defaultLocationId));
@@ -238,31 +235,28 @@ export function CompanyMetadataForm({
       </div>
 
       <h4 className="font-medium">Standard Ansprechpartner</h4>
-      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-        <div className="grid gap-1.5">
-          <Label htmlFor="cmf-first">Vorname</Label>
-          <Input id="cmf-first" value={value.standardData.person.firstName} onChange={(e) => setPerson("firstName", e.target.value)} />
+      <div className="grid gap-4">
+        <div className="grid gap-2">
+          <Label htmlFor="cmf-contact-person">Kontaktperson</Label>
+          <select
+            id="cmf-contact-person"
+            className="h-9 rounded-md border bg-background px-3 text-sm"
+            value={value.standardData.contactPersonId ?? ""}
+            onChange={(e) => setStandard("contactPersonId", e.target.value === "" ? undefined : Number(e.target.value))}
+          >
+            <option value="">— Keine Kontaktperson —</option>
+            {(contacts ?? []).map((contact) => (
+              <option key={contact.id} value={contact.id}>
+                {contact.display_name || `${contact.first_name ?? ""} ${contact.last_name ?? ""}`.trim() || `#${contact.id}`}
+              </option>
+            ))}
+          </select>
         </div>
-        <div className="grid gap-1.5">
-          <Label htmlFor="cmf-last">Nachname</Label>
-          <Input id="cmf-last" value={value.standardData.person.lastName} onChange={(e) => setPerson("lastName", e.target.value)} />
-        </div>
-        <div className="grid gap-1.5">
-          <Label htmlFor="cmf-pro">Pronomen</Label>
-          <Input id="cmf-pro" value={value.standardData.person.pronouns ?? ""} onChange={(e) => setPerson("pronouns", e.target.value)} />
-        </div>
-        <div className="grid gap-1.5">
-          <Label htmlFor="cmf-position">Position</Label>
-          <Input id="cmf-position" value={value.standardData.person.position ?? ""} onChange={(e) => setPerson("position", e.target.value)} />
-        </div>
-        <div className="grid gap-1.5">
-          <Label htmlFor="cmf-email">Email</Label>
-          <Input id="cmf-email" type="email" value={value.standardData.person.contactInfo?.[0]?.email ?? ""} onChange={(e) => setContactInfo({ email: e.target.value })} />
-        </div>
-        <div className="grid gap-1.5">
-          <Label htmlFor="cmf-phone-person">Telefon</Label>
-          <Input id="cmf-phone-person" value={value.standardData.person.contactInfo?.[0]?.phone ?? ""} onChange={(e) => setContactInfo({ phone: e.target.value })} />
-        </div>
+        {onCreateContact && (
+          <Button type="button" variant="secondary" onClick={onCreateContact}>
+            Neuen Kontakt anlegen
+          </Button>
+        )}
       </div>
 
       <div className="grid gap-1.5">

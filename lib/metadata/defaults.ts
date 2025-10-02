@@ -24,11 +24,7 @@ export const defaultAdminCompanyMetadataDE: adminCompanyMetadata = {
     currency: "EUR",
     defaultLocationId: undefined,
     power: powerDE,
-    person: {
-      firstName: "",
-      lastName: "",
-      pronouns: "",
-    },
+    contactPersonId: undefined,
   },
   customTypes: { articleTypes: [], caseTypes: [], locationTypes: [] },
   companyWidePrefix: "",
