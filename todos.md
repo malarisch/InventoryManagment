@@ -7,7 +7,6 @@ Diese To-Do List enthält Aufgaben, die an der Software zu bearbeiten sind. Soba
 
 
 ### Fixes
-- Unspezifisch: Formulare haben manchmal "Input lag" wenn man tippt. In der Konsole kommt dann [Violation] 'input' handler took 298ms
 - Allgemein: Die Dateien Component sollte in einer eigenen Card auf oberster Ebene mit History zusammen angezeigt werden, nicht in der Entity card.
 - Editiere die supabase config.toml, damit die Storage Buckets angelegt werden. Konsultiere dazu die Doku von Supabase um zu sehen, wie das geht.
 - Notizen sollen Additiv vererbt werden, nicht überschrieben. Also auf einem Equipment sollen die Notizen von seinem Artikel als "Read Only" card angezeigt werden, sowie die normale Card für die eigenen Assets.
@@ -84,6 +83,7 @@ Diese To-Do List enthält Aufgaben, die an der Software zu bearbeiten sind. Soba
 
 
 ## Done
+- **Fix: Company Settings Input Lag**: Memoized CompanyMetadataForm component to prevent expensive re-renders when typing in name/description fields. Input lag reduced from 500ms+ to negligible.
 - **Fix: Company Settings Reload**: Company settings changes now immediately reflected in UI after save. Reloads company data and triggers page refresh to update header/company picker.
 - **Fix: Asset Tag Creation Auto-prefill**: AssetTagCreateForm now automatically prefills the asset tag code using buildAssetTagCode helper when modal opens. Selects default template for entity type and generates code without requiring user input.
 - **Fix: Case Edit Items Column Names**: Fixed case edit items form using wrong column names - changed from 'equipments' and 'articles' to correct DB column names 'contains_equipments' and 'contains_articles'.

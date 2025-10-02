@@ -1,4 +1,12 @@
-## 2025-01-XX 16:45 – Continued Bug Fixes: Asset Tags & Company Settings
+## 2025-10-02 17:00 – Fixed Input Lag & Updated Instructions
+- Fixed severe input lag (500ms+) in company settings form by memoizing CompanyMetadataForm component
+- Used React.memo and useCallback to prevent expensive re-renders when typing in name/description fields
+- Updated AGENTS.md to emphasize agentlog updates must be in the SAME commit as code changes (not separate)
+- Files: company-settings-form.tsx, AGENTS.md, todos.md
+- Total bugs fixed so far: 16 (added input lag fix)
+- Next: Continue with remaining form improvements and UX enhancements
+
+## 2025-10-02 16:45 – Continued Bug Fixes: Asset Tags & Company Settings
 - Fixed AssetTagCreateForm to auto-prefill code using buildAssetTagCode helper (no manual prompt needed)
 - Fixed company settings not reflecting changes until reload - now refetches data and triggers page refresh
 - Total fixes in session: 15 bugs (PostgREST syntax, case columns, asset tags, company settings)

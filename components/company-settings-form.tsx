@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState, useCallback } from "react";
 import { createClient } from "@/lib/supabase/client";
 import type { Json } from "@/database.types";
 import type { CompanyRecord } from "@/lib/companies";
@@ -13,6 +13,10 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
+import React from "react";
+
+// Memoized wrapper to prevent re-renders when parent state changes
+const MemoizedCompanyMetadataForm = React.memo(CompanyMetadataForm);
 
 export function CompanySettingsForm() {
   const supabase = useMemo(() => createClient(), []);
@@ -27,6 +31,11 @@ export function CompanySettingsForm() {
   const [error, setError] = useState<string | null>(null);
   const [message, setMessage] = useState<string | null>(null);
   const [dumpStatus, setDumpStatus] = useState<string | null>(null);
+
+  // Memoize the metadata form onChange to prevent re-renders
+  const handleMetaObjChange = useCallback((val: adminCompanyMetadata) => {
+    setMetaObj(val);
+  }, []);
 
   useEffect(() => {
     let active = true;
@@ -225,7 +234,7 @@ export function CompanySettingsForm() {
               />
             </div>
           ) : (
-            <CompanyMetadataForm value={metaObj} onChange={setMetaObj} />
+            <MemoizedCompanyMetadataForm value={metaObj} onChange={handleMetaObjChange} />
           )}
         </CardContent>
       </Card>
