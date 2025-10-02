@@ -18,7 +18,6 @@ Diese To-Do List enthält Aufgaben, die an der Software zu bearbeiten sind. Soba
   - Case Edit: Bei Equipments im Case wird nur die ID angezeigt aber nicht der Name des Artikels. In der Plan text ansicht oben das Gleiche, außerdem fehlen Created By und Created At. Ein Picker, um das Case Equipment zu ändern fehlt.
   - Case Edit Table: Die Tabelle ist leer, suche gibt keine Ergebnisse.
 - Company Settings:
-  - Änderungen werden erst nach Reoad ins UX übernommen
   - Führe die "Kontaktperson" sektion als Kontakt Entität aus, nicht als JSON Parallelstruktur.
   - Zerlege auch hier die Metadaten in einzelne Cards, die auf oberster Ebene angezeigt werden.
 - Asset Tag Templates: Page Layout kleiner Anpassungsbedarf. Update das Layout auf drei Spalten, während der Form Content in den ersten zwei Fließt, die Preview ist "Floating", damit man sie immer sieht (nur Desktop!!!!)
@@ -85,6 +84,7 @@ Diese To-Do List enthält Aufgaben, die an der Software zu bearbeiten sind. Soba
 
 
 ## Done
+- **Fix: Company Settings Reload**: Company settings changes now immediately reflected in UI after save. Reloads company data and triggers page refresh to update header/company picker.
 - **Fix: Asset Tag Creation Auto-prefill**: AssetTagCreateForm now automatically prefills the asset tag code using buildAssetTagCode helper when modal opens. Selects default template for entity type and generates code without requiring user input.
 - **Fix: Case Edit Items Column Names**: Fixed case edit items form using wrong column names - changed from 'equipments' and 'articles' to correct DB column names 'contains_equipments' and 'contains_articles'.
 - **Fix: PostgREST Query Syntax (Global)**: Fixed incorrect PostgREST foreign key syntax across multiple components (history-live.tsx, job-quick-book.tsx, case-edit-items-form.tsx) from `articles:article_id(name)` to `articles(name)`.

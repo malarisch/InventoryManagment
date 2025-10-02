@@ -125,7 +125,33 @@ export function CompanySettingsForm() {
         metadata,
       })
       .eq("id", company.id);
-    if (error) setError(error.message); else setMessage("Gespeichert.");
+    if (error) {
+      setError(error.message);
+    } else {
+      setMessage("Gespeichert.");
+      // Reload company data to reflect changes in UI
+      const { data: updated } = await supabase
+        .from("companies")
+        .select("*")
+        .eq("id", company.id)
+        .single<CompanyRecord>();
+      if (updated) {
+        setCompany(updated);
+        setName(updated.name ?? "");
+        setDescription(updated.description ?? "");
+        try {
+          const meta = (updated.metadata ?? null) as adminCompanyMetadata | null;
+          const resolved = meta ?? defaultAdminCompanyMetadataDE;
+          setMetaObj(resolved);
+          setMetadataText(toPrettyJSON(meta ?? {}));
+        } catch {
+          setMetaObj(defaultAdminCompanyMetadataDE);
+          setMetadataText(toPrettyJSON({}));
+        }
+      }
+      // Trigger a page reload to update header/company picker
+      window.location.reload();
+    }
     setSaving(false);
   }
 
