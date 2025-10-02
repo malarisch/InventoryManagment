@@ -35,36 +35,18 @@ export function AssetTagTemplatePreview({ template, editable = false, onElements
 
   const elements: AssetTagTemplateElement[] = useMemo(()=> template.elements || [], [template.elements]);
 
-  // Async generated SVG string
+  // Async generated SVG string - now client-side only for instant updates during drag
   const [svgContent, setSvgContent] = useState<string>('');
   useEffect(() => {
     let cancelled = false;
     (async () => {
       try {
-        // Call server route for image-embedded preview (avoids CORS issues)
-        const res = await fetch('/api/asset-tag-templates/preview', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ template, placeholderData: previewData })
-        });
-        if (res.ok) {
-          const data = await res.json();
-            if (!cancelled && data.svg) {
-              setSvgContent(data.svg);
-              return;
-            }
-        } else {
-          console.warn('Preview API returned non-ok status; falling back to client generation');
-        }
+        // Direct client-side generation for instant preview updates
+        const svg = await generateSVG(template, previewData);
+        if (!cancelled) setSvgContent(svg);
       } catch (e) {
-        console.warn('Preview API failed; falling back to client generation', e);
-      }
-      // Fallback: client-side (will not embed cross-origin images)
-      try {
-        const fallbackSvg = await generateSVG(template, previewData);
-        if (!cancelled) setSvgContent(fallbackSvg);
-      } catch (e) {
-        console.error('Client-side fallback preview generation failed', e);
+        console.error('Client-side preview generation failed', e);
+        if (!cancelled) setSvgContent(''); // Clear on error
       }
     })();
     return () => { cancelled = true; };
