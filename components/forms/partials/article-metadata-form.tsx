@@ -140,6 +140,7 @@ export function ArticleMetadataForm({
   });
   
   const [recentlyRemoved, setRecentlyRemoved] = useState<SectionId | null>(null);
+  const [removedSectionBackup, setRemovedSectionBackup] = useState<Partial<ArticleMetadata> | null>(null);
 
   // Sync from parent: only update local if change came from outside
   useEffect(() => {
@@ -164,6 +165,35 @@ export function ArticleMetadataForm({
   function removeSection(sectionId: SectionId) {
     // Keep "general" always visible
     if (sectionId === "general") return;
+    
+    // Backup data before clearing
+    const backup: Partial<ArticleMetadata> = {};
+    switch (sectionId) {
+      case "physical":
+        backup.weightKg = local.weightKg;
+        backup.dimensionsCm = local.dimensionsCm;
+        break;
+      case "power":
+        backup.power = local.power;
+        break;
+      case "case":
+        backup.case = local.case;
+        backup.is19InchRackmountable = local.is19InchRackmountable;
+        backup.fitsInRestrictedCaseTypes = local.fitsInRestrictedCaseTypes;
+        break;
+      case "connectivity":
+        backup.connectivity = local.connectivity;
+        backup.interfaces = local.interfaces;
+        break;
+      case "suppliers":
+        backup.suppliers = local.suppliers;
+        backup.dailyRentalRate = local.dailyRentalRate;
+        break;
+      case "notes":
+        backup.notes = local.notes;
+        break;
+    }
+    setRemovedSectionBackup(backup);
     
     // Clear data for this section
     update((prev) => {
@@ -202,13 +232,19 @@ export function ArticleMetadataForm({
     // Auto-clear undo after 10 seconds
     setTimeout(() => {
       setRecentlyRemoved((current) => current === sectionId ? null : current);
+      setRemovedSectionBackup(null);
     }, 10000);
   }
 
   function undoRemoveSection() {
-    if (!recentlyRemoved) return;
+    if (!recentlyRemoved || !removedSectionBackup) return;
+    
+    // Restore backed up data
+    update((prev) => ({ ...prev, ...removedSectionBackup }));
+    
     setActiveSections((current) => [...current, recentlyRemoved]);
     setRecentlyRemoved(null);
+    setRemovedSectionBackup(null);
   }
 
   function canRemoveSection(sectionId: SectionId): boolean {

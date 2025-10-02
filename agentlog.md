@@ -1,3 +1,15 @@
+## 2025-10-03 00:05 – Fixed undo to restore backed-up section data
+- **PROBLEM**: Undo button showed section again but data was lost
+- User feedback: "Der Undo Button tuts nicht - er zeigt war die Card wieder an, aber die Daten weg."
+- **ROOT CAUSE**: removeSection() deleted data but undoRemoveSection() didn't restore it
+- **SOLUTION**: Added removedSectionBackup state to store data before deletion
+- removeSection() now backs up section-specific fields before clearing them
+- undoRemoveSection() merges backup back into metadata via update()
+- Backup cleared after 10 seconds along with undo option
+- Files: components/forms/partials/article-metadata-form.tsx, agentlog.md
+- TypeScript compilation: ✅ PASSED (`npm run test:tsc`)
+- Next: Continue with remaining fixes from todos.md
+
 ## 2025-10-02 23:15 – Enhanced metadata section removal with undo and data clearing
 - **PROBLEM**: After implementing remove buttons, two issues identified:
   1. No undo button after removing section
