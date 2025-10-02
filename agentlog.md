@@ -1,3 +1,13 @@
+## 2025-10-02 19:40 – Show inherited Case details without manual toggle
+- **PROBLEM**: Case card still empty until any radio option was clicked; parent default kept overriding user choice
+- Radio handlers set values to null/undefined, so fallback to inherited data reapplied immediately; general case fields only rendered when mode `case-is-rack`
+- **SOLUTION**: Added mode-aware helpers (`hasCaseRackData`, `hasCaseGeneralData`) to detect inherited details
+- Case rack/general blocks now show when data exists, independent of initial selection; radio updates write explicit booleans to stop fallback
+- Reused helpers for section activation + rendering; ensured borders apply only when relevant
+- Files: equipment-metadata-form.tsx, agentlog.md
+- TypeScript compilation: ✅ PASSED
+- Next: Verify card shows inherited placeholders at first render, radio switches hold selection
+
 ## 2025-10-02 19:25 – Broadened Case data detection for auto-activation
 - **PROBLEM**: Case card still hidden when only inner dimensions / weight / restrictions inherited
 - Previous hasCaseData() only checked basic rack flags, missing additional case details
