@@ -117,11 +117,12 @@ export function EquipmentMetadataForm({
   }
 
   useEffect(() => {
+    ensureSectionActive("case", hasCaseData(local, inheritedArticle));
     ensureSectionActive("connectivity", hasConnectivityData(local));
     ensureSectionActive("suppliers", (local.suppliers?.length ?? 0) > 0);
     ensureSectionActive("assignment", !!local.assignedTo);
     ensureSectionActive("notes", !!local.notes);
-  }, [local]);
+  }, [local, inheritedArticle]);
 
   function setTextField<K extends keyof EquipmentMetadata>(key: K, raw: string) {
     const trimmed = raw.trim();
@@ -837,6 +838,30 @@ export function EquipmentMetadataForm({
 
 function hasConnectivityData(metadata: EquipmentMetadata) {
   return Boolean((metadata.connectivity?.length ?? 0) > 0 || (metadata.interfaces?.length ?? 0) > 0);
+}
+
+function hasCaseData(metadata: EquipmentMetadata, inheritedArticle?: ArticleMetadata | null) {
+  // Check if equipment itself has rack/case data
+  const hasOwnCaseData = Boolean(
+    metadata.case?.is19Inch !== undefined ||
+    metadata.case?.heightUnits !== undefined ||
+    metadata.case?.maxDeviceDepthCm !== undefined ||
+    metadata.case?.hasLock !== undefined
+  );
+  
+  const hasOwnRackData = metadata.is19Inch !== undefined;
+  
+  // Check if inherited from article
+  const hasInheritedCaseData = Boolean(
+    inheritedArticle?.case?.is19Inch !== undefined ||
+    inheritedArticle?.case?.heightUnits !== undefined ||
+    inheritedArticle?.case?.maxDeviceDepthCm !== undefined ||
+    inheritedArticle?.case?.hasLock !== undefined
+  );
+  
+  const hasInheritedRackData = inheritedArticle?.is19Inch !== undefined;
+  
+  return hasOwnCaseData || hasOwnRackData || hasInheritedCaseData || hasInheritedRackData;
 }
 
 interface IgnoreToggleProps {

@@ -1,3 +1,15 @@
+## 2025-10-02 19:15 – Auto-activate Case & Rack Setup card when inherited data present
+- **PROBLEM**: Case & Rack card not shown by default when equipment has article with case data
+- Card only appeared after clicking radio button, inherited state not visible initially
+- **SOLUTION**: Added hasCaseData() helper function to detect case/rack data
+- Checks equipment's own data: case.is19Inch, heightUnits, maxDeviceDepthCm, hasLock, is19Inch
+- Checks inherited article data: same fields from articleMetadata
+- Added to ensureSectionActive calls in useEffect with inheritedArticle dependency
+- Card now auto-opens when equipment or article has any case/rack configuration
+- Files: equipment-metadata-form.tsx, agentlog.md
+- TypeScript compilation: ✅ PASSED
+- Next: User testing
+
 ## 2025-10-02 19:00 – Fixed "setState during render" error with lastSentRef pattern
 - **PROBLEM**: Synchronous onChange in setState callback caused React error
 - "Cannot update a component while rendering a different component"
