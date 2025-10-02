@@ -213,6 +213,7 @@ export type Database = {
           description: string | null
           files: Json | null
           id: number
+          is_blocked: boolean
           name: string | null
         }
         Insert: {
@@ -227,6 +228,7 @@ export type Database = {
           description?: string | null
           files?: Json | null
           id?: number
+          is_blocked?: boolean
           name?: string | null
         }
         Update: {
@@ -241,6 +243,7 @@ export type Database = {
           description?: string | null
           files?: Json | null
           id?: number
+          is_blocked?: boolean
           name?: string | null
         }
         Relationships: [
@@ -444,6 +447,7 @@ export type Database = {
           current_location: number | null
           files: Json | null
           id: number
+          is_blocked: boolean
           metadata: Json | null
         }
         Insert: {
@@ -456,6 +460,7 @@ export type Database = {
           current_location?: number | null
           files?: Json | null
           id?: number
+          is_blocked?: boolean
           metadata?: Json | null
         }
         Update: {
@@ -468,6 +473,7 @@ export type Database = {
           current_location?: number | null
           files?: Json | null
           id?: number
+          is_blocked?: boolean
           metadata?: Json | null
         }
         Relationships: [
@@ -993,6 +999,7 @@ export type Database = {
           created_by: string | null
           due_date: string | null
           equipment_id: number | null
+          files: Json
           id: number
           notes: string | null
           status: string
@@ -1006,6 +1013,7 @@ export type Database = {
           created_by?: string | null
           due_date?: string | null
           equipment_id?: number | null
+          files?: Json
           id?: never
           notes?: string | null
           status?: string
@@ -1019,6 +1027,7 @@ export type Database = {
           created_by?: string | null
           due_date?: string | null
           equipment_id?: number | null
+          files?: Json
           id?: never
           notes?: string | null
           status?: string
