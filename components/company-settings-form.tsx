@@ -207,16 +207,16 @@ export function CompanySettingsForm() {
 
   return (
     <div className="grid grid-cols-1 md:grid-cols-12 gap-6">
-      <Card className="md:col-span-4">
+      <Card className="md:col-span-12">
         <CardHeader>
           <CardTitle>Company Settings</CardTitle>
-          <CardDescription>Basisdaten</CardDescription>
+          <CardDescription>Basisdaten der Company</CardDescription>
         </CardHeader>
         <CardContent>
           {loading ? (
             <div className="text-sm text-muted-foreground">Lädt…</div>
           ) : company ? (
-            <form onSubmit={onSubmit} className="space-y-4">
+            <form onSubmit={onSubmit} className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <div className="grid gap-2">
                 <Label htmlFor="name">Name</Label>
                 <Input id="name" value={name} onChange={(e) => setName(e.target.value)} required />
@@ -225,10 +225,30 @@ export function CompanySettingsForm() {
                 <Label htmlFor="description">Beschreibung</Label>
                 <Input id="description" value={description} onChange={(e) => setDescription(e.target.value)} />
               </div>
-              <div className="flex items-center gap-3">
+              
+              <div className="md:col-span-2 flex items-center gap-3 mt-4">
                 <Button type="submit" disabled={saving}>{saving ? "Speichern…" : "Speichern"}</Button>
                 {message && <span className="text-sm text-green-600">{message}</span>}
                 {error && <span className="text-sm text-red-600">{error}</span>}
+              </div>
+
+              <div className="md:col-span-2 border-t pt-4 mt-2">
+                <label className="flex items-center gap-2 text-xs mb-3">
+                  <input type="checkbox" checked={advanced} onChange={(e) => setAdvanced(e.target.checked)} />
+                  Metadaten im Expertenmodus (JSON) bearbeiten
+                </label>
+                {advanced && (
+                  <div className="grid gap-2">
+                    <Label htmlFor="metadata">Metadata (JSON)</Label>
+                    <textarea
+                      id="metadata"
+                      className="min-h-[200px] w-full rounded-md border bg-background p-2 text-sm font-mono"
+                      value={metadataText}
+                      onChange={(e) => setMetadataText(e.target.value)}
+                      spellCheck={false}
+                    />
+                  </div>
+                )}
               </div>
             </form>
           ) : (
@@ -237,37 +257,14 @@ export function CompanySettingsForm() {
         </CardContent>
       </Card>
 
-      <Card className="md:col-span-8">
-        <CardHeader>
-          <CardTitle>Company-Metadaten</CardTitle>
-          <CardDescription>Strukturierte Felder oder JSON</CardDescription>
-        </CardHeader>
-        <CardContent className="space-y-3">
-          <label className="flex items-center gap-2 text-xs">
-            <input type="checkbox" checked={advanced} onChange={(e) => setAdvanced(e.target.checked)} />
-            Expertenmodus (JSON bearbeiten)
-          </label>
-          {advanced ? (
-            <div className="grid gap-2">
-              <Label htmlFor="metadata">Metadata (JSON)</Label>
-              <textarea
-                id="metadata"
-                className="min-h-[200px] w-full rounded-md border bg-background p-2 text-sm font-mono"
-                value={metadataText}
-                onChange={(e) => setMetadataText(e.target.value)}
-                spellCheck={false}
-              />
-            </div>
-          ) : (
-            <MemoizedCompanyMetadataForm 
-              value={metaObj} 
-              onChange={handleMetaObjChange}
-              contacts={contacts}
-              onCreateContact={() => setContactDialogOpen(true)}
-            />
-          )}
-        </CardContent>
-      </Card>
+      {!advanced && !loading && company && (
+        <MemoizedCompanyMetadataForm 
+          value={metaObj} 
+          onChange={handleMetaObjChange}
+          contacts={contacts}
+          onCreateContact={() => setContactDialogOpen(true)}
+        />
+      )}
 
       <ContactFormDialog
         open={contactDialogOpen}

@@ -1,17 +1,6 @@
 "use client";
 
 import { useMemo, useState, useEffect } from "react";
-
-/**
- * CompanyMetadataForm
- *
- * Renders the company metadata form, including custom type textareas for Locations, Cases, Articles.
- * Handles fetching location data and updating metadata state.
- *
- * Props:
- * - value: adminCompanyMetadata (current metadata object)
- * - onChange: function to update metadata
- */
 import type { adminCompanyMetadata } from "@/components/metadataTypes.types";
 import type { Tables } from "@/database.types";
 import { Input } from "@/components/ui/input";
@@ -21,8 +10,22 @@ import { useCompany } from "@/app/management/_libs/companyHook";
 import { SearchPicker, type SearchItem } from "@/components/search/search-picker";
 import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 
 type Contact = Tables<"contacts">;
+
+/**
+ * CompanyMetadataForm
+ *
+ * Renders company metadata as individual cards (Allgemein, Steuer, Unternehmen, etc.).
+ * Each section is now a standalone Card for better visual separation.
+ *
+ * Props:
+ * - value: adminCompanyMetadata (current metadata object)
+ * - onChange: function to update metadata
+ * - contacts: array of company contacts (for contact person picker)
+ * - onCreateContact: callback to open contact creation dialog
+ */
 
 export function CompanyMetadataForm({
   value,
@@ -89,9 +92,14 @@ export function CompanyMetadataForm({
   }, [value.customTypes.articleTypes, value.customTypes.caseTypes, value.customTypes.locationTypes]);
 
   return (
-    <div className="grid gap-6 rounded-md border p-4">
-      <h3 className="text-lg font-medium">Allgemein</h3>
-      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+    <>
+      <Card className="md:col-span-6">
+        <CardHeader>
+          <CardTitle>Allgemein</CardTitle>
+          <CardDescription>Kontaktdaten und Branding</CardDescription>
+        </CardHeader>
+        <CardContent>
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
         <div className="grid gap-1.5">
           <Label htmlFor="cmf-phone">Telefon</Label>
           <Input id="cmf-phone" value={value.phone ?? ""} onChange={(e) => set("phone", e.target.value)} />
@@ -108,9 +116,16 @@ export function CompanyMetadataForm({
           <Label htmlFor="cmf-address">Adresse</Label>
           <Input id="cmf-address" value={value.address ?? ""} onChange={(e) => set("address", e.target.value)} />
         </div>
-      </div>
+        </div>
+        </CardContent>
+      </Card>
 
-      <h3 className="text-lg font-medium">Steuer & Finanzen</h3>
+      <Card className="md:col-span-6">
+        <CardHeader>
+          <CardTitle>Steuer & Finanzen</CardTitle>
+          <CardDescription>MwSt., Währung, Steuernummer</CardDescription>
+        </CardHeader>
+        <CardContent>
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
         <div className="grid gap-1.5">
           <Label htmlFor="cmf-tax-number">Steuernummer</Label>
@@ -128,9 +143,16 @@ export function CompanyMetadataForm({
           <Input id="cmf-curr" value={value.standardData.currency}
             onChange={(e) => setStandard("currency", e.target.value.toUpperCase())} />
         </div>
-      </div>
+        </div>
+        </CardContent>
+      </Card>
 
-      <h3 className="text-lg font-medium">Unternehmen</h3>
+      <Card className="md:col-span-6">
+        <CardHeader>
+          <CardTitle>Unternehmen</CardTitle>
+          <CardDescription>Branche, Mitarbeiter, Gründungsjahr</CardDescription>
+        </CardHeader>
+        <CardContent>
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
         <div className="grid gap-1.5">
           <Label htmlFor="cmf-industry">Branche</Label>
@@ -144,9 +166,16 @@ export function CompanyMetadataForm({
           <Label htmlFor="cmf-year">Gründungsjahr</Label>
           <Input id="cmf-year" type="number" min={1800} max={new Date().getFullYear()} value={value.establishedYear ?? ""} onChange={(e) => set("establishedYear", Number(e.target.value))} />
         </div>
-      </div>
+        </div>
+        </CardContent>
+      </Card>
 
-      <h3 className="text-lg font-medium">Benutzerdefinierte Typen</h3>
+      <Card className="md:col-span-12">
+        <CardHeader>
+          <CardTitle>Benutzerdefinierte Typen</CardTitle>
+          <CardDescription>Eigene Artikel-, Case- und Location-Typen</CardDescription>
+        </CardHeader>
+        <CardContent>
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
         <div className="grid gap-1.5">
           <Label htmlFor="cmf-article-types">Artikeltypen</Label>
@@ -190,9 +219,16 @@ export function CompanyMetadataForm({
               set("customTypes", { ...value.customTypes, locationTypes: t.split("\n").map(s => s.trim()).filter(s => s.length > 0) });
             }} />
         </div>
-      </div>
+        </div>
+        </CardContent>
+      </Card>
 
-      <h3 className="text-lg font-medium">Standardwerte</h3>
+      <Card className="md:col-span-12">
+        <CardHeader>
+          <CardTitle>Standardwerte</CardTitle>
+          <CardDescription>Default Location, Stromversorgung, Kontaktperson</CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-6">
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
         <div className="grid gap-1.5">
           <Label>Default Location</Label>
@@ -259,13 +295,21 @@ export function CompanyMetadataForm({
         )}
       </div>
 
-      <div className="grid gap-1.5">
-        <Label htmlFor="cmf-notes">Notizen</Label>
-        <Textarea id="cmf-notes" className="min-h-[80px] w-full rounded-md border bg-background p-2 text-sm"
-            value={value.notes ?? ""} 
-            onChange={(e) => set("notes", e.target.value)} />
-      </div>
-      <h3 className="text-lg font-medium">Asset Tag Einstellungen</h3>
+        <div className="grid gap-1.5">
+          <Label htmlFor="cmf-notes">Notizen</Label>
+          <Textarea id="cmf-notes" className="min-h-[80px] w-full rounded-md border bg-background p-2 text-sm"
+              value={value.notes ?? ""} 
+              onChange={(e) => set("notes", e.target.value)} />
+        </div>
+        </CardContent>
+      </Card>
+
+      <Card className="md:col-span-12">
+        <CardHeader>
+          <CardTitle>Asset Tag Einstellungen</CardTitle>
+          <CardDescription>Präfixe und Default Templates für Asset Tags</CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-6">
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
         <div className="grid gap-1.5">
           <Label htmlFor="cmf-at-company-prefix">Globaler Prefix</Label>
@@ -305,8 +349,10 @@ export function CompanyMetadataForm({
           <Label htmlFor="cmf-at-location-template">Default Location Template ID</Label>
           <Input id="cmf-at-location-template" type="number" min={0} value={value.defaultLocationAssetTagTemplateId ?? ""} onChange={(e) => set("defaultLocationAssetTagTemplateId", e.target.value ? Number(e.target.value) : undefined)} />
         </div>
-      </div>
-    </div>
+        </div>
+        </CardContent>
+      </Card>
+    </>
   );
 }
 
