@@ -3,7 +3,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { createClient } from "@/lib/supabase/client";
 import type { Tables, Json, Database } from "@/database.types";
-import type { adminCompanyMetadata } from "@/components/metadataTypes.types";
+import type { adminCompanyMetadata, ArticleMetadata, EquipmentMetadata } from "@/components/metadataTypes.types";
 import { buildAssetTagCode } from "@/lib/asset-tags/code";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
@@ -14,10 +14,12 @@ import { useCompany } from "@/app/management/_libs/companyHook";
 import { DatePicker } from "@/components/ui/date-picker";
 import { defaultEquipmentMetadataDE, toPrettyJSON } from "@/lib/metadata/defaults";
 import { EquipmentMetadataForm } from "@/components/forms/partials/equipment-metadata-form";
+import { ContactFormDialog } from "@/components/forms/contacts/contact-form-dialog";
 import { buildEquipmentMetadata } from "@/lib/metadata/builders";
 type Article = Tables<"articles">;
 type Location = Tables<"locations">;
 type AssetTagTemplate = Tables<"asset_tag_templates">;
+type Contact = Tables<"contacts">;
 
 export function EquipmentCreateForm({ initialArticleId }: { initialArticleId?: number }) {
   const supabase = useMemo(() => createClient(), []);
@@ -41,16 +43,19 @@ export function EquipmentCreateForm({ initialArticleId }: { initialArticleId?: n
   const [metaText, setMetaText] = useState<string>(() => toPrettyJSON(defaultEquipmentMetadataDE));
   const [metaObj, setMetaObj] = useState(defaultEquipmentMetadataDE);
   const [advanced, setAdvanced] = useState(false);
+  const [wasAdvanced, setWasAdvanced] = useState(false);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [count, setCount] = useState<number>(1);
+  const [contacts, setContacts] = useState<Contact[]>([]);
+  const [contactDialogOpen, setContactDialogOpen] = useState(false);
 
   useEffect(() => {
     let active = true;
     async function loadData() {
       if (!company?.id) return;
       const [{ data: articlesData }, { data: locationsData }, { data: tmplData }, { data: companyRow }] = await Promise.all([
-        supabase.from("articles").select("id,name,company_id").eq("company_id", company.id).order("name"),
+        supabase.from("articles").select("id,name,company_id,metadata").eq("company_id", company.id).order("name"),
         supabase.from("locations").select("id,name,company_id").eq("company_id", company.id).order("name"),
         supabase.from("asset_tag_templates").select("id,template,company_id").eq("company_id", company.id).order("created_at", { ascending: false }),
         supabase.from("companies").select("metadata").eq("id", company.id).limit(1).maybeSingle(),
@@ -67,6 +72,98 @@ export function EquipmentCreateForm({ initialArticleId }: { initialArticleId?: n
     loadData();
     return () => { active = false; };
   }, [supabase, company?.id]);
+
+  useEffect(() => {
+    let active = true;
+    async function loadContacts() {
+      if (!company?.id) return;
+      const { data, error } = await supabase
+        .from("contacts")
+        .select("*")
+        .eq("company_id", company.id)
+        .order("display_name", { ascending: true });
+      if (!active) return;
+      if (error) {
+        console.error("Failed to load contacts", error);
+        return;
+      }
+      setContacts((data as Contact[]) ?? []);
+    }
+    loadContacts();
+    return () => { active = false; };
+  }, [supabase, company?.id]);
+
+  useEffect(() => {
+    if (advanced && !wasAdvanced) {
+      try {
+        setMetaText(JSON.stringify(metaObj, null, 2));
+      } catch {
+        // ignore serialization issues
+      }
+    }
+    if (!advanced && wasAdvanced) {
+      try {
+        if (metaText.trim()) {
+          const parsed = JSON.parse(metaText) as EquipmentMetadata;
+          setMetaObj(buildEquipmentMetadata(parsed));
+        }
+      } catch {
+        // ignore parse error, keep previous structured values
+      }
+    }
+    setWasAdvanced(advanced);
+  }, [advanced, wasAdvanced, metaObj, metaText]);
+
+  const selectedArticleMetadata = useMemo(() => {
+    if (articleId === "") return null;
+    const id = Number(articleId);
+    const match = articles.find((article) => article.id === id);
+    return (match?.metadata ?? null) as unknown as ArticleMetadata | null;
+  }, [articleId, articles]);
+
+  const supplierContactOptions = useMemo(() => contacts.map((contact) => ({
+    id: contact.id,
+    label: contact.display_name,
+    snapshot: {
+      name: contact.display_name,
+      email: contact.email ?? undefined,
+      phone: contact.phone ?? undefined,
+      has_signal: contact.has_signal ?? undefined,
+      has_whatsapp: contact.has_whatsapp ?? undefined,
+      has_telegram: contact.has_telegram ?? undefined,
+      street: contact.street ?? undefined,
+      zipCode: contact.zip_code ?? undefined,
+      city: contact.city ?? undefined,
+      country: contact.country ?? undefined,
+    },
+  })), [contacts]);
+
+  const metadataCards = advanced ? (
+    <Card>
+      <CardHeader>
+        <CardTitle>Equipment-Metadaten (JSON)</CardTitle>
+        <CardDescription>Direktes Bearbeiten der JSON-Struktur</CardDescription>
+      </CardHeader>
+      <CardContent className="grid gap-2">
+        <textarea
+          id="metadata"
+          className="min-h-[140px] w-full rounded-md border bg-background p-2 text-sm font-mono"
+          value={metaText}
+          onChange={(e) => setMetaText(e.target.value)}
+          spellCheck={false}
+        />
+      </CardContent>
+    </Card>
+  ) : (
+    <EquipmentMetadataForm
+      value={metaObj}
+      onChange={(value) => setMetaObj(buildEquipmentMetadata(value))}
+      articleMetadata={selectedArticleMetadata ?? undefined}
+      companyMetadata={companyMeta ?? undefined}
+      supplierOptions={supplierContactOptions}
+      onCreateSupplier={() => setContactDialogOpen(true)}
+    />
+  );
 
   async function onSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -218,37 +315,35 @@ export function EquipmentCreateForm({ initialArticleId }: { initialArticleId?: n
         </CardContent>
       </Card>
 
-      <Card className="md:col-span-12">
+      <Card className="md:col-span-4">
         <CardHeader>
-          <CardTitle>Equipment-Metadaten</CardTitle>
-          <CardDescription>Strukturierte Felder oder JSON</CardDescription>
+          <CardTitle>Metadaten-Modus</CardTitle>
+          <CardDescription>Zwischen Formular und JSON wechseln</CardDescription>
         </CardHeader>
-        <CardContent className="space-y-3">
-          <label className="flex items-center gap-2 text-xs">
+        <CardContent>
+          <label className="flex items-center gap-2 text-sm">
             <input type="checkbox" checked={advanced} onChange={(e) => setAdvanced(e.target.checked)} />
             Expertenmodus (JSON bearbeiten)
           </label>
-          {advanced ? (
-            <div className="grid gap-2">
-              <Label htmlFor="metadata">Metadata (JSON)</Label>
-              <textarea
-                id="metadata"
-                className="min-h-[120px] w-full rounded-md border bg-background p-2 text-sm font-mono"
-                value={metaText}
-                onChange={(e) => setMetaText(e.target.value)}
-                spellCheck={false}
-              />
-            </div>
-          ) : (
-            <EquipmentMetadataForm value={metaObj} onChange={v => setMetaObj(buildEquipmentMetadata(v))} />
-          )}
         </CardContent>
       </Card>
+
+      <div className="md:col-span-12 grid grid-cols-1 gap-6">{metadataCards}</div>
 
       <div className="md:col-span-12 flex items-center gap-3 justify-end">
         <Button type="submit" disabled={saving}>{saving ? "Erstellen…" : "Erstellen"}</Button>
         {error && <span className="text-sm text-red-600">{error}</span>}
       </div>
+
+      <ContactFormDialog
+        open={contactDialogOpen}
+        onOpenChange={setContactDialogOpen}
+        companyId={company?.id ?? null}
+        defaultType="supplier"
+        onCreated={(contact) => {
+          setContacts((prev) => [...prev, contact]);
+        }}
+      />
     </form>
   );
 }

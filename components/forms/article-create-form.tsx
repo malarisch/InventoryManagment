@@ -5,6 +5,7 @@ import { createClient } from "@/lib/supabase/client";
 import type { Tables } from "@/database.types";
 import { buildAssetTagCode } from "@/lib/asset-tags/code";
 import type { adminCompanyMetadata } from "@/components/metadataTypes.types";
+import type { ArticleMetadata } from "@/components/metadataTypes.types";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
@@ -12,11 +13,13 @@ import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/com
 import { useRouter } from "next/navigation";
 import { useCompany } from "@/app/management/_libs/companyHook";
 import { ArticleMetadataForm } from "@/components/forms/partials/article-metadata-form";
+import { ContactFormDialog } from "@/components/forms/contacts/contact-form-dialog";
 import { defaultArticleMetadataDE, toPrettyJSON } from "@/lib/metadata/defaults";
 
 type Location = Tables<"locations">;
 import type { Json } from "@/database.types";
 type AssetTagTemplate = { id: number; template: Json };
+type Contact = Tables<"contacts">;
 
 export function ArticleCreateForm() {
   const supabase = useMemo(() => createClient(), []);
@@ -33,6 +36,9 @@ export function ArticleCreateForm() {
   const [metaText, setMetaText] = useState<string>(() => toPrettyJSON(defaultArticleMetadataDE));
   const [metaObj, setMetaObj] = useState(defaultArticleMetadataDE);
   const [advanced, setAdvanced] = useState(false);
+  const [wasAdvanced, setWasAdvanced] = useState(false);
+  const [contacts, setContacts] = useState<Contact[]>([]);
+  const [contactDialogOpen, setContactDialogOpen] = useState(false);
 
   useEffect(() => {
     let active = true;
@@ -54,6 +60,26 @@ export function ArticleCreateForm() {
     loadData();
     return () => { active = false; };
   }, [supabase]);
+
+  useEffect(() => {
+    let active = true;
+    async function loadContacts() {
+      if (!company?.id) return;
+      const { data, error } = await supabase
+        .from("contacts")
+        .select("*")
+        .eq("company_id", company.id)
+        .order("display_name", { ascending: true });
+      if (!active) return;
+      if (error) {
+        console.error("Failed to load contacts", error);
+        return;
+      }
+      setContacts((data as Contact[]) ?? []);
+    }
+    loadContacts();
+    return () => { active = false; };
+  }, [supabase, company?.id]);
 
   async function onSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -113,6 +139,70 @@ export function ArticleCreateForm() {
     }
   }
 
+  useEffect(() => {
+    if (advanced && !wasAdvanced) {
+      try {
+        setMetaText(JSON.stringify(metaObj, null, 2));
+      } catch {
+        // ignore serialization errors
+      }
+    }
+    if (!advanced && wasAdvanced) {
+      try {
+        if (metaText.trim().length > 0) {
+          const parsed = JSON.parse(metaText) as ArticleMetadata;
+          setMetaObj(parsed);
+        }
+      } catch {
+        // ignore parse error, keep previous state
+      }
+    }
+    setWasAdvanced(advanced);
+  }, [advanced, wasAdvanced, metaObj, metaText]);
+
+  const supplierContactOptions = useMemo(() => contacts.map((contact) => ({
+    id: contact.id,
+    label: contact.display_name,
+    snapshot: {
+      name: contact.display_name,
+      email: contact.email ?? undefined,
+      phone: contact.phone ?? undefined,
+      has_signal: contact.has_signal ?? undefined,
+      has_whatsapp: contact.has_whatsapp ?? undefined,
+      has_telegram: contact.has_telegram ?? undefined,
+      street: contact.street ?? undefined,
+      zipCode: contact.zip_code ?? undefined,
+      city: contact.city ?? undefined,
+      country: contact.country ?? undefined,
+    },
+  })), [contacts]);
+
+  const metadataCards = advanced ? (
+    <Card>
+      <CardHeader>
+        <CardTitle>Artikel-Metadaten (JSON)</CardTitle>
+        <CardDescription>Direktes Bearbeiten der JSON-Struktur</CardDescription>
+      </CardHeader>
+      <CardContent className="grid gap-2">
+        <textarea
+          id="metadata"
+          className="min-h-[140px] w-full rounded-md border bg-background p-2 text-sm font-mono"
+          value={metaText}
+          onChange={(e) => setMetaText(e.target.value)}
+          spellCheck={false}
+        />
+      </CardContent>
+    </Card>
+  ) : (
+    <ArticleMetadataForm
+      value={metaObj}
+      onChange={setMetaObj}
+      companyMetadata={companyMeta ?? undefined}
+      supplierOptions={supplierContactOptions}
+      onCreateSupplier={() => setContactDialogOpen(true)}
+    />
+  );
+
   return (
     <form onSubmit={onSubmit} className="grid grid-cols-1 md:grid-cols-12 gap-6">
       <Card className="md:col-span-5">
@@ -165,37 +255,35 @@ export function ArticleCreateForm() {
         </CardContent>
       </Card>
 
-      <Card className="md:col-span-12">
+      <Card className="md:col-span-4">
         <CardHeader>
-          <CardTitle>Artikel-Metadaten</CardTitle>
-          <CardDescription>Strukturierte Felder oder JSON</CardDescription>
+          <CardTitle>Metadaten-Modus</CardTitle>
+          <CardDescription>Zwischen Formular und JSON wechseln</CardDescription>
         </CardHeader>
-        <CardContent className="space-y-3">
-          <label className="flex items-center gap-2 text-xs">
+        <CardContent>
+          <label className="flex items-center gap-2 text-sm">
             <input type="checkbox" checked={advanced} onChange={(e) => setAdvanced(e.target.checked)} />
             Expertenmodus (JSON bearbeiten)
           </label>
-          {advanced ? (
-            <div className="grid gap-2">
-              <Label htmlFor="metadata">Metadata (JSON)</Label>
-              <textarea
-                id="metadata"
-                className="min-h-[140px] w-full rounded-md border bg-background p-2 text-sm font-mono"
-                value={metaText}
-                onChange={(e) => setMetaText(e.target.value)}
-                spellCheck={false}
-              />
-            </div>
-          ) : (
-            <ArticleMetadataForm value={metaObj} onChange={setMetaObj} />
-          )}
         </CardContent>
       </Card>
+
+      <div className="md:col-span-12 grid grid-cols-1 gap-6">{metadataCards}</div>
 
       <div className="md:col-span-12 flex items-center gap-3 justify-end">
         <Button type="submit" disabled={saving}>{saving ? "Erstellen…" : "Erstellen"}</Button>
         {error && <span className="text-sm text-red-600">{error}</span>}
       </div>
+
+      <ContactFormDialog
+        open={contactDialogOpen}
+        onOpenChange={setContactDialogOpen}
+        companyId={company?.id ?? null}
+        defaultType="supplier"
+        onCreated={(contact) => {
+          setContacts((prev) => [...prev, contact]);
+        }}
+      />
     </form>
   );
 }

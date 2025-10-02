@@ -35,15 +35,15 @@ export type Price = {
 /** Electrical power characteristics. */
 export type Power = {
   /** Maximum continuous power in watts. */
-  maxPowerW?: number;
+  maxPowerW?: number | null;
   /** Source/type of power. */
-  powerType?: "AC" | "DC" | "PoE" | "Battery" | "Other" | undefined;
+  powerType?: "AC" | "DC" | "PoE" | "Battery" | "Other" | null | undefined;
   /** Voltage range, e.g., "220–240V". */
-  voltageRangeV?: string;
+  voltageRangeV?: string | null;
   /** Frequency, e.g., "50Hz" or "50/60Hz". */
-  frequencyHz?: string;
+  frequencyHz?: string | null;
   /** Connector type, e.g., "IEC C13". */
-  powerConnectorType?: string;
+  powerConnectorType?: string | null;
 };
 /** Contact method and address information. */
 export type ContactInfo = {
@@ -75,10 +75,28 @@ export type Website = {
   description?: string;
 };
 
+/** Snapshot of an external supplier/contact association. */
+export interface SupplierReference {
+  /** ID of the referenced contact record, if linked. */
+  contactId?: number;
+  /** Optional frozen contact info stored when the link was created. */
+  contactSnapshot?: ContactInfo;
+  /** User-friendly label (e.g., vendor name) shown in the UI. */
+  displayName?: string;
+  /** Pricing details for this supplier. */
+  price?: Price;
+  /** Optional website to reach the supplier. */
+  website?: Website;
+  /** Additional internal notes about working with this supplier. */
+  notes?: string;
+  /** Flag to highlight the preferred supplier for the item. */
+  isPreferred?: boolean;
+}
+
 /** Individual person related to customers/jobs/companies. */
 export interface Person {
-  firstName: string;
-  lastName: string;
+  firstName?: string;
+  lastName?: string;
   /** Associated company IDs. */
   companyId?: number[];
   /** Job title/role. */
@@ -158,37 +176,37 @@ export interface Company {
 /** Additional descriptors for an article (product). */
 export interface ArticleMetadata {
     /** Custom article type string (company-defined). */
-    type: string;
-  manufacturer?: string;
-  model?: string;
-  manufacturerPartNumber?: string; // Part Number (MPN)
-  EAN?: string; // European Article Number
-  UPC?: string; // Universal Product Code
+    type: string | null;
+  manufacturer?: string | null;
+  model?: string | null;
+  manufacturerPartNumber?: string | null; // Part Number (MPN)
+  EAN?: string | null; // European Article Number
+  UPC?: string | null; // Universal Product Code
   canBeBookedWithoutStock?: boolean; // e.g., for consumables
   image?: string;
   case?: {
     /** Whether the case is 19" rack based. */
-    is19Inch: boolean;
+    is19Inch?: boolean | null;
     /** Height in rack units (U) if rack-based. */
-    heightUnits: number;
-    maxDeviceDepthCm?: number; // in cm
-    hasLock?: boolean;
+    heightUnits?: number | null;
+    maxDeviceDepthCm?: number | null; // in cm
+    hasLock?: boolean | null;
     innerDimensionsCm?: DimensionsCm;
-    contentMaxWeightKg?: number; // in kg
+    contentMaxWeightKg?: number | null; // in kg
     restrictedContentTypes?: string[]; // e.g., ["Electronics", "Cables"]; can also be used for expansion card slots!
   };
   fitsInRestrictedCaseTypes?: string[]; // e.g., "YAMAHA MINI Expansion Slot"
   /** Whether article itself is 19" rack mountable. */
-  is19Inch: boolean;
+  is19Inch: boolean | null;
   /** Height in rack units (U) if rack-mountable. */
-  heightUnits?: number;
+  heightUnits?: number | null;
   dimensionsCm?: DimensionsCm;
-  weightKg?: number; // in kg
+  weightKg?: number | null; // in kg
   connectivity?: string[]; // e.g., ["WiFi", "Bluetooth", "Ethernet"]
   interfaces?: string[]; // e.g., ["USB-C", "HDMI", "DisplayPort"]
   power?: Power;
-  /** Array of supplier tuples with optional price and website. */
-  suppliers?: [(Company | Person), Price?, Website?][];
+  /** Suppliers who can deliver this article. */
+  suppliers?: SupplierReference[];
   dailyRentalRate?: Price; // in the company's currency
   notes?: string; // Additional notes about the article
 
@@ -196,13 +214,19 @@ export interface ArticleMetadata {
 
 /** Extra per-unit details for a physical equipment item. */
 export interface EquipmentMetadata extends Partial<ArticleMetadata> {
+  type?: string | null;
+  manufacturer?: string | null;
+  model?: string | null;
+  is19Inch?: boolean | null;
+  heightUnits?: number | null;
+  weightKg?: number | null;
 
   serialNumber?: string;
   purchaseDate?: string; // ISO date string
   warrantyExpiry?: string; // ISO date string
   canLeaveLocation?: boolean; // e.g., for portable equipment
   maintenanceSchedule?: string; // e.g., "Every 6 months"
-  supplier?: [(Company | Person), Price?, Website?];
+  suppliers?: SupplierReference[];
   depreciationMethod?: "straight-line" | "declining-balance" | "sum-of-the-years-digits";
   depreciationPeriodMonths?: number; // in months
   assignedTo?: Person; // Person responsible for the equipment
