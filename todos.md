@@ -20,7 +20,6 @@ Diese To-Do List enthält Aufgaben, die an der Software zu bearbeiten sind. Soba
   - Beim Entfernen von Equipments aus einem Case: Could not find the 'equipments' column of 'cases' in the schema cache
   - Case Edit Table: Die Tabelle ist leer, suche gibt keine Ergebnisse. Im Request log vom Browser ist ein 400: fetch.ts:15  GET http://127.0.0.1:54321/rest/v1/equipments?select=*%2Carticles%3Aarticle_id%28name%29&order=created_at.desc&limit=500 400 (Bad Request)
 - Company Settings:
-  - In den Typen lassen sich inzwischen zwar Zeilenumbrüche eingeben, dafür aber keine Leerzeichen mehr.
   - Änderungen werden erst nach Reoad ins UX übernommen
   - Führe die "Kontaktperson" sektion als Kontakt Entität aus, nicht als JSON Parallelstruktur.
   - Zerlege auch hier die Metadaten in einzelne Cards, die auf oberster Ebene angezeigt werden.
@@ -89,6 +88,7 @@ Diese To-Do List enthält Aufgaben, die an der Software zu bearbeiten sind. Soba
 
 
 ## Done
+- **Fix: Company Settings Types with Spaces**: Fixed custom types (articleTypes, caseTypes, locationTypes) by filtering out empty strings after trim, allowing spaces within type names and line breaks between types while removing blank lines.
 - **Fix: Infinite Loop on Table Pages**: Fixed DataTable component causing constant refresh loop on table pages (e.g. /management/equipments) by serializing array dependencies (filters, searchableFields) in useEffect. Array references were being recreated on every render causing infinite re-fetches (~40 requests/second).
 - **Fix: Infinite Loop on Overview Pages (History)**: Fixed history-live component causing ~40 requests/second by removing equipmentDetails and caseDetails from useEffect dependencies.
 - **Fix: Duplicate HTML IDs in Dimension Inputs**: Fixed all dimension input fields having the same HTML id by adding idPrefix prop to DimensionsFieldset component.
