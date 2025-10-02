@@ -172,7 +172,7 @@ export function HistoryLive({
     async function load() {
       const { data, error } = await supabase
         .from('equipments')
-        .select('id, articles:article_id(name), asset_tags:asset_tag(printed_code)')
+        .select('id, articles(name), asset_tags:asset_tag(printed_code)')
         .in('id', missing);
       if (cancelled || error || !data) return;
       setEquipmentDetails((prev) => {

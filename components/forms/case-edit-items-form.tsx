@@ -49,7 +49,7 @@ export function CaseEditItemsForm({
       const [{ data: eqData }, { data: artData }] = await Promise.all([
         supabase
           .from("equipments")
-          .select("*, articles:article_id(name)")
+          .select("*, articles(name)")
           .order("created_at", { ascending: false })
           .limit(500),
         supabase.from("articles").select("id,name").order("name"),

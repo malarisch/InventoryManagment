@@ -18,7 +18,7 @@ Diese To-Do List enthält Aufgaben, die an der Software zu bearbeiten sind. Soba
   - Case Edit: Bei Equipments im Case wird nur die ID angezeigt aber nicht der Name des Artikels. In der Plan text ansicht oben das Gleiche, außerdem fehlen Created By und Created At. Ein Picker, um das Case Equipment zu ändern fehlt.
   - Beim Hinzufügen ungetrackter Artikel in ein Case: Could not find the 'articles' column of 'cases' in the schema cache
   - Beim Entfernen von Equipments aus einem Case: Could not find the 'equipments' column of 'cases' in the schema cache
-  - Case Edit Table: Die Tabelle ist leer, suche gibt keine Ergebnisse. Im Request log vom Browser ist ein 400: fetch.ts:15  GET http://127.0.0.1:54321/rest/v1/equipments?select=*%2Carticles%3Aarticle_id%28name%29&order=created_at.desc&limit=500 400 (Bad Request)
+  - Case Edit Table: Die Tabelle ist leer, suche gibt keine Ergebnisse.
 - Company Settings:
   - Änderungen werden erst nach Reoad ins UX übernommen
   - Führe die "Kontaktperson" sektion als Kontakt Entität aus, nicht als JSON Parallelstruktur.
@@ -88,6 +88,7 @@ Diese To-Do List enthält Aufgaben, die an der Software zu bearbeiten sind. Soba
 
 
 ## Done
+- **Fix: PostgREST Query Syntax (Global)**: Fixed incorrect PostgREST foreign key syntax across multiple components (history-live.tsx, job-quick-book.tsx, case-edit-items-form.tsx) from `articles:article_id(name)` to `articles(name)`.
 - **Fix: Job Edit Page Booked Assets Query Error**: Fixed PostgREST query syntax from `articles:article_id(name)` to `articles(name)` in both job-booked-assets.client.tsx and job-booked-assets.tsx - Supabase auto-detects foreign key relationships without explicit column reference.
 - **Fix: Company Settings Types Input**: Fixed issue where spaces and line breaks were immediately deleted in article/case/location type textareas by changing to process (split/trim/filter) only on blur instead of every keystroke.
 - **Fix: Company Settings Types with Spaces**: Fixed custom types (articleTypes, caseTypes, locationTypes) by filtering out empty strings after trim, allowing spaces within type names and line breaks between types while removing blank lines.
