@@ -1,3 +1,23 @@
+## 2025-10-03 17:15 – Asset Tag Template Forms: Unified create/edit with improved UX
+- **TASK**: Refactor asset tag template edit page to match improved UX from create page
+- User requested: "Refactor the Asset Tag Template Edit Page to also use the UX Refactoring we did on the Create Page, or even better, unify them!"
+- **SOLUTION**: Created single unified form component
+  * New `AssetTagTemplateForm` component with optional `templateId` prop
+  * Edit mode: auto-loads template data via useEffect when templateId provided
+  * Create mode: uses default values when no templateId
+  * Applied improved 3-column responsive layout to both modes:
+    - Left 8/12 columns: organized cards (Basic Info, Dimensions, Styling, Code Generation, Elements)
+    - Right 4/12 columns: sticky live preview card + template codes reference card
+  * Drag-and-drop element positioning in live preview
+  * Consistent navigation breadcrumbs on both pages
+- Removed duplicate code: deleted separate create/edit forms (588 lines eliminated, net -296 lines)
+- Updated both pages: `/asset-tag-templates/new` and `/asset-tag-templates/[id]/edit`
+- Files: `components/forms/asset-tag-template-form.tsx` (new), `app/management/asset-tag-templates/new/page.tsx`, `app/management/asset-tag-templates/[id]/edit/page.tsx`, deleted `asset-tag-template-{create,edit}-form.tsx`, `agentlog.md`
+- TypeScript compilation: ✅ PASSED (`npm run test:tsc`)
+- ESLint: ✅ PASSED (`npm run lint`)
+- Commit: 212b3b3 "refactor: Unified asset tag template form for create and edit"
+- Next: User can test creating new templates and editing existing ones with consistent UX
+
 ## 2025-10-03 16:30 – Company Import/Export: Completed full functionality
 - **TASK**: Complete halfly-implemented company import/export API endpoints and add UI buttons
 - **SOLUTION**:
