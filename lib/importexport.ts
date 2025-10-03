@@ -119,30 +119,31 @@ export async function importCompanyData(companyData: CompanyData, newUser: strin
             companyName = `${companyName} (Import ${timestamp})`;
         }
 
-        // Create company with small retry to absorb rare sequence misalignments (duplicate key on id)
-        let upsertedCompany: companies | null = null;
-        for (let attempt = 0; attempt < 3; attempt++) {
-            try {
-                upsertedCompany = await prisma.companies.create({
-                    data: {
-                        name: companyName,
-                        description: (companyInfo as { description?: string | null }).description ?? null,
-                        owner_user_id: newUser,
-                        metadata: companyInfo.metadata ?? Prisma.JsonNull,
-                        files: companyInfo.files ?? Prisma.JsonNull,
-                    },
-                });
-                break;
-            } catch (err) {
-                const msg = String((err as Error).message || '');
-                const isDupId = msg.includes('duplicate key value') && msg.includes('companies_pkey');
-                if (!isDupId || attempt === 2) {
-                    throw err;
-                }
-                // Next loop iteration will consume next identity value and likely succeed.
-            }
+        // Preemptively align companies identity to avoid rare duplicate key errors in mixed environments
+        try {
+            await (prisma as unknown as { $executeRawUnsafe: (q: string) => Promise<unknown> }).$executeRawUnsafe(`
+                DO $$
+                DECLARE next_id bigint;
+                BEGIN
+                  SELECT COALESCE(MAX(id),0) + 1 INTO next_id FROM public.companies;
+                  EXECUTE format('ALTER TABLE public.companies ALTER COLUMN id RESTART WITH %s', next_id);
+                EXCEPTION WHEN others THEN
+                  NULL;
+                END$$;
+            `);
+        } catch (_e) {
+            // Non-fatal; proceed with create which may still succeed
         }
-        if (!upsertedCompany) throw new Error('Failed to create company');
+
+        const upsertedCompany = await prisma.companies.create({
+            data: {
+                name: companyName,
+                description: (companyInfo as { description?: string | null }).description ?? null,
+                owner_user_id: newUser,
+                metadata: companyInfo.metadata ?? Prisma.JsonNull,
+                files: companyInfo.files ?? Prisma.JsonNull,
+            },
+        });
 
 
         // users_companies membership will be created later to follow requested order

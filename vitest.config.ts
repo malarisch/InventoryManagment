@@ -13,6 +13,9 @@ export default defineConfig({
     reporters: "default",
     hookTimeout: 60_000,
     teardownTimeout: 30_000,
+    globalSetup: [
+      "./tests/vitest/global-setup.ts",
+    ],
     setupFiles: [
       "./tests/vitest/setup-env.ts",
       "./tests/vitest/setup-logging.ts",
