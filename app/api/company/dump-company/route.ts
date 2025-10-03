@@ -3,6 +3,33 @@ import {getCompanyData} from "@/lib/importexport";
 import {createClient} from "@/lib/supabase/server";
 
 /**
+ * Recursively converts BigInt values to strings for JSON serialization
+ */
+function convertBigIntToString(obj: unknown): unknown {
+  if (obj === null || obj === undefined) {
+    return obj;
+  }
+  
+  if (typeof obj === 'bigint') {
+    return obj.toString();
+  }
+  
+  if (Array.isArray(obj)) {
+    return obj.map(item => convertBigIntToString(item));
+  }
+  
+  if (typeof obj === 'object') {
+    const converted: Record<string, unknown> = {};
+    for (const [key, value] of Object.entries(obj)) {
+      converted[key] = convertBigIntToString(value);
+    }
+    return converted;
+  }
+  
+  return obj;
+}
+
+/**
  * GET /api/company/dump-company
  * 
  * Exports company data as JSON for backup/migration purposes.
@@ -82,7 +109,10 @@ export async function GET(req: NextRequest) {
       return NextResponse.json({ error: "Company nicht gefunden" }, { status: 404 });
     }
 
-    return NextResponse.json({ company });
+    // Convert BigInt values to strings for JSON serialization
+    const serializedCompany = convertBigIntToString(company);
+
+    return NextResponse.json({ company: serializedCompany });
 
   } catch (e) {
     console.error("Export error:", e);
