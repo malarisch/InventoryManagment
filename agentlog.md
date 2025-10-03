@@ -1,3 +1,20 @@
+## 2025-10-03 17:30 – Bug Fix: QR code sizing in asset tag templates
+- **ISSUE**: QR codes appearing much smaller than their defined size box in template preview
+- User report: "The QR Code size is even worse than the last change - now there is no padding anymore, but the QR code is a LOT smaller than the box (that has the correct size!)"
+- **ROOT CAUSE**: Inconsistent unit conversion in SVG generator
+  * QR code generation used `size * mmToPx` for width parameter (correct)
+  * But SVG `<image>` tag used raw `size` value without conversion to pixels
+  * Result: QR code data was correct size, but SVG rendered it at ~1/3.78 scale
+- **SOLUTION**: Fixed unit conversion in `lib/asset-tags/svg-generator.ts`
+  * QR code: Store `qrSizePx = size * mmToPx` and use for both QR generation and SVG image dimensions
+  * Images: Convert both width (`size * mmToPx`) and height (`h * mmToPx`) to pixels before SVG
+  * Error fallback also fixed (text positioning now uses converted px values)
+- Files: `lib/asset-tags/svg-generator.ts`, `agentlog.md`
+- TypeScript compilation: ✅ PASSED (`npm run test:tsc`)
+- ESLint: ✅ PASSED (`npm run lint`)
+- Commit: d65dad5 "fix: QR code and image sizing in asset tag templates"
+- Next: QR codes and images now fill their bounding boxes correctly
+
 ## 2025-10-03 17:15 – Asset Tag Template Forms: Unified create/edit with improved UX
 - **TASK**: Refactor asset tag template edit page to match improved UX from create page
 - User requested: "Refactor the Asset Tag Template Edit Page to also use the UX Refactoring we did on the Create Page, or even better, unify them!"
