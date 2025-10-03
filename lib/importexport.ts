@@ -225,6 +225,11 @@ export async function importCompanyData(companyData: CompanyData, newUser: strin
                     equipmentData.article_id = articleIdMap[equipmentData.article_id.toString()];
                 }
 
+                // Parse added_to_inventory_at if it's a string
+                if (equipmentData.added_to_inventory_at && typeof equipmentData.added_to_inventory_at === 'string') {
+                    equipmentData.added_to_inventory_at = new Date(equipmentData.added_to_inventory_at);
+                }
+
                 const newEquipment = await prisma.equipments.create({
                     data: {
                         ...equipmentData,
@@ -309,6 +314,14 @@ export async function importCompanyData(companyData: CompanyData, newUser: strin
                     jobData.contact_id = contactIdMap[jobData.contact_id.toString()];
                 }
                 delete (jobData as Record<string, unknown>).customer_id;
+
+                // Parse date fields if they're strings
+                if (jobData.startdate && typeof jobData.startdate === 'string') {
+                    jobData.startdate = new Date(jobData.startdate);
+                }
+                if (jobData.enddate && typeof jobData.enddate === 'string') {
+                    jobData.enddate = new Date(jobData.enddate);
+                }
 
                 const newJob = await prisma.jobs.create({
                     data: {

@@ -3,7 +3,7 @@ import {getCompanyData} from "@/lib/importexport";
 import {createClient} from "@/lib/supabase/server";
 
 /**
- * Recursively converts BigInt values to strings for JSON serialization
+ * Recursively converts BigInt values to strings and Date objects to ISO strings for JSON serialization
  */
 function convertBigIntToString(obj: unknown): unknown {
   if (obj === null || obj === undefined) {
@@ -12,6 +12,11 @@ function convertBigIntToString(obj: unknown): unknown {
   
   if (typeof obj === 'bigint') {
     return obj.toString();
+  }
+  
+  // Handle Date objects by converting to ISO string
+  if (obj instanceof Date) {
+    return obj.toISOString();
   }
   
   if (Array.isArray(obj)) {
