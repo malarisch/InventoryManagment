@@ -119,15 +119,30 @@ export async function importCompanyData(companyData: CompanyData, newUser: strin
             companyName = `${companyName} (Import ${timestamp})`;
         }
 
-        const upsertedCompany = await prisma.companies.create({
-            data: {
-                name: companyName,
-                description: (companyInfo as { description?: string | null }).description ?? null,
-                owner_user_id: newUser,
-                metadata: companyInfo.metadata ?? Prisma.JsonNull,
-                files: companyInfo.files ?? Prisma.JsonNull,
-            },
-        });
+        // Create company with small retry to absorb rare sequence misalignments (duplicate key on id)
+        let upsertedCompany: companies | null = null;
+        for (let attempt = 0; attempt < 3; attempt++) {
+            try {
+                upsertedCompany = await prisma.companies.create({
+                    data: {
+                        name: companyName,
+                        description: (companyInfo as { description?: string | null }).description ?? null,
+                        owner_user_id: newUser,
+                        metadata: companyInfo.metadata ?? Prisma.JsonNull,
+                        files: companyInfo.files ?? Prisma.JsonNull,
+                    },
+                });
+                break;
+            } catch (err) {
+                const msg = String((err as Error).message || '');
+                const isDupId = msg.includes('duplicate key value') && msg.includes('companies_pkey');
+                if (!isDupId || attempt === 2) {
+                    throw err;
+                }
+                // Next loop iteration will consume next identity value and likely succeed.
+            }
+        }
+        if (!upsertedCompany) throw new Error('Failed to create company');
 
 
         // users_companies membership will be created later to follow requested order

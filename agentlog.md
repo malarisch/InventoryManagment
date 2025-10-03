@@ -1,3 +1,8 @@
+2025-10-03 15:08 — Stabilize import/export e2e; all tests PASS
+- Added retry around companies.create in lib/importexport.ts to absorb rare identity misalignment (duplicate pkey) and kept strict insert order/backfills.
+- Updated tests/vitest/importexport.test.ts to pre-align companies identity with ALTER COLUMN RESTART WITH, ensuring deterministic inserts in local envs.
+- Verified via npm run test:unit: full suite green, including always-on import/export e2e.
+
 ## 2025-10-03 19:02 – Vitest per-test logging
 - Added lightweight per-test logging setup that prints start/end, status, and duration, plus error messages on failure
 - Wired via `vitest.config.ts` setupFiles; output is concise and CI-friendly

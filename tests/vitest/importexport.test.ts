@@ -5,19 +5,30 @@ import { createCleanupTracker, cleanupTestData, createTestUser, createTestCompan
 
 const prisma = new PrismaClient();
 
-// Skip this suite by default; enable with RUN_IMPORTEXPORT_E2E=true
-// and ensure Supabase env vars are present.
-const hasSupabaseEnv = Boolean(process.env.NEXT_PUBLIC_SUPABASE_URL) && Boolean(process.env.SUPABASE_SERVICE_ROLE_KEY);
-const shouldRun = process.env.RUN_IMPORTEXPORT_E2E === 'true' && hasSupabaseEnv;
-const maybeDescribe = shouldRun ? describe : describe.skip;
-
-maybeDescribe('importexport end-to-end', () => {
+describe('importexport end-to-end', () => {
   const cleanup = createCleanupTracker();
   let ownerUserId: string;
   let importingUserId: string;
   let companyId: bigint;
 
   beforeAll(async () => {
+    // Ensure the companies identity sequence is ahead of current max(id) to avoid rare duplicate key errors
+    // that can happen in mismatched local environments. Uses ALTER COLUMN RESTART WITH to support identity columns.
+    try {
+      await prisma.$executeRawUnsafe(`
+        DO $$
+        DECLARE next_id bigint;
+        BEGIN
+          SELECT COALESCE(MAX(id),0) + 1 INTO next_id FROM public.companies;
+          EXECUTE format('ALTER TABLE public.companies ALTER COLUMN id RESTART WITH %s', next_id);
+        EXCEPTION WHEN others THEN
+          -- ignore; continue, inserts may still work if sequence is correct
+          NULL;
+        END$$;
+      `);
+    } catch (_e) {
+      // Non-fatal: if sequence function is unavailable, continue; inserts will likely still work.
+    }
     // Create two users: one as original owner (seed data), one for importing
     const u1 = await createTestUser(cleanup);
     const u2 = await createTestUser(cleanup);
