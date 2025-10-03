@@ -94,33 +94,31 @@ export async function importCompanyData(companyData: CompanyData, newUser: strin
         };
 
 
+        // ALWAYS create a new company on import - never update existing
+        // If a company with the same name exists, add a suffix to avoid conflicts
+        let companyName = companyInfo.name;
         const existingCompany = await prisma.companies.findFirst({
             where: {
-                name: companyInfo.name,
+                name: companyName,
                 owner_user_id: newUser,
             }
         });
 
-        let upsertedCompany;
         if (existingCompany) {
-            upsertedCompany = await prisma.companies.update({
-                where: {id: existingCompany.id},
-                data: {
-                    ...companyInfo,
-                    metadata: companyInfo.metadata ?? Prisma.JsonNull,
-                    files: companyInfo.files ?? Prisma.JsonNull,
-                },
-            });
-        } else {
-            upsertedCompany = await prisma.companies.create({
-                data: {
-                    ...companyInfo,
-                    owner_user_id: newUser,
-                    metadata: companyInfo.metadata ?? Prisma.JsonNull,
-                    files: companyInfo.files ?? Prisma.JsonNull,
-                },
-            });
+            // Add timestamp suffix to avoid name collision
+            const timestamp = new Date().toISOString().split('T')[0]; // YYYY-MM-DD
+            companyName = `${companyName} (Import ${timestamp})`;
         }
+
+        const upsertedCompany = await prisma.companies.create({
+            data: {
+                ...companyInfo,
+                name: companyName,
+                owner_user_id: newUser,
+                metadata: companyInfo.metadata ?? Prisma.JsonNull,
+                files: companyInfo.files ?? Prisma.JsonNull,
+            },
+        });
 
 
         await prisma.users_companies.create({
