@@ -101,7 +101,7 @@ export default async function JobDetailPage({ params }: { params: Promise<{ id: 
                 </CardDescription>
               </CardHeader>
               <CardContent>
-                <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
+                <div className="mb-1 flex flex-wrap items-center justify-between gap-3">
                   <DeleteWithUndo table="jobs" id={job.id} payload={job as Record<string, unknown>} redirectTo="/management/jobs" />
                   <div className="flex items-center gap-2">
                     <Button variant="outline" asChild className="flex items-center gap-2">
@@ -118,9 +118,11 @@ export default async function JobDetailPage({ params }: { params: Promise<{ id: 
                     </Button>
                   </div>
                 </div>
-                <JobEditForm job={job} />
               </CardContent>
             </Card>
+
+            {/* Form now at top level (no nested Cards) */}
+            <JobEditForm job={job} />
 
             <Card>
               <CardHeader>

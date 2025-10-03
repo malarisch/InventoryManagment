@@ -79,7 +79,7 @@ export default async function EquipmentDetailPage({ params }: { params: Promise<
             </CardDescription>
           </CardHeader>
           <CardContent>
-            <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
+            <div className="mb-1 flex flex-wrap items-center justify-between gap-3">
               <DeleteWithUndo table="equipments" id={eq.id} payload={eq as Record<string, unknown>} redirectTo="/management/equipments" />
               <div className="flex items-center gap-3">
                 {!eq.asset_tag && (
@@ -96,9 +96,11 @@ export default async function EquipmentDetailPage({ params }: { params: Promise<
                 </div>
               </div>
             </div>
-            <EquipmentEditForm equipment={eq} />
           </CardContent>
         </Card>
+
+        {/* Form now at top level (no nested Cards) */}
+        <EquipmentEditForm equipment={eq} />
 
         <Card>
           <CardHeader>
