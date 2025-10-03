@@ -14,6 +14,16 @@
 - Commit: 351d1a9 "fix: Set created_by to importing user for all entities"
 - Next: Import now works when importing another user's company export
 
+## 2025-10-03 18:12 – Bug Fix: History FK (change_made_by) during import
+- ISSUE: Import failed with "Foreign key constraint violated on constraint: `history_change_made_by_fkey`"
+- ROOT CAUSE: Exported `change_made_by` referenced a user that doesn't exist in target DB
+- SOLUTION: Set `history.change_made_by` to the importing user and remap `data_id` where possible
+  * Assign `change_made_by = newUser` for all imported history rows
+  * Remap `data_id` for known `table_name` values (articles, equipments, locations, contacts, jobs, asset_tags, cases)
+- Files: `lib/importexport.ts`, `agentlog.md`
+- TypeScript compilation: ✅ PASSED (`npm run test:tsc`)
+- Commit: ba5cf0f "fix(import): set history.change_made_by to importing user and remap data_id where possible"
+
 ## 2025-10-03 18:00 – CRITICAL FIX: Import always creates new company
 - **ISSUE**: Import logic could update existing company instead of creating new one
 - User warning: "Du musst beim Import sicherstellen, dass eine Neue Company ID zugewiesen wird! Sonst korrupted die DB!"
