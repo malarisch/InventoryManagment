@@ -1,4 +1,10 @@
 2025-10-03 17:08 — Tests: remove manual ID inserts in seeding
+2025-10-04 10:15 — CI: split tests into staged workflows
+- Added four workflows: CI Prepare, CI Lint + TSC, CI Vitest, CI Playwright E2E
+- Workflows chain via workflow_run and reuse caches for npm, Prisma, Supabase Docker images, and Playwright browsers
+- Deprecated old combined workflows (run_tests.yml, integration-tests.yml) to avoid duplicate runs
+- Files: .github/workflows/ci-prepare.yml, ci-lint-tsc.yml, ci-vitest.yml, ci-playwright.yml, updated deprecated ones; agentlog.md
+
 - Updated tests/vitest/supabase-seed.test.ts to rely on identity/autoincrement (no explicit id values for users_companies).
 - Prevents identity desync issues and removes a no-go pattern for Supabase tests.
 
