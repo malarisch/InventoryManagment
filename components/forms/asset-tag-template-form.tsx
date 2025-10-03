@@ -431,13 +431,14 @@ export function AssetTagTemplateForm({ templateId }: AssetTagTemplateFormProps) 
       </form>
 
       {/* Live Preview and Template Codes - Sticky on large screens */}
-      <div className="lg:col-span-4 space-y-6">
-        <Card className="lg:sticky lg:top-20">
-          <CardHeader>
-            <CardTitle>Live Preview</CardTitle>
-            <CardDescription>Drag to arrange elements</CardDescription>
-          </CardHeader>
-          <CardContent>
+      <div className="lg:col-span-4">
+        <div className="lg:sticky lg:top-20 space-y-6">
+          <Card>
+            <CardHeader>
+              <CardTitle>Live Preview</CardTitle>
+              <CardDescription>Drag to arrange elements</CardDescription>
+            </CardHeader>
+            <CardContent>
             {(() => {
               const w = form.watch();
               const previewTemplate: AssetTagTemplate = {
@@ -475,76 +476,77 @@ export function AssetTagTemplateForm({ templateId }: AssetTagTemplateFormProps) 
                 />
               );
             })()}
-          </CardContent>
-        </Card>
+            </CardContent>
+          </Card>
 
-        {/* Available Template Codes */}
-        <Card>
-          <CardHeader>
-            <CardTitle>Available Template Codes</CardTitle>
-            <CardDescription>Use these placeholders in element values</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <div className="grid grid-cols-1 gap-2 text-xs">
-              <div className="flex flex-col gap-1">
-                <div className="flex items-center gap-2">
-                  <code className="bg-muted px-2 py-1 rounded">{'{printed_code}'}</code>
-                  <span className="text-muted-foreground">Asset Tag Code</span>
+          {/* Available Template Codes */}
+          <Card>
+            <CardHeader>
+              <CardTitle>Available Template Codes</CardTitle>
+              <CardDescription>Use these placeholders in element values</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="grid grid-cols-1 gap-2 text-xs">
+                <div className="flex flex-col gap-1">
+                  <div className="flex items-center gap-2">
+                    <code className="bg-muted px-2 py-1 rounded">{'{printed_code}'}</code>
+                    <span className="text-muted-foreground">Asset Tag Code</span>
+                  </div>
+                  <div className="text-muted-foreground ml-2">→ {DEFAULT_PREVIEW_DATA.printed_code}</div>
                 </div>
-                <div className="text-muted-foreground ml-2">→ {DEFAULT_PREVIEW_DATA.printed_code}</div>
-              </div>
-              <div className="flex flex-col gap-1">
-                <div className="flex items-center gap-2">
-                  <code className="bg-muted px-2 py-1 rounded">{'{equipment_name}'}</code>
-                  <span className="text-muted-foreground">Equipment Name</span>
+                <div className="flex flex-col gap-1">
+                  <div className="flex items-center gap-2">
+                    <code className="bg-muted px-2 py-1 rounded">{'{equipment_name}'}</code>
+                    <span className="text-muted-foreground">Equipment Name</span>
+                  </div>
+                  <div className="text-muted-foreground ml-2">→ {DEFAULT_PREVIEW_DATA.equipment_name}</div>
                 </div>
-                <div className="text-muted-foreground ml-2">→ {DEFAULT_PREVIEW_DATA.equipment_name}</div>
-              </div>
-              <div className="flex flex-col gap-1">
-                <div className="flex items-center gap-2">
-                  <code className="bg-muted px-2 py-1 rounded">{'{article_name}'}</code>
-                  <span className="text-muted-foreground">Article Name</span>
+                <div className="flex flex-col gap-1">
+                  <div className="flex items-center gap-2">
+                    <code className="bg-muted px-2 py-1 rounded">{'{article_name}'}</code>
+                    <span className="text-muted-foreground">Article Name</span>
+                  </div>
+                  <div className="text-muted-foreground ml-2">→ {DEFAULT_PREVIEW_DATA.article_name}</div>
                 </div>
-                <div className="text-muted-foreground ml-2">→ {DEFAULT_PREVIEW_DATA.article_name}</div>
-              </div>
-              <div className="flex flex-col gap-1">
-                <div className="flex items-center gap-2">
-                  <code className="bg-muted px-2 py-1 rounded">{'{location_name}'}</code>
-                  <span className="text-muted-foreground">Location Name</span>
+                <div className="flex flex-col gap-1">
+                  <div className="flex items-center gap-2">
+                    <code className="bg-muted px-2 py-1 rounded">{'{location_name}'}</code>
+                    <span className="text-muted-foreground">Location Name</span>
+                  </div>
+                  <div className="text-muted-foreground ml-2">→ {DEFAULT_PREVIEW_DATA.location_name}</div>
                 </div>
-                <div className="text-muted-foreground ml-2">→ {DEFAULT_PREVIEW_DATA.location_name}</div>
-              </div>
-              <div className="flex flex-col gap-1">
-                <div className="flex items-center gap-2">
-                  <code className="bg-muted px-2 py-1 rounded">{'{case_name}'}</code>
-                  <span className="text-muted-foreground">Case Name</span>
+                <div className="flex flex-col gap-1">
+                  <div className="flex items-center gap-2">
+                    <code className="bg-muted px-2 py-1 rounded">{'{case_name}'}</code>
+                    <span className="text-muted-foreground">Case Name</span>
+                  </div>
+                  <div className="text-muted-foreground ml-2">→ {DEFAULT_PREVIEW_DATA.case_name}</div>
                 </div>
-                <div className="text-muted-foreground ml-2">→ {DEFAULT_PREVIEW_DATA.case_name}</div>
-              </div>
-              <div className="flex flex-col gap-1">
-                <div className="flex items-center gap-2">
-                  <code className="bg-muted px-2 py-1 rounded">{'{company_name}'}</code>
-                  <span className="text-muted-foreground">Company Name</span>
+                <div className="flex flex-col gap-1">
+                  <div className="flex items-center gap-2">
+                    <code className="bg-muted px-2 py-1 rounded">{'{company_name}'}</code>
+                    <span className="text-muted-foreground">Company Name</span>
+                  </div>
+                  <div className="text-muted-foreground ml-2">→ {DEFAULT_PREVIEW_DATA.company_name}</div>
                 </div>
-                <div className="text-muted-foreground ml-2">→ {DEFAULT_PREVIEW_DATA.company_name}</div>
-              </div>
-              <div className="flex flex-col gap-1">
-                <div className="flex items-center gap-2">
-                  <code className="bg-muted px-2 py-1 rounded">{'{current_date}'}</code>
-                  <span className="text-muted-foreground">Current Date</span>
+                <div className="flex flex-col gap-1">
+                  <div className="flex items-center gap-2">
+                    <code className="bg-muted px-2 py-1 rounded">{'{current_date}'}</code>
+                    <span className="text-muted-foreground">Current Date</span>
+                  </div>
+                  <div className="text-muted-foreground ml-2">→ {DEFAULT_PREVIEW_DATA.current_date}</div>
                 </div>
-                <div className="text-muted-foreground ml-2">→ {DEFAULT_PREVIEW_DATA.current_date}</div>
-              </div>
-              <div className="flex flex-col gap-1">
-                <div className="flex items-center gap-2">
-                  <code className="bg-muted px-2 py-1 rounded">{'{qr_url}'}</code>
-                  <span className="text-muted-foreground">QR Code URL</span>
+                <div className="flex flex-col gap-1">
+                  <div className="flex items-center gap-2">
+                    <code className="bg-muted px-2 py-1 rounded">{'{qr_url}'}</code>
+                    <span className="text-muted-foreground">QR Code URL</span>
+                  </div>
+                  <div className="text-muted-foreground ml-2">→ {DEFAULT_PREVIEW_DATA.qr_url}</div>
                 </div>
-                <div className="text-muted-foreground ml-2">→ {DEFAULT_PREVIEW_DATA.qr_url}</div>
               </div>
-            </div>
-          </CardContent>
-        </Card>
+            </CardContent>
+          </Card>
+        </div>
       </div>
     </div>
   );

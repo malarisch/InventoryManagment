@@ -1,3 +1,17 @@
+## 2025-10-03 17:35 – Bug Fix: Template codes card sticky behavior
+- **ISSUE**: Template codes card scrolling away "under the preview card" instead of staying visible
+- User report: "The Allowed placeholder card is not floating but scrolls under the preview card away"
+- **ROOT CAUSE**: Only the preview card had `lg:sticky lg:top-20`, codes card below was in normal flow
+- **SOLUTION**: Wrapped both cards in a shared sticky container
+  * Changed structure: outer div gets `lg:sticky lg:top-20`, inner div has `space-y-6`
+  * Both preview and codes cards now float together as a single sticky unit
+  * Prevents codes card from scrolling out of view when scrolling form
+- Files: `components/forms/asset-tag-template-form.tsx`, `agentlog.md`
+- TypeScript compilation: ✅ PASSED (`npm run test:tsc`)
+- ESLint: ✅ PASSED (`npm run lint`)
+- Commit: 9f1d476 "fix: Template codes card now stays visible with preview when scrolling"
+- Next: Both cards now stay visible together when scrolling the form
+
 ## 2025-10-03 17:30 – Bug Fix: QR code sizing in asset tag templates
 - **ISSUE**: QR codes appearing much smaller than their defined size box in template preview
 - User report: "The QR Code size is even worse than the last change - now there is no padding anymore, but the QR code is a LOT smaller than the box (that has the correct size!)"
