@@ -6,8 +6,13 @@ import {HistoryCard} from "@/components/historyCard";
 import {CaseEditItemsForm} from "@/components/forms/case-edit-items-form";
 import {DeleteWithUndo} from "@/components/forms/delete-with-undo";
 import {FileManager} from "@/components/files/file-manager";
+import { WorkshopTodoCreateInline } from "@/components/forms/workshop-todo-create-inline";
+import { MaintenanceLogsCard } from "@/components/maintenance/maintenance-logs-card";
+import { fetchUserDisplayAdmin } from "@/lib/users/userDisplay.server";
 
-type CaseRow = Tables<"cases">;
+type CaseRow = Tables<"cases"> & {
+  current_location_location?: { id: number; name: string | null } | null;
+};
 
 export default async function CaseDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const { id: idParam } = await params;
@@ -16,7 +21,7 @@ export default async function CaseDetailPage({ params }: { params: Promise<{ id:
 
   const { data, error } = await supabase
     .from("cases")
-    .select("*")
+    .select("*, current_location_location:current_location(id,name)")
     .eq("id", id)
     .single();
 
@@ -31,8 +36,12 @@ export default async function CaseDetailPage({ params }: { params: Promise<{ id:
   }
 
   const row = data as CaseRow;
+  const caseCompanyId = typeof row.company_id === "number" ? row.company_id : null;
 
-  // Artikel-Namen werden im Edit-Formular clientseitig nachgeladen
+  // Fetch creator display name
+  const creatorDisplay = row.created_by ? await fetchUserDisplayAdmin(row.created_by) : null;
+  const createdAt = row.created_at ? new Date(row.created_at).toLocaleString("de-DE") : null;
+
 
   return (
     <main className="min-h-screen w-full flex flex-col items-center p-5">
@@ -45,10 +54,22 @@ export default async function CaseDetailPage({ params }: { params: Promise<{ id:
           <CardHeader>
             <CardTitle>{row.name ?? `Case #${row.id}`}</CardTitle>
             <CardDescription>
+              {row.description && (<><div className="mb-2">{row.description}</div></>)}
               Case-Equipment: {row.case_equipment ? (
                 <Link className="underline-offset-2 hover:underline" href={`/management/equipments/${row.case_equipment}`}>#{row.case_equipment}</Link>
               ) : "—"}
-              {row.description ? (<><br />{row.description}</>) : null}
+              <br />
+              Standort: {row.current_location ? (
+                <Link
+                  className="underline-offset-2 hover:underline"
+                  href={`/management/locations/${row.current_location}`}
+                >
+                  {row.current_location_location?.name ?? `#${row.current_location}`}
+                </Link>
+              ) : "—"}
+              <br />
+              Erstellt von: {creatorDisplay ?? "—"}
+              {createdAt && ` am ${createdAt}`}
               {row.asset_tag ? (
                 <div className="mt-2">
                   <Link
@@ -63,15 +84,32 @@ export default async function CaseDetailPage({ params }: { params: Promise<{ id:
             </CardDescription>
           </CardHeader>
           <CardContent>
-            <div className="mb-4">
+            <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
               <DeleteWithUndo table="cases" id={row.id} payload={row as Record<string, unknown>} redirectTo="/management/cases" />
+              {caseCompanyId ? (
+                <div className="flex items-center gap-2">
+                  <span className="text-sm text-muted-foreground">Werkstatt:</span>
+                  <WorkshopTodoCreateInline companyId={Number(caseCompanyId)} caseId={Number(row.id)} />
+                </div>
+              ) : null}
             </div>
             <CaseEditItemsForm caseId={id} initialEquipments={row.contains_equipments ?? []} initialArticles={(row.contains_articles as unknown as Array<{ article_id?: number; amount?: number }>) ?? []} caseEquipmentId={row.case_equipment ?? null} initialName={row.name ?? null} initialDescription={row.description ?? null} />
-            <div className="mt-6">
-              <FileManager table="cases" rowId={row.id} companyId={row.company_id ?? undefined} isPublic={false} initial={(row as Record<string, unknown>).files} />
-            </div>
           </CardContent>
         </Card>
+
+        <Card>
+          <CardHeader>
+            <CardTitle>Dateien</CardTitle>
+            <CardDescription>Anhänge und Dokumente zu diesem Case</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <FileManager table="cases" rowId={row.id} companyId={row.company_id ?? undefined} isPublic={false} initial={(row as Record<string, unknown>).files} />
+          </CardContent>
+        </Card>
+
+        {caseCompanyId ? (
+          <MaintenanceLogsCard companyId={Number(caseCompanyId)} caseId={Number(row.id)} />
+        ) : null}
 
         <HistoryCard table="cases" dataId={id} />
       </div>

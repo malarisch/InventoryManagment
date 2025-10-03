@@ -24,16 +24,16 @@ type Props = {
 export function CustomerTable({ pageSize = 10, className }: Props) {
   const customerFilters = useMemo(() => [{ column: 'contact_type', value: 'customer' }], []);
   const columns = [
-    { key: 'id', label: 'ID', render: (row: Contact) => <Link className="underline-offset-2 hover:underline" href={`/management/customers/${row.id}`}>{row.id}</Link> },
+    { key: 'id', label: 'ID', render: (row: Contact) => <Link className="underline-offset-2 hover:underline" href={`/management/contacts/${row.id}`}>{row.id}</Link> },
     { key: 'customer_type', label: 'Typ', render: (row: Contact) => row.customer_type ?? "—" },
-    { key: 'display_name', label: 'Name', render: (row: Contact) => <Link className="underline-offset-2 hover:underline" href={`/management/customers/${row.id}`}>{displayName(row)}</Link> },
+    { key: 'display_name', label: 'Name', render: (row: Contact) => <Link className="underline-offset-2 hover:underline" href={`/management/contacts/${row.id}`}>{displayName(row)}</Link> },
     { key: 'email', label: 'E-Mail', render: (row: Contact) => row.email ?? "—" },
     { key: 'address', label: 'Adresse', render: (row: Contact) => row.address ?? row.street ?? "—" },
   ];
 
   const renderRowActions = (row: Contact) => (
     <Button asChild variant="ghost" size="icon">
-      <Link href={`/management/customers/${row.id}`}><Pencil className="w-4 h-4" /></Link>
+      <Link href={`/management/contacts/${row.id}`}><Pencil className="w-4 h-4" /></Link>
     </Button>
   );
 

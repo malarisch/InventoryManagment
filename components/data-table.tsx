@@ -42,6 +42,10 @@ export function DataTable<T extends { id: number }>(
   const [q, setQ] = useState(initialQuery);
   const dq = useDeferredValue(q);
 
+  // Serialize array dependencies to prevent infinite loops
+  const filtersKey = useMemo(() => JSON.stringify(filters), [filters]);
+  const searchableFieldsKey = useMemo(() => JSON.stringify(searchableFields), [searchableFields]);
+
   useEffect(() => {
     let isActive = true;
     async function load() {
@@ -56,7 +60,7 @@ export function DataTable<T extends { id: number }>(
       });
 
       const term = dq.trim();
-      if (term.length > 0) {
+      if (term.length > 0 && searchableFields.length > 0) {
         const filters: string[] = [];
         searchableFields.forEach(({ field, type }) => {
           if (type === 'number') {
@@ -66,7 +70,11 @@ export function DataTable<T extends { id: number }>(
             filters.push(`${field}.ilike.%${term}%`);
           }
         });
-        if (filters.length > 0) query = query.or(filters.join(',')); else query = query.or('id.eq.0');
+        if (filters.length > 0) {
+          query = query.or(filters.join(','));
+        }
+        // If no filters match the search term type, just show all results
+        // (don't artificially restrict to id.eq.0 which shows nothing)
       }
 
       const { data, error, count } = await query.range(from, to);
@@ -85,7 +93,9 @@ export function DataTable<T extends { id: number }>(
     return () => {
       isActive = false;
     };
-  }, [page, pageSize, dq, supabase, tableName, searchableFields, select, filters]);
+    // Use serialized keys instead of array references to prevent infinite loops
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [page, pageSize, dq, supabase, tableName, filtersKey, searchableFieldsKey, select]);
 
   const totalPages = useMemo(() => {
     if (!count || count <= 0) return 1;

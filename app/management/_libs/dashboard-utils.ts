@@ -45,7 +45,7 @@ export const TABLE_LABELS: Record<string, string> = {
 export const TABLE_ROUTES: Record<string, string> = {
   articles: "/management/articles",
   cases: "/management/cases",
-  contacts: "/management/customers",
+  contacts: "/management/contacts",
   equipments: "/management/equipments",
   jobs: "/management/jobs",
   locations: "/management/locations",

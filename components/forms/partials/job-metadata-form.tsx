@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import type { JobMetadata } from "@/components/metadataTypes.types";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -13,15 +13,27 @@ export function JobMetadataForm({
   onChange: (val: JobMetadata) => void;
 }) {
   const [local, setLocal] = useState<JobMetadata>(value);
+  
+  // Track whether the last change originated from user interaction
+  const isInternalUpdateRef = useRef(false);
+
+  // Sync from parent: only update local if change came from outside
   useEffect(() => {
-    setLocal((prev) => (prev !== value ? value : prev));
+    if (!isInternalUpdateRef.current) {
+      setLocal(value);
+    }
+    isInternalUpdateRef.current = false;
   }, [value]);
+
+  // Notify parent when local changes from user interaction
   useEffect(() => {
-    if (local === value) return;
-    onChange(local);
-  }, [local, value, onChange]);
+    if (isInternalUpdateRef.current) {
+      onChange(local);
+    }
+  }, [local, onChange]);
 
   function set<K extends keyof JobMetadata>(key: K, v: JobMetadata[K]) {
+    isInternalUpdateRef.current = true;
     setLocal((s) => ({ ...s, [key]: v }));
   }
 
@@ -29,10 +41,6 @@ export function JobMetadataForm({
     <div className="grid gap-6 rounded-md border p-4">
       <h3 className="text-lg font-medium">Job-Details</h3>
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-        <div className="grid gap-1.5">
-          <Label htmlFor="jmf-location">Ort</Label>
-          <Input id="jmf-location" value={local.location ?? ""} onChange={(e) => set("location", e.target.value)} />
-        </div>
         <div className="grid gap-1.5">
           <Label htmlFor="jmf-prio">Priorität</Label>
           <select id="jmf-prio" className="h-9 rounded-md border bg-background px-3 text-sm"

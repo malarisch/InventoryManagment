@@ -1,7 +1,7 @@
 'use client';
 
-import { AssetTagTemplateEditForm } from '@/components/forms/asset-tag-template-edit-form';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { AssetTagTemplateForm } from '@/components/forms/asset-tag-template-form';
+import Link from 'next/link';
 import { useParams } from 'next/navigation';
 
 export default function EditAssetTagTemplatePage() {
@@ -9,15 +9,14 @@ export default function EditAssetTagTemplatePage() {
   const id = Number(params.id);
 
   return (
-    <div className="p-4 sm:p-6 lg:p-8">
-      <Card>
-        <CardHeader>
-          <CardTitle>Edit Asset Tag Template</CardTitle>
-        </CardHeader>
-        <CardContent>
-          {id ? <AssetTagTemplateEditForm templateId={id} /> : <p>Invalid template ID.</p>}
-        </CardContent>
-      </Card>
-    </div>
+    <main className="min-h-screen w-full flex flex-col items-center p-5">
+      <div className="w-full max-w-none flex-1 space-y-4">
+        <div className="text-sm text-muted-foreground">
+          <Link href="/management/company-settings?tab=templates" className="hover:underline">← Zurück zu Company Settings</Link>
+        </div>
+        <h1 className="text-2xl font-semibold">Edit Asset Tag Template</h1>
+        {id ? <AssetTagTemplateForm templateId={id} /> : <p className="text-red-600">Invalid template ID.</p>}
+      </div>
+    </main>
   );
 }

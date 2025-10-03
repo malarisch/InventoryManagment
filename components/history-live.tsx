@@ -158,6 +158,8 @@ export function HistoryLive({
     };
   }, [supabase, normalizedTables, dataId]);
 
+  // Load equipment details for DETAIL_TABLES rows
+  // NOTE: deliberately omitting equipmentDetails from deps to prevent infinite loop
   useEffect(() => {
     const equipIds = rows
       .filter((row) => DETAIL_TABLES.has(row.table_name))
@@ -170,7 +172,7 @@ export function HistoryLive({
     async function load() {
       const { data, error } = await supabase
         .from('equipments')
-        .select('id, articles:article_id(name), asset_tags:asset_tag(printed_code)')
+        .select('id, articles(name), asset_tags:asset_tag(printed_code)')
         .in('id', missing);
       if (cancelled || error || !data) return;
       setEquipmentDetails((prev) => {
@@ -190,8 +192,11 @@ export function HistoryLive({
     return () => {
       cancelled = true;
     };
-  }, [rows, equipmentDetails, supabase]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [rows, supabase]);
 
+  // Load case details for DETAIL_TABLES rows
+  // NOTE: deliberately omitting caseDetails from deps to prevent infinite loop
   useEffect(() => {
     const caseIds = rows
       .filter((row) => DETAIL_TABLES.has(row.table_name))
@@ -219,7 +224,8 @@ export function HistoryLive({
     return () => {
       cancelled = true;
     };
-  }, [rows, caseDetails, supabase]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [rows, supabase]);
 
   const previewKeys = ["id", "name", "article_id", "default_location", "asset_tag", "current_location", "company_id"] as const;
 
@@ -317,7 +323,13 @@ export function HistoryLive({
                     <div className="text-xs text-muted-foreground space-y-1">
                       {h.changes.map((c) => (
                         <div key={c.key}>
-                          <span className="font-medium">{c.key}</span>: {typeof c.from === 'object' ? JSON.stringify(c.from) : String(c.from)} → {typeof c.to === 'object' ? JSON.stringify(c.to) : String(c.to)}
+                          {c.from === undefined ? (
+                            // If from is undefined, only show the new value
+                            <><span className="font-medium">{c.key}</span>: {typeof c.to === 'object' ? JSON.stringify(c.to) : String(c.to)}</>
+                          ) : (
+                            // Otherwise show the change
+                            <><span className="font-medium">{c.key}</span>: {typeof c.from === 'object' ? JSON.stringify(c.from) : String(c.from)} → {typeof c.to === 'object' ? JSON.stringify(c.to) : String(c.to)}</>
+                          )}
                         </div>
                       ))}
                     </div>

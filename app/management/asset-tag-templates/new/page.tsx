@@ -1,5 +1,5 @@
 import Link from 'next/link';
-import { AssetTagTemplateCreateForm } from '@/components/forms/asset-tag-template-create-form';
+import { AssetTagTemplateForm } from '@/components/forms/asset-tag-template-form';
 
 export default function NewAssetTagTemplatePage() {
   return (
@@ -9,7 +9,7 @@ export default function NewAssetTagTemplatePage() {
           <Link href="/management/company-settings?tab=templates" className="hover:underline">← Zurück zu Company Settings</Link>
         </div>
         <h1 className="text-2xl font-semibold">Create Asset Tag Template</h1>
-        <AssetTagTemplateCreateForm />
+        <AssetTagTemplateForm />
       </div>
     </main>
   );

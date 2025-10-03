@@ -113,14 +113,16 @@ export function ExpandableHistoryTable({ historyEntries }: ExpandableHistoryTabl
                                     Feld: <span className="font-mono text-foreground">{change.key}</span>
                                   </div>
                                   <div className="grid gap-1 text-xs">
+                                    {change.from !== undefined && (
+                                      <div className="flex items-start gap-2">
+                                        <span className="text-destructive font-medium min-w-0">Vorher:</span>
+                                        <span className="font-mono bg-destructive/10 px-1 rounded text-foreground break-all">
+                                          {change.from === null ? "null" : String(change.from)}
+                                        </span>
+                                      </div>
+                                    )}
                                     <div className="flex items-start gap-2">
-                                      <span className="text-destructive font-medium min-w-0">Vorher:</span>
-                                      <span className="font-mono bg-destructive/10 px-1 rounded text-foreground break-all">
-                                        {change.from === null ? "null" : change.from === undefined ? "undefined" : String(change.from)}
-                                      </span>
-                                    </div>
-                                    <div className="flex items-start gap-2">
-                                      <span className="text-green-600 font-medium min-w-0">Nachher:</span>
+                                      <span className="text-green-600 font-medium min-w-0">{change.from !== undefined ? "Nachher:" : ""}</span>
                                       <span className="font-mono bg-green-100 dark:bg-green-900/20 px-1 rounded text-foreground break-all">
                                         {change.to === null ? "null" : change.to === undefined ? "undefined" : String(change.to)}
                                       </span>

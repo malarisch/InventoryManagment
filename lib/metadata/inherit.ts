@@ -15,10 +15,7 @@ export function normalizeAdminCompanyMetadata(input: unknown): adminCompanyMetad
         ...base.standardData.power,
         ...(raw.standardData?.power as Power | undefined ?? {}),
       },
-      person: {
-        ...base.standardData.person,
-        ...(raw.standardData?.person ?? {}),
-      },
+      contactPersonId: raw.standardData?.contactPersonId,
     },
     customTypes: {
       ...base.customTypes,

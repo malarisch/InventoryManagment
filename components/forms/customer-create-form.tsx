@@ -111,7 +111,7 @@ export function CustomerCreateForm() {
       if (error) throw error;
       const contact = (data as Tables<"contacts">);
       console.log('Customer contact created:', contact);
-      router.push(`/management/customers/${contact.id}`);
+      router.push(`/management/contacts/${contact.id}`);
     } catch (e: unknown) {
       setError(e instanceof Error ? e.message : String(e));
       setSaving(false);

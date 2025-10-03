@@ -60,16 +60,22 @@ export async function generateSVG(
         }
         case 'qrcode': {
           try {
-            const qr = await QRCode.toDataURL(value || '');
-            svg += `<image href="${qr}" x="${x}" y="${y}" width="${size}" height="${size}" />`;
+            const qrSizePx = size * mmToPx;
+            const qr = await QRCode.toDataURL(value || '', {
+              margin: 0, // Remove default margin/padding
+              width: qrSizePx, // Match element size exactly in pixels
+            });
+            svg += `<image href="${qr}" x="${x}" y="${y}" width="${qrSizePx}" height="${qrSizePx}" />`;
           } catch {
             svg += `<rect x="${x}" y="${y}" width="${size*mmToPx}" height="${size*mmToPx}" fill="none" stroke="${color}" stroke-width="1"/>`;
-            svg += `<text x="${x + size/2}" y="${y + size/2}" font-size="8" fill="${color}" text-anchor="middle">QR</text>`;
+            svg += `<text x="${x + size*mmToPx/2}" y="${y + size*mmToPx/2}" font-size="8" fill="${color}" text-anchor="middle">QR</text>`;
           }
           break;
         }
         case 'image': {
           const h = (element.height || size);
+          const imgWidthPx = size * mmToPx;
+          const imgHeightPx = h * mmToPx;
           let href = value;
           if (opts.embedImages && value) {
             try {
@@ -99,7 +105,7 @@ export async function generateSVG(
               console.warn('Image embed failed, falling back to direct href', e);
             }
           }
-          svg += `<image href="${escapeXml(href)}" x="${x}" y="${y}" width="${size}" height="${h}" preserveAspectRatio="xMidYMid meet" />`;
+          svg += `<image href="${escapeXml(href)}" x="${x}" y="${y}" width="${imgWidthPx}" height="${imgHeightPx}" preserveAspectRatio="xMidYMid meet" />`;
           break;
         }
         case 'barcode': {

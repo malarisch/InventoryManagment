@@ -3,6 +3,15 @@
 import { useEffect, useRef, useState, useCallback, useMemo } from 'react';
 import type { AssetTagTemplate, AssetTagTemplateElement } from '@/components/asset-tag-templates/types';
 import { generateSVG } from '@/lib/asset-tags/svg-generator';
+import { Button } from '@/components/ui/button';
+import { Maximize2 } from 'lucide-react';
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog';
 
 interface AssetTagTemplatePreviewProps {
   template: AssetTagTemplate;
@@ -10,61 +19,61 @@ interface AssetTagTemplatePreviewProps {
   editable?: boolean;
   /** Callback with updated elements after drag */
   onElementsChange?: (elements: AssetTagTemplateElement[]) => void;
+  /** Maximum width for canvas scaling (default: 400) */
+  maxWidth?: number;
+  /** Preview data for template placeholders */
+  previewData?: Record<string, string>;
 }
 
 // px per mm (approx 96 dpi)
 const MM_TO_PX = 3.779527559;
 
-export function AssetTagTemplatePreview({ template, editable = false, onElementsChange }: AssetTagTemplatePreviewProps) {
+// Default mock data - exported for use in form
+export const DEFAULT_PREVIEW_DATA = {
+  printed_code: 'EQ-2024-0815',
+  equipment_name: 'Sony FX6 Cinema Camera',
+  article_name: 'Professional Cinema Camera',
+  location_name: 'Studio A - Rack 3',
+  case_name: 'Camera Case 1',
+  company_name: 'EventTech Solutions GmbH',
+  current_date: new Date().toLocaleDateString('de-DE'),
+  qr_url: 'https://app.example.com/equipment/EQ-2024-0815',
+};
+
+export function AssetTagTemplatePreview({ template, editable = false, onElementsChange, maxWidth = 400, previewData = DEFAULT_PREVIEW_DATA }: AssetTagTemplatePreviewProps) {
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
   const overlayCanvasRef = useRef<HTMLCanvasElement | null>(null); // for selection boxes
   const [dragIndex, setDragIndex] = useState<number | null>(null);
   const dragOffset = useRef<{dx: number; dy: number}>({ dx: 0, dy: 0 });
-
-  // Sample placeholder data for preview – keep consistent with previous implementation
-  const previewData = useMemo(() => ({
-    printed_code: 'EQ001',
-    equipment_name: 'Camera Sony FX6',
-    article_name: 'Professional Camera',
-    location_name: 'Studio A',
-  }), []);
+  const [modalOpen, setModalOpen] = useState(false);
 
   const widthPx = template.tagWidthMm * MM_TO_PX;
   const heightPx = template.tagHeightMm * MM_TO_PX;
   const marginPx = (template.marginMm || 0) * MM_TO_PX;
 
+  // Calculate scale to fit within maxWidth while maintaining aspect ratio
+  const scale = useMemo(() => {
+    if (widthPx <= maxWidth) return 1;
+    return maxWidth / widthPx;
+  }, [widthPx, maxWidth]);
+
+  const displayWidth = widthPx * scale;
+  const displayHeight = heightPx * scale;
+
   const elements: AssetTagTemplateElement[] = useMemo(()=> template.elements || [], [template.elements]);
 
-  // Async generated SVG string
+  // Async generated SVG string - now client-side only for instant updates during drag
   const [svgContent, setSvgContent] = useState<string>('');
   useEffect(() => {
     let cancelled = false;
     (async () => {
       try {
-        // Call server route for image-embedded preview (avoids CORS issues)
-        const res = await fetch('/api/asset-tag-templates/preview', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ template, placeholderData: previewData })
-        });
-        if (res.ok) {
-          const data = await res.json();
-            if (!cancelled && data.svg) {
-              setSvgContent(data.svg);
-              return;
-            }
-        } else {
-          console.warn('Preview API returned non-ok status; falling back to client generation');
-        }
+        // Direct client-side generation for instant preview updates
+        const svg = await generateSVG(template, previewData);
+        if (!cancelled) setSvgContent(svg);
       } catch (e) {
-        console.warn('Preview API failed; falling back to client generation', e);
-      }
-      // Fallback: client-side (will not embed cross-origin images)
-      try {
-        const fallbackSvg = await generateSVG(template, previewData);
-        if (!cancelled) setSvgContent(fallbackSvg);
-      } catch (e) {
-        console.error('Client-side fallback preview generation failed', e);
+        console.error('Client-side preview generation failed', e);
+        if (!cancelled) setSvgContent(''); // Clear on error
       }
     })();
     return () => { cancelled = true; };
@@ -90,7 +99,7 @@ export function AssetTagTemplatePreview({ template, editable = false, onElements
     };
     img.src = url;
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [svgContent, widthPx, heightPx, editable]);
+  }, [svgContent, widthPx, heightPx, editable, scale]);
 
   // Bounding box calculation helper (minimal logic duplication just for interaction layer)
   const measureElement = useCallback((ctx: CanvasRenderingContext2D, el: AssetTagTemplateElement) => {
@@ -98,14 +107,18 @@ export function AssetTagTemplatePreview({ template, editable = false, onElements
     if (el.type === 'text') {
       ctx.font = `${size}px Arial, sans-serif`;
       const metrics = ctx.measureText(el.value || '');
-      return { w: metrics.width, h: size };
+      // Use actualBoundingBox if available for more accurate text box
+      const height = metrics.actualBoundingBoxAscent && metrics.actualBoundingBoxDescent
+        ? metrics.actualBoundingBoxAscent + metrics.actualBoundingBoxDescent
+        : size * 1.2; // Fallback: font size * 1.2 for typical line height
+      return { w: metrics.width, h: height };
     } else if (el.type === 'qrcode') {
-      return { w: size, h: size };
+      return { w: size * MM_TO_PX, h: size * MM_TO_PX }; // size is in mm, convert to px
     } else if (el.type === 'barcode') {
       return { w: size * 2, h: size * 0.6 + 10 };
     } else if (el.type === 'image') {
       const h = el.height || size;
-      return { w: size, h };
+      return { w: size * MM_TO_PX, h: h * MM_TO_PX };
     }
     return { w: size, h: size };
   }, [template.textSizePt]);
@@ -157,7 +170,8 @@ export function AssetTagTemplatePreview({ template, editable = false, onElements
 
     const handlePointerDown = (e: PointerEvent) => {
   const rect = base.getBoundingClientRect();
-      const x = e.clientX - rect.left; const y = e.clientY - rect.top;
+      const x = (e.clientX - rect.left) / scale; 
+      const y = (e.clientY - rect.top) / scale;
       const idx = findElementAt(x, y);
       if (idx !== null) {
         setDragIndex(idx);
@@ -171,7 +185,8 @@ export function AssetTagTemplatePreview({ template, editable = false, onElements
     const handlePointerMove = (e: PointerEvent) => {
       if (dragIndex === null) return;
   const rect = base.getBoundingClientRect();
-      const x = e.clientX - rect.left; const y = e.clientY - rect.top;
+      const x = (e.clientX - rect.left) / scale; 
+      const y = (e.clientY - rect.top) / scale;
       const newElements = [...elements];
       const el = { ...newElements[dragIndex] };
       // Convert px back to mm (subtract margin first)
@@ -197,39 +212,90 @@ export function AssetTagTemplatePreview({ template, editable = false, onElements
       window.removeEventListener('pointermove', handlePointerMove);
       window.removeEventListener('pointerup', handlePointerUp);
     };
-  }, [editable, elements, dragIndex, marginPx, onElementsChange, template.tagWidthMm, template.tagHeightMm, findElementAt]);
+  }, [editable, elements, dragIndex, marginPx, onElementsChange, template.tagWidthMm, template.tagHeightMm, findElementAt, scale]);
 
   // Redraw overlay when interaction state changes
   useEffect(() => { drawOverlay(); }, [drawOverlay]);
 
   return (
+    <>
     <div className="space-y-4 select-none">
       <div className="flex items-center justify-between">
         <h4 className="font-medium">Template Preview {editable && <span className="text-xs text-gray-500">(drag elements)</span>}</h4>
+        <Button type="button" variant="outline" size="sm" onClick={() => setModalOpen(true)}>
+          <Maximize2 className="w-4 h-4 mr-2" />
+          Vergrößern
+        </Button>
       </div>
-      <div className="border rounded-lg p-4">
+      <div className="border rounded-lg p-4 overflow-auto">
         <div className="relative inline-block" style={{ lineHeight: 0 }}>
           <canvas
             ref={canvasRef}
-            style={{ border: '1px solid #d1d5db', background: '#ffffff', display: 'block' }}
+            style={{ 
+              border: '1px solid #d1d5db', 
+              background: '#ffffff', 
+              display: 'block',
+              width: `${displayWidth}px`,
+              height: `${displayHeight}px`,
+            }}
           />
           {editable && (
             <canvas
               ref={overlayCanvasRef}
-              style={{ position: 'absolute', inset: 0, cursor: dragIndex !== null ? 'grabbing' : 'grab', background: 'transparent' }}
+              style={{ 
+                position: 'absolute', 
+                inset: 0, 
+                cursor: dragIndex !== null ? 'grabbing' : 'grab', 
+                background: 'transparent',
+                width: `${displayWidth}px`,
+                height: `${displayHeight}px`,
+              }}
             />
           )}
         </div>
       </div>
-      <div className="text-sm text-gray-600">
-        <p><strong>Sample placeholders used:</strong></p>
-        <ul className="list-disc list-inside space-y-1 mt-2">
-          <li><code>{'{{printed_code}}'}</code> → {previewData.printed_code}</li>
-          <li><code>{'{{equipment_name}}'}</code> → {previewData.equipment_name}</li>
-          <li><code>{'{{article_name}}'}</code> → {previewData.article_name}</li>
-          <li><code>{'{{location_name}}'}</code> → {previewData.location_name}</li>
-        </ul>
-      </div>
     </div>
+
+    {/* Full-size modal */}
+    <Dialog open={modalOpen} onOpenChange={setModalOpen}>
+      <DialogContent className="!max-w-[90vw] w-full max-h-[90vh] overflow-auto">
+        <DialogHeader>
+          <DialogTitle>Template Preview (Vergrößert)</DialogTitle>
+          <DialogDescription>
+            Actual size: {template.tagWidthMm}mm × {template.tagHeightMm}mm (3x scaled for viewing)
+          </DialogDescription>
+        </DialogHeader>
+        <div className="border rounded-lg p-4 overflow-auto bg-gray-50 flex items-center justify-center">
+          <div className="relative inline-block" style={{ lineHeight: 0 }}>
+            <canvas
+              style={{ 
+                border: '1px solid #d1d5db', 
+                background: '#ffffff', 
+                display: 'block',
+                width: `${widthPx * 3}px`,
+                height: `${heightPx * 3}px`,
+              }}
+              ref={(canvas) => {
+                if (!canvas || !svgContent) return;
+                canvas.width = widthPx;
+                canvas.height = heightPx;
+                const ctx = canvas.getContext('2d');
+                if (!ctx) return;
+                const blob = new Blob([svgContent], { type: 'image/svg+xml;charset=utf-8' });
+                const url = URL.createObjectURL(blob);
+                const img = new Image();
+                img.onload = () => {
+                  ctx.clearRect(0, 0, widthPx, heightPx);
+                  ctx.drawImage(img, 0, 0);
+                  URL.revokeObjectURL(url);
+                };
+                img.src = url;
+              }}
+            />
+          </div>
+        </div>
+      </DialogContent>
+    </Dialog>
+    </>
   );
 }

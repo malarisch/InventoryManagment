@@ -26,9 +26,9 @@ test.describe("Clean DB", () => {
     }) => {
         // Explicitly opt-in to dangerous delete for e2e teardown only
         process.env.ALLOW_DANGEROUS_DELETE = 'true';
-        const companduser = await getCompanyAndUserId(companyName);
-        const companies = await prisma.companies.findMany({where: {owner_user_id: companduser?.userId}})
-        await deleteCompany(companies);
+  const companduser = await getCompanyAndUserId(companyName);
+  const companies = await prisma.companies.findMany({ where: { owner_user_id: companduser?.userId } });
+  await deleteCompany(companies.map(c => c.id));
 
         // Also remove the auth user that owned these companies
         if (companduser?.userId) {

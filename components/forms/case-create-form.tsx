@@ -160,9 +160,31 @@ export function CaseCreateForm() {
       <Card className="md:col-span-7">
         <CardHeader>
           <CardTitle>Ausstattung</CardTitle>
-          <CardDescription>Equipments auswählen</CardDescription>
+          <CardDescription>
+            {selectedIds.length > 0 
+              ? `${selectedIds.length} Equipment${selectedIds.length === 1 ? '' : 's'} ausgewählt` 
+              : 'Equipments auswählen'}
+          </CardDescription>
         </CardHeader>
-        <CardContent className="space-y-2">
+        <CardContent className="space-y-3">
+          {selectedIds.length > 0 && (
+            <div className="rounded-md border bg-muted/20 p-3">
+              <div className="text-xs font-medium text-muted-foreground mb-2">Ausgewählte Equipments:</div>
+              <div className="flex flex-wrap gap-2">
+                {selectedIds.map((id) => {
+                  const eq = equipments.find((e) => e.id === id);
+                  if (!eq) return null;
+                  const aName = articles.find((a) => a.id === eq.article_id)?.name ?? `#${eq.article_id}`;
+                  return (
+                    <div key={id} className="flex items-center gap-1 rounded-md bg-background border px-2 py-1 text-xs">
+                      <span>#{id} • {aName}</span>
+                      <button type="button" onClick={() => toggle(id)} className="ml-1 text-muted-foreground hover:text-foreground">×</button>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          )}
           <div className="flex items-center gap-2">
             <input className="h-9 w-64 rounded-md border bg-background px-3 text-sm" placeholder="Suche (ID oder Artikelname)" value={q} onChange={(e) => setQ(e.target.value)} />
           </div>
@@ -190,9 +212,9 @@ export function CaseCreateForm() {
                     const aName = articles.find((a) => a.id === e.article_id)?.name ?? (e.article_id ? `#${e.article_id}` : "—");
                     const checked = selectedIds.includes(e.id);
                     return (
-                      <tr key={e.id} className="odd:bg-background even:bg-muted/20">
+                      <tr key={e.id} className="odd:bg-background even:bg-muted/20 hover:bg-muted/30 cursor-pointer" onClick={() => toggle(e.id)}>
                         <td className="px-2 py-2 border-t align-top">
-                          <input type="checkbox" checked={checked} onChange={() => toggle(e.id)} />
+                          <input type="checkbox" checked={checked} onChange={() => toggle(e.id)} onClick={(e) => e.stopPropagation()} />
                         </td>
                         <td className="px-2 py-2 border-t align-top">{e.id}</td>
                         <td className="px-2 py-2 border-t align-top">{aName}</td>

@@ -14,10 +14,11 @@ type NavItem = {
 
 const navItems: NavItem[] = [
   { label: "Dashboard", href: "/management", icon: "layout-dashboard" },
+  { label: "Scanner", href: "/management/scanner", icon: "scan" },
   { label: "Equipments", href: "/management/equipments", icon: "package" },
   { label: "Articles", href: "/management/articles", icon: "box" },
   { label: "Locations", href: "/management/locations", icon: "map-pin" },
-  { label: "Customers", href: "/management/customers", icon: "users" },
+  { label: "Contacts", href: "/management/contacts", icon: "users" },
   { label: "Cases", href: "/management/cases", icon: "archive" },
   { label: "Jobs", href: "/management/jobs", icon: "briefcase" },
   { label: "Workshop", href: "/management/workshop", icon: "wrench" },

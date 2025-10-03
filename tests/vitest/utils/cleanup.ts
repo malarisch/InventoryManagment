@@ -6,6 +6,8 @@
  */
 
 import { createAdminClient } from "@/lib/supabase/admin";
+import { deleteCompany } from "@/lib/tools/deleteCompany";
+
 
 export interface TestCleanupTracker {
   userIds: string[];
@@ -47,7 +49,7 @@ export function createCleanupTracker(): TestCleanupTracker {
  */
 export async function cleanupTestData(tracker: TestCleanupTracker): Promise<void> {
   const admin = createAdminClient();
-
+  await deleteCompany(tracker.companyIds.map(BigInt));
   try {
     // Clean up business entities first (in reverse dependency order)
     if (tracker.jobIds.length > 0) {

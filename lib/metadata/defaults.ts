@@ -24,11 +24,7 @@ export const defaultAdminCompanyMetadataDE: adminCompanyMetadata = {
     currency: "EUR",
     defaultLocationId: undefined,
     power: powerDE,
-    person: {
-      firstName: "",
-      lastName: "",
-      pronouns: "",
-    },
+    contactPersonId: undefined,
   },
   customTypes: { articleTypes: [], caseTypes: [], locationTypes: [] },
   companyWidePrefix: "",
@@ -45,10 +41,8 @@ export const defaultAdminCompanyMetadataDE: adminCompanyMetadata = {
 
 export const defaultArticleMetadataDE: ArticleMetadata = {
   type: "",
-  is19Inch: false,
-  heightUnits: 0,
-  case: { is19Inch: false, heightUnits: 0 },
-  power: powerDE,
+  is19InchRackmountable: false,
+  // power: undefined - leave empty so placeholders show instead of prefilled values
 };
 
 export const defaultEquipmentMetadataDE: EquipmentMetadata = {

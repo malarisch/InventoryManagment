@@ -26,29 +26,8 @@ services:
       # Node environment
       - NODE_ENV=production
     restart: unless-stopped
-    depends_on:
-      - db
     networks:
       - app-network
-
-  # PostgreSQL Database (optional - use if self-hosting DB)
-  # Remove this if using managed Supabase
-  db:
-    image: postgres:15-alpine
-    environment:
-      - POSTGRES_USER=${DB_USER:-postgres}
-      - POSTGRES_PASSWORD=${DB_PASSWORD:-postgres}
-      - POSTGRES_DB=${DB_NAME:-inventory}
-    volumes:
-      - postgres-data:/var/lib/postgresql/data
-    ports:
-      - "5432:5432"
-    restart: unless-stopped
-    networks:
-      - app-network
-
-volumes:
-  postgres-data:
 
 networks:
   app-network:

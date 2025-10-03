@@ -48,7 +48,7 @@ export function JobQuickBook({ jobId }: { jobId: number }) {
         supabase.from("articles").select("id,name,metadata").order("name"),
         supabase
           .from("equipments")
-          .select("*, articles:article_id(name), asset_tags:asset_tag(printed_code)")
+          .select("*, articles(name), asset_tags:asset_tag(printed_code)")
           .order("created_at", { ascending: false })
           .limit(1000),
         supabase.from("cases").select("id, name, description").order("created_at", { ascending: false }).limit(200),

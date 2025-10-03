@@ -1,7 +1,7 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
-import type { ArticleMetadata, EquipmentMetadata, Person } from "@/components/metadataTypes.types";
+import { useEffect, useMemo, useRef, useState } from "react";
+import type { ArticleMetadata, DimensionsCm, EquipmentMetadata } from "@/components/metadataTypes.types";
 import type { adminCompanyMetadata } from "@/components/metadataTypes.types";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -29,6 +29,7 @@ type SectionId =
   | "general"
   | "physical"
   | "power"
+  | "case"
   | "lifecycle"
   | "connectivity"
   | "suppliers"
@@ -46,6 +47,7 @@ const SECTION_DEFINITIONS: SectionDefinition[] = [
   { id: "general", title: "Allgemein", description: "Typ, Seriennummer und Hersteller", defaultActive: true },
   { id: "physical", title: "Physische Eigenschaften", description: "Rack, Gewicht und Maße", defaultActive: true },
   { id: "power", title: "Stromversorgung", description: "Spannung, Frequenz und Anschluss", defaultActive: true },
+  { id: "case", title: "Case Setup", description: "Rack-Koffer und innere Abmessungen" },
   { id: "lifecycle", title: "Lebenszyklus", description: "Kauf, Garantie und Wartung", defaultActive: true },
   { id: "connectivity", title: "Konnektivität & Schnittstellen", description: "Netzwerk und Ports" },
   { id: "suppliers", title: "Lieferanten & Preise", description: "Lieferanten und Konditionen" },
@@ -63,6 +65,9 @@ export function EquipmentMetadataForm({
 }: EquipmentMetadataFormProps) {
   const [local, setLocal] = useState<EquipmentMetadata>(value);
   const { company } = useCompany();
+  
+  // Track whether the last change originated from user interaction
+  const isInternalUpdateRef = useRef(false);
 
   const adminMeta = useMemo(() => normalizeAdminCompanyMetadata(companyMetadata ?? company?.metadata ?? null), [companyMetadata, company]);
   const powerDefaults = useMemo(() => powerPlaceholders(adminMeta), [adminMeta]);
@@ -82,16 +87,23 @@ export function EquipmentMetadataForm({
 
   const [activeSections, setActiveSections] = useState<SectionId[]>(() => SECTION_DEFINITIONS.filter((section) => section.defaultActive).map((section) => section.id));
 
+  // Sync from parent: only update local if change came from outside
   useEffect(() => {
-    setLocal((prev) => (prev !== value ? value : prev));
+    if (!isInternalUpdateRef.current) {
+      setLocal(value);
+    }
+    isInternalUpdateRef.current = false;
   }, [value]);
 
+  // Notify parent when local changes from user interaction
   useEffect(() => {
-    if (local === value) return;
-    onChange(local);
-  }, [local, value, onChange]);
+    if (isInternalUpdateRef.current) {
+      onChange(local);
+    }
+  }, [local, onChange]);
 
   function update(updater: (prev: EquipmentMetadata) => EquipmentMetadata) {
+    isInternalUpdateRef.current = true;
     setLocal((prev) => updater(prev));
   }
 
@@ -101,14 +113,18 @@ export function EquipmentMetadataForm({
   }
 
   useEffect(() => {
+    ensureSectionActive("case", hasCaseData(local, inheritedArticle));
     ensureSectionActive("connectivity", hasConnectivityData(local));
     ensureSectionActive("suppliers", (local.suppliers?.length ?? 0) > 0);
-    ensureSectionActive("assignment", !!local.assignedTo);
-    ensureSectionActive("notes", !!local.notes);
-  }, [local]);
+    ensureSectionActive("assignment", !!local.assignedToContactId);
+    // Activate notes section if equipment has own notes OR if inherited article notes exist
+    const hasOwnNotes = !!local.notes;
+    const hasInheritedNotes = !!inheritedArticle?.notes && inheritedArticle.notes.trim().length > 0;
+    ensureSectionActive("notes", hasOwnNotes || hasInheritedNotes);
+  }, [local, inheritedArticle]);
 
-  function setTextField<K extends keyof EquipmentMetadata>(key: K, raw: string) {
-    const trimmed = raw.trim();
+  function setTextField<K extends keyof EquipmentMetadata>(key: K, raw: string, trim = true) {
+    const trimmed = trim ? raw.trim() : raw;
     update((prev) => ({
       ...prev,
       [key]: trimmed.length === 0 ? undefined : trimmed,
@@ -224,28 +240,10 @@ export function EquipmentMetadataForm({
       <Card>
         <CardHeader>
           <CardTitle>Physische Eigenschaften</CardTitle>
-          <CardDescription>Rack-Optionen, Gewicht und Maße</CardDescription>
+          <CardDescription>Gewicht und Maße</CardDescription>
         </CardHeader>
         <CardContent className="grid gap-4">
-          <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
-            <InheritedCheckbox
-              id="emf-is-rack"
-              label="19-Zoll Rackmontage"
-              checked={!!local.is19Inch}
-              placeholder={!!inheritedArticle?.is19Inch}
-              ignored={local.is19Inch === null}
-              onIgnoreChange={(checked) => update((prev) => ({ ...prev, is19Inch: checked ? null : undefined }))}
-              onChange={(checked) => update((prev) => ({ ...prev, is19Inch: checked }))}
-            />
-            <InheritedNumberField
-              id="emf-u"
-              label="Höheneinheiten (U)"
-              value={local.heightUnits}
-              placeholder={inheritedArticle?.heightUnits ?? undefined}
-              ignored={local.heightUnits === null}
-              onIgnoreChange={(checked) => update((prev) => ({ ...prev, heightUnits: checked ? null : undefined }))}
-              onChange={(value) => update((prev) => ({ ...prev, heightUnits: value }))}
-            />
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
             <InheritedNumberField
               id="emf-weight"
               label="Gewicht (kg)"
@@ -345,6 +343,314 @@ export function EquipmentMetadataForm({
             onIgnoreChange={(checked) => updatePower({ maxPowerW: checked ? null : undefined })}
             onChange={(amount) => updatePower({ maxPowerW: amount })}
           />
+        </CardContent>
+      </Card>
+    );
+  }
+
+  function renderCaseCard() {
+    if (!activeSections.includes("case")) return null;
+    const caseData = local.case ?? {};
+    const inheritedCase = inheritedArticle?.case ?? {};
+
+    const explicitCaseRack = caseData.is19InchRack;
+    const explicitEquipmentRack = local.is19InchRackmountable;
+    const resolvedCaseRack = explicitCaseRack ?? inheritedCase.is19InchRack ?? false;
+    const resolvedEquipmentRack = explicitEquipmentRack ?? inheritedArticle?.is19InchRackmountable ?? false;
+
+    const mode: "none" | "case-is-rack" | "equipment-is-rackmountable" = (() => {
+      if (explicitCaseRack === true) return "case-is-rack";
+      if (explicitEquipmentRack === true) return "equipment-is-rackmountable";
+      if (explicitCaseRack === false && explicitEquipmentRack === false) return "none";
+      if (resolvedCaseRack) return "case-is-rack";
+      if (resolvedEquipmentRack) return "equipment-is-rackmountable";
+      return "none";
+    })();
+
+    const generalCaseActive = (caseData.isGeneralCase ?? inheritedCase.isGeneralCase) ?? false;
+    const caseHasRackDataActive = hasCaseRackData(local, inheritedArticle);
+    const caseHasGeneralDataActive = hasCaseGeneralData(local, inheritedArticle);
+    const showRackCaseFields =
+      mode === "case-is-rack" || (explicitCaseRack === undefined && caseHasRackDataActive);
+    const showGeneralCaseFields =
+      generalCaseActive || (caseData.isGeneralCase === undefined && caseHasGeneralDataActive);
+
+    return (
+      <Card>
+        <CardHeader>
+          <CardTitle>Case & Rack Setup</CardTitle>
+          <CardDescription>Konfiguration für Cases und Rackmontage-Eigenschaften. Geerbte Werte werden als Platzhalter angezeigt</CardDescription>
+        </CardHeader>
+        <CardContent className="grid gap-4">
+          <div className="flex flex-col gap-2">
+            <div className="flex items-center space-x-2">
+              <Checkbox
+                id="case-mode-general"
+                checked={generalCaseActive}
+                onCheckedChange={(checked) => {
+                  const next = !!checked;
+                  update((prev) => {
+                    const prevCase = prev.case ?? {};
+                    const inheritedValue = inheritedCase.isGeneralCase;
+                    const nextValue = inheritedValue !== undefined && inheritedValue === next ? undefined : next;
+                    const updatedCase = {
+                      ...prevCase,
+                      isGeneralCase: nextValue,
+                    };
+                    if (!next) {
+                      updatedCase.innerDimensionsCm = undefined;
+                      updatedCase.contentMaxWeightKg = undefined;
+                      updatedCase.hasLock = undefined;
+                    }
+                    const cleanedCase = Object.values(updatedCase).every((value) => value === undefined)
+                      ? undefined
+                      : updatedCase;
+                    return { ...prev, case: cleanedCase };
+                  });
+                }}
+              />
+              <Label htmlFor="case-mode-general" className="font-normal cursor-pointer">
+                Hat Case Eigenschaften
+              </Label>
+              {inheritedCase.isGeneralCase !== undefined && caseData.isGeneralCase === undefined && (
+                <span className="text-xs text-muted-foreground">(geerbt)</span>
+              )}
+            </div>
+          </div>
+
+          <div className="grid gap-3">
+            <Label>Rack-Konfiguration</Label>
+            <div className="flex flex-col gap-2">
+              <div className="flex items-center space-x-2">
+                <input
+                  type="radio"
+                  id="case-mode-none"
+                  name="case-mode"
+                  checked={mode === "none"}
+                  onChange={() => {
+                    update((prev) => {
+                      const prevCase = prev.case ?? {};
+                      return {
+                        ...prev,
+                        is19InchRackmountable: false,
+                        heightUnits: undefined,
+                        case: {
+                          ...prevCase,
+                          is19InchRack: false,
+                          heightUnits: undefined,
+                          maxDeviceDepthCm: undefined,
+                        },
+                      };
+                    });
+                  }}
+                />
+                <Label htmlFor="case-mode-none" className="font-normal cursor-pointer">
+                  Keine Rack-Eigenschaften
+                </Label>
+              </div>
+              <div className="flex items-center space-x-2">
+                <input
+                  type="radio"
+                  id="case-mode-case-rack"
+                  name="case-mode"
+                  checked={mode === "case-is-rack"}
+                  onChange={() => {
+                    update((prev) => {
+                      const prevCase = prev.case ?? {};
+                      return {
+                        ...prev,
+                        is19InchRackmountable: null,
+                        heightUnits: undefined,
+                        case: { ...prevCase, is19InchRack: true },
+                      };
+                    });
+                  }}
+                />
+                <Label htmlFor="case-mode-case-rack" className="font-normal cursor-pointer">
+                  Case ist 19&quot; Rack
+                </Label>
+              </div>
+              <div className="flex items-center space-x-2">
+                <input
+                  type="radio"
+                  id="case-mode-equipment-rack"
+                  name="case-mode"
+                  checked={mode === "equipment-is-rackmountable"}
+                  onChange={() => {
+                    update((prev) => {
+                      const prevCase = prev.case ?? {};
+                      return {
+                        ...prev,
+                        is19InchRackmountable: true,
+                        case: {
+                          ...prevCase,
+                          is19InchRack: false,
+                          heightUnits: undefined,
+                          maxDeviceDepthCm: undefined,
+                        },
+                      };
+                    });
+                  }}
+                />
+                <Label htmlFor="case-mode-equipment-rack" className="font-normal cursor-pointer">
+                  Equipment ist 19&quot; rackmontierbar
+                </Label>
+              </div>
+            </div>
+          </div>
+
+          {showRackCaseFields && (
+            <div className={`grid grid-cols-1 gap-4 sm:grid-cols-2 ${mode === "case-is-rack" ? "border-l-4 border-blue-500 pl-4" : ""}`}>
+              <InheritedNumberField
+                id="emf-case-hu"
+                label="Höheneinheiten (U)"
+                value={caseData.heightUnits}
+                placeholder={inheritedCase.heightUnits ?? undefined}
+                ignored={caseData.heightUnits === null}
+                onIgnoreChange={(checked) => {
+                  update((prev) => ({ ...prev, case: { ...prev.case, heightUnits: checked ? null : undefined } }));
+                }}
+                onChange={(val) => {
+                  update((prev) => ({ ...prev, case: { ...prev.case, heightUnits: val } }));
+                }}
+              />
+              <InheritedNumberField
+                id="emf-case-depth"
+                label="Max. Gerätetiefe (cm)"
+                step="0.1"
+                value={caseData.maxDeviceDepthCm}
+                placeholder={inheritedCase.maxDeviceDepthCm ?? undefined}
+                ignored={caseData.maxDeviceDepthCm === null}
+                onIgnoreChange={(checked) => {
+                  update((prev) => ({ ...prev, case: { ...prev.case, maxDeviceDepthCm: checked ? null : undefined } }));
+                }}
+                onChange={(val) => {
+                  update((prev) => ({ ...prev, case: { ...prev.case, maxDeviceDepthCm: val } }));
+                }}
+              />
+            </div>
+          )}
+
+          {mode === "equipment-is-rackmountable" && (
+            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 border-l-4 border-green-500 pl-4">
+              <InheritedNumberField
+                id="emf-equipment-height"
+                label="Höheneinheiten (U)"
+                value={local.heightUnits}
+                placeholder={inheritedArticle?.heightUnits ?? undefined}
+                ignored={local.heightUnits === null}
+                onIgnoreChange={(checked) => {
+                  update((prev) => ({ ...prev, heightUnits: checked ? null : undefined }));
+                }}
+                onChange={(val) => {
+                  update((prev) => ({ ...prev, heightUnits: val }));
+                }}
+              />
+            </div>
+          )}
+
+          {showGeneralCaseFields && (
+            <div className={`grid gap-4 ${mode === "case-is-rack" ? "border-l-4 border-blue-500 pl-4" : ""}`}>
+              <div className="space-y-2">
+                <Label>Innenmaße (cm)</Label>
+                <div className="grid gap-3 sm:grid-cols-3">
+                  <div className="grid gap-1.5">
+                    <Label htmlFor="emf-case-inner-w">Breite</Label>
+                    <Input
+                      id="emf-case-inner-w"
+                      type="number"
+                      step="0.1"
+                      placeholder={String(inheritedCase.innerDimensionsCm?.width ?? "")}
+                      value={caseData.innerDimensionsCm?.width ?? ""}
+                      onChange={(event) => {
+                        const val = event.target.value === "" ? undefined : Number(event.target.value);
+                        if (val === undefined) {
+                          update((prev) => ({ ...prev, case: { ...prev.case, innerDimensionsCm: undefined } }));
+                          return;
+                        }
+                        update((prev) => {
+                          const existingDims = prev.case?.innerDimensionsCm ?? inheritedCase.innerDimensionsCm ?? { width: 0, height: 0 };
+                          return { ...prev, case: { ...prev.case, innerDimensionsCm: { ...existingDims, width: val } } };
+                        });
+                      }}
+                    />
+                  </div>
+                  <div className="grid gap-1.5">
+                    <Label htmlFor="emf-case-inner-h">Höhe</Label>
+                    <Input
+                      id="emf-case-inner-h"
+                      type="number"
+                      step="0.1"
+                      placeholder={String(inheritedCase.innerDimensionsCm?.height ?? "")}
+                      value={caseData.innerDimensionsCm?.height ?? ""}
+                      onChange={(event) => {
+                        const val = event.target.value === "" ? undefined : Number(event.target.value);
+                        if (val === undefined) {
+                          update((prev) => ({ ...prev, case: { ...prev.case, innerDimensionsCm: undefined } }));
+                          return;
+                        }
+                        update((prev) => {
+                          const existingDims = prev.case?.innerDimensionsCm ?? inheritedCase.innerDimensionsCm ?? { width: 0, height: 0 };
+                          return { ...prev, case: { ...prev.case, innerDimensionsCm: { ...existingDims, height: val } } };
+                        });
+                      }}
+                    />
+                  </div>
+                  <div className="grid gap-1.5">
+                    <Label htmlFor="emf-case-inner-d">Tiefe</Label>
+                    <Input
+                      id="emf-case-inner-d"
+                      type="number"
+                      step="0.1"
+                      placeholder={String(inheritedCase.innerDimensionsCm?.depth ?? "")}
+                      value={caseData.innerDimensionsCm?.depth ?? ""}
+                      onChange={(event) => {
+                        const val = event.target.value === "" ? undefined : Number(event.target.value);
+                        if (val === undefined) {
+                          update((prev) => ({ ...prev, case: { ...prev.case, innerDimensionsCm: undefined } }));
+                          return;
+                        }
+                        update((prev) => {
+                          const existingDims = prev.case?.innerDimensionsCm ?? inheritedCase.innerDimensionsCm ?? { width: 0, height: 0 };
+                          return { ...prev, case: { ...prev.case, innerDimensionsCm: { ...existingDims, depth: val } } };
+                        });
+                      }}
+                    />
+                  </div>
+                </div>
+              </div>
+
+              <div className="grid gap-4 sm:grid-cols-2">
+                <InheritedNumberField
+                  id="emf-case-max-weight"
+                  label="Maximales Inhaltsgewicht (kg)"
+                  step="0.1"
+                  value={caseData.contentMaxWeightKg}
+                  placeholder={inheritedCase.contentMaxWeightKg ?? undefined}
+                  ignored={caseData.contentMaxWeightKg === null}
+                  onIgnoreChange={(checked) => {
+                    update((prev) => ({ ...prev, case: { ...prev.case, contentMaxWeightKg: checked ? null : undefined } }));
+                  }}
+                  onChange={(val) => {
+                    update((prev) => ({ ...prev, case: { ...prev.case, contentMaxWeightKg: val } }));
+                  }}
+                />
+                <InheritedCheckbox
+                  id="emf-case-lock"
+                  label="Case hat Schloss"
+                  checked={!!caseData.hasLock}
+                  placeholder={!!inheritedCase.hasLock}
+                  ignored={caseData.hasLock === null}
+                  onIgnoreChange={(checked) => {
+                    update((prev) => ({ ...prev, case: { ...prev.case, hasLock: checked ? null : undefined } }));
+                  }}
+                  onChange={(checked) => {
+                    update((prev) => ({ ...prev, case: { ...prev.case, hasLock: checked } }));
+                  }}
+                />
+              </div>
+            </div>
+          )}
         </CardContent>
       </Card>
     );
@@ -470,67 +776,79 @@ export function EquipmentMetadataForm({
 
   function renderAssignmentCard() {
     if (!activeSections.includes("assignment")) return null;
-    const person = local.assignedTo ?? ({} as Person);
+    
     return (
       <Card>
         <CardHeader>
           <CardTitle>Zuweisung</CardTitle>
           <CardDescription>Verantwortung für dieses Equipment</CardDescription>
         </CardHeader>
-        <CardContent className="grid gap-4 sm:grid-cols-2">
+        <CardContent className="grid gap-4">
           <div className="grid gap-1.5">
-            <Label htmlFor="assigned-first-name">Vorname</Label>
-            <Input
-              id="assigned-first-name"
-              value={person.firstName ?? ""}
-              onChange={(event) => update((prev) => ({
-                ...prev,
-                assignedTo: { ...(prev.assignedTo ?? {}), firstName: event.target.value },
-              }))}
-            />
+            <Label htmlFor="assigned-contact">Zugewiesene Person</Label>
+            <select
+              id="assigned-contact"
+              className="h-9 rounded-md border bg-background px-3 text-sm"
+              value={local.assignedToContactId ?? ""}
+              onChange={(event) => {
+                const value = event.target.value;
+                update((prev) => ({
+                  ...prev,
+                  assignedToContactId: value ? Number(value) : undefined,
+                }));
+              }}
+            >
+              <option value="">Keine Zuweisung</option>
+              {supplierOptions?.map((contact) => (
+                <option key={contact.id} value={contact.id}>
+                  {contact.label}
+                </option>
+              ))}
+            </select>
+            {onCreateSupplier && (
+              <Button
+                type="button"
+                variant="ghost"
+                size="sm"
+                className="mt-1 w-fit"
+                onClick={onCreateSupplier}
+              >
+                + Neuen Kontakt anlegen
+              </Button>
+            )}
           </div>
-          <div className="grid gap-1.5">
-            <Label htmlFor="assigned-last-name">Nachname</Label>
-            <Input
-              id="assigned-last-name"
-              value={person.lastName ?? ""}
-              onChange={(event) => update((prev) => ({
+          
+          {local.assignedToContactId && (
+            <div className="grid gap-1.5">
+              <Label htmlFor="assigned-notes">Notizen zur Zuweisung</Label>
+              <Textarea
+                id="assigned-notes"
+                value={local.assignedToNotes ?? ""}
+                onChange={(event) => update((prev) => ({
+                  ...prev,
+                  assignedToNotes: event.target.value,
+                }))}
+                rows={3}
+                placeholder="z.B. Verantwortungsbereich, besondere Hinweise..."
+              />
+            </div>
+          )}
+          
+          {local.assignedToContactId && (
+            <Button
+              type="button"
+              variant="ghost"
+              size="sm"
+              className="w-fit"
+              onClick={() => update((prev) => ({
                 ...prev,
-                assignedTo: { ...(prev.assignedTo ?? {}), lastName: event.target.value },
+                assignedToContactId: undefined,
+                assignedToNotes: undefined,
               }))}
-            />
-          </div>
-          <div className="grid gap-1.5">
-            <Label htmlFor="assigned-position">Rolle</Label>
-            <Input
-              id="assigned-position"
-              value={person.position ?? ""}
-              onChange={(event) => update((prev) => ({
-                ...prev,
-                assignedTo: { ...(prev.assignedTo ?? {}), position: event.target.value },
-              }))}
-            />
-          </div>
-          <div className="grid gap-1.5">
-            <Label htmlFor="assigned-notes">Notizen</Label>
-            <Textarea
-              id="assigned-notes"
-              value={person.notes ?? ""}
-              onChange={(event) => update((prev) => ({
-                ...prev,
-                assignedTo: { ...(prev.assignedTo ?? {}), notes: event.target.value },
-              }))}
-              rows={3}
-            />
-          </div>
-          <Button
-            type="button"
-            variant="ghost"
-            className="col-span-full justify-start"
-            onClick={() => update((prev) => ({ ...prev, assignedTo: undefined }))}
-          >
-            Zuweisung entfernen
-          </Button>
+            >
+              Zuweisung entfernen
+            </Button>
+          )}
         </CardContent>
       </Card>
     );
@@ -538,21 +856,47 @@ export function EquipmentMetadataForm({
 
   function renderNotesCard() {
     if (!activeSections.includes("notes")) return null;
+
+    // Show inherited article notes as read-only if they exist
+    const inheritedNotes = inheritedArticle?.notes;
+    const hasInheritedNotes = inheritedNotes && inheritedNotes.trim().length > 0;
+
     return (
-      <Card>
-        <CardHeader>
-          <CardTitle>Notizen</CardTitle>
-          <CardDescription>Freitext für Hinweise</CardDescription>
-        </CardHeader>
-        <CardContent>
-          <Textarea
-            id="emf-notes"
-            className="min-h-[120px]"
-            value={local.notes ?? ""}
-            onChange={(event) => setTextField("notes", event.target.value)}
-          />
-        </CardContent>
-      </Card>
+      <>
+        {hasInheritedNotes && (
+          <Card className="border-blue-200 bg-blue-50/50">
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <span className="text-blue-600">📝</span>
+                Notizen vom Artikel
+              </CardTitle>
+              <CardDescription>
+                Diese Notizen sind vom zugeordneten Artikel geerbt und können hier nicht bearbeitet werden
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="rounded-md bg-background p-3 text-sm text-muted-foreground whitespace-pre-wrap border">
+                {inheritedNotes}
+              </div>
+            </CardContent>
+          </Card>
+        )}
+        <Card>
+          <CardHeader>
+            <CardTitle>Equipment-Notizen</CardTitle>
+            <CardDescription>Freitext für gerätespezifische Hinweise</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <Textarea
+              id="emf-notes"
+              className="min-h-[120px]"
+              value={local.notes ?? ""}
+              onChange={(event) => setTextField("notes", event.target.value, false)}
+              onBlur={(event) => setTextField('notes', event.target.value, true)}
+            />
+          </CardContent>
+        </Card>
+      </>
     );
   }
 
@@ -586,6 +930,7 @@ export function EquipmentMetadataForm({
       {renderGeneralCard()}
       {renderPhysicalCard()}
       {renderPowerCard()}
+      {renderCaseCard()}
       {renderLifecycleCard()}
       {renderConnectivityCard()}
       {renderSuppliersCard()}
@@ -600,6 +945,61 @@ function hasConnectivityData(metadata: EquipmentMetadata) {
   return Boolean((metadata.connectivity?.length ?? 0) > 0 || (metadata.interfaces?.length ?? 0) > 0);
 }
 
+function hasDimensions(dims?: DimensionsCm | null) {
+  if (!dims) return false;
+  return dims.width != null || dims.height != null || dims.depth != null;
+}
+
+function hasRestrictedTypes(types?: string[] | null) {
+  return (types?.length ?? 0) > 0;
+}
+
+function hasNumber(value: number | null | undefined) {
+  return value !== null && value !== undefined;
+}
+
+function hasCaseRackData(metadata: EquipmentMetadata, inheritedArticle?: ArticleMetadata | null) {
+  return Boolean(
+    metadata.case?.is19InchRack === true ||
+    hasNumber(metadata.case?.heightUnits ?? null) ||
+    hasNumber(metadata.case?.maxDeviceDepthCm ?? null) ||
+    inheritedArticle?.case?.is19InchRack === true ||
+    hasNumber(inheritedArticle?.case?.heightUnits ?? null) ||
+    hasNumber(inheritedArticle?.case?.maxDeviceDepthCm ?? null)
+  );
+}
+
+function hasCaseGeneralData(metadata: EquipmentMetadata, inheritedArticle?: ArticleMetadata | null) {
+  return Boolean(
+    metadata.case?.isGeneralCase === true ||
+    metadata.case?.hasLock === true ||
+    hasNumber(metadata.case?.contentMaxWeightKg ?? null) ||
+    hasDimensions(metadata.case?.innerDimensionsCm) ||
+    hasRestrictedTypes(metadata.case?.restrictedContentTypes) ||
+    inheritedArticle?.case?.isGeneralCase === true ||
+    inheritedArticle?.case?.hasLock === true ||
+    hasNumber(inheritedArticle?.case?.contentMaxWeightKg ?? null) ||
+    hasDimensions(inheritedArticle?.case?.innerDimensionsCm) ||
+    hasRestrictedTypes(inheritedArticle?.case?.restrictedContentTypes)
+  );
+}
+
+function hasEquipmentRackData(metadata: EquipmentMetadata, inheritedArticle?: ArticleMetadata | null) {
+  return Boolean(
+    metadata.is19InchRackmountable === true ||
+    hasNumber(metadata.heightUnits ?? null) ||
+    inheritedArticle?.is19InchRackmountable === true ||
+    hasNumber(inheritedArticle?.heightUnits ?? null)
+  );
+}
+
+function hasCaseData(metadata: EquipmentMetadata, inheritedArticle?: ArticleMetadata | null) {
+  return (
+    hasCaseRackData(metadata, inheritedArticle) ||
+    hasCaseGeneralData(metadata, inheritedArticle) ||
+    hasEquipmentRackData(metadata, inheritedArticle)
+  );
+}
 interface IgnoreToggleProps {
   id: string;
   label: string;

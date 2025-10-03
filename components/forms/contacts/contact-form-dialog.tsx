@@ -10,6 +10,8 @@ import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Checkbox } from "@/components/ui/checkbox";
 
+type ContactType = "general" | "person" | "company" | "supplier" | "customer";
+
 const CONTACT_TYPES = [
   { value: "general", label: "Allgemein" },
   { value: "person", label: "Person" },
@@ -18,15 +20,16 @@ const CONTACT_TYPES = [
   { value: "customer", label: "Kunde" },
 ];
 
-export interface ContactFormDialogProps {
+interface ContactFormDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   companyId: number | null;
-  onCreated: (contact: Tables<"contacts">) => void;
-  defaultType?: string;
+  onCreated?: (contact: Tables<"contacts">) => void;
+  defaultType?: ContactType;
+  _contactOptions?: { id: number; name: string; email: string | null }[];
 }
 
-export function ContactFormDialog({ open, onOpenChange, companyId, onCreated, defaultType = "general" }: ContactFormDialogProps) {
+export function ContactFormDialog({ open, onOpenChange, companyId, onCreated, defaultType = "general", _contactOptions = [] }: ContactFormDialogProps) {
   const supabase = useMemo(() => createClient(), []);
   const [displayName, setDisplayName] = useState("");
   const [contactType, setContactType] = useState(defaultType);
@@ -100,9 +103,7 @@ export function ContactFormDialog({ open, onOpenChange, companyId, onCreated, de
           surname: lastName.trim() || null,
           organization: organization.trim() || null,
           company_name: organization.trim() || null,
-          customer_type: contactType === 'customer'
-            ? (organization.trim() ? 'company' : 'private')
-            : null,
+          customer_type: null,
           email: email.trim() || null,
           phone: phone.trim() || null,
           has_signal: hasSignal,
@@ -125,7 +126,7 @@ export function ContactFormDialog({ open, onOpenChange, companyId, onCreated, de
       }
 
       if (data) {
-        onCreated(data);
+        onCreated?.(data);
         resetForm();
         onOpenChange(false);
       }
@@ -162,7 +163,7 @@ export function ContactFormDialog({ open, onOpenChange, companyId, onCreated, de
               id="contact-type"
               className="h-9 rounded-md border bg-background px-3 text-sm"
               value={contactType}
-              onChange={(event) => setContactType(event.target.value)}
+              onChange={(event) => setContactType(event.target.value as ContactType)}
             >
               {CONTACT_TYPES.map((option) => (
                 <option key={option.value} value={option.value}>{option.label}</option>

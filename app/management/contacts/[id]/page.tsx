@@ -5,7 +5,7 @@ import Link from "next/link";
 import { safeParseDate, formatDateTime } from "@/lib/dates";
 import { fallbackDisplayFromId } from "@/lib/userDisplay";
 import { fetchUserDisplayAdmin } from "@/lib/users/userDisplay.server";
-import { CustomerEditForm } from "@/components/forms/customer-edit-form";
+import { ContactEditForm } from "@/components/forms/contact-edit-form";
 import { HistoryCard } from "@/components/historyCard";
 import { DeleteWithUndo } from "@/components/forms/delete-with-undo";
 import { FileManager } from "@/components/files/file-manager";
@@ -57,11 +57,11 @@ export default async function CustomerDetailPage({ params }: { params: Promise<{
     <main className="min-h-screen w-full flex flex-col items-center p-5">
       <div className="w-full max-w-none flex-1 space-y-4">
         <div className="text-sm text-muted-foreground">
-          <Link href="/management/customers" className="hover:underline">← Zurück zur Übersicht</Link>
+          <Link href="/management/contacts" className="hover:underline">← Zurück zur Übersicht</Link>
         </div>
         <Card>
           <CardHeader>
-            <CardTitle id="customer-title">{displayName(contact)}</CardTitle>
+            <CardTitle id="contact-title">{displayName(contact)}</CardTitle>
             <CardDescription>
               #{contact.id} {contact.customer_type ? `• ${contact.customer_type}` : ""}{contact.contact_type && contact.contact_type !== 'customer' ? ` (${contact.contact_type})` : ""}
               <br />
@@ -72,17 +72,25 @@ export default async function CustomerDetailPage({ params }: { params: Promise<{
           </CardHeader>
           <CardContent>
             <div className="mb-4">
-              <DeleteWithUndo table="contacts" id={contact.id} payload={contact as Record<string, unknown>} redirectTo="/management/customers" />
+              <DeleteWithUndo table="contacts" id={contact.id} payload={contact as Record<string, unknown>} redirectTo="/management/contacts" />
             </div>
-            <CustomerEditForm customer={contact} />
-            <div className="mt-6">
-              <FileManager table="contacts" rowId={contact.id} companyId={contact.company_id} isPublic={false} initial={(contact as Record<string, unknown>).files} />
-            </div>
+            <ContactEditForm contact={contact} />
           </CardContent>
         </Card>
+
         <Card>
           <CardHeader>
-            <CardTitle>Jobs dieses Kunden</CardTitle>
+            <CardTitle>Dateien</CardTitle>
+            <CardDescription>Anhänge und Dokumente zu diesem Kontakt</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <FileManager table="contacts" rowId={contact.id} companyId={contact.company_id} isPublic={false} initial={(contact as Record<string, unknown>).files} />
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader>
+            <CardTitle>Jobs dieses Kontakts</CardTitle>
             <CardDescription>{jobs.length} Einträge</CardDescription>
           </CardHeader>
           <CardContent>

@@ -83,7 +83,7 @@ export default function SearchPage() {
             title = `ID: ${result.id}`;
           }
           const href = result.type === 'contacts'
-            ? `/management/customers/${result.id}`
+            ? `/management/contacts/${result.id}`
             : `/management/${result.type}/${result.id}`;
           const typeLabel = result.type === 'contacts' ? 'Kontakt' : result.type;
           return (

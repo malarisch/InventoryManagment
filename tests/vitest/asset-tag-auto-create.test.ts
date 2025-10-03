@@ -40,7 +40,6 @@ const companyMeta: import('@/components/metadataTypes.types').adminCompanyMetada
     taxRate: 0,
     currency: 'EUR',
     power: { powerType: 'AC', maxPowerW: 0 },
-    person: { firstName: '', lastName: '' }
   },
   customTypes: {
     articleTypes: [],

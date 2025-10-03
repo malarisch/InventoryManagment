@@ -151,7 +151,7 @@ export function GlobalSearchModal({
             type: 'contacts',
             title: baseName || `Kontakt #${item.id}`,
             subtitle: item.customer_type ?? item.contact_type ?? undefined,
-            url: `/management/customers/${item.id}`
+            url: `/management/contacts/${item.id}`
           });
         });
       }

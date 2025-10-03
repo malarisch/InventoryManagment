@@ -43,7 +43,7 @@ export function JobTable({ pageSize = 10, className }: Props) {
     { key: 'type', label: 'Typ', render: (row: JobRow) => row.type ?? "—" },
     { key: 'contact_id', label: 'Kontakt', render: (row: JobRow) => (
         row.contacts?.id ? (
-          <Link className="underline-offset-2 hover:underline" href={`/management/customers/${row.contacts.id}`}>
+          <Link className="underline-offset-2 hover:underline" href={`/management/contacts/${row.contacts.id}`}>
             {contactDisplay(row.contacts)}
           </Link>
         ) : contactDisplay(row.contacts)

@@ -9,7 +9,6 @@ function makeMeta(overrides: Partial<adminCompanyMetadata> = {}): adminCompanyMe
       taxRate: 0,
       currency: "EUR",
       power: { powerType: "AC" },
-      person: { firstName: "Test", lastName: "User" },
     },
     customTypes: { articleTypes: [], caseTypes: [], locationTypes: [] },
     companyWidePrefix: "",

@@ -128,7 +128,8 @@ export interface adminCompanyMetadata {
     defaultLocationId?: number;
     /** Default power specs for equipment/locations. */
     power: Power;
-    person: Person;
+    /** Contact person ID - references contacts table instead of embedded Person object. */
+    contactPersonId?: number;
   };
   customTypes: { articleTypes: string[], caseTypes: string[], locationTypes: string[] };
   /** Optional company wide prefix applied before any specific entity prefix when generating asset tag codes. */
@@ -186,7 +187,8 @@ export interface ArticleMetadata {
   image?: string;
   case?: {
     /** Whether the case is 19" rack based. */
-    is19Inch?: boolean | null;
+    isGeneralCase?: boolean;
+    is19InchRack?: boolean | null;
     /** Height in rack units (U) if rack-based. */
     heightUnits?: number | null;
     maxDeviceDepthCm?: number | null; // in cm
@@ -197,7 +199,7 @@ export interface ArticleMetadata {
   };
   fitsInRestrictedCaseTypes?: string[]; // e.g., "YAMAHA MINI Expansion Slot"
   /** Whether article itself is 19" rack mountable. */
-  is19Inch: boolean | null;
+  is19InchRackmountable?: boolean | null;
   /** Height in rack units (U) if rack-mountable. */
   heightUnits?: number | null;
   dimensionsCm?: DimensionsCm;
@@ -217,7 +219,7 @@ export interface EquipmentMetadata extends Partial<ArticleMetadata> {
   type?: string | null;
   manufacturer?: string | null;
   model?: string | null;
-  is19Inch?: boolean | null;
+  is19InchRackmountable?: boolean | null;
   heightUnits?: number | null;
   weightKg?: number | null;
 
@@ -229,8 +231,10 @@ export interface EquipmentMetadata extends Partial<ArticleMetadata> {
   suppliers?: SupplierReference[];
   depreciationMethod?: "straight-line" | "declining-balance" | "sum-of-the-years-digits";
   depreciationPeriodMonths?: number; // in months
-  assignedTo?: Person; // Person responsible for the equipment
-    notes?: string; // Additional notes about the equipment
+  /** Assignment to a contact person */
+  assignedToContactId?: number; // FK to contacts table
+  assignedToNotes?: string; // Notes about the assignment
+  notes?: string; // Additional notes about the equipment
 }
 
 /** Optional notes for a case object. */
@@ -264,7 +268,6 @@ export interface JobMetadata {
   assignedTo?: Person[]; // Array of persons assigned to the job
   reportedBy?: Person; // Person who reported/created the job
   customer?: CustomerMetadata; // Customer related to the job
-  location?: string; // Location where the job is to be performed
   actualStart?: string; // ISO date string
   actualEnd?: string; // ISO date string
     actualCost?: Price; // Actual cost incurred

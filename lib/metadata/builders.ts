@@ -31,8 +31,14 @@ export function buildEquipmentMetadata(input: Partial<EquipmentMetadata>): Equip
     ...defaultEquipmentMetadataDE,
     ...safeInput,
     power: { ...defaultEquipmentMetadataDE.power, ...(safeInput.power || {}) },
-    is19Inch: safeInput.is19Inch ?? defaultEquipmentMetadataDE.is19Inch,
+    is19InchRackmountable: safeInput.is19InchRackmountable ?? defaultEquipmentMetadataDE.is19InchRackmountable,
     heightUnits: safeInput.heightUnits ?? defaultEquipmentMetadataDE.heightUnits,
+    case: safeInput.case
+      ? {
+          ...(defaultEquipmentMetadataDE.case ?? {}),
+          ...safeInput.case,
+        }
+      : defaultEquipmentMetadataDE.case,
     type: safeInput.type ?? defaultEquipmentMetadataDE.type,
   } as EquipmentMetadata;
 }
@@ -55,7 +61,7 @@ export function buildAdminCompanyMetadata(input: Partial<adminCompanyMetadata>):
       currency: input.standardData?.currency ? String(input.standardData.currency).toUpperCase() : base.standardData.currency,
       defaultLocationId: input.standardData?.defaultLocationId,
       power: { ...base.standardData.power, ...(input.standardData?.power ?? {}) },
-      person: { ...base.standardData.person, ...(input.standardData?.person ?? {}) },
+      contactPersonId: input.standardData?.contactPersonId,
     },
     customTypes: input.customTypes ? {
       articleTypes: [...input.customTypes.articleTypes],

@@ -1,3 +1,4 @@
+//
 import {
     articles,
     asset_tag_templates,
@@ -12,6 +13,8 @@ import {
     jobs,
     locations,
     nfc_tags,
+    maintenance_logs,
+    workshop_todos,
     Prisma,
     PrismaClient,
     profiles,
@@ -42,7 +45,9 @@ export async function getCompanyData(companyId: string) {
             job_booked_assets: true,
             nfc_tags: true,
             asset_tags: true,
-            history: true
+            history: true,
+            maintenance_logs: true,
+            workshop_todos: true
 
 
             // Add other related models as needed
@@ -75,6 +80,8 @@ export async function importCompanyData(companyData: CompanyData, newUser: strin
             cases: _cases,
             locations: _locations,
             asset_tag_templates: _asset_tag_templates,
+            maintenance_logs: _maintenance_logs,
+            workshop_todos: _workshop_todos,
             ...companyInfo
         } = companyData as Omit<companies, "updated_at"> & {
             articles: articles[],
@@ -91,57 +98,60 @@ export async function importCompanyData(companyData: CompanyData, newUser: strin
             asset_tag_templates: asset_tag_templates[],
             users_companies: users_companies[],
             profiles: profiles | null,
+            maintenance_logs: maintenance_logs[],
+            workshop_todos: workshop_todos[],
         };
 
 
+        // ALWAYS create a new company on import - never update existing
+        // If a company with the same name exists, add a suffix to avoid conflicts
+        let companyName = companyInfo.name;
         const existingCompany = await prisma.companies.findFirst({
             where: {
-                name: companyInfo.name,
+                name: companyName,
                 owner_user_id: newUser,
             }
         });
 
-        let upsertedCompany;
         if (existingCompany) {
-            upsertedCompany = await prisma.companies.update({
-                where: {id: existingCompany.id},
-                data: {
-                    ...companyInfo,
-                    metadata: companyInfo.metadata ?? Prisma.JsonNull,
-                    files: companyInfo.files ?? Prisma.JsonNull,
-                },
-            });
-        } else {
-            upsertedCompany = await prisma.companies.create({
-                data: {
-                    ...companyInfo,
-                    owner_user_id: newUser,
-                    metadata: companyInfo.metadata ?? Prisma.JsonNull,
-                    files: companyInfo.files ?? Prisma.JsonNull,
-                },
-            });
+            // Add timestamp suffix to avoid name collision
+            const timestamp = new Date().toISOString().split('T')[0]; // YYYY-MM-DD
+            companyName = `${companyName} (Import ${timestamp})`;
         }
 
+        
 
-        await prisma.users_companies.create({
+        const upsertedCompany = await prisma.companies.create({
             data: {
-                company_id: upsertedCompany.id,
-                user_id: newUser,
-            }
-        })
+                name: companyName,
+                description: (companyInfo as { description?: string | null }).description ?? null,
+                owner_user_id: newUser,
+                metadata: companyInfo.metadata ?? Prisma.JsonNull,
+                files: companyInfo.files ?? Prisma.JsonNull,
+            },
+        });
+
+
+        // users_companies membership will be created later to follow requested order
 
         const companyIdMap: Record<string, bigint> = {};
         companyIdMap[companyData.id.toString()] = upsertedCompany.id;
 
 
         // IDs für verschiedene Entitäten speichern
-        const profileIdMap: Record<string, string> = {};
-        const locationIdMap: Record<string, bigint> = {};
-        const articleIdMap: Record<string, bigint> = {};
-        const equipmentIdMap: Record<string, bigint> = {};
-        const contactIdMap: Record<string, bigint> = {};
-        const jobIdMap: Record<string, bigint> = {};
-        const assetTagIdMap: Record<string, bigint> = {};
+    const profileIdMap: Record<string, string> = {};
+    const locationIdMap: Record<string, bigint> = {};
+    const articleIdMap: Record<string, bigint> = {};
+    const equipmentIdMap: Record<string, bigint> = {};
+    const contactIdMap: Record<string, bigint> = {};
+    const jobIdMap: Record<string, bigint> = {};
+    const assetTagIdMap: Record<string, bigint> = {};
+    const templateIdMap: Record<string, bigint> = {};
+    const nfcTagIdMap: Record<string, bigint> = {};
+    const caseIdMap: Record<string, bigint> = {};
+    const maintenanceLogIdMap: Record<string, bigint> = {};
+    const workshopTodoIdMap: Record<string, bigint> = {};
+    const historyIdMap: Record<string, bigint> = {};
 
         // Profile importieren
         if (companyData.profiles) {
@@ -150,101 +160,114 @@ export async function importCompanyData(companyData: CompanyData, newUser: strin
             profileIdMap[oldId] = newUser;
         }
 
-        // Locations importieren
-        if (companyData.locations && companyData.locations.length > 0) {
-            for (const location of companyData.locations) {
-                const {
-                    id: oldId,
-                    created_at: _createdAt,
-                    ...locationData
-                } = location as Omit<locations, "updated_at">;
-                locationData.company_id = upsertedCompany.id;
-
-                const newLocation = await prisma.locations.create({
-                    data: {
-                        ...locationData,
-                        files: locationData.files ?? Prisma.JsonNull
-                    }
-                });
-                locationIdMap[oldId.toString()] = newLocation.id;
-            }
-        }
-
-        // Asset Tag Templates importieren
+        // Asset Tag Templates importieren (first, as requested)
         if (companyData.asset_tag_templates && companyData.asset_tag_templates.length > 0) {
             for (const template of companyData.asset_tag_templates) {
                 const {
-                    id: _id,
+                    id: oldId,
                     created_at: _createdAt,
+                    created_by: _createdBy,
                     ...templateData
                 } = template as Omit<asset_tag_templates, "updated_at">;
                 templateData.company_id = upsertedCompany.id;
 
-                await prisma.asset_tag_templates.create({
+                const newTemplate = await prisma.asset_tag_templates.create({
                     data: {
                         ...templateData,
+                        created_by: newUser,
                         template: templateData.template ?? Prisma.JsonNull
                     }
                 });
+                templateIdMap[oldId.toString()] = newTemplate.id;
             }
         }
 
-        // Artikel importieren
-        if (companyData.articles && companyData.articles.length > 0) {
-            for (const article of companyData.articles) {
-                const {
-                    id: oldId,
-                    created_at: _createdAt,
-                    ...articleData
-                } = article as Omit<articles, "updated_at">;
-                articleData.company_id = upsertedCompany.id;
+        // History EARLY insert (requested order), we'll backfill data_id later
+        if (companyData.history && companyData.history.length > 0) {
+            for (const historyItem of companyData.history) {
+                const { id: oldId, created_at: _createdAt, ...historyData } = historyItem as Omit<history, "updated_at">;
+                historyData.company_id = upsertedCompany.id;
 
-                const newArticle = await prisma.articles.create({
+                // Ensure change_made_by references the importing user to satisfy FK
+                (historyData as unknown as { change_made_by?: string | null }).change_made_by = newUser;
+
+                const created = await prisma.history.create({
                     data: {
-                        ...articleData,
-                        metadata: articleData.metadata ?? Prisma.JsonNull,
-                        files: articleData.files ?? Prisma.JsonNull,
+                        ...historyData,
+                        old_data: historyData.old_data ?? Prisma.JsonNull
                     }
                 });
-                articleIdMap[oldId.toString()] = newArticle.id;
+                historyIdMap[oldId.toString()] = created.id;
             }
         }
 
-        // Equipment importieren
-        if (companyData.equipments && companyData.equipments.length > 0) {
-            for (const equipment of companyData.equipments) {
+        // NFC Tags importieren (after history as requested)
+        if (companyData.nfc_tags && companyData.nfc_tags.length > 0) {
+            for (const nfcTag of companyData.nfc_tags) {
+                const { id: oldId, created_at: _createdAt, created_by: _createdBy, ...nfcTagData } = nfcTag as Omit<nfc_tags, "updated_at">;
+                const newNfc = await prisma.nfc_tags.create({
+                    data: {
+                        ...nfcTagData,
+                        company_id: upsertedCompany.id,
+                        created_by: newUser,
+                    }
+                });
+                nfcTagIdMap[oldId.toString()] = newNfc.id;
+            }
+        }
+
+        // users_companies membership (after nfc_tags to follow requested order)
+        await prisma.users_companies.create({
+            data: {
+                company_id: upsertedCompany.id,
+                user_id: newUser,
+            }
+        })
+
+        // Asset Tags importieren (nach Templates und NFC Tags)
+        if (companyData.asset_tags && companyData.asset_tags.length > 0) {
+            for (const assetTag of companyData.asset_tags) {
                 const {
                     id: oldId,
                     created_at: _createdAt,
-                    ...equipmentData
-                } = equipment as Omit<equipments, "updated_at">;
-                equipmentData.company_id = upsertedCompany.id;
+                    created_by: _createdBy,
+                    ...assetTagData
+                } = assetTag as Omit<asset_tags, "updated_at">;
+                assetTagData.company_id = upsertedCompany.id;
 
-                // Artikel-ID aktualisieren, falls vorhanden
-                if (equipmentData.article_id && articleIdMap[equipmentData.article_id.toString()]) {
-                    equipmentData.article_id = articleIdMap[equipmentData.article_id.toString()];
+                // Remap printed_template
+                if ((assetTagData as { printed_template?: bigint | null }).printed_template) {
+                    const pt = (assetTagData as { printed_template?: bigint | null }).printed_template!;
+                    const mapped = templateIdMap[pt.toString()];
+                    (assetTagData as { printed_template?: bigint | null }).printed_template = mapped ?? null;
+                }
+                // Remap nfc_tag_id
+                if ((assetTagData as { nfc_tag_id?: bigint | null }).nfc_tag_id) {
+                    const nt = (assetTagData as { nfc_tag_id?: bigint | null }).nfc_tag_id!;
+                    const mappedNfc = nfcTagIdMap[nt.toString()];
+                    (assetTagData as { nfc_tag_id?: bigint | null }).nfc_tag_id = mappedNfc ?? null;
                 }
 
-                const newEquipment = await prisma.equipments.create({
+                const newAssetTag = await prisma.asset_tags.create({
                     data: {
-                        ...equipmentData,
-                        metadata: equipmentData.metadata ?? Prisma.JsonNull,
-                        files: equipmentData.files ?? Prisma.JsonNull,
+                        ...assetTagData,
+                        created_by: newUser
                     }
                 });
-                equipmentIdMap[oldId.toString()] = newEquipment.id;
+                assetTagIdMap[oldId.toString()] = newAssetTag.id;
             }
         }
 
-        // Kontakte importieren (inkl. ehemaliger Kunden)
-        const contactsSource = (companyData as Record<string, unknown>).contacts as ReadonlyArray<contacts> | undefined
+        // Kontakte importieren (noch vor Jobs, damit jobs.contact_id gemappt werden kann)
+        const contactsSourceEarly = (companyData as Record<string, unknown>).contacts as ReadonlyArray<contacts> | undefined
           ?? (companyData as Record<string, unknown>).customers as ReadonlyArray<contacts & { customer_type?: string }> | undefined
           ?? [];
-        if (contactsSource && contactsSource.length > 0) {
-            for (const contact of contactsSource) {
+        if (contactsSourceEarly && contactsSourceEarly.length > 0) {
+            for (const contact of contactsSourceEarly) {
                 const {
                     id: oldId,
                     created_at: _createdAt,
+                    created_by: _createdBy,
                     ...contactData
                 } = contact as Omit<contacts, "updated_at"> & { customer_type?: string; address?: string };
 
@@ -258,7 +281,7 @@ export async function importCompanyData(companyData: CompanyData, newUser: strin
                 const newContact = await prisma.contacts.create({
                     data: {
                         company_id: upsertedCompany.id,
-                        created_by: contactData.created_by ?? null,
+                        created_by: newUser,
                         contact_type: contactData.contact_type ?? 'customer',
                         customer_type: (contactData as { customer_type?: string }).customer_type ?? null,
                         display_name: display,
@@ -291,12 +314,13 @@ export async function importCompanyData(companyData: CompanyData, newUser: strin
             }
         }
 
-        // Jobs importieren
+        // Jobs importieren (requested before locations/articles/equipments)
         if (companyData.jobs && companyData.jobs.length > 0) {
             for (const job of companyData.jobs) {
                 const {
                     id: oldId,
                     created_at: _createdAt,
+                    created_by: _createdBy,
                     ...jobData
                 } = job as Omit<jobs, "updated_at"> & { customer_id?: bigint | null };
                 jobData.company_id = upsertedCompany.id;
@@ -310,14 +334,172 @@ export async function importCompanyData(companyData: CompanyData, newUser: strin
                 }
                 delete (jobData as Record<string, unknown>).customer_id;
 
+                // Parse date fields if they're strings
+                if (jobData.startdate && typeof jobData.startdate === 'string') {
+                    jobData.startdate = new Date(jobData.startdate);
+                }
+                if (jobData.enddate && typeof jobData.enddate === 'string') {
+                    jobData.enddate = new Date(jobData.enddate);
+                }
+
                 const newJob = await prisma.jobs.create({
                     data: {
                         ...jobData,
+                        created_by: newUser,
                         meta: jobData.meta ?? Prisma.JsonNull,
                         files: jobData.files ?? Prisma.JsonNull,
                     }
                 });
                 jobIdMap[oldId.toString()] = newJob.id;
+            }
+        }
+
+        // Locations importieren (after jobs per requested order)
+        if (companyData.locations && companyData.locations.length > 0) {
+            for (const location of companyData.locations) {
+                const {
+                    id: oldId,
+                    created_at: _createdAt,
+                    created_by: _createdBy,
+                    ...locationData
+                } = location as Omit<locations, "updated_at">;
+                locationData.company_id = upsertedCompany.id;
+
+                // Asset Tag ID remappen, falls vorhanden
+                if (locationData.asset_tag && assetTagIdMap[locationData.asset_tag.toString()]) {
+                    locationData.asset_tag = assetTagIdMap[locationData.asset_tag.toString()];
+                }
+
+                const newLocation = await prisma.locations.create({
+                    data: {
+                        ...locationData,
+                        created_by: newUser,
+                        files: locationData.files ?? Prisma.JsonNull
+                    }
+                });
+                locationIdMap[oldId.toString()] = newLocation.id;
+            }
+        }
+
+        // (Templates bereits oben importiert)
+
+        // Artikel importieren (after locations)
+        if (companyData.articles && companyData.articles.length > 0) {
+            for (const article of companyData.articles) {
+                const {
+                    id: oldId,
+                    created_at: _createdAt,
+                    created_by: _createdBy,
+                    ...articleData
+                } = article as Omit<articles, "updated_at">;
+                articleData.company_id = upsertedCompany.id;
+
+                // Default Location ID remappen, falls vorhanden
+                if (articleData.default_location && locationIdMap[articleData.default_location.toString()]) {
+                    articleData.default_location = locationIdMap[articleData.default_location.toString()];
+                }
+
+                // Asset Tag ID remappen, falls vorhanden
+                if (articleData.asset_tag && assetTagIdMap[articleData.asset_tag.toString()]) {
+                    articleData.asset_tag = assetTagIdMap[articleData.asset_tag.toString()];
+                }
+
+                const newArticle = await prisma.articles.create({
+                    data: {
+                        ...articleData,
+                        created_by: newUser,
+                        metadata: articleData.metadata ?? Prisma.JsonNull,
+                        files: articleData.files ?? Prisma.JsonNull,
+                    }
+                });
+                articleIdMap[oldId.toString()] = newArticle.id;
+            }
+        }
+
+        // Equipment importieren (after articles)
+        if (companyData.equipments && companyData.equipments.length > 0) {
+            for (const equipment of companyData.equipments) {
+                const {
+                    id: oldId,
+                    created_at: _createdAt,
+                    created_by: _createdBy,
+                    ...equipmentData
+                } = equipment as Omit<equipments, "updated_at">;
+                equipmentData.company_id = upsertedCompany.id;
+
+                // Artikel-ID aktualisieren, falls vorhanden
+                if (equipmentData.article_id && articleIdMap[equipmentData.article_id.toString()]) {
+                    equipmentData.article_id = articleIdMap[equipmentData.article_id.toString()];
+                }
+
+                // Asset Tag ID remappen, falls vorhanden
+                if (equipmentData.asset_tag && assetTagIdMap[equipmentData.asset_tag.toString()]) {
+                    equipmentData.asset_tag = assetTagIdMap[equipmentData.asset_tag.toString()];
+                }
+
+                // Current Location remappen, falls vorhanden
+                if (equipmentData.current_location && locationIdMap[equipmentData.current_location.toString()]) {
+                    equipmentData.current_location = locationIdMap[equipmentData.current_location.toString()];
+                }
+
+                // Parse added_to_inventory_at if it's a string
+                if (equipmentData.added_to_inventory_at && typeof equipmentData.added_to_inventory_at === 'string') {
+                    equipmentData.added_to_inventory_at = new Date(equipmentData.added_to_inventory_at);
+                }
+
+                const newEquipment = await prisma.equipments.create({
+                    data: {
+                        ...equipmentData,
+                        created_by: newUser,
+                        metadata: equipmentData.metadata ?? Prisma.JsonNull,
+                        files: equipmentData.files ?? Prisma.JsonNull,
+                    }
+                });
+                equipmentIdMap[oldId.toString()] = newEquipment.id;
+            }
+        }
+
+                // (Contacts and Jobs were already imported earlier to satisfy requested ordering)
+
+        // Cases importieren (nach Equipments/Locations wegen FKs) — moved up before job assets per requested order
+        if (companyData.cases && companyData.cases.length > 0) {
+            for (const caseItem of companyData.cases) {
+                const {
+                    id: oldId,
+                    created_at: _createdAt,
+                    created_by: _createdBy,
+                    ...caseData
+                } = caseItem as Omit<cases, "updated_at">;
+                caseData.company_id = upsertedCompany.id;
+
+                // Remap asset_tag, case_equipment, current_location
+                if (caseData.asset_tag && assetTagIdMap[caseData.asset_tag.toString()]) {
+                    caseData.asset_tag = assetTagIdMap[caseData.asset_tag.toString()];
+                }
+                if (caseData.case_equipment && equipmentIdMap[caseData.case_equipment.toString()]) {
+                    caseData.case_equipment = equipmentIdMap[caseData.case_equipment.toString()];
+                }
+                if ((caseData as unknown as { current_location?: bigint | null }).current_location && locationIdMap[(caseData as unknown as { current_location?: bigint | null }).current_location!.toString()]) {
+                    (caseData as unknown as { current_location?: bigint | null }).current_location = locationIdMap[(caseData as unknown as { current_location?: bigint | null }).current_location!.toString()];
+                }
+
+                // Remap contains_equipments array if present
+                if (Array.isArray(caseData.contains_equipments) && caseData.contains_equipments.length > 0) {
+                    caseData.contains_equipments = caseData.contains_equipments.map((eid) => {
+                        const mapped = equipmentIdMap[eid.toString()];
+                        return mapped ?? eid;
+                    });
+                }
+
+                const newCase = await prisma.cases.create({
+                    data: {
+                        ...caseData,
+                        created_by: newUser,
+                        contains_articles: (caseData.contains_articles as Prisma.InputJsonValue[]) ?? Prisma.JsonNull,
+                        files: caseData.files ?? Prisma.JsonNull,
+                    }
+                });
+                caseIdMap[oldId.toString()] = newCase.id;
             }
         }
 
@@ -327,6 +509,7 @@ export async function importCompanyData(companyData: CompanyData, newUser: strin
                 const {
                     id: _id,
                     created_at: _createdAt,
+                    created_by: _createdBy,
                     ...jobAssetData
                 } = jobAsset as Omit<job_assets_on_job, "updated_at">;
                 jobAssetData.company_id = upsertedCompany.id;
@@ -340,8 +523,15 @@ export async function importCompanyData(companyData: CompanyData, newUser: strin
                     jobAssetData.equipment_id = equipmentIdMap[jobAssetData.equipment_id.toString()];
                 }
 
+                if ((jobAssetData as { case_id?: bigint | null }).case_id && caseIdMap[(jobAssetData as { case_id?: bigint | null }).case_id!.toString()]) {
+                    (jobAssetData as { case_id?: bigint | null }).case_id = caseIdMap[(jobAssetData as { case_id?: bigint | null }).case_id!.toString()];
+                }
+
                 await prisma.job_assets_on_job.create({
-                    data: jobAssetData
+                    data: {
+                        ...jobAssetData,
+                        created_by: newUser
+                    }
                 });
             }
         }
@@ -352,6 +542,7 @@ export async function importCompanyData(companyData: CompanyData, newUser: strin
                 const {
                     id: _id,
                     created_at: _createdAt,
+                    created_by: _createdBy,
                     ...bookedAssetData
                 } = bookedAsset as Omit<job_booked_assets, "updated_at">;
                 bookedAssetData.company_id = upsertedCompany.id;
@@ -365,81 +556,101 @@ export async function importCompanyData(companyData: CompanyData, newUser: strin
                     bookedAssetData.equipment_id = equipmentIdMap[bookedAssetData.equipment_id.toString()];
                 }
 
+                if ((bookedAssetData as { case_id?: bigint | null }).case_id && caseIdMap[(bookedAssetData as { case_id?: bigint | null }).case_id!.toString()]) {
+                    (bookedAssetData as { case_id?: bigint | null }).case_id = caseIdMap[(bookedAssetData as { case_id?: bigint | null }).case_id!.toString()];
+                }
+
                 await prisma.job_booked_assets.create({
-                    data: bookedAssetData
+                    data: {
+                        ...bookedAssetData,
+                        created_by: newUser
+                    }
                 });
             }
         }
 
-        // Asset Tags importieren
-        if (companyData.asset_tags && companyData.asset_tags.length > 0) {
-            for (const assetTag of companyData.asset_tags) {
-                const {
-                    id: oldId,
-                    created_at: _createdAt,
-                    ...assetTagData
-                } = assetTag as Omit<asset_tags, "updated_at">;
-                assetTagData.company_id = upsertedCompany.id;
+        // Workshop Todos importieren (after job assets)
+        if ((companyData as Record<string, unknown>).workshop_todos && (companyData as Record<string, unknown>).workshop_todos instanceof Array) {
+            for (const wtItem of (companyData as unknown as { workshop_todos: workshop_todos[] }).workshop_todos) {
+                const wt = wtItem as Partial<workshop_todos> & { id: bigint };
+                const oldId = wt.id;
+                const remappedEquipment = wt.equipment_id ? (equipmentIdMap[wt.equipment_id.toString()] ?? wt.equipment_id) : null;
+                const remappedCase = wt.case_id ? (caseIdMap[wt.case_id.toString()] ?? wt.case_id) : null;
+                const parsedDue = wt.due_date && typeof wt.due_date === 'string' ? new Date(wt.due_date) : (wt.due_date ?? null);
+                const parsedClosed = wt.closed_at && typeof wt.closed_at === 'string' ? new Date(wt.closed_at) : (wt.closed_at ?? null);
 
-                const newAssetTag = await prisma.asset_tags.create({
-                    data: assetTagData
-                });
-                assetTagIdMap[oldId.toString()] = newAssetTag.id;
+                const payload = {
+                    company_id: upsertedCompany.id,
+                    created_by: newUser,
+                    equipment_id: remappedEquipment,
+                    case_id: remappedCase,
+                    title: (wt.title as string) ?? `Todo #${oldId}`,
+                    notes: (wt.notes as string | null) ?? null,
+                    status: (wt.status as string) ?? 'open',
+                    due_date: parsedDue,
+                    closed_at: parsedClosed,
+                    files: (wt.files as Prisma.JsonValue | null) ?? Prisma.JsonNull,
+                } as unknown as Prisma.workshop_todosCreateInput;
+
+                const inserted = await prisma.workshop_todos.create({ data: payload });
+                workshopTodoIdMap[oldId.toString()] = inserted.id;
             }
         }
 
-        // NFC Tags importieren
-        if (companyData.nfc_tags && companyData.nfc_tags.length > 0) {
-            for (const nfcTag of companyData.nfc_tags) {
-                const {
-                    id: _id,
-                    created_at: _createdAt,
-                    ...nfcTagData
-                } = nfcTag as Omit<nfc_tags, "updated_at">;
-                nfcTagData.company_id = upsertedCompany.id;
+        // Maintenance Logs importieren (after workshop todos)
+        if ((companyData as Record<string, unknown>).maintenance_logs && (companyData as Record<string, unknown>).maintenance_logs instanceof Array) {
+            for (const mlItem of (companyData as unknown as { maintenance_logs: maintenance_logs[] }).maintenance_logs) {
+                const ml = mlItem as Partial<maintenance_logs> & { id: bigint };
+                const oldId = ml.id;
+                const remappedEquipment = ml.equipment_id ? (equipmentIdMap[ml.equipment_id.toString()] ?? ml.equipment_id) : null;
+                const remappedCase = ml.case_id ? (caseIdMap[ml.case_id.toString()] ?? ml.case_id) : null;
+                const parsedPerformedAt = ml.performed_at && typeof ml.performed_at === 'string' ? new Date(ml.performed_at) : (ml.performed_at ?? new Date());
 
-                await prisma.nfc_tags.create({
-                    data: nfcTagData
-                });
+                const payload = {
+                    company_id: upsertedCompany.id,
+                    created_by: newUser,
+                    performed_by: newUser,
+                    performed_at: parsedPerformedAt,
+                    equipment_id: remappedEquipment,
+                    case_id: remappedCase,
+                    title: (ml.title as string) ?? `Maintenance #${oldId}`,
+                    notes: (ml.notes as string | null) ?? null,
+                } as unknown as Prisma.maintenance_logsCreateInput;
+
+                const inserted = await prisma.maintenance_logs.create({ data: payload });
+                maintenanceLogIdMap[oldId.toString()] = inserted.id;
             }
         }
 
-        // History importieren
+        // (NFC Tags bereits oben importiert)
+
+        // Backfill history.data_id now that all IDs are known
         if (companyData.history && companyData.history.length > 0) {
             for (const historyItem of companyData.history) {
-                const {
-                    id: _id,
-                    created_at: _createdAt,
-                    ...historyData
-                } = historyItem as Omit<history, "updated_at">;
-                historyData.company_id = upsertedCompany.id;
-
-                await prisma.history.create({
-                    data: {
-                        ...historyData,
-                        old_data: historyData.old_data ?? Prisma.JsonNull
-                    }
-                });
-            }
-        }
-
-        // Cases importieren
-        if (companyData.cases && companyData.cases.length > 0) {
-            for (const caseItem of companyData.cases) {
-                const {
-                    id: _id,
-                    created_at: _createdAt,
-                    ...caseData
-                } = caseItem as Omit<cases, "updated_at">;
-                caseData.company_id = upsertedCompany.id;
-
-                await prisma.cases.create({
-                    data: {
-                        ...caseData,
-                        contains_articles: (caseData.contains_articles as Prisma.InputJsonValue[]) ?? Prisma.JsonNull,
-                        files: caseData.files ?? Prisma.JsonNull,
-                    }
-                });
+                const { id: oldId } = historyItem as Omit<history, "updated_at">;
+                const newHistId = historyIdMap[oldId.toString()];
+                if (!newHistId) continue;
+                const tname = (historyItem as unknown as { table_name: string }).table_name;
+                const originalId = (historyItem as unknown as { data_id: bigint }).data_id;
+                let mappedId: bigint | undefined;
+                switch (tname) {
+                    case 'articles': mappedId = articleIdMap[originalId?.toString()]; break;
+                    case 'equipments': mappedId = equipmentIdMap[originalId?.toString()]; break;
+                    case 'locations': mappedId = locationIdMap[originalId?.toString()]; break;
+                    case 'contacts': mappedId = contactIdMap[originalId?.toString()]; break;
+                    case 'jobs': mappedId = jobIdMap[originalId?.toString()]; break;
+                    case 'asset_tags': mappedId = assetTagIdMap[originalId?.toString()]; break;
+                    case 'cases': mappedId = caseIdMap[originalId?.toString()]; break;
+                    case 'workshop_todos': mappedId = workshopTodoIdMap[originalId?.toString()]; break;
+                    case 'maintenance_logs': mappedId = maintenanceLogIdMap[originalId?.toString()]; break;
+                    default: mappedId = undefined; break;
+                }
+                if (mappedId) {
+                    await prisma.history.update({
+                        where: { id: newHistId },
+                        data: { data_id: mappedId }
+                    });
+                }
             }
         }
 
