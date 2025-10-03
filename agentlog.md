@@ -1,3 +1,20 @@
+## 2025-10-03 18:00 – CRITICAL FIX: Import always creates new company
+- **ISSUE**: Import logic could update existing company instead of creating new one
+- User warning: "Du musst beim Import sicherstellen, dass eine Neue Company ID zugewiesen wird! Sonst korrupted die DB!"
+- **ROOT CAUSE**: Import checked for existing company by name+owner and would UPDATE instead of CREATE
+  * Could overwrite existing company data when re-importing
+  * Would corrupt database by mixing old and new entity IDs
+  * Data loss risk for users re-importing their own exports
+- **SOLUTION**: Removed update logic - now ALWAYS creates new company
+  * Changed from upsert pattern to always `create` new company
+  * If company name exists, adds timestamp suffix: `"Name (Import 2025-10-03)"`
+  * Ensures fresh company ID and all entity IDs are remapped correctly
+  * Safe to import same company multiple times without conflicts
+- Files: `lib/importexport.ts`, `agentlog.md`
+- TypeScript compilation: ✅ PASSED (`npm run test:tsc`)
+- Commit: 0e3ffd6 "fix: CRITICAL - Always create new company on import, never update"
+- Next: Import is now safe and will never corrupt existing company data
+
 ## 2025-10-03 17:55 – Bug Fix: BigInt serialization in company import API response
 - **ISSUE**: Import API returning 500 error after successful import: "Do not know how to serialize a BigInt"
 - Error occurred at line 11: `return NextResponse.json({ company })`
