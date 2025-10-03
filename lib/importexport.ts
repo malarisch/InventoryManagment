@@ -154,6 +154,7 @@ export async function importCompanyData(companyData: CompanyData, newUser: strin
                 const {
                     id: oldId,
                     created_at: _createdAt,
+                    created_by: _createdBy,
                     ...locationData
                 } = location as Omit<locations, "updated_at">;
                 locationData.company_id = upsertedCompany.id;
@@ -161,6 +162,7 @@ export async function importCompanyData(companyData: CompanyData, newUser: strin
                 const newLocation = await prisma.locations.create({
                     data: {
                         ...locationData,
+                        created_by: newUser,
                         files: locationData.files ?? Prisma.JsonNull
                     }
                 });
@@ -174,6 +176,7 @@ export async function importCompanyData(companyData: CompanyData, newUser: strin
                 const {
                     id: _id,
                     created_at: _createdAt,
+                    created_by: _createdBy,
                     ...templateData
                 } = template as Omit<asset_tag_templates, "updated_at">;
                 templateData.company_id = upsertedCompany.id;
@@ -181,6 +184,7 @@ export async function importCompanyData(companyData: CompanyData, newUser: strin
                 await prisma.asset_tag_templates.create({
                     data: {
                         ...templateData,
+                        created_by: newUser,
                         template: templateData.template ?? Prisma.JsonNull
                     }
                 });
@@ -193,6 +197,7 @@ export async function importCompanyData(companyData: CompanyData, newUser: strin
                 const {
                     id: oldId,
                     created_at: _createdAt,
+                    created_by: _createdBy,
                     ...articleData
                 } = article as Omit<articles, "updated_at">;
                 articleData.company_id = upsertedCompany.id;
@@ -200,6 +205,7 @@ export async function importCompanyData(companyData: CompanyData, newUser: strin
                 const newArticle = await prisma.articles.create({
                     data: {
                         ...articleData,
+                        created_by: newUser,
                         metadata: articleData.metadata ?? Prisma.JsonNull,
                         files: articleData.files ?? Prisma.JsonNull,
                     }
@@ -214,6 +220,7 @@ export async function importCompanyData(companyData: CompanyData, newUser: strin
                 const {
                     id: oldId,
                     created_at: _createdAt,
+                    created_by: _createdBy,
                     ...equipmentData
                 } = equipment as Omit<equipments, "updated_at">;
                 equipmentData.company_id = upsertedCompany.id;
@@ -231,6 +238,7 @@ export async function importCompanyData(companyData: CompanyData, newUser: strin
                 const newEquipment = await prisma.equipments.create({
                     data: {
                         ...equipmentData,
+                        created_by: newUser,
                         metadata: equipmentData.metadata ?? Prisma.JsonNull,
                         files: equipmentData.files ?? Prisma.JsonNull,
                     }
@@ -248,6 +256,7 @@ export async function importCompanyData(companyData: CompanyData, newUser: strin
                 const {
                     id: oldId,
                     created_at: _createdAt,
+                    created_by: _createdBy,
                     ...contactData
                 } = contact as Omit<contacts, "updated_at"> & { customer_type?: string; address?: string };
 
@@ -261,7 +270,7 @@ export async function importCompanyData(companyData: CompanyData, newUser: strin
                 const newContact = await prisma.contacts.create({
                     data: {
                         company_id: upsertedCompany.id,
-                        created_by: contactData.created_by ?? null,
+                        created_by: newUser,
                         contact_type: contactData.contact_type ?? 'customer',
                         customer_type: (contactData as { customer_type?: string }).customer_type ?? null,
                         display_name: display,
@@ -300,6 +309,7 @@ export async function importCompanyData(companyData: CompanyData, newUser: strin
                 const {
                     id: oldId,
                     created_at: _createdAt,
+                    created_by: _createdBy,
                     ...jobData
                 } = job as Omit<jobs, "updated_at"> & { customer_id?: bigint | null };
                 jobData.company_id = upsertedCompany.id;
@@ -324,6 +334,7 @@ export async function importCompanyData(companyData: CompanyData, newUser: strin
                 const newJob = await prisma.jobs.create({
                     data: {
                         ...jobData,
+                        created_by: newUser,
                         meta: jobData.meta ?? Prisma.JsonNull,
                         files: jobData.files ?? Prisma.JsonNull,
                     }
@@ -338,6 +349,7 @@ export async function importCompanyData(companyData: CompanyData, newUser: strin
                 const {
                     id: _id,
                     created_at: _createdAt,
+                    created_by: _createdBy,
                     ...jobAssetData
                 } = jobAsset as Omit<job_assets_on_job, "updated_at">;
                 jobAssetData.company_id = upsertedCompany.id;
@@ -352,7 +364,10 @@ export async function importCompanyData(companyData: CompanyData, newUser: strin
                 }
 
                 await prisma.job_assets_on_job.create({
-                    data: jobAssetData
+                    data: {
+                        ...jobAssetData,
+                        created_by: newUser
+                    }
                 });
             }
         }
@@ -363,6 +378,7 @@ export async function importCompanyData(companyData: CompanyData, newUser: strin
                 const {
                     id: _id,
                     created_at: _createdAt,
+                    created_by: _createdBy,
                     ...bookedAssetData
                 } = bookedAsset as Omit<job_booked_assets, "updated_at">;
                 bookedAssetData.company_id = upsertedCompany.id;
@@ -377,7 +393,10 @@ export async function importCompanyData(companyData: CompanyData, newUser: strin
                 }
 
                 await prisma.job_booked_assets.create({
-                    data: bookedAssetData
+                    data: {
+                        ...bookedAssetData,
+                        created_by: newUser
+                    }
                 });
             }
         }
@@ -388,12 +407,16 @@ export async function importCompanyData(companyData: CompanyData, newUser: strin
                 const {
                     id: oldId,
                     created_at: _createdAt,
+                    created_by: _createdBy,
                     ...assetTagData
                 } = assetTag as Omit<asset_tags, "updated_at">;
                 assetTagData.company_id = upsertedCompany.id;
 
                 const newAssetTag = await prisma.asset_tags.create({
-                    data: assetTagData
+                    data: {
+                        ...assetTagData,
+                        created_by: newUser
+                    }
                 });
                 assetTagIdMap[oldId.toString()] = newAssetTag.id;
             }
@@ -405,12 +428,16 @@ export async function importCompanyData(companyData: CompanyData, newUser: strin
                 const {
                     id: _id,
                     created_at: _createdAt,
+                    created_by: _createdBy,
                     ...nfcTagData
                 } = nfcTag as Omit<nfc_tags, "updated_at">;
                 nfcTagData.company_id = upsertedCompany.id;
 
                 await prisma.nfc_tags.create({
-                    data: nfcTagData
+                    data: {
+                        ...nfcTagData,
+                        created_by: newUser
+                    }
                 });
             }
         }
@@ -440,6 +467,7 @@ export async function importCompanyData(companyData: CompanyData, newUser: strin
                 const {
                     id: _id,
                     created_at: _createdAt,
+                    created_by: _createdBy,
                     ...caseData
                 } = caseItem as Omit<cases, "updated_at">;
                 caseData.company_id = upsertedCompany.id;
@@ -447,6 +475,7 @@ export async function importCompanyData(companyData: CompanyData, newUser: strin
                 await prisma.cases.create({
                     data: {
                         ...caseData,
+                        created_by: newUser,
                         contains_articles: (caseData.contains_articles as Prisma.InputJsonValue[]) ?? Prisma.JsonNull,
                         files: caseData.files ?? Prisma.JsonNull,
                     }
