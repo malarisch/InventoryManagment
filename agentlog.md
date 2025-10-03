@@ -1,3 +1,24 @@
+## 2025-10-03 15:15 – Bug Fix: Removed non-existent contact_person_id field from contact creation
+- **ISSUE**: PGRST204 error on Company Settings contact creation: "Could not find the 'contact_person_id' column of 'contacts' in the schema cache"
+- User report: "Contact Creation auf der Company Settings für Standard Kontakt. Absenden: PGRST204 Could not find the 'contact_person_id' column"
+- **ROOT CAUSE**: contact-form-dialog.tsx attempted to insert contact_person_id field that never existed in contacts table schema
+- Investigation: Searched database.types.ts, confirmed contacts table has no contact_person_id column
+- Partially implemented feature: UI and state existed for company contact person selection but database column was never added
+- **SOLUTION**: Removed incomplete feature entirely (simpler than adding migration)
+- Changes to contact-form-dialog.tsx:
+  * Removed contact_person_id from database insert statement (line 101)
+  * Removed contactPersonId state variable and resetForm reference
+  * Removed SearchPicker UI for "Ansprechperson" selection (only showed for company type)
+  * Cleaned up unused imports: SearchPicker, SearchItem
+  * Added ContactType type definition (general | person | company | supplier | customer)
+  * Fixed companyId type to allow null (fixes 4 TypeScript errors in calling components)
+  * Fixed onCreated optional chaining
+- Files: components/forms/contacts/contact-form-dialog.tsx, agentlog.md
+- TypeScript compilation: ✅ PASSED (`npm run test:tsc` - all errors resolved)
+- Commit: e1404ca "fix: Remove non-existent contact_person_id field from contact creation"
+- Next: Test contact creation on Company Settings page, verify all contact types work without PGRST204 error
+- Note: Contact person selection for companies can be re-implemented later with proper database migration if needed
+
 ## 2025-10-03 14:45 – Workshop: Added blocking feature schema and todos overview
 - **TASK**: Workshop features - equipment page overview + blocking (todos #4-5 of 6)
 - User requested:
