@@ -1,3 +1,16 @@
+## 2025-10-03 17:55 – Bug Fix: BigInt serialization in company import API response
+- **ISSUE**: Import API returning 500 error after successful import: "Do not know how to serialize a BigInt"
+- Error occurred at line 11: `return NextResponse.json({ company })`
+- **ROOT CAUSE**: Import function returns company data with BigInt IDs, NextResponse.json() cannot serialize BigInt
+- **SOLUTION**: Added same `convertBigIntToString` helper to import API route
+  * Copied helper function from export route to `app/api/company/import-company/route.ts`
+  * Applied conversion to response: `return NextResponse.json({ company: convertBigIntToString(company) })`
+  * Ensures consistent BigInt/Date handling across both export and import endpoints
+- Files: `app/api/company/import-company/route.ts`, `agentlog.md`
+- TypeScript compilation: ✅ PASSED (`npm run test:tsc`)
+- Commit: d0403d8 "fix: BigInt serialization in company import API response"
+- Next: Both export and import APIs now properly handle BigInt and Date serialization
+
 ## 2025-10-03 17:50 – Bug Fix: Date serialization in company import/export
 - **ISSUE**: Import failing with "Invalid value provided. Expected DateTime or Null, provided Object"
 - User report: Import error showing `added_to_inventory_at: {}` (empty object) instead of DateTime
