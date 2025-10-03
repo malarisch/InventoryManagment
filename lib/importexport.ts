@@ -119,21 +119,7 @@ export async function importCompanyData(companyData: CompanyData, newUser: strin
             companyName = `${companyName} (Import ${timestamp})`;
         }
 
-        // Preemptively align companies identity to avoid rare duplicate key errors in mixed environments
-        try {
-            await (prisma as unknown as { $executeRawUnsafe: (q: string) => Promise<unknown> }).$executeRawUnsafe(`
-                DO $$
-                DECLARE next_id bigint;
-                BEGIN
-                  SELECT COALESCE(MAX(id),0) + 1 INTO next_id FROM public.companies;
-                  EXECUTE format('ALTER TABLE public.companies ALTER COLUMN id RESTART WITH %s', next_id);
-                EXCEPTION WHEN others THEN
-                  NULL;
-                END$$;
-            `);
-        } catch (_e) {
-            // Non-fatal; proceed with create which may still succeed
-        }
+        
 
         const upsertedCompany = await prisma.companies.create({
             data: {

@@ -1,5 +1,6 @@
 import 'dotenv/config';
 import { createAdminClient } from '@/lib/supabase/admin';
+import { deleteCompany } from '@/lib/tools/deleteCompany';
 
 // Vitest global setup that returns a teardown function.
 // The teardown deletes leftover test users so they don't persist in Supabase.
@@ -31,7 +32,12 @@ export default async function globalSetup() {
             meta?.source === 'automated-test' ||
             meta?.display_name === 'Vitest Runner' ||
             email.toLowerCase().startsWith('vitest+');
-
+          const {data: companies, error} = await admin.from("companies").select("id").eq("owner_user_id", u.id);
+          if (error) throw error;
+            if (companies && companies.length > 0) {
+                // Delete companies owned by this user
+                await deleteCompany(companies.map(c => c.id));
+            }
           if (fromTests && u.id) {
             await admin.auth.admin.deleteUser(u.id);
           }

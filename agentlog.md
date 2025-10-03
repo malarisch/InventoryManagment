@@ -1,6 +1,13 @@
+2025-10-03 17:08 — Tests: remove manual ID inserts in seeding
+- Updated tests/vitest/supabase-seed.test.ts to rely on identity/autoincrement (no explicit id values for users_companies).
+- Prevents identity desync issues and removes a no-go pattern for Supabase tests.
+
 2025-10-03 15:20 — History: respect companies.enable_history
 - Added migration to update public.log_history: it now checks public.companies.enable_history for the owning company and skips logging when false.
 - Keeps prior behavior (skip DELETE on companies, job *_record_id enrichment) and preserves deferrable FK.
+
+2025-10-03 15:22 — Prisma: add companies.enable_history field
+- Updated prisma schema with `enable_history Boolean @default(true)` on companies model and regenerated client.
 
 2025-10-03 15:14 — Add global Supabase auth cleanup for tests
 - Added tests/vitest/global-cleanup.test.ts to sweep and delete leftover test users (metadata.source='automated-test', display_name='Vitest Runner', or email starting with 'vitest+').
