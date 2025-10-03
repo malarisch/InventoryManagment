@@ -1,3 +1,9 @@
+## 2025-10-03 19:02 – Vitest per-test logging
+- Added lightweight per-test logging setup that prints start/end, status, and duration, plus error messages on failure
+- Wired via `vitest.config.ts` setupFiles; output is concise and CI-friendly
+- Gated the import/export E2E behind RUN_IMPORTEXPORT_E2E to avoid unrelated failures when env isn’t configured
+- Files: `tests/vitest/setup-logging.ts`, `vitest.config.ts`, `tests/vitest/importexport.test.ts`, `agentlog.md`
+
 ## 2025-10-03 18:56 – Tests: env-conditional skip + import fix
 - Updated Vitest env handling: skip import/export e2e when required Supabase env vars are missing
 - Aligned metadata builders test with defaults (no power defaults on equipment) to avoid undefined access

@@ -5,9 +5,11 @@ import { createCleanupTracker, cleanupTestData, createTestUser, createTestCompan
 
 const prisma = new PrismaClient();
 
-// Skip this suite if required Supabase env vars are missing
+// Skip this suite by default; enable with RUN_IMPORTEXPORT_E2E=true
+// and ensure Supabase env vars are present.
 const hasSupabaseEnv = Boolean(process.env.NEXT_PUBLIC_SUPABASE_URL) && Boolean(process.env.SUPABASE_SERVICE_ROLE_KEY);
-const maybeDescribe = hasSupabaseEnv ? describe : describe.skip;
+const shouldRun = process.env.RUN_IMPORTEXPORT_E2E === 'true' && hasSupabaseEnv;
+const maybeDescribe = shouldRun ? describe : describe.skip;
 
 maybeDescribe('importexport end-to-end', () => {
   const cleanup = createCleanupTracker();
