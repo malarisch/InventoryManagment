@@ -1,3 +1,19 @@
+## 2025-10-03 16:30 – Company Import/Export: Completed full functionality
+- **TASK**: Complete halfly-implemented company import/export API endpoints and add UI buttons
+- **SOLUTION**:
+  * Enhanced `/api/company/dump-company` GET endpoint with authentication/authorization (checks user membership or ownership)
+  * Added "Company Export" button to company settings page that downloads full company data as JSON file
+  * Created `CompanyImportForm` component with file picker for JSON import
+  * Added import form to user profile settings page (`/management/profile/settings`)
+  * Export uses `getCompanyData()` from `lib/importexport.ts` (Prisma) to fetch all related entities
+  * Import uses `importCompanyData()` to create new company with user as owner, mapping all IDs
+  * Includes all entities: articles, equipments, contacts, jobs, locations, cases, asset tags, templates, history, etc.
+- Files: `app/api/company/dump-company/route.ts`, `components/company-settings-form.tsx`, `components/company-import-form.tsx`, `app/management/profile/settings/page.tsx`, `agentlog.md`
+- TypeScript compilation: ✅ PASSED (`npm run test:tsc`)
+- ESLint: ✅ PASSED (`npm run lint`)
+- Commit: 222cdf7 "feat: Complete company import/export functionality"
+- Next: User can test export → download JSON → import in different account
+
 ## 2025-10-03 15:15 – Bug Fix: Removed non-existent contact_person_id field from contact creation
 - **ISSUE**: PGRST204 error on Company Settings contact creation: "Could not find the 'contact_person_id' column of 'contacts' in the schema cache"
 - User report: "Contact Creation auf der Company Settings für Standard Kontakt. Absenden: PGRST204 Could not find the 'contact_person_id' column"

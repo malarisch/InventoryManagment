@@ -34,6 +34,7 @@ export function CompanySettingsForm() {
   const [error, setError] = useState<string | null>(null);
   const [message, setMessage] = useState<string | null>(null);
   const [dumpStatus, setDumpStatus] = useState<string | null>(null);
+  const [exportStatus, setExportStatus] = useState<string | null>(null);
   const [contacts, setContacts] = useState<Contact[]>([]);
   const [contactDialogOpen, setContactDialogOpen] = useState(false);
 
@@ -205,6 +206,36 @@ export function CompanySettingsForm() {
     }
   }
 
+  async function exportCompany() {
+    if (!company) return;
+    setExportStatus("Exportiere Company…");
+    try {
+      const res = await fetch(`/api/company/dump-company?companyId=${company.id}`);
+      const data = await res.json();
+      
+      if (!res.ok) {
+        setExportStatus(`Fehler: ${data?.error ?? res.status}`);
+        return;
+      }
+
+      // Download as JSON file
+      const blob = new Blob([JSON.stringify(data.company, null, 2)], { type: "application/json" });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `${company.name.replace(/[^a-z0-9]/gi, '_')}_export_${new Date().toISOString().split('T')[0]}.json`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+      
+      setExportStatus("Export erfolgreich heruntergeladen!");
+    } catch (e: unknown) {
+      const message = e instanceof Error ? e.message : String(e);
+      setExportStatus(`Fehler: ${message}`);
+    }
+  }
+
   return (
     <div className="grid grid-cols-1 md:grid-cols-12 gap-6">
       <Card className="md:col-span-12">
@@ -274,6 +305,20 @@ export function CompanySettingsForm() {
           setContacts((prev) => [...prev, contact]);
         }}
       />
+
+      <Card className="md:col-span-12">
+        <CardHeader>
+          <CardTitle>Company Export</CardTitle>
+          <CardDescription>Exportiere alle Company-Daten als JSON für Backup oder Migration</CardDescription>
+        </CardHeader>
+        <CardContent>
+          <div className="flex items-center justify-between gap-3">
+            <div className="text-sm">Exportiert alle Daten dieser Company (Artikel, Equipment, Kontakte, Jobs, etc.) als JSON-Datei zum Download.</div>
+            <Button type="button" variant="outline" onClick={exportCompany} disabled={!company}>Company exportieren</Button>
+          </div>
+          {exportStatus && <div className="mt-2 text-xs text-muted-foreground">{exportStatus}</div>}
+        </CardContent>
+      </Card>
 
       <Card className="md:col-span-12">
         <CardHeader>
