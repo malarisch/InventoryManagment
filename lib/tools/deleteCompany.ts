@@ -27,7 +27,6 @@ async function getDeleteOrder(deleteOrder = false): Promise<Array<{ table_name: 
   return result;
 }
 
-getDeleteOrder(true);
 
 // Deletes all records that belong to the given companies (by company_id),
 // then removes the companies themselves. Uses an explicit order to satisfy
@@ -38,6 +37,8 @@ export const deleteCompany = async (companies: Array<{ id: bigint }>) => {
   if (process.env.ALLOW_DANGEROUS_DELETE !== 'true') {
     console.log('deleteCompany is disabled. Set ALLOW_DANGEROUS_DELETE=true to run this tool (e2e cleanup only).');
   }
+  const deleteOrder = await getDeleteOrder(true);
+
   for (const company of companies) {
     const companyId = company.id; // bigint
 

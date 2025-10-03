@@ -1,3 +1,7 @@
+2025-10-03 15:20 — History: respect companies.enable_history
+- Added migration to update public.log_history: it now checks public.companies.enable_history for the owning company and skips logging when false.
+- Keeps prior behavior (skip DELETE on companies, job *_record_id enrichment) and preserves deferrable FK.
+
 2025-10-03 15:14 — Add global Supabase auth cleanup for tests
 - Added tests/vitest/global-cleanup.test.ts to sweep and delete leftover test users (metadata.source='automated-test', display_name='Vitest Runner', or email starting with 'vitest+').
 - Ensures Supabase stays tidy after runs; guarded by env presence. Suite passes locally.

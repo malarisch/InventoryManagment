@@ -269,6 +269,7 @@ model companies {
   metadata            Json?
   owner_user_id       String?               @default(dbgenerated("auth.uid()")) @db.Uuid
   files               Json?
+  enable_history      Boolean               @default(true)
   articles            articles[]
   asset_tag_templates asset_tag_templates[]
   asset_tags          asset_tags[]
