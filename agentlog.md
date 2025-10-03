@@ -2,6 +2,10 @@
 - Updated tests/vitest/supabase-seed.test.ts to rely on identity/autoincrement (no explicit id values for users_companies).
 - Prevents identity desync issues and removes a no-go pattern for Supabase tests.
 
+2025-10-03 20:05 — Fix e2e teardown deleteCompany call
+- Updated tests/e2e/cleanup.teardown.ts to pass bigint[] (company IDs) to deleteCompany instead of full rows.
+- Resolves TypeScript error TS2345 in teardown.
+
 2025-10-03 15:20 — History: respect companies.enable_history
 - Added migration to update public.log_history: it now checks public.companies.enable_history for the owning company and skips logging when false.
 - Keeps prior behavior (skip DELETE on companies, job *_record_id enrichment) and preserves deferrable FK.
