@@ -1,4 +1,4 @@
-import 'dotenv/config';
+
 import { describe, it, expect } from 'vitest';
 import { createAdminClient } from '@/lib/supabase/admin';
 
@@ -15,10 +15,8 @@ describe('global auth cleanup', () => {
   const missing = required.filter((k) => !process.env[k]);
 
   if (missing.length > 0) {
-    it.skip('skipped: missing Supabase env', () => {
-      expect(true).toBe(true);
-    });
-    return;
+    
+    throw new Error("Missing Supabase env");
   }
 
   it('deletes leftover Vitest-created users', async () => {
@@ -43,6 +41,7 @@ describe('global auth cleanup', () => {
           email.toLowerCase().startsWith('vitest+');
 
         if (fromTests && u.id) {
+            console.log("Deleting User", u.id)
           await admin.auth.admin.deleteUser(u.id);
           deleted++;
         }

@@ -1,7 +1,33 @@
-import "dotenv/config";
+import "@/lib/setup-env"
 import {PrismaClient} from "@/lib/generated/prisma";
-
 const prisma = new PrismaClient();
+
+
+
+/**
+ * Retrieve public tables with FK-depth levels from the DB.
+ *
+ * @param {boolean} deleteOrder - If true, sort descending by level (suitable for deletion).
+ *                                If false or omitted, sort ascending (suitable for creation/inspection).
+ * @returns {Promise<Array<{ table_name: string; level: number }>>}
+ *          Promise resolving to an array of objects containing table_name and numeric level.
+ * @throws Propagates any database/query errors from prisma.$queryRawUnsafe.
+ */
+async function getDeleteOrder(deleteOrder = false): Promise<Array<{ table_name: string; level: number }>> {
+  const result: Array<{ table_name: string; level: number }> = await prisma.$queryRawUnsafe("SELECT table_name::text, level::int FROM public.list_public_tables_fk_order();") ?? [];
+  if (deleteOrder) {
+    result.sort((a, b) => b.level - a.level);
+  } else {
+    result.sort((a, b) => a.level - b.level);
+
+  }
+  //result.map((r) => r.table_name as string).forEach((table_name: string, level: number) => {
+    //console.log("Level", level + ":", table_name)
+  //})
+  return result;
+}
+
+getDeleteOrder(true);
 
 // Deletes all records that belong to the given companies (by company_id),
 // then removes the companies themselves. Uses an explicit order to satisfy
