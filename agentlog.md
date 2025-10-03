@@ -1,3 +1,18 @@
+## 2025-10-03 17:40 – Bug Fix: BigInt serialization in company export API
+- **ISSUE**: Export API returning 500 error: "Do not know how to serialize a BigInt"
+- User report: "api/dumpcompany gibt 500: {"error":"Do not know how to serialize a BigInt"}"
+- **ROOT CAUSE**: Prisma returns BigInt for database bigint columns, JavaScript JSON.stringify() cannot handle BigInt natively
+- **SOLUTION**: Added recursive BigInt conversion helper in `app/api/company/dump-company/route.ts`
+  * `convertBigIntToString(obj)` recursively traverses data structure
+  * Converts all BigInt values to strings before JSON serialization
+  * Handles nested objects, arrays, and preserves null/undefined
+  * Applied to company export data: `return NextResponse.json(convertBigIntToString(company))`
+- Files: `app/api/company/dump-company/route.ts`, `agentlog.md`
+- TypeScript compilation: ✅ PASSED (`npm run test:tsc`)
+- ESLint: ✅ PASSED (`npm run lint`)
+- Commit: 92c4b31 "fix: BigInt serialization error in company export API"
+- Next: Company export now returns JSON successfully with all IDs as strings
+
 ## 2025-10-03 17:35 – Bug Fix: Template codes card sticky behavior
 - **ISSUE**: Template codes card scrolling away "under the preview card" instead of staying visible
 - User report: "The Allowed placeholder card is not floating but scrolls under the preview card away"
