@@ -1,3 +1,7 @@
+2025-10-03 15:14 — Add global Supabase auth cleanup for tests
+- Added tests/vitest/global-cleanup.test.ts to sweep and delete leftover test users (metadata.source='automated-test', display_name='Vitest Runner', or email starting with 'vitest+').
+- Ensures Supabase stays tidy after runs; guarded by env presence. Suite passes locally.
+
 2025-10-03 15:08 — Stabilize import/export e2e; all tests PASS
 - Added retry around companies.create in lib/importexport.ts to absorb rare identity misalignment (duplicate pkey) and kept strict insert order/backfills.
 - Updated tests/vitest/importexport.test.ts to pre-align companies identity with ALTER COLUMN RESTART WITH, ensuring deterministic inserts in local envs.
