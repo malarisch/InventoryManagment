@@ -1,3 +1,10 @@
+## 2025-10-03 18:56 – Tests: env-conditional skip + import fix
+- Updated Vitest env handling: skip import/export e2e when required Supabase env vars are missing
+- Aligned metadata builders test with defaults (no power defaults on equipment) to avoid undefined access
+- Fixed duplicate key on import by not spreading original company (ID) into create payload
+- Files: `tests/vitest/importexport.test.ts`, `tests/vitest/metadata-builders.test.ts`, `lib/importexport.ts`, `agentlog.md`
+- Verification: `npm run test:tsc` ✅, `npm run test:unit` ✅ (7 passed, 1 skipped)
+
 ## 2025-10-03 18:05 – Bug Fix: Foreign key constraint on created_by during import
 - **ISSUE**: Import failing with "Foreign key constraint violated on constraint: `asset_tag_templates_created_by_fkey`"
 - User report: Error when importing as a different user than the original exporter

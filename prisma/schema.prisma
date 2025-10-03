@@ -254,6 +254,8 @@ model cases {
   locations                                        locations?          @relation(fields: [current_location], references: [id], onDelete: SetNull, onUpdate: Cascade)
   job_assets_on_job                                job_assets_on_job[]
   job_booked_assets                                job_booked_assets[]
+  maintenance_logs                                 maintenance_logs[]
+  workshop_todos                                   workshop_todos[]
 
   @@schema("public")
 }
@@ -281,6 +283,8 @@ model companies {
   locations           locations[]
   nfc_tags            nfc_tags[]
   users_companies     users_companies[]
+  maintenance_logs    maintenance_logs[]
+  workshop_todos      workshop_todos[]
 
   @@schema("public")
 }
@@ -306,6 +310,8 @@ model equipments {
   locations                                   locations?          @relation(fields: [current_location], references: [id])
   job_assets_on_job                           job_assets_on_job[]
   job_booked_assets                           job_booked_assets[]
+  maintenance_logs                            maintenance_logs[]
+  workshop_todos                              workshop_todos[]
 
   @@schema("public")
 }
@@ -397,6 +403,7 @@ model locations {
   company_id  BigInt
   asset_tag   BigInt?
   files       Json?
+  is_workshop Boolean      @default(false)
   articles    articles[]
   equipments  equipments[]
   cases       cases[]
@@ -442,6 +449,9 @@ model profiles {
   locations           locations[]
   nfc_tags            nfc_tags[]
   users_companies     users_companies[]
+  maintenance_logs_created maintenance_logs[] @relation("maintenance_logs_created_by")
+  maintenance_logs_performed maintenance_logs[] @relation("maintenance_logs_performed_by")
+  workshop_todos      workshop_todos[]
 
   @@schema("public")
 }
@@ -567,4 +577,49 @@ enum buckettype {
   ANALYTICS
 
   @@schema("storage")
+}
+
+/// This model contains row level security and requires additional setup for migrations. Visit https://pris.ly/d/row-level-security for more info.
+model maintenance_logs {
+  id            BigInt     @id @default(autoincrement())
+  created_at    DateTime   @default(now()) @db.Timestamptz(6)
+  company_id    BigInt
+  created_by    String?    @db.Uuid
+  performed_by  String?    @db.Uuid
+  performed_at  DateTime   @default(now()) @db.Timestamptz(6)
+  equipment_id  BigInt?
+  case_id       BigInt?
+  title         String
+  notes         String?
+
+  companies     companies  @relation(fields: [company_id], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  profiles_created_by   profiles?  @relation("maintenance_logs_created_by", fields: [created_by], references: [id])
+  profiles_performed_by profiles?  @relation("maintenance_logs_performed_by", fields: [performed_by], references: [id])
+  equipments    equipments? @relation(fields: [equipment_id], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  cases         cases?     @relation(fields: [case_id], references: [id], onDelete: Cascade, onUpdate: Cascade)
+
+  @@schema("public")
+}
+
+/// This model contains row level security and requires additional setup for migrations. Visit https://pris.ly/d/row-level-security for more info.
+model workshop_todos {
+  id           BigInt    @id @default(autoincrement())
+  created_at   DateTime  @default(now()) @db.Timestamptz(6)
+  company_id   BigInt
+  created_by   String?   @db.Uuid
+  equipment_id BigInt?
+  case_id      BigInt?
+  title        String
+  notes        String?
+  status       String    @default("open")
+  due_date     DateTime? @db.Date
+  closed_at    DateTime? @db.Timestamptz(6)
+  files        Json?
+
+  companies    companies  @relation(fields: [company_id], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  profiles     profiles?  @relation(fields: [created_by], references: [id])
+  equipments   equipments? @relation(fields: [equipment_id], references: [id], onDelete: SetNull, onUpdate: Cascade)
+  cases        cases?     @relation(fields: [case_id], references: [id], onDelete: SetNull, onUpdate: Cascade)
+
+  @@schema("public")
 }
