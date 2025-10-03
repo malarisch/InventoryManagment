@@ -1,137 +1,16 @@
-name: Integration Tests
+name: DEPRECATED - Integration Tests (combined)
 
 on:
-  push:
-    branches: [ main ]
-  pull_request:
-    branches: [ main ]
+  # Manual only to avoid duplicate CI after split workflows
+  workflow_dispatch:
 
 permissions:
   contents: read
 
 jobs:
-  tests:
+  noop:
     runs-on: ubuntu-latest
+    if: false # disabled
 
     steps:
-      - name: Checkout
-        uses: actions/checkout@v5
-
-      - name: Use Node.js 24.x
-        uses: actions/setup-node@v5
-        with:
-          node-version: 24
-          cache: 'npm'
-      - name: "Move config_noseed.toml to supabase/config.toml (if present)"
-        run: |
-          if [ -f supabase/config_noseed.toml ]; then
-            mv supabase/config_noseed.toml supabase/config.toml
-          else
-            echo "No config_noseed.toml present, skipping"
-          fi
-      - name: Install dependencies
-        run: npm ci
-
-      # Cache Prisma engines to speed up `prisma generate`
-      - name: Cache Prisma engines
-        uses: actions/cache@v4
-        with:
-          path: |
-            ~/.cache/prisma
-            node_modules/.prisma
-          key: ${{ runner.os }}-prisma-${{ hashFiles('**/package-lock.json') }}
-      - name: Install Supabase CLI
-        uses: supabase/setup-cli@v1
-        with:
-          version: latest
-
-      # Determine Supabase CLI version for cache key stability
-      - name: Determine Supabase CLI version
-        id: supabase-cli-version
-        run: echo "version=$(supabase --version | tr ' ' '-' )" >> $GITHUB_OUTPUT
-
-      # Restore cached Supabase Docker images (to avoid repeated image pulls)
-      - name: Restore Supabase Docker images cache
-        id: supabase-images-cache
-        uses: actions/cache@v4
-        with:
-          path: .cache/supabase-images.tar
-          key: ${{ runner.os }}-supabase-images-${{ steps.supabase-cli-version.outputs.version }}-${{ hashFiles('supabase/config.toml') }}
-
-      # Load cached Docker images if available
-      - name: Load cached Supabase Docker images
-        if: steps.supabase-images-cache.outputs.cache-hit == 'true'
-        run: |
-          docker load -i .cache/supabase-images.tar
-
-      - name: Start Supabase stack
-        run: supabase start
-
-      # Save Docker images to cache for future runs (only if not restored)
-      - name: Save Supabase Docker images to cache
-        if: steps.supabase-images-cache.outputs.cache-hit != 'true'
-        run: |
-          mkdir -p .cache
-          # Collect images used by running containers in this project
-          IMAGES=$(docker ps --format '{{.Image}} {{.Names}}' | grep -i 'inventorymanagment' | awk '{print $1}' | sort -u)
-          if [ -z "$IMAGES" ]; then
-            # Fallback to common Supabase image namespaces
-            IMAGES=$(docker ps --format '{{.Image}}' | grep -E 'supabase/|postgrest|kong|inbucket|imgproxy' | sort -u || true)
-          fi
-          if [ -n "$IMAGES" ]; then
-            echo "Caching images:" && echo "$IMAGES"
-            docker save -o .cache/supabase-images.tar $IMAGES
-          else
-            echo 'No Supabase images detected to cache'
-          fi
-
-      - name: Export Supabase environment
-        run: ./scripts/write-supabase-env.sh > .env.local
-
-      - name: Create symlink for .env
-        run: ln -s .env.local .env
-      - name: Create Prisma client
-        run: npx prisma generate
-
-      # Determine Playwright version for stable browser cache key
-      - name: Determine Playwright version
-        id: playwright-version
-        run: echo version=$(node -e "console.log(require('playwright/package.json').version)") >> $GITHUB_OUTPUT
-
-      # Cache Playwright browsers to avoid re-downloading on each run
-      - name: Cache Playwright browsers
-        uses: actions/cache@v4
-        with:
-          path: ~/.cache/ms-playwright
-          key: ${{ runner.os }}-playwright-${{ steps.playwright-version.outputs.version }}
-      - name: Install Playwright browsers
-        run: npx playwright install --with-deps
-      - name: Build Next.js app
-        run: npm run build
-      - name: Start Next.js app and wait for readiness
-        run: |
-          # Start Next.js in background and capture logs
-          npm run start > next.log 2>&1 &
-          NEXT_PID=$!
-          echo "Waiting for Next.js to respond on http://127.0.0.1:3000..."
-          for i in $(seq 1 60); do
-            if curl -sSf http://127.0.0.1:3000 >/dev/null 2>&1; then
-              echo "Next.js is up"
-              break
-            fi
-            echo "Waiting... ($i)"
-            sleep 2
-          done
-          if ! curl -sSf http://127.0.0.1:3000 >/dev/null 2>&1; then
-            echo "Next.js failed to start. Printing last 200 lines of next.log:" >&2
-            tail -n 200 next.log || true
-            kill $NEXT_PID || true
-            exit 1
-          fi
-      - name: Run full test suite (lint, tsc, unit, e2e)
-        # Do not override Supabase env vars here; Playwright loads them from .env via dotenv.
-        # We only set Playwright-specific envs.
-        env:
-          PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD: 1
-          PLAYWRIGHT_BASE_URL: http://127.0.0.1:3000
-        run: npm run test
+      - run: echo "Deprecated workflow. Use split CI workflows instead."

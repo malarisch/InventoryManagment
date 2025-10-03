@@ -1,34 +1,17 @@
-name: Lint
+name: DEPRECATED - Combined Lint/TS/Unit
 
 on:
-  push:
-    branches: [ main ]
-  pull_request:
-    branches: [ main ]
+  # Manual only to avoid duplicate CI after split workflows
+  workflow_dispatch:
 
 permissions:
   contents: read
 
 jobs:
-  lint:
-    name: ESLint
+  noop:
+    name: Deprecated (do not use)
     runs-on: ubuntu-latest
+    if: false # disabled
 
     steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-
-      - name: Use Node.js 20.x
-        uses: actions/setup-node@v4
-        with:
-          node-version: 20
-          cache: 'npm'
-
-      - name: Install dependencies
-        run: npm ci
-
-      - name: Run lint, typecheck and unit tests
-        run: |
-          npm run lint
-          npm run test:tsc
-          npm run test:unit
+      - run: echo "Deprecated workflow. Use split CI workflows instead."
