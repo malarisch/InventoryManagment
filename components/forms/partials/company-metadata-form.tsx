@@ -274,19 +274,30 @@ export function CompanyMetadataForm({
       <div className="grid gap-4">
         <div className="grid gap-2">
           <Label htmlFor="cmf-contact-person">Kontaktperson</Label>
-          <select
-            id="cmf-contact-person"
-            className="h-9 rounded-md border bg-background px-3 text-sm"
-            value={value.standardData.contactPersonId ?? ""}
-            onChange={(e) => setStandard("contactPersonId", e.target.value === "" ? undefined : Number(e.target.value))}
-          >
-            <option value="">— Keine Kontaktperson —</option>
-            {(contacts ?? []).map((contact) => (
-              <option key={contact.id} value={contact.id}>
-                {contact.display_name || `${contact.first_name ?? ""} ${contact.last_name ?? ""}`.trim() || `#${contact.id}`}
-              </option>
-            ))}
-          </select>
+          <SearchPicker
+            items={(contacts ?? []).map(c => ({
+              id: c.id.toString(),
+              category: 'contact' as const,
+              title: c.display_name || `${c.first_name ?? ""} ${c.last_name ?? ""}`.trim() || `#${c.id}`,
+              description: c.email || undefined,
+              matchers: [
+                { value: c.display_name || "", weight: 1 },
+                { value: c.first_name || "", weight: 0.9 },
+                { value: c.last_name || "", weight: 0.9 },
+                ...(c.email ? [{ value: c.email, weight: 0.8 }] : []),
+                ...(c.organization ? [{ value: c.organization, weight: 0.7 }] : [])
+              ].filter(m => m.value),
+              data: c.id
+            }))}
+            onSelect={(item: SearchItem<'contact', number>) => setStandard("contactPersonId", item.data)}
+            placeholder="Kontakt suchen..."
+            buttonLabel={
+              value.standardData.contactPersonId
+                ? (contacts ?? []).find(c => c.id === value.standardData.contactPersonId)?.display_name || "Kontakt wählen"
+                : "Keine Kontaktperson"
+            }
+            resetOnSelect
+          />
         </div>
         {onCreateContact && (
           <Button type="button" variant="secondary" onClick={onCreateContact}>
