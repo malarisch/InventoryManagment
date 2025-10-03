@@ -1,3 +1,19 @@
+## 2025-10-03 18:05 – Bug Fix: Foreign key constraint on created_by during import
+- **ISSUE**: Import failing with "Foreign key constraint violated on constraint: `asset_tag_templates_created_by_fkey`"
+- User report: Error when importing as a different user than the original exporter
+- **ROOT CAUSE**: All `created_by` fields contained original user IDs that don't exist in target database
+  * Foreign key constraints require valid references to `auth.users` (via profiles)
+  * Import across different databases/users caused FK violations
+- **SOLUTION**: Set all `created_by` fields to the importing user
+  * Removed original `created_by` in destructuring for all entities
+  * Explicitly set `created_by: newUser` in all create statements
+  * Affected entities: locations, asset_tag_templates, articles, equipments, contacts, jobs, job_assets_on_job, job_booked_assets, asset_tags, nfc_tags, cases
+  * Now all imported data is owned by the user performing the import
+- Files: `lib/importexport.ts`, `agentlog.md`
+- TypeScript compilation: ✅ PASSED (`npm run test:tsc`)
+- Commit: 351d1a9 "fix: Set created_by to importing user for all entities"
+- Next: Import now works when importing another user's company export
+
 ## 2025-10-03 18:00 – CRITICAL FIX: Import always creates new company
 - **ISSUE**: Import logic could update existing company instead of creating new one
 - User warning: "Du musst beim Import sicherstellen, dass eine Neue Company ID zugewiesen wird! Sonst korrupted die DB!"
