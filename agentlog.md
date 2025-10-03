@@ -1,3 +1,20 @@
+## 2025-10-03 17:50 – Bug Fix: Date serialization in company import/export
+- **ISSUE**: Import failing with "Invalid value provided. Expected DateTime or Null, provided Object"
+- User report: Import error showing `added_to_inventory_at: {}` (empty object) instead of DateTime
+- **ROOT CAUSE**: Date objects were not being properly serialized during export and deserialized during import
+  * Export: Date objects converted to empty `{}` by JSON.stringify
+  * Import: Received empty objects instead of ISO date strings
+- **SOLUTION**: Enhanced date handling in both export and import
+  * Export (`app/api/company/dump-company/route.ts`): Added Date instanceof check to convert to ISO string
+  * Import (`lib/importexport.ts`): Parse ISO date strings back to Date objects
+    - `equipments.added_to_inventory_at`: Check if string and convert to Date
+    - `jobs.startdate` and `jobs.enddate`: Check if string and convert to Date
+- Files: `app/api/company/dump-company/route.ts`, `lib/importexport.ts`, `agentlog.md`
+- TypeScript compilation: ✅ PASSED (`npm run test:tsc`)
+- ESLint: ✅ PASSED (`npm run lint`)
+- Commit: c2c3d59 "fix: Date serialization in company import/export"
+- Next: Company export/import now properly handles all date fields
+
 ## 2025-10-03 17:40 – Bug Fix: BigInt serialization in company export API
 - **ISSUE**: Export API returning 500 error: "Do not know how to serialize a BigInt"
 - User report: "api/dumpcompany gibt 500: {"error":"Do not know how to serialize a BigInt"}"
