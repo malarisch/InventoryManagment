@@ -491,15 +491,32 @@ export async function importCompanyData(companyData: CompanyData, newUser: strin
 
         // (NFC Tags bereits oben importiert)
 
-        // History importieren
+        // History importieren (FK-safe)
         if (companyData.history && companyData.history.length > 0) {
             for (const historyItem of companyData.history) {
-                const {
-                    id: _id,
-                    created_at: _createdAt,
-                    ...historyData
-                } = historyItem as Omit<history, "updated_at">;
+                const { id: _id, created_at: _createdAt, ...historyData } = historyItem as Omit<history, "updated_at">;
                 historyData.company_id = upsertedCompany.id;
+
+                // Ensure change_made_by references the importing user to satisfy FK
+                (historyData as unknown as { change_made_by?: string | null }).change_made_by = newUser;
+
+                // Optional: remap data_id to new IDs when table_name matches
+                const tname = (historyData as unknown as { table_name: string }).table_name;
+                const originalId = (historyData as unknown as { data_id: bigint }).data_id;
+                let mappedId: bigint | undefined;
+                switch (tname) {
+                    case 'articles': mappedId = articleIdMap[originalId?.toString()]; break;
+                    case 'equipments': mappedId = equipmentIdMap[originalId?.toString()]; break;
+                    case 'locations': mappedId = locationIdMap[originalId?.toString()]; break;
+                    case 'contacts': mappedId = contactIdMap[originalId?.toString()]; break;
+                    case 'jobs': mappedId = jobIdMap[originalId?.toString()]; break;
+                    case 'asset_tags': mappedId = assetTagIdMap[originalId?.toString()]; break;
+                    case 'cases': mappedId = caseIdMap[originalId?.toString()]; break;
+                    default: mappedId = undefined; break;
+                }
+                if (mappedId) {
+                    (historyData as unknown as { data_id: bigint }).data_id = mappedId;
+                }
 
                 await prisma.history.create({
                     data: {
