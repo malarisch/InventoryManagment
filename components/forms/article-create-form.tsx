@@ -224,7 +224,7 @@ export function ArticleCreateForm() {
           <CardTitle>Basisdaten</CardTitle>
           <CardDescription>Name und Standort</CardDescription>
         </CardHeader>
-        <CardContent className="space-y-3">
+        <CardContent className="grid gap-3 sm:grid-cols-2">
           <div className="grid gap-2">
             <Label htmlFor="name">Name</Label>
             <Input id="name" value={name} onChange={(e) => setName(e.target.value)} placeholder="Artikelname" />
@@ -251,7 +251,7 @@ export function ArticleCreateForm() {
           <CardTitle>Asset Tag</CardTitle>
           <CardDescription>Optional direkt ein Template auswählen</CardDescription>
         </CardHeader>
-        <CardContent>
+        <CardContent className="grid gap-2 sm:grid-cols-2">
           <div className="grid gap-2">
             <Label htmlFor="asset_tag_template">Asset Tag Template</Label>
             <select
@@ -266,6 +266,7 @@ export function ArticleCreateForm() {
               ))}
             </select>
           </div>
+          <div className="hidden sm:block" />
         </CardContent>
       </Card>
 
@@ -282,9 +283,9 @@ export function ArticleCreateForm() {
         </CardContent>
       </Card>
 
-      <div className="md:col-span-12 grid grid-cols-1 gap-6">{metadataCards}</div>
+      <div className="col-span-full">{metadataCards}</div>
 
-      <div className="md:col-span-12 flex items-center gap-3 justify-end">
+      <div className="col-span-full flex items-center gap-3 justify-end">
         <Button type="submit" disabled={saving}>{saving ? "Erstellen…" : "Erstellen"}</Button>
         {error && <span className="text-sm text-red-600">{error}</span>}
       </div>

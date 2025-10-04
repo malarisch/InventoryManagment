@@ -243,7 +243,7 @@ export function EquipmentCreateForm({ initialArticleId }: { initialArticleId?: n
           <CardTitle>Asset Tag</CardTitle>
           <CardDescription>Optionales Template</CardDescription>
         </CardHeader>
-        <CardContent>
+        <CardContent className="grid gap-2 sm:grid-cols-2">
           <div className="grid gap-2">
             <Label htmlFor="asset_tag_template">Asset Tag Template</Label>
             <select
@@ -258,6 +258,7 @@ export function EquipmentCreateForm({ initialArticleId }: { initialArticleId?: n
               ))}
             </select>
           </div>
+          <div className="hidden sm:block" />
         </CardContent>
       </Card>
 
@@ -266,7 +267,7 @@ export function EquipmentCreateForm({ initialArticleId }: { initialArticleId?: n
           <CardTitle>Zuordnung</CardTitle>
           <CardDescription>Artikel und Standort</CardDescription>
         </CardHeader>
-        <CardContent className="space-y-3">
+        <CardContent className="grid gap-3 sm:grid-cols-2">
           <div className="grid gap-2">
             <Label htmlFor="article_id">Artikel</Label>
             <select
@@ -303,7 +304,7 @@ export function EquipmentCreateForm({ initialArticleId }: { initialArticleId?: n
           <CardTitle>Inventar</CardTitle>
           <CardDescription>Datum & Anzahl</CardDescription>
         </CardHeader>
-        <CardContent className="space-y-3">
+        <CardContent className="grid gap-3 sm:grid-cols-2">
           <div className="grid gap-2">
             <Label htmlFor="added">Im Lager seit</Label>
             <DatePicker id="added" name="added" value={addedAt} onChange={setAddedAt} />
@@ -328,9 +329,9 @@ export function EquipmentCreateForm({ initialArticleId }: { initialArticleId?: n
         </CardContent>
       </Card>
 
-      <div className="md:col-span-12 grid grid-cols-1 gap-6">{metadataCards}</div>
+  <div className="col-span-full">{metadataCards}</div>
 
-      <div className="md:col-span-12 flex items-center gap-3 justify-end">
+      <div className="col-span-full flex items-center gap-3 justify-end">
         <Button type="submit" disabled={saving}>{saving ? "Erstellen…" : "Erstellen"}</Button>
         {error && <span className="text-sm text-red-600">{error}</span>}
       </div>

@@ -45,8 +45,8 @@ interface SectionDefinition {
 
 const SECTION_DEFINITIONS: SectionDefinition[] = [
   { id: "general", title: "Allgemein", description: "Typ, Seriennummer und Hersteller", defaultActive: true },
-  { id: "physical", title: "Physische Eigenschaften", description: "Rack, Gewicht und Maße", defaultActive: true },
-  { id: "power", title: "Stromversorgung", description: "Spannung, Frequenz und Anschluss", defaultActive: true },
+  { id: "physical", title: "Physische Eigenschaften", description: "Rack, Gewicht und Maße", defaultActive: false },
+  { id: "power", title: "Stromversorgung", description: "Spannung, Frequenz und Anschluss", defaultActive: false },
   { id: "case", title: "Case Setup", description: "Rack-Koffer und innere Abmessungen" },
   { id: "lifecycle", title: "Lebenszyklus", description: "Kauf, Garantie und Wartung", defaultActive: true },
   { id: "connectivity", title: "Konnektivität & Schnittstellen", description: "Netzwerk und Ports" },
@@ -86,6 +86,8 @@ export function EquipmentMetadataForm({
   }, [company]);
 
   const [activeSections, setActiveSections] = useState<SectionId[]>(() => SECTION_DEFINITIONS.filter((section) => section.defaultActive).map((section) => section.id));
+  const [recentlyRemoved, setRecentlyRemoved] = useState<SectionId | null>(null);
+  const [removedSectionBackup, setRemovedSectionBackup] = useState<Partial<EquipmentMetadata> | null>(null);
 
   // Sync from parent: only update local if change came from outside
   useEffect(() => {
@@ -107,12 +109,126 @@ export function EquipmentMetadataForm({
     setLocal((prev) => updater(prev));
   }
 
+  function canRemoveSection(sectionId: SectionId): boolean {
+    return sectionId !== "general";
+  }
+
+  function removeSection(sectionId: SectionId) {
+    if (!canRemoveSection(sectionId)) return;
+
+    // Backup before clearing
+    const backup: Partial<EquipmentMetadata> = {};
+    switch (sectionId) {
+      case "physical":
+        backup.weightKg = local.weightKg;
+        backup.dimensionsCm = local.dimensionsCm;
+        backup.heightUnits = local.heightUnits;
+        backup.is19InchRackmountable = local.is19InchRackmountable;
+        break;
+      case "power":
+        backup.power = local.power;
+        break;
+      case "case":
+        backup.case = local.case;
+        backup.heightUnits = local.heightUnits;
+        backup.is19InchRackmountable = local.is19InchRackmountable;
+        break;
+      case "lifecycle":
+        backup.purchaseDate = local.purchaseDate;
+        backup.warrantyExpiry = local.warrantyExpiry;
+        backup.maintenanceSchedule = local.maintenanceSchedule;
+        backup.canLeaveLocation = local.canLeaveLocation;
+        backup.depreciationMethod = local.depreciationMethod;
+        backup.depreciationPeriodMonths = local.depreciationPeriodMonths;
+        break;
+      case "connectivity":
+        backup.connectivity = local.connectivity;
+        backup.interfaces = local.interfaces;
+        break;
+      case "suppliers":
+        backup.suppliers = local.suppliers;
+        break;
+      case "assignment":
+        backup.assignedToContactId = local.assignedToContactId;
+        backup.assignedToNotes = local.assignedToNotes;
+        break;
+      case "notes":
+        backup.notes = local.notes;
+        break;
+    }
+    setRemovedSectionBackup(backup);
+
+    // Clear data
+    update((prev) => {
+      const updated = { ...prev } as EquipmentMetadata;
+      switch (sectionId) {
+        case "physical":
+          updated.weightKg = undefined;
+          updated.dimensionsCm = undefined;
+          updated.heightUnits = undefined;
+          updated.is19InchRackmountable = undefined;
+          break;
+        case "power":
+          updated.power = undefined;
+          break;
+        case "case":
+          updated.case = undefined;
+          updated.heightUnits = undefined;
+          updated.is19InchRackmountable = undefined;
+          break;
+        case "lifecycle":
+          updated.purchaseDate = undefined;
+          updated.warrantyExpiry = undefined;
+          updated.maintenanceSchedule = undefined;
+          updated.canLeaveLocation = undefined;
+          updated.depreciationMethod = undefined;
+          updated.depreciationPeriodMonths = undefined;
+          break;
+        case "connectivity":
+          updated.connectivity = undefined;
+          updated.interfaces = undefined;
+          break;
+        case "suppliers":
+          updated.suppliers = undefined;
+          break;
+        case "assignment":
+          updated.assignedToContactId = undefined;
+          updated.assignedToNotes = undefined;
+          break;
+        case "notes":
+          updated.notes = undefined;
+          break;
+      }
+      return updated;
+    });
+
+    setActiveSections((current) => current.filter((id) => id !== sectionId));
+    setRecentlyRemoved(sectionId);
+    setTimeout(() => {
+      setRecentlyRemoved((current) => (current === sectionId ? null : current));
+      setRemovedSectionBackup(null);
+    }, 10000);
+  }
+
+  function undoRemoveSection() {
+    if (!recentlyRemoved || !removedSectionBackup) return;
+    update((prev) => ({ ...prev, ...removedSectionBackup }));
+    setActiveSections((current) => [...current, recentlyRemoved!]);
+    setRecentlyRemoved(null);
+    setRemovedSectionBackup(null);
+  }
+
   function ensureSectionActive(section: SectionId, hasData: boolean) {
     if (!hasData) return;
     setActiveSections((current) => (current.includes(section) ? current : [...current, section]));
   }
 
   useEffect(() => {
+    ensureSectionActive("physical", hasPhysicalData(local));
+    ensureSectionActive(
+      "power",
+      hasPowerData(local) || hasPowerDefaults(adminMeta) || hasPowerDataFromArticle(inheritedArticle)
+    );
     ensureSectionActive("case", hasCaseData(local, inheritedArticle));
     ensureSectionActive("connectivity", hasConnectivityData(local));
     ensureSectionActive("suppliers", (local.suppliers?.length ?? 0) > 0);
@@ -121,7 +237,7 @@ export function EquipmentMetadataForm({
     const hasOwnNotes = !!local.notes;
     const hasInheritedNotes = !!inheritedArticle?.notes && inheritedArticle.notes.trim().length > 0;
     ensureSectionActive("notes", hasOwnNotes || hasInheritedNotes);
-  }, [local, inheritedArticle]);
+  }, [local, inheritedArticle, adminMeta]);
 
   function setTextField<K extends keyof EquipmentMetadata>(key: K, raw: string, trim = true) {
     const trimmed = trim ? raw.trim() : raw;
@@ -239,8 +355,15 @@ export function EquipmentMetadataForm({
     return (
       <Card>
         <CardHeader>
-          <CardTitle>Physische Eigenschaften</CardTitle>
-          <CardDescription>Gewicht und Maße</CardDescription>
+          <div className="flex items-start justify-between gap-2">
+            <div>
+              <CardTitle>Physische Eigenschaften</CardTitle>
+              <CardDescription>Gewicht und Maße</CardDescription>
+            </div>
+            {canRemoveSection("physical") && (
+              <Button type="button" variant="ghost" size="sm" onClick={() => removeSection("physical")} className="h-8 w-8 p-0" title="Bereich entfernen">✕</Button>
+            )}
+          </div>
         </CardHeader>
         <CardContent className="grid gap-4">
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
@@ -278,8 +401,15 @@ export function EquipmentMetadataForm({
     return (
       <Card>
         <CardHeader>
-          <CardTitle>Stromversorgung</CardTitle>
-          <CardDescription>Geerbte Werte werden als Platzhalter angezeigt</CardDescription>
+          <div className="flex items-start justify-between gap-2">
+            <div>
+              <CardTitle>Stromversorgung</CardTitle>
+              <CardDescription>Geerbte Werte werden als Platzhalter angezeigt</CardDescription>
+            </div>
+            {canRemoveSection("power") && (
+              <Button type="button" variant="ghost" size="sm" onClick={() => removeSection("power")} className="h-8 w-8 p-0" title="Bereich entfernen">✕</Button>
+            )}
+          </div>
         </CardHeader>
         <CardContent className="grid gap-4 sm:grid-cols-3">
           <div className="grid gap-1.5">
@@ -378,8 +508,15 @@ export function EquipmentMetadataForm({
     return (
       <Card>
         <CardHeader>
-          <CardTitle>Case & Rack Setup</CardTitle>
-          <CardDescription>Konfiguration für Cases und Rackmontage-Eigenschaften. Geerbte Werte werden als Platzhalter angezeigt</CardDescription>
+          <div className="flex items-start justify-between gap-2">
+            <div>
+              <CardTitle>Case & Rack Setup</CardTitle>
+              <CardDescription>Konfiguration für Cases und Rackmontage-Eigenschaften. Geerbte Werte werden als Platzhalter angezeigt</CardDescription>
+            </div>
+            {canRemoveSection("case") && (
+              <Button type="button" variant="ghost" size="sm" onClick={() => removeSection("case")} className="h-8 w-8 p-0" title="Bereich entfernen">✕</Button>
+            )}
+          </div>
         </CardHeader>
         <CardContent className="grid gap-4">
           <div className="flex flex-col gap-2">
@@ -661,8 +798,15 @@ export function EquipmentMetadataForm({
     return (
       <Card>
         <CardHeader>
-          <CardTitle>Lebenszyklus</CardTitle>
-          <CardDescription>Kaufdatum, Garantie und Wartung</CardDescription>
+          <div className="flex items-start justify-between gap-2">
+            <div>
+              <CardTitle>Lebenszyklus</CardTitle>
+              <CardDescription>Kaufdatum, Garantie und Wartung</CardDescription>
+            </div>
+            {canRemoveSection("lifecycle") && (
+              <Button type="button" variant="ghost" size="sm" onClick={() => removeSection("lifecycle")} className="h-8 w-8 p-0" title="Bereich entfernen">✕</Button>
+            )}
+          </div>
         </CardHeader>
         <CardContent className="grid gap-4 sm:grid-cols-2">
           <DateField
@@ -728,8 +872,15 @@ export function EquipmentMetadataForm({
     return (
       <Card>
         <CardHeader>
-          <CardTitle>Konnektivität & Schnittstellen</CardTitle>
-          <CardDescription>Netzwerk-Features und Ports</CardDescription>
+          <div className="flex items-start justify-between gap-2">
+            <div>
+              <CardTitle>Konnektivität & Schnittstellen</CardTitle>
+              <CardDescription>Netzwerk-Features und Ports</CardDescription>
+            </div>
+            {canRemoveSection("connectivity") && (
+              <Button type="button" variant="ghost" size="sm" onClick={() => removeSection("connectivity")} className="h-8 w-8 p-0" title="Bereich entfernen">✕</Button>
+            )}
+          </div>
         </CardHeader>
         <CardContent className="grid gap-4">
           <div className="grid gap-1.5">
@@ -758,8 +909,15 @@ export function EquipmentMetadataForm({
     return (
       <Card>
         <CardHeader>
-          <CardTitle>Lieferanten & Preise</CardTitle>
-          <CardDescription>Lieferantenverwaltung, Preise und Konditionen</CardDescription>
+          <div className="flex items-start justify-between gap-2">
+            <div>
+              <CardTitle>Lieferanten & Preise</CardTitle>
+              <CardDescription>Lieferantenverwaltung, Preise und Konditionen</CardDescription>
+            </div>
+            {canRemoveSection("suppliers") && (
+              <Button type="button" variant="ghost" size="sm" onClick={() => removeSection("suppliers")} className="h-8 w-8 p-0" title="Bereich entfernen">✕</Button>
+            )}
+          </div>
         </CardHeader>
         <CardContent className="grid gap-6">
           <SupplierListEditor
@@ -780,8 +938,15 @@ export function EquipmentMetadataForm({
     return (
       <Card>
         <CardHeader>
-          <CardTitle>Zuweisung</CardTitle>
-          <CardDescription>Verantwortung für dieses Equipment</CardDescription>
+          <div className="flex items-start justify-between gap-2">
+            <div>
+              <CardTitle>Zuweisung</CardTitle>
+              <CardDescription>Verantwortung für dieses Equipment</CardDescription>
+            </div>
+            {canRemoveSection("assignment") && (
+              <Button type="button" variant="ghost" size="sm" onClick={() => removeSection("assignment")} className="h-8 w-8 p-0" title="Bereich entfernen">✕</Button>
+            )}
+          </div>
         </CardHeader>
         <CardContent className="grid gap-4">
           <div className="grid gap-1.5">
@@ -883,8 +1048,15 @@ export function EquipmentMetadataForm({
         )}
         <Card>
           <CardHeader>
-            <CardTitle>Equipment-Notizen</CardTitle>
-            <CardDescription>Freitext für gerätespezifische Hinweise</CardDescription>
+            <div className="flex items-start justify-between gap-2">
+              <div>
+                <CardTitle>Equipment-Notizen</CardTitle>
+                <CardDescription>Freitext für gerätespezifische Hinweise</CardDescription>
+              </div>
+              {canRemoveSection("notes") && (
+                <Button type="button" variant="ghost" size="sm" onClick={() => removeSection("notes")} className="h-8 w-8 p-0" title="Bereich entfernen">✕</Button>
+              )}
+            </div>
           </CardHeader>
           <CardContent>
             <Textarea
@@ -926,8 +1098,18 @@ export function EquipmentMetadataForm({
   }
 
   return (
-    <>
-      {renderGeneralCard()}
+    <div className="grid gap-6 md:grid-cols-2 xl:grid-cols-3">
+      <div className="col-span-full md:col-span-2 xl:col-span-3">{renderGeneralCard()}</div>
+
+      {recentlyRemoved && (
+        <div className="col-span-full flex items-center justify-between rounded-md border border-yellow-500/50 bg-yellow-50 dark:bg-yellow-950/20 px-4 py-3">
+          <span className="text-sm">
+            Bereich entfernt: <strong>{SECTION_DEFINITIONS.find(s => s.id === recentlyRemoved)?.title}</strong>
+          </span>
+          <Button type="button" variant="outline" size="sm" onClick={undoRemoveSection}>Rückgängig</Button>
+        </div>
+      )}
+
       {renderPhysicalCard()}
       {renderPowerCard()}
       {renderCaseCard()}
@@ -936,8 +1118,8 @@ export function EquipmentMetadataForm({
       {renderSuppliersCard()}
       {renderAssignmentCard()}
       {renderNotesCard()}
-      {renderSectionAddCard()}
-    </>
+      <div className="col-span-full">{renderSectionAddCard()}</div>
+    </div>
   );
 }
 
@@ -1200,3 +1382,30 @@ function DateField({ id, label, value, onChange }: DateFieldProps) {
 }
 
 export default EquipmentMetadataForm;
+
+function hasPhysicalData(metadata: EquipmentMetadata) {
+  return Boolean(
+    metadata.is19InchRackmountable ||
+      metadata.heightUnits ||
+      metadata.weightKg ||
+      metadata.dimensionsCm
+  );
+}
+
+function hasPowerData(metadata: EquipmentMetadata) {
+  const power = metadata.power;
+  if (!power) return false;
+  return Object.values(power).some((value) => value !== undefined && value !== null);
+}
+
+function hasPowerDefaults(admin: adminCompanyMetadata) {
+  return Object.values(admin.standardData.power).some(
+    (value) => value !== undefined && value !== null && value !== ""
+  );
+}
+
+function hasPowerDataFromArticle(article?: ArticleMetadata | null) {
+  const power = article?.power;
+  if (!power) return false;
+  return Object.values(power).some((value) => value !== undefined && value !== null);
+}

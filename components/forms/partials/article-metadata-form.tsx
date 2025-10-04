@@ -574,6 +574,8 @@ export function ArticleMetadataForm({
     );
   }
 
+  
+
   function renderCaseCard() {
     if (!activeSections.includes("case")) return null;
     const caseMeta = local.case ?? {};
@@ -1097,34 +1099,30 @@ export function ArticleMetadataForm({
   }
 
   return (
-    <>
-      {renderGeneralCard()}
-      
-      {/* Undo Banner */}
+    <div className="grid gap-6 md:grid-cols-2 xl:grid-cols-3">
+      {/* General always spans full width on small screens; let it flow on larger */}
+      <div className="col-span-full md:col-span-2 xl:col-span-3">{renderGeneralCard()}</div>
+
+      {/* Undo Banner across the grid */}
       {recentlyRemoved && (
-        <div className="flex items-center justify-between rounded-md border border-yellow-500/50 bg-yellow-50 dark:bg-yellow-950/20 px-4 py-3">
+        <div className="col-span-full flex items-center justify-between rounded-md border border-yellow-500/50 bg-yellow-50 dark:bg-yellow-950/20 px-4 py-3">
           <span className="text-sm">
             Bereich entfernt: <strong>{SECTION_DEFINITIONS.find(s => s.id === recentlyRemoved)?.title}</strong>
           </span>
-          <Button
-            type="button"
-            variant="outline"
-            size="sm"
-            onClick={undoRemoveSection}
-          >
+          <Button type="button" variant="outline" size="sm" onClick={undoRemoveSection}>
             Rückgängig
           </Button>
         </div>
       )}
-      
+
       {renderPhysicalCard()}
       {renderPowerCard()}
       {renderCaseCard()}
       {renderConnectivityCard()}
       {renderSuppliersCard()}
       {renderNotesCard()}
-      {renderSectionAddCard()}
-    </>
+      <div className="col-span-full">{renderSectionAddCard()}</div>
+    </div>
   );
 }
 
