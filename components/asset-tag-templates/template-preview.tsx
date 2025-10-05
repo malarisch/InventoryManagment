@@ -61,6 +61,18 @@ export function AssetTagTemplatePreview({ template, editable = false, onElements
   const displayHeight = heightPx * scale;
 
   const elements: AssetTagTemplateElement[] = useMemo(()=> template.elements || [], [template.elements]);
+  
+  // Use refs to avoid re-registering event listeners on every element change
+  const elementsRef = useRef(elements);
+  const onElementsChangeRef = useRef(onElementsChange);
+  
+  useEffect(() => {
+    elementsRef.current = elements;
+  }, [elements]);
+  
+  useEffect(() => {
+    onElementsChangeRef.current = onElementsChange;
+  }, [onElementsChange]);
 
   // Async generated SVG string - now client-side only for instant updates during drag
   const [svgContent, setSvgContent] = useState<string>('');
@@ -95,11 +107,9 @@ export function AssetTagTemplatePreview({ template, editable = false, onElements
       ctx.clearRect(0, 0, widthPx, heightPx);
       ctx.drawImage(img, 0, 0);
       URL.revokeObjectURL(url);
-      drawOverlay();
     };
     img.src = url;
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [svgContent, widthPx, heightPx, editable, scale]);
+  }, [svgContent, widthPx, heightPx]);
 
   // Bounding box calculation helper (minimal logic duplication just for interaction layer)
   const measureElement = useCallback((ctx: CanvasRenderingContext2D, el: AssetTagTemplateElement) => {
@@ -158,6 +168,11 @@ export function AssetTagTemplatePreview({ template, editable = false, onElements
     ctx.restore();
   }, [editable, elements, dragIndex, marginPx, measureElement, template.textSizePt]);
 
+  // Separate effect for overlay to avoid circular dependencies
+  useEffect(() => {
+    drawOverlay();
+  }, [drawOverlay]);
+
   // Hit detection for dragging
   const findElementAt = useCallback((xCanvas: number, yCanvas: number): number | null => {
     const overlay = overlayCanvasRef.current; if (!overlay) return null;
@@ -197,7 +212,7 @@ export function AssetTagTemplatePreview({ template, editable = false, onElements
       const idx = findElementAt(x, y);
       if (idx !== null) {
         setDragIndex(idx);
-        const el = elements[idx];
+        const el = elementsRef.current[idx];
         const ex = el.x * MM_TO_PX + marginPx; const ey = el.y * MM_TO_PX + marginPx;
         dragOffset.current = { dx: x - ex, dy: y - ey };
       } else {
@@ -209,7 +224,7 @@ export function AssetTagTemplatePreview({ template, editable = false, onElements
   const rect = base.getBoundingClientRect();
       const x = (e.clientX - rect.left) / scale; 
       const y = (e.clientY - rect.top) / scale;
-      const newElements = [...elements];
+      const newElements = [...elementsRef.current];
       const el = { ...newElements[dragIndex] };
       // Convert px back to mm (subtract margin first)
   el.x = parseFloat(((x - dragOffset.current.dx - marginPx) / MM_TO_PX).toFixed(2));
@@ -218,7 +233,7 @@ export function AssetTagTemplatePreview({ template, editable = false, onElements
       el.x = Math.max(0, Math.min(el.x, template.tagWidthMm));
       el.y = Math.max(0, Math.min(el.y, template.tagHeightMm));
       newElements[dragIndex] = el;
-      onElementsChange?.(newElements);
+      onElementsChangeRef.current?.(newElements);
     };
     const handlePointerUp = () => {
       if (dragIndex !== null) {
@@ -234,7 +249,7 @@ export function AssetTagTemplatePreview({ template, editable = false, onElements
       window.removeEventListener('pointermove', handlePointerMove);
       window.removeEventListener('pointerup', handlePointerUp);
     };
-  }, [editable, elements, dragIndex, marginPx, onElementsChange, template.tagWidthMm, template.tagHeightMm, findElementAt, scale]);
+  }, [editable, dragIndex, marginPx, template.tagWidthMm, template.tagHeightMm, findElementAt, scale]);
 
   // Redraw overlay when interaction state changes
   useEffect(() => { drawOverlay(); }, [drawOverlay]);
