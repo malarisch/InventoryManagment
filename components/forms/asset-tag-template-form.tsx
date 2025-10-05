@@ -249,12 +249,12 @@ export function AssetTagTemplateForm({ templateId }: AssetTagTemplateFormProps) 
             </CardHeader>
             <CardContent className="space-y-3">
               <div>
-                <label className="block text-sm font-medium mb-1">Name</label>
-                <Input placeholder="My Template" {...form.register('name')} />
+                <label htmlFor="name" className="block text-sm font-medium mb-1">Name</label>
+                <Input id="name" placeholder="My Template" {...form.register('name')} />
               </div>
               <div>
-                <label className="block text-sm font-medium mb-1">Description</label>
-                <Input placeholder="Optional description" {...form.register('description')} />
+                <label htmlFor="description" className="block text-sm font-medium mb-1">Description</label>
+                <Input id="description" placeholder="Optional description" {...form.register('description')} />
               </div>
             </CardContent>
           </Card>
@@ -268,17 +268,17 @@ export function AssetTagTemplateForm({ templateId }: AssetTagTemplateFormProps) 
             <CardContent className="space-y-3">
               <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <label className="block text-sm font-medium mb-1">Width (mm)</label>
-                  <Input type="number" {...form.register('tagWidthMm', { valueAsNumber: true })} />
+                  <label htmlFor="tagWidthMm" className="block text-sm font-medium mb-1">Width (mm)</label>
+                  <Input id="tagWidthMm" type="number" {...form.register('tagWidthMm', { valueAsNumber: true })} />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium mb-1">Height (mm)</label>
-                  <Input type="number" {...form.register('tagHeightMm', { valueAsNumber: true })} />
+                  <label htmlFor="tagHeightMm" className="block text-sm font-medium mb-1">Height (mm)</label>
+                  <Input id="tagHeightMm" type="number" {...form.register('tagHeightMm', { valueAsNumber: true })} />
                 </div>
               </div>
               <div>
-                <label className="block text-sm font-medium mb-1">Margin (mm)</label>
-                <Input type="number" step="0.1" {...form.register('marginMm', { valueAsNumber: true })} />
+                <label htmlFor="marginMm" className="block text-sm font-medium mb-1">Margin (mm)</label>
+                <Input id="marginMm" type="number" step="0.1" {...form.register('marginMm', { valueAsNumber: true })} />
               </div>
             </CardContent>
           </Card>
@@ -292,28 +292,28 @@ export function AssetTagTemplateForm({ templateId }: AssetTagTemplateFormProps) 
           </CardHeader>
           <CardContent className="grid grid-cols-2 md:grid-cols-3 gap-4">
             <div>
-              <label className="block text-sm font-medium mb-1">Background Color</label>
-              <Input type="color" {...form.register('backgroundColor')} />
+              <label htmlFor="backgroundColor" className="block text-sm font-medium mb-1">Background Color</label>
+              <Input id="backgroundColor" type="color" {...form.register('backgroundColor')} />
             </div>
             <div>
-              <label className="block text-sm font-medium mb-1">Text Color</label>
-              <Input type="color" {...form.register('textColor')} />
+              <label htmlFor="textColor" className="block text-sm font-medium mb-1">Text Color</label>
+              <Input id="textColor" type="color" {...form.register('textColor')} />
             </div>
             <div>
-              <label className="block text-sm font-medium mb-1">Border Color</label>
-              <Input type="color" {...form.register('borderColor')} />
+              <label htmlFor="borderColor" className="block text-sm font-medium mb-1">Border Color</label>
+              <Input id="borderColor" type="color" {...form.register('borderColor')} />
             </div>
             <div>
-              <label className="block text-sm font-medium mb-1">Border Width (mm)</label>
-              <Input type="number" step="0.1" {...form.register('borderWidthMm', { valueAsNumber: true })} />
+              <label htmlFor="borderWidthMm" className="block text-sm font-medium mb-1">Border Width (mm)</label>
+              <Input id="borderWidthMm" type="number" step="0.1" {...form.register('borderWidthMm', { valueAsNumber: true })} />
             </div>
             <div>
-              <label className="block text-sm font-medium mb-1">Text Size (pt)</label>
-              <Input type="number" {...form.register('textSizePt', { valueAsNumber: true })} />
+              <label htmlFor="textSizePt" className="block text-sm font-medium mb-1">Text Size (pt)</label>
+              <Input id="textSizePt" type="number" {...form.register('textSizePt', { valueAsNumber: true })} />
             </div>
             <div className="flex items-center space-x-2">
-              <input type="checkbox" {...form.register('isMonochrome')} />
-              <label className="text-sm font-medium">Monochrome (Black & White)</label>
+              <input id="isMonochrome" type="checkbox" {...form.register('isMonochrome')} />
+              <label htmlFor="isMonochrome" className="text-sm font-medium">Monochrome (Black & White)</label>
             </div>
           </CardContent>
         </Card>
@@ -326,39 +326,39 @@ export function AssetTagTemplateForm({ templateId }: AssetTagTemplateFormProps) 
           </CardHeader>
           <CardContent className="grid grid-cols-2 md:grid-cols-3 gap-4">
             <div>
-              <label className="block text-sm font-medium mb-1">Prefix</label>
-              <Input placeholder="e.g., EQ" {...form.register('prefix')} />
+              <label htmlFor="prefix" className="block text-sm font-medium mb-1">Prefix</label>
+              <Input id="prefix" placeholder="e.g., EQ" {...form.register('prefix')} />
             </div>
             <div>
-              <label className="block text-sm font-medium mb-1">Number Length</label>
-              <Input type="number" {...form.register('numberLength', { valueAsNumber: true })} />
+              <label htmlFor="numberLength" className="block text-sm font-medium mb-1">Number Length</label>
+              <Input id="numberLength" type="number" {...form.register('numberLength', { valueAsNumber: true })} />
             </div>
             <div>
-              <label className="block text-sm font-medium mb-1">Suffix</label>
-              <Input placeholder="e.g., A" {...form.register('suffix')} />
+              <label htmlFor="suffix" className="block text-sm font-medium mb-1">Suffix</label>
+              <Input id="suffix" placeholder="e.g., A" {...form.register('suffix')} />
             </div>
             <div>
-              <label className="block text-sm font-medium mb-1">Numbering Scheme</label>
-              <select {...form.register('numberingScheme')} className="h-9 rounded-md border bg-background px-3 text-sm w-full">
+              <label htmlFor="numberingScheme" className="block text-sm font-medium mb-1">Numbering Scheme</label>
+              <select id="numberingScheme" {...form.register('numberingScheme')} className="h-9 rounded-md border bg-background px-3 text-sm w-full">
                 <option value="sequential">Sequential</option>
                 <option value="random">Random</option>
               </select>
             </div>
             <div className="col-span-2">
-              <label className="block text-sm font-medium mb-1">String Template</label>
-              <Input placeholder="e.g., {prefix}{number}{suffix}" {...form.register('stringTemplate')} />
+              <label htmlFor="stringTemplate" className="block text-sm font-medium mb-1">String Template</label>
+              <Input id="stringTemplate" placeholder="e.g., {prefix}{number}{suffix}" {...form.register('stringTemplate')} />
             </div>
             <div>
-              <label className="block text-sm font-medium mb-1">Code Type</label>
-              <select {...form.register('codeType')} className="h-9 rounded-md border bg-background px-3 text-sm w-full">
+              <label htmlFor="codeType" className="block text-sm font-medium mb-1">Code Type</label>
+              <select id="codeType" {...form.register('codeType')} className="h-9 rounded-md border bg-background px-3 text-sm w-full">
                 <option value="QR">QR Code</option>
                 <option value="Barcode">Barcode</option>
                 <option value="None">None</option>
               </select>
             </div>
             <div>
-              <label className="block text-sm font-medium mb-1">Code Size (mm)</label>
-              <Input type="number" {...form.register('codeSizeMm', { valueAsNumber: true })} />
+              <label htmlFor="codeSizeMm" className="block text-sm font-medium mb-1">Code Size (mm)</label>
+              <Input id="codeSizeMm" type="number" {...form.register('codeSizeMm', { valueAsNumber: true })} />
             </div>
           </CardContent>
         </Card>
@@ -374,8 +374,8 @@ export function AssetTagTemplateForm({ templateId }: AssetTagTemplateFormProps) 
               <div key={f.id} className="border border-dashed rounded-md p-4 space-y-4">
                 <div className="grid grid-cols-3 gap-4">
                   <div>
-                    <label className="block text-sm font-medium mb-1">Type</label>
-                    <select className="h-9 rounded-md border bg-background px-3 text-sm w-full" {...form.register(`elements.${index}.type` as const)}>
+                    <label htmlFor={`elements-${index}-type`} className="block text-sm font-medium mb-1">Type</label>
+                    <select id={`elements-${index}-type`} className="h-9 rounded-md border bg-background px-3 text-sm w-full" {...form.register(`elements.${index}.type` as const)}>
                       <option value="text">Text</option>
                       <option value="qrcode">QR Code</option>
                       <option value="barcode">Barcode</option>
@@ -383,32 +383,32 @@ export function AssetTagTemplateForm({ templateId }: AssetTagTemplateFormProps) 
                     </select>
                   </div>
                   <div>
-                    <label className="block text-sm font-medium mb-1">X Position (mm)</label>
-                    <Input type="number" step="0.01" {...form.register(`elements.${index}.x` as const, { valueAsNumber: true })} />
+                    <label htmlFor={`elements-${index}-x`} className="block text-sm font-medium mb-1">X Position (mm)</label>
+                    <Input id={`elements-${index}-x`} type="number" step="0.01" {...form.register(`elements.${index}.x` as const, { valueAsNumber: true })} />
                   </div>
                   <div>
-                    <label className="block text-sm font-medium mb-1">Y Position (mm)</label>
-                    <Input type="number" step="0.01" {...form.register(`elements.${index}.y` as const, { valueAsNumber: true })} />
+                    <label htmlFor={`elements-${index}-y`} className="block text-sm font-medium mb-1">Y Position (mm)</label>
+                    <Input id={`elements-${index}-y`} type="number" step="0.01" {...form.register(`elements.${index}.y` as const, { valueAsNumber: true })} />
                   </div>
                 </div>
                 <div className="grid grid-cols-3 gap-4">
                   <div className="col-span-2">
-                    <label className="block text-sm font-medium mb-1">Value / Placeholder / Image URL</label>
-                    <Input placeholder="e.g., {equipment_name} or https://...img.png" {...form.register(`elements.${index}.value` as const)} />
+                    <label htmlFor={`elements-${index}-value`} className="block text-sm font-medium mb-1">Value / Placeholder / Image URL</label>
+                    <Input id={`elements-${index}-value`} placeholder="e.g., {equipment_name} or https://...img.png" {...form.register(`elements.${index}.value` as const)} />
                   </div>
                   <div>
-                    <label className="block text-sm font-medium mb-1">Size</label>
-                    <Input type="number" placeholder="Font/code/image width" {...form.register(`elements.${index}.size` as const, { valueAsNumber: true })} />
+                    <label htmlFor={`elements-${index}-size`} className="block text-sm font-medium mb-1">Size</label>
+                    <Input id={`elements-${index}-size`} type="number" placeholder="Font/code/image width" {...form.register(`elements.${index}.size` as const, { valueAsNumber: true })} />
                   </div>
                   <div>
-                    <label className="block text-sm font-medium mb-1">Height (image)</label>
-                    <Input type="number" placeholder="Only for image" {...form.register(`elements.${index}.height` as const, { valueAsNumber: true })} />
+                    <label htmlFor={`elements-${index}-height`} className="block text-sm font-medium mb-1">Height (image)</label>
+                    <Input id={`elements-${index}-height`} type="number" placeholder="Only for image" {...form.register(`elements.${index}.height` as const, { valueAsNumber: true })} />
                   </div>
                 </div>
                 <div className="flex items-end justify-between">
                   <div>
-                    <label className="block text-sm font-medium mb-1">Color Override</label>
-                    <Input type="color" {...form.register(`elements.${index}.color` as const)} />
+                    <label htmlFor={`elements-${index}-color`} className="block text-sm font-medium mb-1">Color Override</label>
+                    <Input id={`elements-${index}-color`} type="color" {...form.register(`elements.${index}.color` as const)} />
                   </div>
                   <Button type="button" variant="destructive" onClick={() => remove(index)}>
                     Remove Element

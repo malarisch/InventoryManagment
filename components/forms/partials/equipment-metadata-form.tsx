@@ -299,7 +299,7 @@ export function EquipmentMetadataForm({
         <CardContent className="grid gap-4 md:grid-cols-2">
           <div className="grid gap-1.5">
             <div className="flex items-center justify-between">
-              <Label>Typ</Label>
+              <Label id="emf-type-label">Typ</Label>
               {articleType && (
                 <IgnoreToggle
                   id="emf-type-ignore"
@@ -317,6 +317,7 @@ export function EquipmentMetadataForm({
               categoryLabels={{ type: "Artikeltypen" }}
               resetOnSelect={false}
               disabled={local.type === null}
+              buttonProps={{ "aria-labelledby": "emf-type-label emf-type-button", id: "emf-type-button" }}
             />
           </div>
           <div className="grid gap-1.5">
@@ -884,7 +885,7 @@ export function EquipmentMetadataForm({
         </CardHeader>
         <CardContent className="grid gap-4">
           <div className="grid gap-1.5">
-            <Label>Konnektivität</Label>
+            <Label id="emf-connectivity-label">Konnektivität</Label>
             <StringListInput
               values={local.connectivity ?? []}
               onChange={(next) => update((prev) => ({ ...prev, connectivity: next }))}
@@ -892,7 +893,7 @@ export function EquipmentMetadataForm({
             />
           </div>
           <div className="grid gap-1.5">
-            <Label>Schnittstellen</Label>
+            <Label id="emf-interfaces-label">Schnittstellen</Label>
             <StringListInput
               values={local.interfaces ?? []}
               onChange={(next) => update((prev) => ({ ...prev, interfaces: next }))}

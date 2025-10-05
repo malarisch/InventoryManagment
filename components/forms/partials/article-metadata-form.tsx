@@ -326,7 +326,7 @@ export function ArticleMetadataForm({
         </CardHeader>
         <CardContent className="grid gap-4 sm:grid-cols-2">
           <div className="grid gap-1.5">
-            <Label>Typ (erforderlich)</Label>
+            <Label id="amf-type-label">Typ (erforderlich)</Label>
             <SearchPicker
               items={articleTypeItems}
               onSelect={(item) => setTextField("type", item.data)}
@@ -334,6 +334,7 @@ export function ArticleMetadataForm({
               buttonLabel={local.type ?? "Typ auswählen"}
               categoryLabels={{ type: "Artikeltypen" }}
               resetOnSelect={false}
+              buttonProps={{ "aria-labelledby": "amf-type-label amf-type-button", id: "amf-type-button" }}
             />
           </div>
           <div className="grid gap-1.5">
@@ -614,7 +615,7 @@ export function ArticleMetadataForm({
         <CardContent className="grid gap-4">
           {/* Mode Selection - Radio Buttons */}
           <div className="grid gap-3">
-            <Label>Rack-Konfiguration</Label>
+            <Label id="amf-rack-config-label" aria-label="Rack-Konfiguration">Rack-Konfiguration</Label>
             <div className="flex flex-col gap-2">
               <div className="flex items-center space-x-2">
                 <Checkbox
@@ -789,7 +790,7 @@ export function ArticleMetadataForm({
           {caseMeta.isGeneralCase && (
             <>
               <div className="grid gap-1.5">
-                <Label>Innenmaße (cm)</Label>
+                <Label id="amf-inner-dims-label" aria-label="Innenmaße (cm)">Innenmaße (cm)</Label>
                 <div className="grid grid-cols-3 gap-3">
                   <div className="grid gap-1.5">
                     <Label htmlFor="case-inner-w" className="text-xs">
@@ -955,7 +956,7 @@ export function ArticleMetadataForm({
         </CardHeader>
         <CardContent className="grid gap-4">
           <div className="grid gap-1.5">
-            <Label htmlFor="connectivity-list">Konnektivität</Label>
+            <Label id="amf-connectivity-label">Konnektivität</Label>
             <StringListInput
               values={local.connectivity ?? []}
               onChange={(next) =>
@@ -965,7 +966,7 @@ export function ArticleMetadataForm({
             />
           </div>
           <div className="grid gap-1.5">
-            <Label htmlFor="interfaces-list">Schnittstellen</Label>
+            <Label id="amf-interfaces-label">Schnittstellen</Label>
             <StringListInput
               values={local.interfaces ?? []}
               onChange={(next) =>

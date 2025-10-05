@@ -34,6 +34,8 @@ type SearchPickerProps<TCategory extends string, TData> = {
   onQueryChange?: (query: string) => void;
   buttonLabel?: string;
   resetOnSelect?: boolean;
+  // Optional props passed to the trigger button (e.g., id, aria-*)
+  buttonProps?: React.ButtonHTMLAttributes<HTMLButtonElement>;
 };
 
 type RankedItem<TCategory extends string, TData> = {
@@ -67,6 +69,7 @@ export function SearchPicker<TCategory extends string, TData>({
   onQueryChange,
   buttonLabel,
   resetOnSelect = true,
+  buttonProps,
 }: SearchPickerProps<TCategory, TData>) {
   const containerRef = useRef<HTMLDivElement | null>(null);
   const inputRef = useRef<HTMLInputElement | null>(null);
@@ -225,8 +228,10 @@ export function SearchPicker<TCategory extends string, TData>({
         type="button"
         onClick={handleOpen}
         disabled={disabled}
+        {...buttonProps}
         className={cn(
           "flex h-9 w-full items-center gap-2 rounded-md border border-input bg-background px-3 text-left text-sm shadow-sm transition focus:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background disabled:cursor-not-allowed disabled:opacity-50",
+          buttonProps?.className,
         )}
       >
         <Search className="h-4 w-4 text-muted-foreground" aria-hidden="true" />
