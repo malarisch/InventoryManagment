@@ -136,16 +136,27 @@ export function AssetTagTemplatePreview({ template, editable = false, onElements
       const x = el.x * MM_TO_PX + marginPx;
       const y = el.y * MM_TO_PX + marginPx;
       const m = measureElement(ctx, el);
+      
+      // For text, adjust y to draw box from top of text instead of baseline
+      let boxY = y;
+      if (el.type === 'text') {
+        const size = template.textSizePt || 12;
+        ctx.font = `${size}px Arial, sans-serif`;
+        const metrics = ctx.measureText(el.value || '');
+        const ascent = metrics.actualBoundingBoxAscent || size * 0.8;
+        boxY = y - ascent; // Move box up by ascent to start at top of text
+      }
+      
       ctx.strokeStyle = dragIndex === i ? '#2563eb' : 'rgba(0,0,0,0.3)';
       ctx.setLineDash(dragIndex === i ? [4,2] : [3,3]);
       ctx.lineWidth = 1;
-      ctx.strokeRect(x, y, m.w, m.h);
+      ctx.strokeRect(x, boxY, m.w, m.h);
       // small handle
       ctx.fillStyle = dragIndex === i ? '#2563eb' : '#6b7280';
-      ctx.fillRect(x-3, y-3, 6, 6);
+      ctx.fillRect(x-3, boxY-3, 6, 6);
     });
     ctx.restore();
-  }, [editable, elements, dragIndex, marginPx, measureElement]);
+  }, [editable, elements, dragIndex, marginPx, measureElement, template.textSizePt]);
 
   // Hit detection for dragging
   const findElementAt = useCallback((xCanvas: number, yCanvas: number): number | null => {
@@ -156,12 +167,23 @@ export function AssetTagTemplatePreview({ template, editable = false, onElements
       const x = el.x * MM_TO_PX + marginPx;
       const y = el.y * MM_TO_PX + marginPx;
       const m = measureElement(ctx, el);
-      if (xCanvas >= x && xCanvas <= x + m.w && yCanvas >= y && yCanvas <= y + m.h) {
+      
+      // For text, adjust y to match the box position (from top of text instead of baseline)
+      let boxY = y;
+      if (el.type === 'text') {
+        const size = template.textSizePt || 12;
+        ctx.font = `${size}px Arial, sans-serif`;
+        const metrics = ctx.measureText(el.value || '');
+        const ascent = metrics.actualBoundingBoxAscent || size * 0.8;
+        boxY = y - ascent;
+      }
+      
+      if (xCanvas >= x && xCanvas <= x + m.w && yCanvas >= boxY && yCanvas <= boxY + m.h) {
         return i;
       }
     }
     return null;
-  }, [elements, marginPx, measureElement]);
+  }, [elements, marginPx, measureElement, template.textSizePt]);
 
   // Mouse events only when editable
   useEffect(() => {
