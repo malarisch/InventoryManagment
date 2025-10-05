@@ -40,36 +40,41 @@ export function JobQuickBook({ jobId }: { jobId: number }) {
   const [selectedArticle, setSelectedArticle] = useState<Article | null>(null);
   const [articleAmount, setArticleAmount] = useState<number>(1);
 
+  // Extract load function so it can be called on demand
+  const load = useCallback(async () => {
+    setLoading(true);
+    const [arts, eqs, cs, booked] = await Promise.all([
+      supabase.from("articles").select("id,name,metadata").order("name"),
+      supabase
+        .from("equipments")
+        .select("*, articles(name), asset_tags:asset_tag(printed_code)")
+        .order("created_at", { ascending: false })
+        .limit(1000),
+      supabase.from("cases").select("id, name, description").order("created_at", { ascending: false }).limit(200),
+      supabase.from("job_booked_assets").select("equipment_id, case_id").eq("job_id", jobId),
+    ]);
+    setArticles((arts.data as Article[] | null) ?? []);
+    setEquipments((eqs.data as Equipment[] | null) ?? []);
+    setCases((cs.data as CaseRow[] | null) ?? []);
+    setBookedEqIds(
+      ((booked.data as Array<{ equipment_id: number | null }> | null) ?? [])
+        .map((entry) => entry.equipment_id)
+        .filter((id): id is number => typeof id === "number"),
+    );
+    setLoading(false);
+  }, [supabase, jobId]);
+
   useEffect(() => {
     let active = true;
-    async function load() {
-      setLoading(true);
-      const [arts, eqs, cs, booked] = await Promise.all([
-        supabase.from("articles").select("id,name,metadata").order("name"),
-        supabase
-          .from("equipments")
-          .select("*, articles(name), asset_tags:asset_tag(printed_code)")
-          .order("created_at", { ascending: false })
-          .limit(1000),
-        supabase.from("cases").select("id, name, description").order("created_at", { ascending: false }).limit(200),
-        supabase.from("job_booked_assets").select("equipment_id, case_id").eq("job_id", jobId),
-      ]);
+    async function loadWrapper() {
+      await load();
       if (!active) return;
-      setArticles((arts.data as Article[] | null) ?? []);
-      setEquipments((eqs.data as Equipment[] | null) ?? []);
-      setCases((cs.data as CaseRow[] | null) ?? []);
-      setBookedEqIds(
-        ((booked.data as Array<{ equipment_id: number | null }> | null) ?? [])
-          .map((entry) => entry.equipment_id)
-          .filter((id): id is number => typeof id === "number"),
-      );
-      setLoading(false);
     }
-    load();
+    void loadWrapper();
     return () => {
       active = false;
     };
-  }, [supabase, jobId]);
+  }, [load]);
 
   const searchItems = useMemo<QuickBookItem[]>(() => {
     const list: QuickBookItem[] = [];
@@ -169,6 +174,9 @@ export function JobQuickBook({ jobId }: { jobId: number }) {
         setBookedEqIds((prev) => [...prev, equipment.id]);
         setSelectedArticle(null);
         void logEvent("job_book_equipment", { job_id: jobId, equipment_id: equipment.id });
+        if (typeof window !== 'undefined') {
+          window.dispatchEvent(new CustomEvent('job-booked-assets:refresh', { detail: { jobId } }));
+        }
       }
     setActionLoading(false);
   },
@@ -191,10 +199,14 @@ export function JobQuickBook({ jobId }: { jobId: number }) {
         setStatus({ kind: "success", message: `Case ${caseRow.name ?? `#${caseRow.id}`} gebucht.` });
         setSelectedArticle(null);
         void logEvent("job_book_case", { job_id: jobId, case_id: caseRow.id });
+        await load(); // Refresh local options
+        if (typeof window !== 'undefined') {
+          window.dispatchEvent(new CustomEvent('job-booked-assets:refresh', { detail: { jobId } }));
+        }
       }
     setActionLoading(false);
   },
-  [company, jobId, supabase],
+  [company, jobId, supabase, load],
 );
 
   const handleArticleBooking = useCallback(async () => {
@@ -238,9 +250,13 @@ export function JobQuickBook({ jobId }: { jobId: number }) {
       setArticleAmount(1);
       setSelectedArticle(null);
       void logEvent("job_book_article_equipments", { job_id: jobId, article_id: selectedArticle.id, count });
+      await load(); // Refresh local options
+      if (typeof window !== 'undefined') {
+        window.dispatchEvent(new CustomEvent('job-booked-assets:refresh', { detail: { jobId } }));
+      }
     }
     setActionLoading(false);
-  }, [selectedArticle, company, equipments, bookedEqIds, articleAmount, jobId, supabase]);
+  }, [selectedArticle, company, equipments, bookedEqIds, articleAmount, jobId, supabase, load]);
 
   const handleSearchSelect = useCallback(
     (item: QuickBookItem) => {

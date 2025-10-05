@@ -55,6 +55,7 @@ export function CompanyCreateForm() {
       if (error) throw error;
       const id = (data as Tables<"companies">).id;
       await supabase.from("users_companies").insert({ user_id: userId, company_id: id });
+      router.refresh(); // Force refresh to update state
       router.push("/management/company-settings");
     } catch (e: unknown) {
       setError(e instanceof Error ? e.message : String(e));

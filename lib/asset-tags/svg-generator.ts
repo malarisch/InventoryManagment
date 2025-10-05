@@ -159,9 +159,10 @@ export function getAssetTagPlaceholders(
   article?: { name?: string } | null, 
   location?: { name?: string } | null,
   caseeq?: { name?: string } | null,
+  company?: { name?: string } | null,
   
 ): PlaceholderData {
-  console.log('Generating placeholders with:', { assetTag, equipment, article, location });
+  console.log('Generating placeholders with:', { assetTag, equipment, article, location, company });
   let safeName = 'Unknown';
   if (equipment?.name) {
     safeName = equipment.name;
@@ -181,6 +182,7 @@ export function getAssetTagPlaceholders(
     article_name: article?.name || '',
     location_name: location?.name || '',
     case_name: caseeq?.name || '',
+    company_name: company?.name || '',
     current_date: new Date().toLocaleDateString(),
     safe_name: safeName
 

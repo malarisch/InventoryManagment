@@ -256,12 +256,6 @@ export function CompanySettingsForm() {
                 <Label htmlFor="description">Beschreibung</Label>
                 <Input id="description" value={description} onChange={(e) => setDescription(e.target.value)} />
               </div>
-              
-              <div className="md:col-span-2 flex items-center gap-3 mt-4">
-                <Button type="submit" disabled={saving}>{saving ? "Speichern…" : "Speichern"}</Button>
-                {message && <span className="text-sm text-green-600">{message}</span>}
-                {error && <span className="text-sm text-red-600">{error}</span>}
-              </div>
 
               <div className="md:col-span-2 border-t pt-4 mt-2">
                 <label className="flex items-center gap-2 text-xs mb-3">
@@ -295,6 +289,15 @@ export function CompanySettingsForm() {
           contacts={contacts}
           onCreateContact={() => setContactDialogOpen(true)}
         />
+      )}
+
+      {/* Save button for entire form */}
+      {!loading && company && (
+        <div className="md:col-span-12 flex items-center gap-3 justify-end">
+          <Button onClick={onSubmit} disabled={saving}>{saving ? "Speichern…" : "Speichern"}</Button>
+          {message && <span className="text-sm text-green-600">{message}</span>}
+          {error && <span className="text-sm text-red-600">{error}</span>}
+        </div>
       )}
 
       <ContactFormDialog
