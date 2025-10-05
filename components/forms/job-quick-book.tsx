@@ -174,6 +174,9 @@ export function JobQuickBook({ jobId }: { jobId: number }) {
         setBookedEqIds((prev) => [...prev, equipment.id]);
         setSelectedArticle(null);
         void logEvent("job_book_equipment", { job_id: jobId, equipment_id: equipment.id });
+        if (typeof window !== 'undefined') {
+          window.dispatchEvent(new CustomEvent('job-booked-assets:refresh', { detail: { jobId } }));
+        }
       }
     setActionLoading(false);
   },
@@ -196,7 +199,10 @@ export function JobQuickBook({ jobId }: { jobId: number }) {
         setStatus({ kind: "success", message: `Case ${caseRow.name ?? `#${caseRow.id}`} gebucht.` });
         setSelectedArticle(null);
         void logEvent("job_book_case", { job_id: jobId, case_id: caseRow.id });
-        await load(); // Refresh data
+        await load(); // Refresh local options
+        if (typeof window !== 'undefined') {
+          window.dispatchEvent(new CustomEvent('job-booked-assets:refresh', { detail: { jobId } }));
+        }
       }
     setActionLoading(false);
   },
@@ -244,7 +250,10 @@ export function JobQuickBook({ jobId }: { jobId: number }) {
       setArticleAmount(1);
       setSelectedArticle(null);
       void logEvent("job_book_article_equipments", { job_id: jobId, article_id: selectedArticle.id, count });
-      await load(); // Refresh data
+      await load(); // Refresh local options
+      if (typeof window !== 'undefined') {
+        window.dispatchEvent(new CustomEvent('job-booked-assets:refresh', { detail: { jobId } }));
+      }
     }
     setActionLoading(false);
   }, [selectedArticle, company, equipments, bookedEqIds, articleAmount, jobId, supabase, load]);

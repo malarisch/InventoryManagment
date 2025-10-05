@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { createClient } from "@/lib/supabase/client";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
@@ -22,23 +22,20 @@ export function JobBookedAssetsList({ jobId, initial }: { jobId: number; initial
   const [lastRemoved, setLastRemoved] = useState<Booked | null>(null);
   const [loading, setLoading] = useState(false);
 
-  useEffect(() => {
-    let active = true;
-
-    async function loadLatest() {
-      setLoading(true);
-      const { data, error } = await supabase
-        .from("job_booked_assets")
-        .select("*, equipments:equipment_id(id, article_id, articles(name)), cases:case_id(id)")
-        .eq("job_id", jobId)
-        .order("created_at", { ascending: false });
-      if (!active) return;
-      if (!error && Array.isArray(data)) {
-        setRows(data as Booked[]);
-      }
-      setLoading(false);
+  const loadLatest = useCallback(async () => {
+    setLoading(true);
+    const { data, error } = await supabase
+      .from("job_booked_assets")
+      .select("*, equipments:equipment_id(id, article_id, articles(name)), cases:case_id(id)")
+      .eq("job_id", jobId)
+      .order("created_at", { ascending: false });
+    if (!error && Array.isArray(data)) {
+      setRows(data as Booked[]);
     }
+    setLoading(false);
+  }, [supabase, jobId]);
 
+  useEffect(() => {
     void loadLatest();
 
     const channel = supabase
@@ -92,11 +89,28 @@ export function JobBookedAssetsList({ jobId, initial }: { jobId: number; initial
       )
       .subscribe();
 
-    return () => {
-      active = false;
-      supabase.removeChannel(channel);
+    // Listen to manual refresh requests (from other components) and reload
+    const onRefresh: EventListener = (event) => {
+      try {
+        const custom = event as CustomEvent<{ jobId?: number }>;
+        if (!custom.detail?.jobId || custom.detail.jobId === jobId) {
+          void loadLatest();
+        }
+      } catch {
+        void loadLatest();
+      }
     };
-  }, [supabase, jobId]);
+    if (typeof window !== 'undefined') {
+      window.addEventListener('job-booked-assets:refresh', onRefresh);
+    }
+
+    return () => {
+      supabase.removeChannel(channel);
+      if (typeof window !== 'undefined') {
+        window.removeEventListener('job-booked-assets:refresh', onRefresh);
+      }
+    };
+  }, [supabase, jobId, loadLatest]);
 
   async function remove(id: number) {
     setStatus(null);
