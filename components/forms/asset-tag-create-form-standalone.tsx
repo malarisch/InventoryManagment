@@ -64,6 +64,7 @@ export function AssetTagCreateFormStandalone() {
         return;
       }
 
+      router.refresh(); // Force refresh to update state
       router.push('/management/asset-tags');
     } finally {
       setLoading(false);
