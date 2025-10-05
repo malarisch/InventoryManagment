@@ -65,6 +65,11 @@ export function AssetTagTemplatePreview({ template, editable = false, onElements
   // Use refs to avoid re-registering event listeners on every element change
   const elementsRef = useRef(elements);
   const onElementsChangeRef = useRef(onElementsChange);
+  // Throttle emit to avoid excessive re-renders while dragging
+  const lastEmitRef = useRef(0);
+  const trailingTimeoutRef = useRef<number | null>(null);
+  const nextElementsRef = useRef<AssetTagTemplateElement[] | null>(null);
+  const lastComputedRef = useRef<AssetTagTemplateElement[] | null>(null);
   
   useEffect(() => {
     elementsRef.current = elements;
@@ -233,11 +238,42 @@ export function AssetTagTemplatePreview({ template, editable = false, onElements
       el.x = Math.max(0, Math.min(el.x, template.tagWidthMm));
       el.y = Math.max(0, Math.min(el.y, template.tagHeightMm));
       newElements[dragIndex] = el;
-      onElementsChangeRef.current?.(newElements);
+      lastComputedRef.current = newElements;
+      // Throttle to ~10 Hz
+      const now = performance.now();
+      const minInterval = 100; // ms
+      const timeSince = now - lastEmitRef.current;
+      if (timeSince >= minInterval) {
+        lastEmitRef.current = now;
+        onElementsChangeRef.current?.(newElements);
+      } else {
+        nextElementsRef.current = newElements;
+        if (trailingTimeoutRef.current != null) {
+          window.clearTimeout(trailingTimeoutRef.current);
+        }
+        const delay = Math.max(0, minInterval - timeSince);
+        trailingTimeoutRef.current = window.setTimeout(() => {
+          lastEmitRef.current = performance.now();
+          const next = nextElementsRef.current ?? newElements;
+          onElementsChangeRef.current?.(next);
+          nextElementsRef.current = null;
+          trailingTimeoutRef.current = null;
+        }, delay);
+      }
     };
     const handlePointerUp = () => {
       if (dragIndex !== null) {
         setDragIndex(null);
+      }
+      // Flush any pending update at drag end
+      if (trailingTimeoutRef.current != null) {
+        window.clearTimeout(trailingTimeoutRef.current);
+        trailingTimeoutRef.current = null;
+      }
+      if (lastComputedRef.current) {
+        lastEmitRef.current = performance.now();
+        onElementsChangeRef.current?.(lastComputedRef.current);
+        nextElementsRef.current = null;
       }
     };
 
@@ -248,6 +284,10 @@ export function AssetTagTemplatePreview({ template, editable = false, onElements
       overlay?.removeEventListener('pointerdown', handlePointerDown);
       window.removeEventListener('pointermove', handlePointerMove);
       window.removeEventListener('pointerup', handlePointerUp);
+      if (trailingTimeoutRef.current != null) {
+        window.clearTimeout(trailingTimeoutRef.current);
+        trailingTimeoutRef.current = null;
+      }
     };
   }, [editable, dragIndex, marginPx, template.tagWidthMm, template.tagHeightMm, findElementAt, scale]);
 
