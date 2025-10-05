@@ -1,3 +1,5 @@
+2025-10-06: Refactor case edit layout. Moved `CaseEditItemsForm` out of the header Card on the case detail page and rewired the form into a 12-col responsive grid so cards flow on large screens and stack on mobile. Files: app/management/cases/[id]/page.tsx, components/forms/case-edit-items-form.tsx.
+2025-10-05: a11y label associations pass. Added htmlFor/id pairs across asset tag template form; extended SearchPicker with buttonProps to allow id/aria-labelledby; wired 'Typ' labels in article/equipment metadata; added ids for rack/inner-dims and connectivity/interfaces headings. Files: components/forms/asset-tag-template-form.tsx, components/search/search-picker.tsx, components/forms/partials/{article,equipment}-metadata-form.tsx. Next: consider passing aria-labelledby into StringListInput inputs for stricter label association.
 2025-10-03 17:08 — Tests: remove manual ID inserts in seeding
 2025-10-04 10:15 — CI: split tests into staged workflows
 - Added four workflows: CI Prepare, CI Lint + TSC, CI Vitest, CI Playwright E2E
