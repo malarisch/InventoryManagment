@@ -58,7 +58,7 @@ export default async function EquipmentDetailPage({ params }: { params: Promise<
         </div>
         <Card>
           <CardHeader>
-            <CardTitle>Equipment #{eq.id}</CardTitle>
+            <CardTitle>{eq.articles?.name ? `${eq.articles.name} #${eq.id}` : `Equipment #${eq.id}`}</CardTitle>
             <CardDescription>
               Artikel: {eq.article_id ? (
                 <Link className="underline-offset-2 hover:underline" href={`/management/articles/${eq.article_id}`}>

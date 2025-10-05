@@ -13,7 +13,7 @@ export async function GET(req: NextRequest, context: { params: Promise<{ id: str
     // Fetch asset tag + template (FK)
     const { data: assetTag, error: tagError } = await supabase
       .from('asset_tags')
-      .select('id, printed_code, printed_template, asset_tag_templates:asset_tag_templates!printed_template(template)')
+      .select('id, printed_code, printed_template, company_id, asset_tag_templates:asset_tag_templates!printed_template(template)')
       .eq('id', id)
       .maybeSingle();
 
@@ -35,24 +35,31 @@ export async function GET(req: NextRequest, context: { params: Promise<{ id: str
       { data: equipmentData, error: equipError },
       { data: articleData, error: articleError },
       { data: locationData, error: locationError },
-      { data: caseData, error: caseError }
+      { data: caseData, error: caseError },
+      { data: companyData, error: companyError }
     ] = await Promise.all([
-      supabase.from('equipments').select('id, metadata, articles(id, name), locations(name)').eq('asset_tag', id).maybeSingle(),
-      supabase.from('articles').select('id, name').eq('asset_tag', id).maybeSingle(),
-      supabase.from('locations').select('id, name').eq('asset_tag', id).maybeSingle(),
-      supabase.from('cases').select('id, name').eq('asset_tag', id).maybeSingle(),
+      supabase.from('equipments').select('id, metadata, articles(id, name), locations(name), company_id').eq('asset_tag', id).maybeSingle(),
+      supabase.from('articles').select('id, name, company_id').eq('asset_tag', id).maybeSingle(),
+      supabase.from('locations').select('id, name, company_id').eq('asset_tag', id).maybeSingle(),
+      supabase.from('cases').select('id, name, company_id').eq('asset_tag', id).maybeSingle(),
+      // Try to fetch company from asset tag's company_id if available
+      assetTag.company_id 
+        ? supabase.from('companies').select('id, name').eq('id', assetTag.company_id).maybeSingle()
+        : Promise.resolve({ data: null, error: null })
     ]);
 
     if (equipError) console.warn('equipment lookup failed (continuing):', equipError.message);
     if (articleError) console.warn('article lookup failed (continuing):', articleError.message);
     if (locationError) console.warn('location lookup failed (continuing):', locationError.message);
     if (caseError) console.warn('case lookup failed (continuing):', caseError.message);
+    if (companyError) console.warn('company lookup failed (continuing):', companyError.message);
 
     // Build friendly entities
     let equipment: { name: string; id?: number } | null = null;
     let article: { name?: string } | null = null;
     let location: { name?: string } | null = null;
     let caseeq: { name?: string } | null = null;
+    let company: { name?: string } | null = null;
 
     if (equipmentData) {
       const metaName = (equipmentData.metadata as { name?: string } | null)?.name;
@@ -68,13 +75,24 @@ export async function GET(req: NextRequest, context: { params: Promise<{ id: str
     if (!article && articleData) article = { name: articleData.name };
     if (!location && locationData) location = { name: locationData.name };
     if (caseData) caseeq = { name: caseData.name };
+    if (companyData) company = { name: companyData.name };
+
+    // Fallback: if no company from companyData, try to get from related entities
+    if (!company) {
+      const companyId = equipmentData?.company_id || articleData?.company_id || locationData?.company_id || caseData?.company_id;
+      if (companyId) {
+        const { data: fallbackCompany } = await supabase.from('companies').select('name').eq('id', companyId).maybeSingle();
+        if (fallbackCompany) company = { name: fallbackCompany.name };
+      }
+    }
 
     const placeholderData = getAssetTagPlaceholders(
       assetTag as { printed_code?: string | null },
       equipment,
       article,
       location,
-      caseeq
+      caseeq,
+      company
     );
     const svgText = await generateSVG(templateJson, placeholderData);
 
