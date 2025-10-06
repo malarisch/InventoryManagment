@@ -1,3 +1,10 @@
+2025-10-06 04:05 — Make management navigation sidebar collapsible
+- Introduced a client-side `ManagementShell` wrapper that manages sidebar visibility with breakpoint-aware defaults (auto-collapsed below 1024px, expanded on large screens)
+- Added a toggle button to the management header plus a slide-in overlay so medium screens can reveal the menu and large screens can collapse it entirely
+- Extended sidebar/header icon maps to cover all nav entries and synced content padding with sidebar width
+- Verification: npm run test:tsc ✅
+- Files: app/management/_libs/{management-shell.tsx,management-header.tsx,management-sidebar.tsx}, app/management/layout.tsx
+
 2025-10-06 03:30 — Simplify Jobs form grid to utilize full width with 2-column layout
 - Changed Jobs form from xl:grid-cols-12 to xl:grid-cols-2 for cleaner, full-width usage
 - Previous 12-column grid: Basisdaten (5 cols) + Termine (4 cols) = 9 cols used, leaving 3 empty

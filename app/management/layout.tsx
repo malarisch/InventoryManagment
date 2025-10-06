@@ -1,6 +1,5 @@
 import type { Metadata } from "next";
-import { Sidebar } from "@/app/management/_libs/management-sidebar";
-import { Header } from "@/app/management/_libs/management-header";
+import { ManagementShell } from "@/app/management/_libs/management-shell";
 
 export const metadata: Metadata = {
   title: "Management | Inventory",
@@ -32,16 +31,5 @@ export default function ManagementLayout({
 }: Readonly<{
   children: React.ReactNode;
 }>) {
-  return (
-    <div className="min-h-screen bg-background text-foreground">
-      <aside className="hidden md:fixed md:inset-y-0 md:z-20 md:flex md:w-64 md:flex-col border-r bg-background">
-        <Sidebar items={navItems} />
-      </aside>
-
-      <div className="md:pl-64">
-        <Header items={navItems} />
-        <main className="p-3 md:p-4 lg:p-6 max-w-[1600px] mx-auto">{children}</main>
-      </div>
-    </div>
-  );
+  return <ManagementShell items={navItems}>{children}</ManagementShell>;
 }

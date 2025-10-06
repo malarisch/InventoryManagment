@@ -151,7 +151,7 @@ export async function JobAssetSummaryCard({ jobId }: { jobId: number }) {
             <p className="text-sm font-medium text-muted-foreground">Anzahl</p>
             <p className="text-2xl font-bold">{summary.itemCount}</p>
             <p className="text-xs text-muted-foreground">
-              {summary.equipmentCount} Equipment{summary.equipmentCount !== 1 ? "s" : ""}, {summary.caseCount} Case{summary.caseCount !== 1 ? "s" : ""}
+              {summary.equipmentCount}&nbsp;Equipment{summary.equipmentCount !== 1 ? "s" : ""}, {summary.caseCount}&nbsp;Case{summary.caseCount !== 1 ? "s" : ""}
             </p>
           </div>
 

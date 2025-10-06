@@ -19,6 +19,11 @@ import {
   Users,
   Archive,
   Wrench,
+  Scan,
+  Tag,
+  FilePlus,
+  PanelLeftOpen,
+  PanelLeftClose,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { usePathname } from "next/navigation";
@@ -58,10 +63,20 @@ const iconMap: Record<string, ComponentType<SVGProps<SVGSVGElement>>> = {
   archive: Archive,
   settings: Settings,
   wrench: Wrench,
+  scan: Scan,
+  tag: Tag,
+  "file-plus": FilePlus,
 };
 
-export function Header({ items }: { items: NavItem[] }) {
-  const [open, setOpen] = useState(false);
+type HeaderProps = {
+  items: NavItem[];
+  onToggleSidebar?: () => void;
+  isSidebarOpen?: boolean;
+  sidebarId?: string;
+};
+
+export function Header({ items, onToggleSidebar, isSidebarOpen = false, sidebarId }: HeaderProps) {
+  const [drawerOpen, setDrawerOpen] = useState(false);
   const { isOpen: searchOpen, openSearch, closeSearch } = useGlobalSearch();
 
   return (
@@ -73,10 +88,24 @@ export function Header({ items }: { items: NavItem[] }) {
             size="icon"
             className="md:hidden"
             aria-label="Open navigation"
-            onClick={() => setOpen(true)}
+            onClick={() => setDrawerOpen(true)}
           >
             <Menu className="h-5 w-5" />
           </Button>
+
+          {onToggleSidebar ? (
+            <Button
+              variant="ghost"
+              size="icon"
+              className="hidden md:inline-flex"
+              aria-label={isSidebarOpen ? "Navigation einklappen" : "Navigation ausklappen"}
+              aria-controls={sidebarId}
+              aria-expanded={isSidebarOpen}
+              onClick={onToggleSidebar}
+            >
+              {isSidebarOpen ? <PanelLeftClose className="h-5 w-5" /> : <PanelLeftOpen className="h-5 w-5" />}
+            </Button>
+          ) : null}
 
           <div className="flex items-center gap-2 text-sm text-muted-foreground">
             <span className="hidden sm:inline">Inventory</span>
@@ -108,8 +137,8 @@ export function Header({ items }: { items: NavItem[] }) {
         </div>
 
         {/* Mobile drawer */}
-        {open ? (
-          <MobileDrawer items={items} onClose={() => setOpen(false)} />
+        {drawerOpen ? (
+          <MobileDrawer items={items} onClose={() => setDrawerOpen(false)} />
         ) : null}
       </header>
       
