@@ -120,6 +120,24 @@ export function JobQuickBook({ jobId }: { jobId: number }) {
     };
   }, [load]);
 
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    const handler = (event: Event) => {
+      try {
+        const custom = event as CustomEvent<{ jobId?: number }>;
+        if (!custom.detail?.jobId || custom.detail.jobId === jobId) {
+          void load();
+        }
+      } catch {
+        void load();
+      }
+    };
+    window.addEventListener("job-booked-assets:refresh", handler);
+    return () => {
+      window.removeEventListener("job-booked-assets:refresh", handler);
+    };
+  }, [jobId, load]);
+
   const searchItems = useMemo<QuickBookItem[]>(() => {
     const list: QuickBookItem[] = [];
 

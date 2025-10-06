@@ -126,6 +126,9 @@ export function JobBookedAssetsList({ jobId, initial }: { jobId: number; initial
     } else {
       setLastRemoved(removed);
       setStatus("Entfernt. ");
+      if (typeof window !== "undefined") {
+        window.dispatchEvent(new CustomEvent("job-booked-assets:refresh", { detail: { jobId } }));
+      }
     }
   }
 
@@ -157,6 +160,9 @@ export function JobBookedAssetsList({ jobId, initial }: { jobId: number; initial
     });
     setLastRemoved(null);
     setStatus("Wiederhergestellt.");
+    if (typeof window !== "undefined") {
+      window.dispatchEvent(new CustomEvent("job-booked-assets:refresh", { detail: { jobId } }));
+    }
   }
 
   // Build enriched entries for grouping and display

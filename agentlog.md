@@ -1,3 +1,15 @@
+2025-10-06 05:55 — Speed up job asset summary refresh
+- Moved the asset summary logic into a shared helper and wrapped the card in a client component that listens to realtime + refresh events instead of forcing full router refreshes
+- Removed router.refresh() calls from booking flows to avoid reloading the entire page while still broadcasting summary updates
+- Files: components/job-asset-summary{.tsx,.client.tsx}, components/job-booked-assets.client.tsx, components/forms/job-quick-book.tsx, lib/jobs/asset-summary.ts
+- Verification: npm run test:tsc ✅
+
+2025-10-06 05:30 — Refresh job asset summary after bookings
+- Trigger router.refresh() after booking, removing, or undoing assets so the server-side summary updates immediately
+- Hooked the quick book picker into the shared refresh event to reload availability when bookings change elsewhere on the page
+- Files: components/job-booked-assets.client.tsx, components/forms/job-quick-book.tsx
+- Verification: npm run test:tsc ✅
+
 2025-10-06 05:05 — Block quick booking of case-contained equipment
 - Extended the quick book loader to merge case contents and container equipment into the booked set so assets already assigned via Cases no longer appear as selectable items
 - Deduplicate booked equipment IDs when booking directly or in batches to keep the picker state consistent
