@@ -33,10 +33,14 @@ function getWeightFromMetadata(metadata: unknown): number {
 
 function getPriceFromMetadata(metadata: unknown): { amount: number; currency: string } | null {
   const meta = metadata as ArticleMetadata | null;
-  if (!meta?.dailyRentalRate?.amount || !meta?.dailyRentalRate?.currency) return null;
+  // Accept 0 as a valid amount; only null/undefined should be excluded
+  if (meta?.dailyRentalRate == null) return null;
+  const amt = meta.dailyRentalRate.amount;
+  const cur = meta.dailyRentalRate.currency;
+  if (amt == null || cur == null) return null;
   return {
-    amount: meta.dailyRentalRate.amount,
-    currency: meta.dailyRentalRate.currency,
+    amount: amt,
+    currency: cur,
   };
 }
 
@@ -51,7 +55,7 @@ async function calculateAssetSummary(jobId: number): Promise<AssetSummary> {
   // Fetch all booked assets with their equipment and article data
   const { data: bookedAssets } = await supabase
     .from("job_booked_assets")
-    .select("*, equipments:equipment_id(*, articles:article_id(*)), cases:case_id(*)")
+    .select("*, equipments:equipment_id(id, article_id, metadata, articles:article_id(name,metadata)), cases:case_id(id)")
     .eq("job_id", jobId);
 
   const assets = (bookedAssets as BookedAsset[] | null) ?? [];
@@ -87,7 +91,8 @@ async function calculateAssetSummary(jobId: number): Promise<AssetSummary> {
         const price = getPriceFromMetadata(article.metadata);
         if (price) {
           totalPrice += price.amount;
-          currency = currency || price.currency;
+          // If multiple currencies appear, keep the first; otherwise UI shows just number with currency
+          if (!currency) currency = price.currency;
         }
       }
     } else if (asset.case_id && asset.cases) {
