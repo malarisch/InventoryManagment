@@ -188,6 +188,14 @@ export function JobBookedAssetsList({ jobId, initial }: { jobId: number; initial
           priceAmount: meta?.dailyRentalRate?.amount ?? null,
           priceCurrency: meta?.dailyRentalRate?.currency ?? null,
         });
+      } else if (r.equipment_id) {
+        // Fallback: show equipment by ID even if join failed or is restricted by RLS
+        list.push({
+          id: r.id,
+          kind: "equipment",
+          refId: r.equipment_id,
+          articleType: "Equipment",
+        });
       } else if (r.case_id) {
         list.push({ id: r.id, kind: "case", refId: r.case_id, articleType: "Case" });
       }

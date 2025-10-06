@@ -55,7 +55,7 @@ async function calculateAssetSummary(jobId: number): Promise<AssetSummary> {
   // Fetch all booked assets with their equipment and article data
   const { data: bookedAssets } = await supabase
     .from("job_booked_assets")
-    .select("*, equipments:equipment_id(id, article_id, metadata, articles:article_id(name,metadata)), cases:case_id(id)")
+    .select("*, equipments:equipment_id(id, article_id, metadata, articles(name,metadata)), cases:case_id(id)")
     .eq("job_id", jobId);
 
   const assets = (bookedAssets as BookedAsset[] | null) ?? [];
