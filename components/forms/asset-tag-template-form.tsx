@@ -54,6 +54,7 @@ const formSchema = z.object({
     size: preprocessOptionalNumber(1),
     height: preprocessOptionalNumber(1),
     color: z.string().optional(),
+    textAlign: z.enum(['left', 'center', 'right']).optional(),
   })),
 });
 
@@ -116,7 +117,14 @@ export function AssetTagTemplateForm({ templateId }: AssetTagTemplateFormProps) 
         setError('Template nicht gefunden');
         setTimeout(() => router.push('/management/company-settings?tab=templates'), 2000);
       } else {
-        form.reset(data.template as unknown as FormValues);
+        const template = data.template as AssetTagTemplate;
+        form.reset({
+          ...template,
+          elements: (template.elements || []).map((element) => ({
+            ...element,
+            textAlign: element.textAlign ?? 'left',
+          })),
+        } as unknown as FormValues);
       }
     }
     
@@ -158,6 +166,7 @@ export function AssetTagTemplateForm({ templateId }: AssetTagTemplateFormProps) 
           ...e,
           size: e.size as number | undefined,
           height: e.height as number | undefined,
+          textAlign: e.textAlign ?? 'left',
         })),
       };
 
@@ -405,18 +414,36 @@ export function AssetTagTemplateForm({ templateId }: AssetTagTemplateFormProps) 
                     <Input id={`elements-${index}-height`} type="number" placeholder="Only for image" {...form.register(`elements.${index}.height` as const, { valueAsNumber: true })} />
                   </div>
                 </div>
-                <div className="flex items-end justify-between">
-                  <div>
-                    <label htmlFor={`elements-${index}-color`} className="block text-sm font-medium mb-1">Color Override</label>
-                    <Input id={`elements-${index}-color`} type="color" {...form.register(`elements.${index}.color` as const)} />
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 items-end">
+                  <div className="flex items-end gap-4">
+                    <div>
+                      <label htmlFor={`elements-${index}-color`} className="block text-sm font-medium mb-1">Color Override</label>
+                      <Input id={`elements-${index}-color`} type="color" {...form.register(`elements.${index}.color` as const)} />
+                    </div>
+                    {form.watch(`elements.${index}.type`) === 'text' ? (
+                      <div>
+                        <label htmlFor={`elements-${index}-textAlign`} className="block text-sm font-medium mb-1">Text Alignment</label>
+                        <select
+                          id={`elements-${index}-textAlign`}
+                          className="h-9 rounded-md border bg-background px-3 text-sm w-full"
+                          {...form.register(`elements.${index}.textAlign` as const)}
+                        >
+                          <option value="left">Links</option>
+                          <option value="center">Zentriert</option>
+                          <option value="right">Rechts</option>
+                        </select>
+                      </div>
+                    ) : null}
                   </div>
-                  <Button type="button" variant="destructive" onClick={() => remove(index)}>
-                    Remove Element
-                  </Button>
+                  <div className="flex justify-end md:justify-end">
+                    <Button type="button" variant="destructive" onClick={() => remove(index)}>
+                      Remove Element
+                    </Button>
+                  </div>
                 </div>
               </div>
             ))}
-            <Button type="button" variant="outline" onClick={() => append({ type: 'text', x: 0, y: 0, value: '', size: 12 })}>
+            <Button type="button" variant="outline" onClick={() => append({ type: 'text', x: 0, y: 0, value: '', size: 12, textAlign: 'left' })}>
               Add Element
             </Button>
           </CardContent>
@@ -464,6 +491,7 @@ export function AssetTagTemplateForm({ templateId }: AssetTagTemplateFormProps) 
                   ...e,
                   size: e.size as number | undefined,
                   height: e.height as number | undefined,
+                  textAlign: e.textAlign,
                 })),
               };
               return (

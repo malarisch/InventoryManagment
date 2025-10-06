@@ -55,7 +55,9 @@ export async function generateSVG(
 
       switch (element.type) {
         case 'text': {
-          svg += `<text x="${x}" y="${y}" font-size="${size}" fill="${color}" color="${color}" font-family="Arial, sans-serif">${escapeXml(value)}</text>`;
+          const align = element.textAlign || 'left';
+          const textAnchor = align === 'center' ? 'middle' : align === 'right' ? 'end' : 'start';
+          svg += `<text x="${x}" y="${y}" font-size="${size}" fill="${color}" color="${color}" font-family="Arial, sans-serif" text-anchor="${textAnchor}" dominant-baseline="alphabetic">${escapeXml(value)}</text>`;
           break;
         }
         case 'qrcode': {

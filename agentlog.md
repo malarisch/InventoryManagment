@@ -1,3 +1,26 @@
+2025-10-06 06:55 — Allow selecting form controls after dragging
+- Normalisierte Pointer-Events: Drag-End wird nun zuverlässig beim Verlassen der Canvas oder bei Klicks außerhalb beendet, sodass Form Inputs/Dropdowns den Fokus behalten
+- Files: components/asset-tag-templates/template-preview.tsx
+- Verification: npm run test:tsc ✅
+
+2025-10-06 06:40 — Show drag handle at element anchor
+- Overlay handle now renders exactly am Anchorpunkt (inkl. Baseline bei Text), sodass klar ist, welche Koordinate der Nutzer verschiebt
+- Basisdaten in Bounding-Box-Helper erweitert und die Vorschau neu justiert
+- Files: components/asset-tag-templates/template-preview.tsx
+- Verification: npm run test:tsc ✅
+
+2025-10-06 06:30 — Keep text alignment dropdown usable
+- Extended the preview overlay to skip drag interactions for ~120ms after pointer down so the new alignment select stays focusable, preventing immediate blur
+- Also guard against lingering drag state by cancelling on pointerleave and ensure SVG redraw isn’t triggered redundantly
+- Files: components/asset-tag-templates/template-preview.tsx
+- Verification: npm run test:tsc ✅
+
+2025-10-06 06:15 — Add text alignment controls to asset tag templates
+- Introduced per-element alignment (links/zentriert/rechts) with matching SVG generation so text anchors from the specified edge/center
+- Updated template builder UI, drag overlay, and preview hit-box logic to respect the new anchors while keeping coordinates relative to the chosen alignment
+- Files: components/forms/asset-tag-template-form.tsx, components/asset-tag-templates/{template-preview.tsx,types.ts}, lib/asset-tags/svg-generator.ts
+- Verification: npm run test:tsc ✅
+
 2025-10-06 05:55 — Speed up job asset summary refresh
 - Moved the asset summary logic into a shared helper and wrapped the card in a client component that listens to realtime + refresh events instead of forcing full router refreshes
 - Removed router.refresh() calls from booking flows to avoid reloading the entire page while still broadcasting summary updates
