@@ -1,3 +1,16 @@
+2025-10-06 03:25 — Fix responsive grid clipping in Termine and Asset-Zusammenfassung cards
+- Termine card: changed sm:grid-cols-2 → md:grid-cols-2 for date/time picker grids
+  * Date pickers were clipping at small widths (sm: 640px too early for DatePicker components)
+  * Now stack vertically below 768px, side-by-side at md: (768px+)
+  * Time inputs also respect md: breakpoint for consistent behavior
+- Asset-Zusammenfassung: changed grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 → grid-cols-2 xl:grid-cols-4
+  * Previous lg: (1024px) caused stat cards with text-2xl to overlap at intermediate widths
+  * Now starts with 2-column grid (mobile-friendly), expands to 4 columns at xl: (1280px+)
+  * Large stat values (prices, weights) have adequate space without clipping
+- Reason: sm: and lg: breakpoints too aggressive for components with large text/interactive elements
+- Files: components/forms/job-edit-form.tsx, components/job-asset-summary.tsx
+- Result: No more element clipping or overlap in Termine and Asset-Zusammenfassung cards
+
 2025-10-06 03:15 — Fix 1180px viewport layout issues (iPad Air landscape / MacBook 50% browser width)
 - Adjusted Jobs form grid breakpoint from lg: to xl: to prevent premature side-by-side layout
 - Jobs form: changed lg:grid-cols-12 → xl:grid-cols-12 (activates at 1280px instead of 1024px)

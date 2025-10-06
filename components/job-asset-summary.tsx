@@ -146,7 +146,7 @@ export async function JobAssetSummaryCard({ jobId }: { jobId: number }) {
         </CardDescription>
       </CardHeader>
       <CardContent>
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+        <div className="grid grid-cols-2 xl:grid-cols-4 gap-4">
           <div className="space-y-1">
             <p className="text-sm font-medium text-muted-foreground">Anzahl</p>
             <p className="text-2xl font-bold">{summary.itemCount}</p>
