@@ -1,3 +1,9 @@
+2025-10-06 07:55 — Fix user menu hydration id mismatch
+- Dropdown Trigger bekommt feste ID `user-menu-trigger` und Content `user-menu-content`, damit SSR/CSR dieselben Attribute liefern
+- Verhindert Radix/React Hydrationswarnung durch zufällige generierte IDs in DropdownMenuTrigger
+- Files: app/management/_libs/management-header.tsx
+- Verification: npm run test:tsc ✅
+
 2025-10-06 07:40 — Relative alignment controls & canvas clamp
 - Ergänzte relative Ausrichtungsbuttons je Referenz-Element (Links/Mitte/Rechts und Oben/Mitte/Unten) inklusive Bounding-Box-Messung via Hidden-Canvas
 - Canvas-Ausrichtung berücksichtigt jetzt Elementbreite/-höhe und hält Rechts/Unten innerhalb des Tagbereichs

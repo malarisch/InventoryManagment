@@ -279,11 +279,12 @@ function UserMenu() {
         <button
           aria-label="Benutzermenü"
           className="inline-flex h-8 w-8 items-center justify-center rounded-full bg-muted text-xs font-medium text-muted-foreground hover:bg-muted/80"
+          id="user-menu-trigger"
         >
           <User className="h-4 w-4" />
         </button>
       </DropdownMenuTrigger>
-      <DropdownMenuContent align="end" className="w-56">
+  <DropdownMenuContent align="end" className="w-56" id="user-menu-content">
         <DropdownMenuLabel>Menü</DropdownMenuLabel>
         <DropdownMenuSeparator />
         <DropdownMenuSub>
