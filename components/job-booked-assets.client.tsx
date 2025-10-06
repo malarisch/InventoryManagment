@@ -228,7 +228,7 @@ export function JobBookedAssetsList({ jobId, initial }: { jobId: number; initial
 
   function fmtCurrency(amount: number | null | undefined, currency: string | null | undefined): string | null {
     if (amount == null || currency == null) return null;
-    return new Intl.NumberFormat("de-DE", { style: "currency", currency }).format(amount / 100);
+    return new Intl.NumberFormat("de-DE", { style: "currency", currency }).format(amount);
   }
 
   return (

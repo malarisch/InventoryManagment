@@ -109,12 +109,10 @@ async function calculateAssetSummary(jobId: number): Promise<AssetSummary> {
 }
 
 function formatPrice(amount: number, currency: string): string {
-  // Amount is in smallest unit (cents), convert to main unit
-  const mainAmount = amount / 100;
   return new Intl.NumberFormat("de-DE", {
     style: "currency",
     currency: currency,
-  }).format(mainAmount);
+  }).format(amount);
 }
 
 function formatWeight(kg: number): string {

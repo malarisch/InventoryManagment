@@ -21,7 +21,7 @@ export type DimensionsCm = {
 };
 /** Monetary value in company currency. */
 export type Price = {
-  /** Amount in smallest relevant unit; tax inclusion per `grossNet`. */
+  /** Amount in main currency unit (e.g., 10.5 for €10,50); tax inclusion per `grossNet`. */
   amount: number;
   /** Whether `amount` includes tax (gross) or not (net). */
   grossNet: "gross" | "net";
