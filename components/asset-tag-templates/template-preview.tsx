@@ -228,7 +228,7 @@ export function AssetTagTemplatePreview({ template, editable = false, onElements
       }
     }
     return null;
-  }, [elements, getBoundingBox]);
+  }, [elements, getBoundingBox, template.textSizePt]);
 
   // Mouse events only when editable
   useEffect(() => {

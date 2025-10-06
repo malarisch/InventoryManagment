@@ -1,3 +1,19 @@
+2025-10-06 08:25 — Fix mobile sidebar toggle wiring
+- Entfernte veralteten `MobileDrawer` im Header und verbinden den mobilen Menübutton direkt mit dem Shell-Sidebar-Toggle inkl. ARIA-Attributen
+- Sidebar klappt jetzt auch auf kleinen Screens korrekt ein/aus; Typprüfung grün
+- Files: app/management/_libs/management-header.tsx
+- Verification: npm run test:tsc ✅
+
+2025-10-06 08:12 — Fix template preview hook deps
+- Ergänzte `template.textSizePt` in der `findElementAt` useCallback-Dependency, damit `next build`/eslint keine Missing-Dependency-Warnung mehr wirft
+- Files: components/asset-tag-templates/template-preview.tsx
+- Verification: npm run test:tsc ✅
+
+2025-10-06 08:05 — Remove obsolete dump-seed API & UI
+- Deprecated `/api/admin/dump-seed` Route gelöscht und Company Settings Card samt Fetch-Handler entfernt; Dokumentation zeigt nun nur noch den JSON-Export Workflow
+- Files: app/api/admin/dump-seed/route.ts (deleted), components/company-settings-form.tsx, AGENTS.md
+- Verification: npm run test:tsc ✅
+
 2025-10-06 07:55 — Fix user menu hydration id mismatch
 - Dropdown Trigger bekommt feste ID `user-menu-trigger` und Content `user-menu-content`, damit SSR/CSR dieselben Attribute liefern
 - Verhindert Radix/React Hydrationswarnung durch zufällige generierte IDs in DropdownMenuTrigger
