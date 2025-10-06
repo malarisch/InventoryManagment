@@ -73,8 +73,8 @@ export default async function JobDetailPage({ params }: { params: Promise<{ id: 
   const title = jobName && jobName.length > 0 ? jobName : `Job #${job.id}`;
 
   return (
-    <main className="min-h-screen w-full flex flex-col items-center p-5">
-      <div className="w-full max-w-none flex-1 space-y-4">
+    <main className="w-full flex flex-col">
+      <div className="w-full max-w-7xl mx-auto px-4 py-4 space-y-4">
         <div className="text-sm text-muted-foreground">
           <Link href="/management/jobs" className="hover:underline">← Zurück zur Übersicht</Link>
         </div>
@@ -85,11 +85,11 @@ export default async function JobDetailPage({ params }: { params: Promise<{ id: 
           {/* Left column: Main content (2/3) */}
           <div className="lg:col-span-2 space-y-4">
             <Card>
-              <CardHeader>
-                <CardTitle>
+              <CardHeader className="pb-3 px-4 pt-4">
+                <CardTitle className="text-lg">
                   <JobNameHeading data-testid="job-title" fallback={title} />
                 </CardTitle>
-                <CardDescription className="flex flex-wrap items-center gap-2">
+                <CardDescription className="flex flex-wrap items-center gap-2 text-xs">
                   <span>Job-ID #{job.id} • Erstellt am {createdDisplay} • Erstellt von {creatorDisplay}</span>
                   <span className="text-muted-foreground">•</span>
                   <JobHeaderContact 
@@ -100,20 +100,20 @@ export default async function JobDetailPage({ params }: { params: Promise<{ id: 
                   />
                 </CardDescription>
               </CardHeader>
-              <CardContent>
-                <div className="mb-1 flex flex-wrap items-center justify-between gap-3">
+              <CardContent className="px-4 pb-4">
+                <div className="mb-1 flex flex-wrap items-center justify-between gap-2">
                   <DeleteWithUndo table="jobs" id={job.id} payload={job as Record<string, unknown>} redirectTo="/management/jobs" />
-                  <div className="flex items-center gap-2">
-                    <Button variant="outline" asChild className="flex items-center gap-2">
+                  <div className="flex items-center gap-2 flex-wrap">
+                    <Button variant="outline" size="sm" asChild className="flex items-center gap-1.5">
                       <Link href={`/management/scanner?mode=job-book&jobId=${job.id}`}>
-                        <ClipboardList className="h-4 w-4" />
-                        Kameramodus buchen
+                        <ClipboardList className="h-3.5 w-3.5" />
+                        <span className="text-xs">Kameramodus buchen</span>
                       </Link>
                     </Button>
-                    <Button variant="outline" asChild className="flex items-center gap-2">
+                    <Button variant="outline" size="sm" asChild className="flex items-center gap-1.5">
                       <Link href={`/management/scanner?mode=job-pack&jobId=${job.id}`}>
-                        <PackageCheck className="h-4 w-4" />
-                        Kameramodus packen
+                        <PackageCheck className="h-3.5 w-3.5" />
+                        <span className="text-xs">Kameramodus packen</span>
                       </Link>
                     </Button>
                   </div>
@@ -125,11 +125,11 @@ export default async function JobDetailPage({ params }: { params: Promise<{ id: 
             <JobEditForm job={job} />
 
             <Card>
-              <CardHeader>
-                <CardTitle>Dateien</CardTitle>
-                <CardDescription>Anhänge und Dokumente zu diesem Job</CardDescription>
+              <CardHeader className="pb-3 px-4 pt-4">
+                <CardTitle className="text-lg">Dateien</CardTitle>
+                <CardDescription className="text-xs">Anhänge und Dokumente zu diesem Job</CardDescription>
               </CardHeader>
-              <CardContent>
+              <CardContent className="px-4 pb-4">
                 <FileManager table="jobs" rowId={job.id} companyId={job.company_id} isPublic={false} initial={(job as Record<string, unknown>).files} />
               </CardContent>
             </Card>
@@ -142,11 +142,11 @@ export default async function JobDetailPage({ params }: { params: Promise<{ id: 
             <JobAssetSummaryCard jobId={id} />
             
             <Card>
-              <CardHeader>
-                <CardTitle>Schnell buchen</CardTitle>
-                <CardDescription>Nach Artikelmenge, Equipment-ID oder Case.</CardDescription>
+              <CardHeader className="pb-3 px-4 pt-4">
+                <CardTitle className="text-base">Schnell buchen</CardTitle>
+                <CardDescription className="text-xs">Nach Artikelmenge, Equipment-ID oder Case.</CardDescription>
               </CardHeader>
-              <CardContent>
+              <CardContent className="px-4 pb-4">
                 <JobQuickBook jobId={id} />
               </CardContent>
             </Card>

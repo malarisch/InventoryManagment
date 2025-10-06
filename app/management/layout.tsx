@@ -40,7 +40,7 @@ export default function ManagementLayout({
 
       <div className="md:pl-64">
         <Header items={navItems} />
-        <main className="p-4 md:p-6 lg:p-8">{children}</main>
+        <main className="p-3 md:p-4 lg:p-6 max-w-[1600px] mx-auto">{children}</main>
       </div>
     </div>
   );

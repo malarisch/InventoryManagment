@@ -51,15 +51,15 @@ export default async function EquipmentDetailPage({ params }: { params: Promise<
   const creator = await fetchUserDisplayAdmin(eq.created_by ?? undefined);
 
   return (
-    <main className="min-h-screen w-full flex flex-col items-center p-5">
-      <div className="w-full max-w-none flex-1 space-y-4">
+    <main className="w-full flex flex-col">
+      <div className="w-full max-w-7xl mx-auto px-4 py-4 space-y-4">
         <div className="text-sm text-muted-foreground">
           <Link href="/management/equipments" className="hover:underline">← Zurück zur Übersicht</Link>
         </div>
         <Card>
-          <CardHeader>
-            <CardTitle>{eq.articles?.name ? `${eq.articles.name} #${eq.id}` : `Equipment #${eq.id}`}</CardTitle>
-            <CardDescription>
+          <CardHeader className="pb-3 px-4 pt-4">
+            <CardTitle className="text-lg">{eq.articles?.name ? `${eq.articles.name} #${eq.id}` : `Equipment #${eq.id}`}</CardTitle>
+            <CardDescription className="text-xs">
               Artikel: {eq.article_id ? (
                 <Link className="underline-offset-2 hover:underline" href={`/management/articles/${eq.article_id}`}>
                   {eq.articles?.name ?? `#${eq.article_id}`}
@@ -78,10 +78,10 @@ export default async function EquipmentDetailPage({ params }: { params: Promise<
               {" • Erstellt am: "}{formatDateTime(safeParseDate(eq.created_at))} {`• Erstellt von: ${creator ?? (eq.created_by === currentUserId ? 'Du' : fallbackDisplayFromId(eq.created_by)) ?? '—'}`}
             </CardDescription>
           </CardHeader>
-          <CardContent>
-            <div className="mb-1 flex flex-wrap items-center justify-between gap-3">
+          <CardContent className="px-4 pb-4">
+            <div className="mb-1 flex flex-wrap items-center justify-between gap-2">
               <DeleteWithUndo table="equipments" id={eq.id} payload={eq as Record<string, unknown>} redirectTo="/management/equipments" />
-              <div className="flex items-center gap-3">
+              <div className="flex items-center gap-2 flex-wrap">
                 {!eq.asset_tag && (
                   <AssetTagCreateForm
                     item={{ id: eq.id, name: eq.articles?.name || `Equipment #${eq.id}` }}
@@ -90,8 +90,8 @@ export default async function EquipmentDetailPage({ params }: { params: Promise<
                   />
                 )}
                 {/* Workshop quick todo */}
-                <div>
-                  <span className="mr-2 text-sm text-muted-foreground">Werkstatt:</span>
+                <div className="flex items-center gap-2">
+                  <span className="text-xs text-muted-foreground">Werkstatt:</span>
                   <WorkshopTodoCreateInline companyId={Number(eq.company_id)} equipmentId={Number(eq.id)} />
                 </div>
               </div>
@@ -103,11 +103,11 @@ export default async function EquipmentDetailPage({ params }: { params: Promise<
         <EquipmentEditForm equipment={eq} />
 
         <Card>
-          <CardHeader>
-            <CardTitle>Dateien</CardTitle>
-            <CardDescription>Anhänge und Dokumente zu diesem Equipment</CardDescription>
+          <CardHeader className="pb-3 px-4 pt-4">
+            <CardTitle className="text-lg">Dateien</CardTitle>
+            <CardDescription className="text-xs">Anhänge und Dokumente zu diesem Equipment</CardDescription>
           </CardHeader>
-          <CardContent>
+          <CardContent className="px-4 pb-4">
             <FileManager table="equipments" rowId={eq.id} companyId={eq.company_id} isPublic={false} initial={(eq as Record<string, unknown>).files} />
           </CardContent>
         </Card>
@@ -116,7 +116,7 @@ export default async function EquipmentDetailPage({ params }: { params: Promise<
         
         <MaintenanceLogsCard companyId={Number(eq.company_id)} equipmentId={Number(eq.id)} />
       </div>
-      <div className="w-full max-w-none mt-4">
+      <div className="w-full max-w-7xl mx-auto px-4 mt-4">
         <HistoryCard table="equipments" dataId={id} />
       </div>
     </main>
