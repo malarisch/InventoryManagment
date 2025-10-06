@@ -165,8 +165,8 @@ export function JobEditForm({ job }: { job: Job }) {
   }
 
   return (
-    <form onSubmit={onSubmit} className="grid grid-cols-1 xl:grid-cols-12 gap-6">
-      <Card className="xl:col-span-5">
+    <form onSubmit={onSubmit} className="grid grid-cols-1 xl:grid-cols-2 gap-6">
+      <Card>
         <CardHeader>
           <CardTitle>Basisdaten</CardTitle>
           <CardDescription>Name, Typ, Ort</CardDescription>
@@ -187,7 +187,7 @@ export function JobEditForm({ job }: { job: Job }) {
         </CardContent>
       </Card>
 
-      <Card className="xl:col-span-4">
+      <Card>
         <CardHeader>
           <CardTitle>Termine</CardTitle>
           <CardDescription>Start und Ende</CardDescription>
@@ -262,7 +262,7 @@ export function JobEditForm({ job }: { job: Job }) {
         </CardContent>
       </Card>
 
-      <Card className="xl:col-span-4">
+      <Card className="xl:col-span-2">
         <CardHeader>
           <CardTitle>Metadaten-Modus</CardTitle>
           <CardDescription>Zwischen Formular und JSON wechseln</CardDescription>
@@ -275,9 +275,9 @@ export function JobEditForm({ job }: { job: Job }) {
         </CardContent>
       </Card>
 
-      <div className="xl:col-span-12 grid grid-cols-1 gap-6">{metadataCard}</div>
+      <div className="xl:col-span-2 grid grid-cols-1 gap-6">{metadataCard}</div>
 
-      <div className="xl:col-span-12 flex items-center gap-3 justify-end">
+      <div className="xl:col-span-2 flex items-center gap-3 justify-end">
         <Button type="submit" disabled={saving}>{saving ? "Speichern…" : "Speichern"}</Button>
         {message && <span className="text-sm text-green-600">{message}</span>}
         {error && <span className="text-sm text-red-600">{error}</span>}

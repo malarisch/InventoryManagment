@@ -1,3 +1,13 @@
+2025-10-06 03:30 — Simplify Jobs form grid to utilize full width with 2-column layout
+- Changed Jobs form from xl:grid-cols-12 to xl:grid-cols-2 for cleaner, full-width usage
+- Previous 12-column grid: Basisdaten (5 cols) + Termine (4 cols) = 9 cols used, leaving 3 empty
+- New 2-column grid: Basisdaten + Termine each take 1 column (50% width at xl:)
+- Metadaten-Modus, metadata sections, and save button now span full width (xl:col-span-2)
+- Result: Form now uses **entire available width** of the left column in page's lg:grid-cols-3 layout
+- Behavior unchanged at mobile/tablet (still stacks vertically below 1280px)
+- Files: components/forms/job-edit-form.tsx
+- Why: Simpler grid system, no wasted space, easier to maintain
+
 2025-10-06 03:25 — Fix responsive grid clipping in Termine and Asset-Zusammenfassung cards
 - Termine card: changed sm:grid-cols-2 → md:grid-cols-2 for date/time picker grids
   * Date pickers were clipping at small widths (sm: 640px too early for DatePicker components)
