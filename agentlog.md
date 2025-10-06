@@ -1,3 +1,9 @@
+2025-10-06 09:05 — Clean up header unused props after drawer removal
+- Entfernte ungenutzte Icon-Map & `items`-Prop aus dem Header, nachdem der MobileDrawer entfiel; ManagementShell-Aufruf aktualisiert
+- ESLint `no-unused-vars` Warnungen beseitigt, Typprüfung bleibt grün
+- Files: app/management/_libs/{management-header.tsx,management-shell.tsx}
+- Verification: npm run test:tsc ✅
+
 2025-10-06 08:25 — Fix mobile sidebar toggle wiring
 - Entfernte veralteten `MobileDrawer` im Header und verbinden den mobilen Menübutton direkt mit dem Shell-Sidebar-Toggle inkl. ARIA-Attributen
 - Sidebar klappt jetzt auch auf kleinen Screens korrekt ein/aus; Typprüfung grün

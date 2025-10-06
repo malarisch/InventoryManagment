@@ -76,7 +76,6 @@ export function ManagementShell({ items, children }: ManagementShellProps) {
         )}
       >
         <Header
-          items={items}
           onToggleSidebar={handleToggleSidebar}
           isSidebarOpen={sidebarOpen}
           sidebarId={sidebarId}
