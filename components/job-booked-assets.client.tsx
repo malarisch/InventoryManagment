@@ -13,7 +13,7 @@ type Booked = {
   company_id: number;
   equipment_id: number | null;
   case_id: number | null;
-  equipments?: { id: number; article_id: number | null; articles?: { name: string | null } | null } | null;
+  equipments?: { id: number; article_id: number | null; articles?: { name: string | null; metadata?: unknown } | null } | null;
   cases?: { id: number } | null;
 };
 
@@ -28,7 +28,7 @@ export function JobBookedAssetsList({ jobId, initial }: { jobId: number; initial
     setLoading(true);
     const { data, error } = await supabase
       .from("job_booked_assets")
-      .select("*, equipments:equipment_id(id, article_id, articles(name)), cases:case_id(id)")
+      .select("*, equipments:equipment_id(id, article_id, articles(name,metadata)), cases:case_id(id)")
       .eq("job_id", jobId)
       .order("created_at", { ascending: false });
     if (!error && Array.isArray(data)) {
@@ -50,7 +50,7 @@ export function JobBookedAssetsList({ jobId, initial }: { jobId: number; initial
           if (!newRowId) return;
           const { data } = await supabase
             .from("job_booked_assets")
-            .select("*, equipments:equipment_id(id, article_id, articles(name)), cases:case_id(id)")
+            .select("*, equipments:equipment_id(id, article_id, articles(name,metadata)), cases:case_id(id)")
             .eq("id", newRowId)
             .limit(1)
             .single();
@@ -69,7 +69,7 @@ export function JobBookedAssetsList({ jobId, initial }: { jobId: number; initial
           if (!updatedId) return;
           const { data } = await supabase
             .from("job_booked_assets")
-            .select("*, equipments:equipment_id(id, article_id, articles(name)), cases:case_id(id)")
+            .select("*, equipments:equipment_id(id, article_id, articles(name,metadata)), cases:case_id(id)")
             .eq("id", updatedId)
             .limit(1)
             .single();
@@ -145,7 +145,7 @@ export function JobBookedAssetsList({ jobId, initial }: { jobId: number; initial
     const { data, error } = await supabase
       .from("job_booked_assets")
       .insert(payload)
-      .select("*, equipments:equipment_id(id, article_id, articles(name)), cases:case_id(id)")
+      .select("*, equipments:equipment_id(id, article_id, articles(name,metadata)), cases:case_id(id)")
       .single();
     if (error) {
       setStatus(error.message);
@@ -248,7 +248,7 @@ export function JobBookedAssetsList({ jobId, initial }: { jobId: number; initial
       {groups.length === 0 ? (
         <div className="text-xs text-muted-foreground">Keine Assets gebucht.</div>
       ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <div className="grid grid-cols-1 gap-6">
           {groups.map((group) => (
             <div key={group.key}>
               <div className="mb-2 text-sm font-medium">{group.key}</div>
@@ -258,8 +258,9 @@ export function JobBookedAssetsList({ jobId, initial }: { jobId: number; initial
                     <div className="min-w-0 flex-1">
                       {e.kind === "equipment" ? (
                         <div className="truncate">
-                          <Link className="underline-offset-2 hover:underline" href={`/management/equipments/${e.refId}`}>Equipment #{e.refId}</Link>
-                          {" • "}{e.articleName ?? (e.articleId ? `Artikel #${e.articleId}` : "—")}
+                          <Link className="underline-offset-2 hover:underline" href={`/management/equipments/${e.refId}`}>
+                            {(e.articleName ?? (e.articleId ? `Artikel #${e.articleId}` : "Equipment")) + ` #${e.refId}`}
+                          </Link>
                         </div>
                       ) : (
                         <div className="truncate">
