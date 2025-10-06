@@ -39,7 +39,8 @@ export function PriceFields({ value, onChange, disabled = false, currencyFallbac
           type="number"
           min={0}
           step="0.01"
-          value={value?.amount ?? ""}
+          // Price.amount is stored in smallest unit (e.g., cents). Display in main unit.
+          value={value?.amount !== undefined ? value.amount / 100 : ""}
           onChange={(event) => {
             const parsed = parseNumber(event.target.value);
             if (parsed === undefined) {
@@ -47,7 +48,8 @@ export function PriceFields({ value, onChange, disabled = false, currencyFallbac
               return;
             }
             const next = ensurePrice(value, currencyFallback);
-            onChange({ ...next, amount: parsed });
+            // Persist in smallest unit (cents)
+            onChange({ ...next, amount: Math.round(parsed * 100) });
           }}
           disabled={disabled}
         />
