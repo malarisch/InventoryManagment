@@ -1,3 +1,32 @@
+2025-10-06 03:15 — Fix 1180px viewport layout issues (iPad Air landscape / MacBook 50% browser width)
+- Adjusted Jobs form grid breakpoint from lg: to xl: to prevent premature side-by-side layout
+- Jobs form: changed lg:grid-cols-12 → xl:grid-cols-12 (activates at 1280px instead of 1024px)
+  * Basisdaten, Termine, and Metadaten-Modus cards now stack vertically at 1180px width
+  * Fixes overlapping "Start-Datum"/"End-Datum" labels and cramped time inputs at iPad Air landscape
+  * Updated all lg:col-span-* → xl:col-span-* for consistent behavior across all cards
+- Why xl: breakpoint: lg: (1024px) was too aggressive for Jobs form complexity
+  * At 1180px, Termine card needs full width for date/time picker components
+  * Complex forms with date pickers benefit from 1280px+ threshold for horizontal layouts
+- Testing: Used Playwright at 1180x820 (iPad Air landscape) and 1600x900 to verify
+  * 1180px: All cards stack vertically with proper spacing ✅
+  * 1600px: Basisdaten and Termine side-by-side with adequate space ✅
+- Files: components/forms/job-edit-form.tsx
+- Result: Jobs form displays properly at intermediate viewports (960px-1280px) without label overlap
+
+2025-10-06 03:00 — Fix 960px viewport layout issues (MacBook 15" at ~60% browser width)
+- Adjusted grid breakpoints in Equipment and Jobs forms to prevent 2-column layout at 960px
+- Equipment form: changed md:grid-cols-2 lg:grid-cols-3 → lg:grid-cols-2 xl:grid-cols-3
+  * Metadata cards (Stromversorgung, Case & Rack Setup, Lebenszyklus) now stack vertically at 960px
+  * Fixes label wrapping and "Ignorieren" checkbox overflow in complex form fields
+  * Updated col-span classes: md:col-span-2/3 → lg:col-span-2/3
+- Jobs form: changed md:grid-cols-12 → lg:grid-cols-12
+  * Basisdaten and Termine cards now stack vertically at 960px instead of cramped side-by-side
+  * Date/time pickers have proper spacing, labels don't break
+  * Updated col-span classes: md:col-span-* → lg:col-span-*
+- Testing: Used Playwright at 960x768 to reproduce and verify fixes on both pages
+- Files: components/forms/{equipment-edit-form,job-edit-form}.tsx
+- Result: All cards display properly at 960px with readable labels and proper field spacing
+
 2025-10-06 02:50 — App-wide layout improvements with Tailwind CSS
 - Systematically improved layouts using Playwright to test at 1024x768 and 1366x768 resolutions
 - Reduced card padding throughout: CardHeader px-4 pt-4 pb-3, CardContent px-4 pb-4
