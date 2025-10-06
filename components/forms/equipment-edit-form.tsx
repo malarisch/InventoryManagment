@@ -206,7 +206,7 @@ export function EquipmentEditForm({ equipment }: { equipment: Equipment }) {
   }
 
   return (
-    <form onSubmit={onSubmit} className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+    <form onSubmit={onSubmit} className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-4">
       <Card>
         <CardHeader className="pb-3 px-4 pt-4">
           <CardTitle className="text-base">Asset Tag</CardTitle>
@@ -282,9 +282,9 @@ export function EquipmentEditForm({ equipment }: { equipment: Equipment }) {
         </CardContent>
       </Card>
 
-      <div className="md:col-span-2 lg:col-span-3 grid grid-cols-1 gap-4">{metadataCards}</div>
+      <div className="lg:col-span-2 xl:col-span-3 grid grid-cols-1 gap-4">{metadataCards}</div>
 
-      <div className="md:col-span-2 lg:col-span-3 flex flex-wrap items-center gap-3 justify-end">
+      <div className="lg:col-span-2 xl:col-span-3 flex flex-wrap items-center gap-3 justify-end">
         <Button type="submit" disabled={saving}>{saving ? "Speichern…" : "Speichern"}</Button>
         {equipment.asset_tag && (
           <Link
