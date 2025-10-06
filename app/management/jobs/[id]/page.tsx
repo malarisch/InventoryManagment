@@ -73,8 +73,8 @@ export default async function JobDetailPage({ params }: { params: Promise<{ id: 
   const title = jobName && jobName.length > 0 ? jobName : `Job #${job.id}`;
 
   return (
-    <main className="w-full flex flex-col">
-      <div className="w-full max-w-7xl mx-auto px-4 py-4 space-y-4">
+    <main className="min-h-screen w-full flex flex-col items-center p-5">
+      <div className="w-full max-w-none flex-1 space-y-4">
         <div className="text-sm text-muted-foreground">
           <Link href="/management/jobs" className="hover:underline">← Zurück zur Übersicht</Link>
         </div>

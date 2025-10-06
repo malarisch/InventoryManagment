@@ -462,7 +462,7 @@ export function ArticleMetadataForm({
       adminMeta.standardData.power.powerConnectorType ??
       undefined;
     return (
-      <Card>
+      <Card className="col-span-2">
         <CardHeader>
           <div className="flex items-start justify-between gap-2">
             <div>
@@ -485,8 +485,8 @@ export function ArticleMetadataForm({
             )}
           </div>
         </CardHeader>
-        <CardContent className="grid gap-4 sm:grid-cols-3">
-          <div className="grid gap-1.5">
+        <CardContent className="grid gap-4 sm:grid-cols-1 grid-flow-row-dense">
+          <div className="grid gap-1.5 col-span-2 sm:col-span-4">
             <div className="flex items-center justify-between">
               <Label htmlFor="amf-power-type">Stromtyp</Label>
               {inherited.powerType && (
@@ -500,6 +500,7 @@ export function ArticleMetadataForm({
                 />
               )}
             </div>
+            
             <select
               id="amf-power-type"
               className="h-9 rounded-md border bg-background px-3 text-sm"
@@ -1100,7 +1101,7 @@ export function ArticleMetadataForm({
   }
 
   return (
-    <div className="grid gap-6 md:grid-cols-2 xl:grid-cols-3">
+    <div className="grid gap-6 md:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4">
       {/* General always spans full width on small screens; let it flow on larger */}
       <div className="col-span-full md:col-span-2 xl:col-span-3">{renderGeneralCard()}</div>
 
@@ -1179,6 +1180,7 @@ interface IgnoreToggleProps {
 
 function IgnoreToggle({ id, label, checked, onChange }: IgnoreToggleProps) {
   return (
+    <div className="flex col-span-2">
     <label
       className="flex items-center gap-2 text-xs text-muted-foreground"
       htmlFor={id}
@@ -1190,6 +1192,7 @@ function IgnoreToggle({ id, label, checked, onChange }: IgnoreToggleProps) {
       />
       {label}
     </label>
+    </div>
   );
 }
 
@@ -1213,8 +1216,8 @@ function PowerInput({
   onChange,
 }: PowerInputProps) {
   return (
-    <div className="grid gap-1.5">
-      <div className="flex items-center justify-between">
+    <div className="grid gap-1.5 md:col-span-2 sm:col-span-4">
+      <div className="items-center justify-between">
         <Label htmlFor={id}>{label}</Label>
         {(placeholder || ignored) && (
           <IgnoreToggle

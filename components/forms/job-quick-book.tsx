@@ -50,17 +50,61 @@ export function JobQuickBook({ jobId }: { jobId: number }) {
         .select("*, articles(name), asset_tags:asset_tag(printed_code)")
         .order("created_at", { ascending: false })
         .limit(1000),
-      supabase.from("cases").select("id, name, description").order("created_at", { ascending: false }).limit(200),
+      supabase
+        .from("cases")
+        .select("id, name, description, contains_equipments, case_equipment")
+        .order("created_at", { ascending: false })
+        .limit(200),
       supabase.from("job_booked_assets").select("equipment_id, case_id").eq("job_id", jobId),
     ]);
-    setArticles((arts.data as Article[] | null) ?? []);
-    setEquipments((eqs.data as Equipment[] | null) ?? []);
-    setCases((cs.data as CaseRow[] | null) ?? []);
-    setBookedEqIds(
-      ((booked.data as Array<{ equipment_id: number | null }> | null) ?? [])
-        .map((entry) => entry.equipment_id)
-        .filter((id): id is number => typeof id === "number"),
-    );
+    const articleRows = (arts.data as Article[] | null) ?? [];
+    const equipmentRows = (eqs.data as Equipment[] | null) ?? [];
+    let caseRows = (cs.data as CaseRow[] | null) ?? [];
+    const bookedRows = (booked.data as Array<{ equipment_id: number | null; case_id: number | null }> | null) ?? [];
+
+    const directEquipmentIds = bookedRows
+      .map((entry) => entry.equipment_id)
+      .filter((id): id is number => typeof id === "number");
+
+    const bookedCaseIds = bookedRows
+      .map((entry) => entry.case_id)
+      .filter((id): id is number => typeof id === "number");
+
+    if (bookedCaseIds.length) {
+      const missingCaseIds = bookedCaseIds.filter((caseId) => !caseRows.some((row) => row.id === caseId));
+      if (missingCaseIds.length) {
+        const { data: missingCases } = await supabase
+          .from("cases")
+          .select("id, name, description, contains_equipments, case_equipment")
+          .in("id", missingCaseIds);
+        if (Array.isArray(missingCases)) {
+          caseRows = [...caseRows, ...(missingCases as CaseRow[])];
+        }
+      }
+    }
+
+    const caseMap = new Map<number, CaseRow>();
+    for (const row of caseRows) {
+      caseMap.set(row.id, row);
+    }
+    const caseRowsUnique = Array.from(caseMap.values());
+
+    const caseIdSet = new Set(bookedCaseIds);
+    const equipmentsFromCases = caseRowsUnique.flatMap((caseRow) => {
+      if (!caseIdSet.has(caseRow.id)) return [];
+      const contained = Array.isArray(caseRow.contains_equipments)
+        ? caseRow.contains_equipments.filter((id): id is number => typeof id === "number")
+        : [];
+      const caseEquipment = typeof caseRow.case_equipment === "number" ? [caseRow.case_equipment] : [];
+      return [...contained, ...caseEquipment];
+    });
+
+    const combinedBooked = Array.from(new Set([...directEquipmentIds, ...equipmentsFromCases]));
+
+    setArticles(articleRows);
+    setEquipments(equipmentRows);
+    setCases(caseRowsUnique);
+    setBookedEqIds(combinedBooked);
     setLoading(false);
   }, [supabase, jobId]);
 
@@ -171,7 +215,7 @@ export function JobQuickBook({ jobId }: { jobId: number }) {
           kind: "success",
           message: `Equipment ${equipment.asset_tags?.printed_code ?? `#${equipment.id}`} gebucht.`,
         });
-        setBookedEqIds((prev) => [...prev, equipment.id]);
+        setBookedEqIds((prev) => (prev.includes(equipment.id) ? prev : [...prev, equipment.id]));
         setSelectedArticle(null);
         void logEvent("job_book_equipment", { job_id: jobId, equipment_id: equipment.id });
         if (typeof window !== 'undefined') {
@@ -246,7 +290,11 @@ export function JobQuickBook({ jobId }: { jobId: number }) {
         } gebucht.`,
       });
       const bookedIds = slice.map((equipment) => equipment.id);
-      setBookedEqIds((prev) => [...prev, ...bookedIds]);
+      setBookedEqIds((prev) => {
+        const next = new Set(prev);
+        for (const id of bookedIds) next.add(id);
+        return Array.from(next);
+      });
       setArticleAmount(1);
       setSelectedArticle(null);
       void logEvent("job_book_article_equipments", { job_id: jobId, article_id: selectedArticle.id, count });

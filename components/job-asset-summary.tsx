@@ -142,11 +142,11 @@ export async function JobAssetSummaryCard({ jobId }: { jobId: number }) {
       <CardHeader>
         <CardTitle>Asset-Zusammenfassung</CardTitle>
         <CardDescription>
-          Übersicht über gebuchte Assets ({summary.itemCount} Einträge)
+          Übersicht über gebuchte Assets
         </CardDescription>
       </CardHeader>
       <CardContent>
-        <div className="grid grid-cols-2 xl:grid-cols-4 gap-4">
+        <div className="grid gap-4 [grid-template-columns:repeat(auto-fit,minmax(16rem,1fr))] lg:grid-cols-2 xl:grid-cols-2 2xl:grid-cols-4">
           <div className="space-y-1">
             <p className="text-sm font-medium text-muted-foreground">Anzahl</p>
             <p className="text-2xl font-bold">{summary.itemCount}</p>
@@ -156,13 +156,12 @@ export async function JobAssetSummaryCard({ jobId }: { jobId: number }) {
           </div>
 
           <div className="space-y-1">
-            <p className="text-sm font-medium text-muted-foreground">Gesamtpreis (Tag)</p>
+            <p className="text-sm font-medium text-muted-foreground">Tagespreis</p>
             {summary.totalPrice !== null && summary.currency ? (
               <p className="text-2xl font-bold">{formatPrice(summary.totalPrice, summary.currency)}</p>
             ) : (
               <p className="text-2xl font-bold text-muted-foreground">—</p>
             )}
-            <p className="text-xs text-muted-foreground">Tagesmiete</p>
           </div>
 
           <div className="space-y-1">
@@ -172,7 +171,6 @@ export async function JobAssetSummaryCard({ jobId }: { jobId: number }) {
             ) : (
               <p className="text-2xl font-bold text-muted-foreground">—</p>
             )}
-            <p className="text-xs text-muted-foreground">Alle Assets</p>
           </div>
 
           <div className="space-y-1">
@@ -182,7 +180,6 @@ export async function JobAssetSummaryCard({ jobId }: { jobId: number }) {
             ) : (
               <p className="text-2xl font-bold text-muted-foreground">—</p>
             )}
-            <p className="text-xs text-muted-foreground">Volumen</p>
           </div>
         </div>
       </CardContent>

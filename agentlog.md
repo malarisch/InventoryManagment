@@ -1,3 +1,29 @@
+2025-10-06 05:05 — Block quick booking of case-contained equipment
+- Extended the quick book loader to merge case contents and container equipment into the booked set so assets already assigned via Cases no longer appear as selectable items
+- Deduplicate booked equipment IDs when booking directly or in batches to keep the picker state consistent
+- Files: components/forms/job-quick-book.tsx
+- Verification: npm run test:tsc ✅
+
+2025-10-06 04:42 — Reinstate wide asset summary grid
+- Kept auto-fit behavior for small/medium screens but enforce 2 columns at lg and 4 columns at xl so the summary returns to 2x2/1x4 layouts on larger displays
+- Files: components/job-asset-summary.tsx
+- Verification: npm run test:tsc ✅
+
+2025-10-06 04:35 — Restore job detail page full-width wrapper
+- Updated the job detail page layout wrappers to match the full-width pattern used elsewhere (`min-h-screen w-full flex flex-col items-center p-5`) so the screen no longer caps at ~2/3 width on large displays
+- Verified visually via Playwright (`job-page-fullwidth.png`) and re-ran npm run test:tsc ✅ to ensure no regressions
+- Files: app/management/jobs/[id]/page.tsx
+
+2025-10-06 04:20 — Relax job asset summary grid breakpoints
+- Updated the asset summary card to stack metrics until large screens (`grid-cols-1 lg:grid-cols-2 xl:grid-cols-4`) so medium viewports no longer squash the text
+- Verification: npm run test:tsc ✅
+- Files: components/job-asset-summary.tsx
+
+2025-10-06 04:28 — Auto-fit job asset summary metrics
+- Replaced fixed grid breakpoints with `grid-template-columns: repeat(auto-fit, minmax(14rem, 1fr))` so metric cards wrap naturally at any width without overlapping
+- Captured before/after Playwright screenshots to confirm spacing at normal viewport sizes; TypeScript compile still clean
+- Files: components/job-asset-summary.tsx
+
 2025-10-06 04:05 — Make management navigation sidebar collapsible
 - Introduced a client-side `ManagementShell` wrapper that manages sidebar visibility with breakpoint-aware defaults (auto-collapsed below 1024px, expanded on large screens)
 - Added a toggle button to the management header plus a slide-in overlay so medium screens can reveal the menu and large screens can collapse it entirely
