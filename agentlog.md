@@ -1,3 +1,13 @@
+2025-10-06 02:50 — App-wide layout improvements with Tailwind CSS
+- Systematically improved layouts using Playwright to test at 1024x768 and 1366x768 resolutions
+- Reduced card padding throughout: CardHeader px-4 pt-4 pb-3, CardContent px-4 pb-4
+- Smaller font sizes: titles text-base/text-lg, descriptions text-xs, dashboard stats text-3xl
+- Tightened spacing: gap-6→gap-4, space-y-4→space-y-3, p-4→p-3 for buttons and containers
+- Added max-width constraints: max-w-[1600px] on main layout, max-w-7xl on detail pages
+- Improved responsive grids: equipment form from md:grid-cols-12 to md:grid-cols-2 lg:grid-cols-3
+- Files: app/management/{page,layout,equipments/[id]/page,jobs/[id]/page}.tsx, components/forms/equipment-edit-form.tsx
+- Result: Cards fit properly on standard screens, no overflow, better space utilization, responsive scaling works correctly
+
 2025-10-06: Job booked assets label format. Updated equipment display to "{Artikelname} #EquipmentId" in grouped list. File: components/job-booked-assets.client.tsx.
 2025-10-06: Pricing convention switch to main units. Store/display Price.amount in main currency units (decimals). Removed /100 from formatters and reverted PriceFields to write decimals. Updated Price doc comment. Files: components/forms/metadata/price-fields.tsx, components/job-booked-assets.client.tsx, components/job-asset-summary.tsx, components/metadataTypes.types.ts.
 2025-10-06: Fix JobAssetSummary data load. Align server select with client (include equipments.articles(name,metadata) and equipment metadata); harden price extraction for 0 amounts; summary now shows totals instead of dashes. File: components/job-asset-summary.tsx.
