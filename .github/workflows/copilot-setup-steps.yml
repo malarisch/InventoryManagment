@@ -94,3 +94,15 @@ jobs:
         run: npx playwright install --with-deps
       - name: Update Supabase Migrations
         run: npx supabase migrations up
+
+      - name: Start Supabase stack
+        run: supabase start
+
+      - name: Export Supabase environment
+        run: ./scripts/write-supabase-env.sh > .env.local
+
+      - name: Create symlink for .env
+        run: ln -s .env.local .env
+
+      - name: Create Prisma client
+        run: npx prisma generate
