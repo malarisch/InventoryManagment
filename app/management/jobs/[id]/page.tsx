@@ -81,9 +81,9 @@ export default async function JobDetailPage({ params }: { params: Promise<{ id: 
         <JobNameProvider initialName={title}>
         
         {/* 2-column layout: 2/3 for main content, 1/3 for sidebar */}
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
+        <div className="grid grid-cols-1 xl:grid-cols-3 gap-4">
           {/* Left column: Main content (2/3) */}
-          <div className="lg:col-span-2 space-y-4">
+          <div className="xl:col-span-2 space-y-4">
             <Card>
               <CardHeader className="pb-3 px-4 pt-4">
                 <CardTitle className="text-lg">
@@ -138,7 +138,7 @@ export default async function JobDetailPage({ params }: { params: Promise<{ id: 
           </div>
 
           {/* Right column: Sidebar (1/3) */}
-          <div className="lg:col-span-1 space-y-4">
+          <div className="xl:col-span-1 space-y-4">
             <JobAssetSummaryCard jobId={id} />
             
             <Card>
