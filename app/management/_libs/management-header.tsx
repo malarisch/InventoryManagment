@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useMemo, useState, type ComponentType, type SVGProps } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { ThemeSwitcher } from "@/components/theme-switcher";
 import {
@@ -9,22 +9,9 @@ import {
   Search,
   Bell,
   User,
-  LayoutDashboard,
-  Package,
-  Box,
-  MapPin,
-  Settings,
-  Briefcase,
-  Users,
-  Archive,
-  Wrench,
-  Scan,
-  Tag,
-  FilePlus,
   PanelLeftOpen,
   PanelLeftClose,
 } from "lucide-react";
-import { cn } from "@/lib/utils";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -45,35 +32,13 @@ import { GlobalSearchModal } from "@/components/search/global-search-modal";
 import { useGlobalSearch } from "@/components/search/use-global-search";
 import { useRouter } from "next/navigation";
 
-type NavItem = {
-  label: string;
-  href: string;
-  icon: string; // lucide icon name
-};
-
-const iconMap: Record<string, ComponentType<SVGProps<SVGSVGElement>>> = {
-  "layout-dashboard": LayoutDashboard,
-  package: Package,
-  box: Box,
-  "map-pin": MapPin,
-  briefcase: Briefcase,
-  users: Users,
-  archive: Archive,
-  settings: Settings,
-  wrench: Wrench,
-  scan: Scan,
-  tag: Tag,
-  "file-plus": FilePlus,
-};
-
 type HeaderProps = {
-  items: NavItem[];
   onToggleSidebar?: () => void;
   isSidebarOpen?: boolean;
   sidebarId?: string;
 };
 
-export function Header({ items, onToggleSidebar, isSidebarOpen = false, sidebarId }: HeaderProps) {
+export function Header({ onToggleSidebar, isSidebarOpen = false, sidebarId }: HeaderProps) {
   const { isOpen: searchOpen, openSearch, closeSearch } = useGlobalSearch();
 
   return (

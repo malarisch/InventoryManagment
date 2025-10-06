@@ -92,11 +92,11 @@ jobs:
 
       - name: Install Playwright browsers (populate cache)
         run: npx playwright install --with-deps
-      - name: Update Supabase Migrations
-        run: npx supabase migrations up
 
       - name: Start Supabase stack
         run: supabase start
+      - name: Update Supabase Migrations
+        run: npx supabase migrations up
 
       - name: Export Supabase environment
         run: ./scripts/write-supabase-env.sh > .env.local
