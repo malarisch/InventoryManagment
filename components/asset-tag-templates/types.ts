@@ -7,6 +7,7 @@ export type AssetTagTemplateElement = {
   size?: number; // Font size OR square size / width
   height?: number; // optional height for images (falls back to size if omitted)
   color?: string; // Color override (ignored for image except maybe tint future)
+  textAlign?: 'left' | 'center' | 'right';
 };
 
 export type AssetTagTemplate = {

@@ -12,6 +12,9 @@ import {
   Users,
   Archive,
   Wrench,
+  Scan,
+  Tag,
+  FilePlus,
 } from "lucide-react";
 import { CompanyNameHeader } from "@/app/management/_libs/company-name-header";
 import React from "react";
@@ -32,6 +35,9 @@ const iconMap: Record<string, React.ComponentType<React.SVGProps<SVGSVGElement>>
   archive: Archive,
   settings: Settings,
   wrench: Wrench,
+  scan: Scan,
+  tag: Tag,
+  "file-plus": FilePlus,
 };
 
 export function Sidebar({ items }: { items: NavItem[] }) {

@@ -79,8 +79,7 @@
 - Profilpflege in der App unter `/management/settings`.
 
 ### Seed Dump
-- Button in `/management/company-settings` erzeugt via API (`POST /api/admin/dump-seed`) eine `supabase/seed.sql` mit Daten aus `auth.users`, `auth.identities` und allen `public`-Tabellen (FK-Reihenfolge, `truncate ... restart identity cascade` + `insert`).
-- Server-seitig wird der Admin-Client (`SUPABASE_SERVICE_ROLE_KEY`) genutzt, nur für authentifizierte Owner einer Company.
+- Die frühere `/api/admin/dump-seed` Funktionalität wurde entfernt. Nutze bei Bedarf den Company-Export (`/api/company/dump-company`) und die Import-Workflows.
 
 ## Agent Workflow & Logging
 - Whenever you are planning to implement a feature you have heared about in the `todos.md`, read it again to make sure you have the correct understanding of what the user wants. When writing to it read it first so you don't overwrite any changes made by the user while you were working. The same is true for `human-review-todos.md`.

@@ -1,3 +1,180 @@
+2025-10-06 08:25 — Fix mobile sidebar toggle wiring
+- Entfernte veralteten `MobileDrawer` im Header und verbinden den mobilen Menübutton direkt mit dem Shell-Sidebar-Toggle inkl. ARIA-Attributen
+- Sidebar klappt jetzt auch auf kleinen Screens korrekt ein/aus; Typprüfung grün
+- Files: app/management/_libs/management-header.tsx
+- Verification: npm run test:tsc ✅
+
+2025-10-06 08:12 — Fix template preview hook deps
+- Ergänzte `template.textSizePt` in der `findElementAt` useCallback-Dependency, damit `next build`/eslint keine Missing-Dependency-Warnung mehr wirft
+- Files: components/asset-tag-templates/template-preview.tsx
+- Verification: npm run test:tsc ✅
+
+2025-10-06 08:05 — Remove obsolete dump-seed API & UI
+- Deprecated `/api/admin/dump-seed` Route gelöscht und Company Settings Card samt Fetch-Handler entfernt; Dokumentation zeigt nun nur noch den JSON-Export Workflow
+- Files: app/api/admin/dump-seed/route.ts (deleted), components/company-settings-form.tsx, AGENTS.md
+- Verification: npm run test:tsc ✅
+
+2025-10-06 07:55 — Fix user menu hydration id mismatch
+- Dropdown Trigger bekommt feste ID `user-menu-trigger` und Content `user-menu-content`, damit SSR/CSR dieselben Attribute liefern
+- Verhindert Radix/React Hydrationswarnung durch zufällige generierte IDs in DropdownMenuTrigger
+- Files: app/management/_libs/management-header.tsx
+- Verification: npm run test:tsc ✅
+
+2025-10-06 07:40 — Relative alignment controls & canvas clamp
+- Ergänzte relative Ausrichtungsbuttons je Referenz-Element (Links/Mitte/Rechts und Oben/Mitte/Unten) inklusive Bounding-Box-Messung via Hidden-Canvas
+- Canvas-Ausrichtung berücksichtigt jetzt Elementbreite/-höhe und hält Rechts/Unten innerhalb des Tagbereichs
+- Files: components/forms/asset-tag-template-form.tsx
+- Verification: npm run test:tsc ✅
+
+2025-10-06 07:25 — Add canvas alignment shortcuts for tag elements
+- Ergänzte Buttons zur schnellen Ausrichtung auf Canvas-Ränder (links/mittig/rechts sowie oben/mittig/unten) mit 2-Stellen-Rundung für Koordinaten
+- Reuse Form-SetValue, verträgt gemischte Maße und ignoriert ungültige Template-Dimensionen gracefully
+- Files: components/forms/asset-tag-template-form.tsx
+- Verification: npm run test:tsc ✅
+
+2025-10-06 07:10 — Align template elements to peers
+- Ergänzte Ausrichtungskontrollen im Template-Editor: Auswahl anderer Elemente plus Buttons zum Angleichen von X- bzw. Y-Positionen mit 2‑Stellen-Rundung
+- UI verwaltet Referenz-IDs unabhängig von Feldreihenfolge und aktualisiert Formwerte via setValue
+- Files: components/forms/asset-tag-template-form.tsx
+- Verification: npm run test:tsc ✅
+
+2025-10-06 06:55 — Allow selecting form controls after dragging
+- Normalisierte Pointer-Events: Drag-End wird nun zuverlässig beim Verlassen der Canvas oder bei Klicks außerhalb beendet, sodass Form Inputs/Dropdowns den Fokus behalten
+- Files: components/asset-tag-templates/template-preview.tsx
+- Verification: npm run test:tsc ✅
+
+2025-10-06 06:40 — Show drag handle at element anchor
+- Overlay handle now renders exactly am Anchorpunkt (inkl. Baseline bei Text), sodass klar ist, welche Koordinate der Nutzer verschiebt
+- Basisdaten in Bounding-Box-Helper erweitert und die Vorschau neu justiert
+- Files: components/asset-tag-templates/template-preview.tsx
+- Verification: npm run test:tsc ✅
+
+2025-10-06 06:30 — Keep text alignment dropdown usable
+- Extended the preview overlay to skip drag interactions for ~120ms after pointer down so the new alignment select stays focusable, preventing immediate blur
+- Also guard against lingering drag state by cancelling on pointerleave and ensure SVG redraw isn’t triggered redundantly
+- Files: components/asset-tag-templates/template-preview.tsx
+- Verification: npm run test:tsc ✅
+
+2025-10-06 06:15 — Add text alignment controls to asset tag templates
+- Introduced per-element alignment (links/zentriert/rechts) with matching SVG generation so text anchors from the specified edge/center
+- Updated template builder UI, drag overlay, and preview hit-box logic to respect the new anchors while keeping coordinates relative to the chosen alignment
+- Files: components/forms/asset-tag-template-form.tsx, components/asset-tag-templates/{template-preview.tsx,types.ts}, lib/asset-tags/svg-generator.ts
+- Verification: npm run test:tsc ✅
+
+2025-10-06 05:55 — Speed up job asset summary refresh
+- Moved the asset summary logic into a shared helper and wrapped the card in a client component that listens to realtime + refresh events instead of forcing full router refreshes
+- Removed router.refresh() calls from booking flows to avoid reloading the entire page while still broadcasting summary updates
+- Files: components/job-asset-summary{.tsx,.client.tsx}, components/job-booked-assets.client.tsx, components/forms/job-quick-book.tsx, lib/jobs/asset-summary.ts
+- Verification: npm run test:tsc ✅
+
+2025-10-06 05:30 — Refresh job asset summary after bookings
+- Trigger router.refresh() after booking, removing, or undoing assets so the server-side summary updates immediately
+- Hooked the quick book picker into the shared refresh event to reload availability when bookings change elsewhere on the page
+- Files: components/job-booked-assets.client.tsx, components/forms/job-quick-book.tsx
+- Verification: npm run test:tsc ✅
+
+2025-10-06 05:05 — Block quick booking of case-contained equipment
+- Extended the quick book loader to merge case contents and container equipment into the booked set so assets already assigned via Cases no longer appear as selectable items
+- Deduplicate booked equipment IDs when booking directly or in batches to keep the picker state consistent
+- Files: components/forms/job-quick-book.tsx
+- Verification: npm run test:tsc ✅
+
+2025-10-06 04:42 — Reinstate wide asset summary grid
+- Kept auto-fit behavior for small/medium screens but enforce 2 columns at lg and 4 columns at xl so the summary returns to 2x2/1x4 layouts on larger displays
+- Files: components/job-asset-summary.tsx
+- Verification: npm run test:tsc ✅
+
+2025-10-06 04:35 — Restore job detail page full-width wrapper
+- Updated the job detail page layout wrappers to match the full-width pattern used elsewhere (`min-h-screen w-full flex flex-col items-center p-5`) so the screen no longer caps at ~2/3 width on large displays
+- Verified visually via Playwright (`job-page-fullwidth.png`) and re-ran npm run test:tsc ✅ to ensure no regressions
+- Files: app/management/jobs/[id]/page.tsx
+
+2025-10-06 04:20 — Relax job asset summary grid breakpoints
+- Updated the asset summary card to stack metrics until large screens (`grid-cols-1 lg:grid-cols-2 xl:grid-cols-4`) so medium viewports no longer squash the text
+- Verification: npm run test:tsc ✅
+- Files: components/job-asset-summary.tsx
+
+2025-10-06 04:28 — Auto-fit job asset summary metrics
+- Replaced fixed grid breakpoints with `grid-template-columns: repeat(auto-fit, minmax(14rem, 1fr))` so metric cards wrap naturally at any width without overlapping
+- Captured before/after Playwright screenshots to confirm spacing at normal viewport sizes; TypeScript compile still clean
+- Files: components/job-asset-summary.tsx
+
+2025-10-06 04:05 — Make management navigation sidebar collapsible
+- Introduced a client-side `ManagementShell` wrapper that manages sidebar visibility with breakpoint-aware defaults (auto-collapsed below 1024px, expanded on large screens)
+- Added a toggle button to the management header plus a slide-in overlay so medium screens can reveal the menu and large screens can collapse it entirely
+- Extended sidebar/header icon maps to cover all nav entries and synced content padding with sidebar width
+- Verification: npm run test:tsc ✅
+- Files: app/management/_libs/{management-shell.tsx,management-header.tsx,management-sidebar.tsx}, app/management/layout.tsx
+
+2025-10-06 03:30 — Simplify Jobs form grid to utilize full width with 2-column layout
+- Changed Jobs form from xl:grid-cols-12 to xl:grid-cols-2 for cleaner, full-width usage
+- Previous 12-column grid: Basisdaten (5 cols) + Termine (4 cols) = 9 cols used, leaving 3 empty
+- New 2-column grid: Basisdaten + Termine each take 1 column (50% width at xl:)
+- Metadaten-Modus, metadata sections, and save button now span full width (xl:col-span-2)
+- Result: Form now uses **entire available width** of the left column in page's lg:grid-cols-3 layout
+- Behavior unchanged at mobile/tablet (still stacks vertically below 1280px)
+- Files: components/forms/job-edit-form.tsx
+- Why: Simpler grid system, no wasted space, easier to maintain
+
+2025-10-06 03:25 — Fix responsive grid clipping in Termine and Asset-Zusammenfassung cards
+- Termine card: changed sm:grid-cols-2 → md:grid-cols-2 for date/time picker grids
+  * Date pickers were clipping at small widths (sm: 640px too early for DatePicker components)
+  * Now stack vertically below 768px, side-by-side at md: (768px+)
+  * Time inputs also respect md: breakpoint for consistent behavior
+- Asset-Zusammenfassung: changed grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 → grid-cols-2 xl:grid-cols-4
+  * Previous lg: (1024px) caused stat cards with text-2xl to overlap at intermediate widths
+  * Now starts with 2-column grid (mobile-friendly), expands to 4 columns at xl: (1280px+)
+  * Large stat values (prices, weights) have adequate space without clipping
+- Reason: sm: and lg: breakpoints too aggressive for components with large text/interactive elements
+- Files: components/forms/job-edit-form.tsx, components/job-asset-summary.tsx
+- Result: No more element clipping or overlap in Termine and Asset-Zusammenfassung cards
+
+2025-10-06 03:15 — Fix 1180px viewport layout issues (iPad Air landscape / MacBook 50% browser width)
+- Adjusted Jobs form grid breakpoint from lg: to xl: to prevent premature side-by-side layout
+- Jobs form: changed lg:grid-cols-12 → xl:grid-cols-12 (activates at 1280px instead of 1024px)
+  * Basisdaten, Termine, and Metadaten-Modus cards now stack vertically at 1180px width
+  * Fixes overlapping "Start-Datum"/"End-Datum" labels and cramped time inputs at iPad Air landscape
+  * Updated all lg:col-span-* → xl:col-span-* for consistent behavior across all cards
+- Why xl: breakpoint: lg: (1024px) was too aggressive for Jobs form complexity
+  * At 1180px, Termine card needs full width for date/time picker components
+  * Complex forms with date pickers benefit from 1280px+ threshold for horizontal layouts
+- Testing: Used Playwright at 1180x820 (iPad Air landscape) and 1600x900 to verify
+  * 1180px: All cards stack vertically with proper spacing ✅
+  * 1600px: Basisdaten and Termine side-by-side with adequate space ✅
+- Files: components/forms/job-edit-form.tsx
+- Result: Jobs form displays properly at intermediate viewports (960px-1280px) without label overlap
+
+2025-10-06 03:00 — Fix 960px viewport layout issues (MacBook 15" at ~60% browser width)
+- Adjusted grid breakpoints in Equipment and Jobs forms to prevent 2-column layout at 960px
+- Equipment form: changed md:grid-cols-2 lg:grid-cols-3 → lg:grid-cols-2 xl:grid-cols-3
+  * Metadata cards (Stromversorgung, Case & Rack Setup, Lebenszyklus) now stack vertically at 960px
+  * Fixes label wrapping and "Ignorieren" checkbox overflow in complex form fields
+  * Updated col-span classes: md:col-span-2/3 → lg:col-span-2/3
+- Jobs form: changed md:grid-cols-12 → lg:grid-cols-12
+  * Basisdaten and Termine cards now stack vertically at 960px instead of cramped side-by-side
+  * Date/time pickers have proper spacing, labels don't break
+  * Updated col-span classes: md:col-span-* → lg:col-span-*
+- Testing: Used Playwright at 960x768 to reproduce and verify fixes on both pages
+- Files: components/forms/{equipment-edit-form,job-edit-form}.tsx
+- Result: All cards display properly at 960px with readable labels and proper field spacing
+
+2025-10-06 02:50 — App-wide layout improvements with Tailwind CSS
+- Systematically improved layouts using Playwright to test at 1024x768 and 1366x768 resolutions
+- Reduced card padding throughout: CardHeader px-4 pt-4 pb-3, CardContent px-4 pb-4
+- Smaller font sizes: titles text-base/text-lg, descriptions text-xs, dashboard stats text-3xl
+- Tightened spacing: gap-6→gap-4, space-y-4→space-y-3, p-4→p-3 for buttons and containers
+- Added max-width constraints: max-w-[1600px] on main layout, max-w-7xl on detail pages
+- Improved responsive grids: equipment form from md:grid-cols-12 to md:grid-cols-2 lg:grid-cols-3
+- Files: app/management/{page,layout,equipments/[id]/page,jobs/[id]/page}.tsx, components/forms/equipment-edit-form.tsx
+- Result: Cards fit properly on standard screens, no overflow, better space utilization, responsive scaling works correctly
+
+2025-10-06: Job booked assets label format. Updated equipment display to "{Artikelname} #EquipmentId" in grouped list. File: components/job-booked-assets.client.tsx.
+2025-10-06: Pricing convention switch to main units. Store/display Price.amount in main currency units (decimals). Removed /100 from formatters and reverted PriceFields to write decimals. Updated Price doc comment. Files: components/forms/metadata/price-fields.tsx, components/job-booked-assets.client.tsx, components/job-asset-summary.tsx, components/metadataTypes.types.ts.
+2025-10-06: Fix JobAssetSummary data load. Align server select with client (include equipments.articles(name,metadata) and equipment metadata); harden price extraction for 0 amounts; summary now shows totals instead of dashes. File: components/job-asset-summary.tsx.
+2025-10-06: Inheritance + price data fixes. Equipment creation now inherits article.default_location when none selected; job booked assets queries include article.metadata so per-item and summary prices display consistently. Files: components/forms/equipment-create-form.tsx, components/job-booked-assets{.tsx,.client.tsx}, components/job-asset-summary.tsx.
+2025-10-06: Job booked assets grouped list. Refactored `JobBookedAssetsList` to a grouped, searchable list by article type (SearchPicker-like UX) with per-item price display from `article.metadata.dailyRentalRate`. Retained realtime + event-based refresh and undo. Files: components/job-booked-assets.client.tsx.
+2025-10-06: Refactor case edit layout. Moved `CaseEditItemsForm` out of the header Card on the case detail page and rewired the form into a 12-col responsive grid so cards flow on large screens and stack on mobile. Files: app/management/cases/[id]/page.tsx, components/forms/case-edit-items-form.tsx.
+2025-10-05: a11y label associations pass. Added htmlFor/id pairs across asset tag template form; extended SearchPicker with buttonProps to allow id/aria-labelledby; wired 'Typ' labels in article/equipment metadata; added ids for rack/inner-dims and connectivity/interfaces headings. Files: components/forms/asset-tag-template-form.tsx, components/search/search-picker.tsx, components/forms/partials/{article,equipment}-metadata-form.tsx. Next: consider passing aria-labelledby into StringListInput inputs for stricter label association.
 2025-10-03 17:08 — Tests: remove manual ID inserts in seeding
 2025-10-04 10:15 — CI: split tests into staged workflows
 - Added four workflows: CI Prepare, CI Lint + TSC, CI Vitest, CI Playwright E2E

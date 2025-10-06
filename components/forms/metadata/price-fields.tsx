@@ -39,6 +39,7 @@ export function PriceFields({ value, onChange, disabled = false, currencyFallbac
           type="number"
           min={0}
           step="0.01"
+          // Price.amount is stored in main currency units (e.g., 10.50 for €10,50)
           value={value?.amount ?? ""}
           onChange={(event) => {
             const parsed = parseNumber(event.target.value);
@@ -47,6 +48,7 @@ export function PriceFields({ value, onChange, disabled = false, currencyFallbac
               return;
             }
             const next = ensurePrice(value, currencyFallback);
+            // Persist as main unit decimal
             onChange({ ...next, amount: parsed });
           }}
           disabled={disabled}

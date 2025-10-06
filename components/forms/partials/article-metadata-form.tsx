@@ -326,7 +326,7 @@ export function ArticleMetadataForm({
         </CardHeader>
         <CardContent className="grid gap-4 sm:grid-cols-2">
           <div className="grid gap-1.5">
-            <Label>Typ (erforderlich)</Label>
+            <Label id="amf-type-label">Typ (erforderlich)</Label>
             <SearchPicker
               items={articleTypeItems}
               onSelect={(item) => setTextField("type", item.data)}
@@ -334,6 +334,7 @@ export function ArticleMetadataForm({
               buttonLabel={local.type ?? "Typ auswählen"}
               categoryLabels={{ type: "Artikeltypen" }}
               resetOnSelect={false}
+              buttonProps={{ "aria-labelledby": "amf-type-label amf-type-button", id: "amf-type-button" }}
             />
           </div>
           <div className="grid gap-1.5">
@@ -461,7 +462,7 @@ export function ArticleMetadataForm({
       adminMeta.standardData.power.powerConnectorType ??
       undefined;
     return (
-      <Card>
+      <Card className="col-span-2">
         <CardHeader>
           <div className="flex items-start justify-between gap-2">
             <div>
@@ -484,8 +485,8 @@ export function ArticleMetadataForm({
             )}
           </div>
         </CardHeader>
-        <CardContent className="grid gap-4 sm:grid-cols-3">
-          <div className="grid gap-1.5">
+        <CardContent className="grid gap-4 sm:grid-cols-1 grid-flow-row-dense">
+          <div className="grid gap-1.5 col-span-2 sm:col-span-4">
             <div className="flex items-center justify-between">
               <Label htmlFor="amf-power-type">Stromtyp</Label>
               {inherited.powerType && (
@@ -499,6 +500,7 @@ export function ArticleMetadataForm({
                 />
               )}
             </div>
+            
             <select
               id="amf-power-type"
               className="h-9 rounded-md border bg-background px-3 text-sm"
@@ -574,6 +576,8 @@ export function ArticleMetadataForm({
     );
   }
 
+  
+
   function renderCaseCard() {
     if (!activeSections.includes("case")) return null;
     const caseMeta = local.case ?? {};
@@ -612,7 +616,7 @@ export function ArticleMetadataForm({
         <CardContent className="grid gap-4">
           {/* Mode Selection - Radio Buttons */}
           <div className="grid gap-3">
-            <Label>Rack-Konfiguration</Label>
+            <Label id="amf-rack-config-label" aria-label="Rack-Konfiguration">Rack-Konfiguration</Label>
             <div className="flex flex-col gap-2">
               <div className="flex items-center space-x-2">
                 <Checkbox
@@ -787,7 +791,7 @@ export function ArticleMetadataForm({
           {caseMeta.isGeneralCase && (
             <>
               <div className="grid gap-1.5">
-                <Label>Innenmaße (cm)</Label>
+                <Label id="amf-inner-dims-label" aria-label="Innenmaße (cm)">Innenmaße (cm)</Label>
                 <div className="grid grid-cols-3 gap-3">
                   <div className="grid gap-1.5">
                     <Label htmlFor="case-inner-w" className="text-xs">
@@ -953,7 +957,7 @@ export function ArticleMetadataForm({
         </CardHeader>
         <CardContent className="grid gap-4">
           <div className="grid gap-1.5">
-            <Label htmlFor="connectivity-list">Konnektivität</Label>
+            <Label id="amf-connectivity-label">Konnektivität</Label>
             <StringListInput
               values={local.connectivity ?? []}
               onChange={(next) =>
@@ -963,7 +967,7 @@ export function ArticleMetadataForm({
             />
           </div>
           <div className="grid gap-1.5">
-            <Label htmlFor="interfaces-list">Schnittstellen</Label>
+            <Label id="amf-interfaces-label">Schnittstellen</Label>
             <StringListInput
               values={local.interfaces ?? []}
               onChange={(next) =>
@@ -1097,34 +1101,30 @@ export function ArticleMetadataForm({
   }
 
   return (
-    <>
-      {renderGeneralCard()}
-      
-      {/* Undo Banner */}
+    <div className="grid gap-6 md:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4">
+      {/* General always spans full width on small screens; let it flow on larger */}
+      <div className="col-span-full md:col-span-2 xl:col-span-3">{renderGeneralCard()}</div>
+
+      {/* Undo Banner across the grid */}
       {recentlyRemoved && (
-        <div className="flex items-center justify-between rounded-md border border-yellow-500/50 bg-yellow-50 dark:bg-yellow-950/20 px-4 py-3">
+        <div className="col-span-full flex items-center justify-between rounded-md border border-yellow-500/50 bg-yellow-50 dark:bg-yellow-950/20 px-4 py-3">
           <span className="text-sm">
             Bereich entfernt: <strong>{SECTION_DEFINITIONS.find(s => s.id === recentlyRemoved)?.title}</strong>
           </span>
-          <Button
-            type="button"
-            variant="outline"
-            size="sm"
-            onClick={undoRemoveSection}
-          >
+          <Button type="button" variant="outline" size="sm" onClick={undoRemoveSection}>
             Rückgängig
           </Button>
         </div>
       )}
-      
+
       {renderPhysicalCard()}
       {renderPowerCard()}
       {renderCaseCard()}
       {renderConnectivityCard()}
       {renderSuppliersCard()}
       {renderNotesCard()}
-      {renderSectionAddCard()}
-    </>
+      <div className="col-span-full">{renderSectionAddCard()}</div>
+    </div>
   );
 }
 
@@ -1180,6 +1180,7 @@ interface IgnoreToggleProps {
 
 function IgnoreToggle({ id, label, checked, onChange }: IgnoreToggleProps) {
   return (
+    <div className="flex col-span-2">
     <label
       className="flex items-center gap-2 text-xs text-muted-foreground"
       htmlFor={id}
@@ -1191,6 +1192,7 @@ function IgnoreToggle({ id, label, checked, onChange }: IgnoreToggleProps) {
       />
       {label}
     </label>
+    </div>
   );
 }
 
@@ -1214,8 +1216,8 @@ function PowerInput({
   onChange,
 }: PowerInputProps) {
   return (
-    <div className="grid gap-1.5">
-      <div className="flex items-center justify-between">
+    <div className="grid gap-1.5 md:col-span-2 sm:col-span-4">
+      <div className="items-center justify-between">
         <Label htmlFor={id}>{label}</Label>
         {(placeholder || ignored) && (
           <IgnoreToggle

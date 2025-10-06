@@ -134,14 +134,14 @@ export function EquipmentEditForm({ equipment }: { equipment: Equipment }) {
 
   const metadataCards = advanced ? (
     <Card>
-      <CardHeader>
-        <CardTitle>Equipment-Metadaten (JSON)</CardTitle>
-        <CardDescription>Direktes Bearbeiten der JSON-Struktur</CardDescription>
+      <CardHeader className="pb-3 px-4 pt-4">
+        <CardTitle className="text-base">Equipment-Metadaten (JSON)</CardTitle>
+        <CardDescription className="text-xs">Direktes Bearbeiten der JSON-Struktur</CardDescription>
       </CardHeader>
-      <CardContent className="grid gap-2">
+      <CardContent className="px-4 pb-4">
         <textarea
           id="metadata"
-          className="min-h-[140px] w-full rounded-md border bg-background p-2 text-sm font-mono"
+          className="min-h-[140px] w-full rounded-md border bg-background p-2 text-xs font-mono"
           value={metaText}
           onChange={(event) => setMetaText(event.target.value)}
           spellCheck={false}
@@ -206,15 +206,15 @@ export function EquipmentEditForm({ equipment }: { equipment: Equipment }) {
   }
 
   return (
-    <form onSubmit={onSubmit} className="grid grid-cols-1 md:grid-cols-12 gap-6">
-      <Card className="md:col-span-4">
-        <CardHeader>
-          <CardTitle>Asset Tag</CardTitle>
-          <CardDescription>Vorhandenen Tag zuordnen</CardDescription>
+    <form onSubmit={onSubmit} className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-4">
+      <Card>
+        <CardHeader className="pb-3 px-4 pt-4">
+          <CardTitle className="text-base">Asset Tag</CardTitle>
+          <CardDescription className="text-xs">Vorhandenen Tag zuordnen</CardDescription>
         </CardHeader>
-        <CardContent>
+        <CardContent className="px-4 pb-4">
           <div className="grid gap-2">
-            <Label htmlFor="asset_tag">Asset Tag</Label>
+            <Label htmlFor="asset_tag" className="text-sm">Asset Tag</Label>
             <select
               id="asset_tag"
               className="h-9 rounded-md border bg-background px-3 text-sm"
@@ -232,14 +232,14 @@ export function EquipmentEditForm({ equipment }: { equipment: Equipment }) {
         </CardContent>
       </Card>
 
-      <Card className="md:col-span-4">
-        <CardHeader>
-          <CardTitle>Zuordnung</CardTitle>
-          <CardDescription>Artikel und Standort</CardDescription>
+      <Card>
+        <CardHeader className="pb-3 px-4 pt-4">
+          <CardTitle className="text-base">Zuordnung</CardTitle>
+          <CardDescription className="text-xs">Artikel und Standort</CardDescription>
         </CardHeader>
-        <CardContent className="space-y-3">
+        <CardContent className="space-y-3 px-4 pb-4">
           <div className="grid gap-2">
-            <Label htmlFor="article_id">Artikel</Label>
+            <Label htmlFor="article_id" className="text-sm">Artikel</Label>
             <select
               id="article_id"
               className="h-9 rounded-md border bg-background px-3 text-sm"
@@ -253,7 +253,7 @@ export function EquipmentEditForm({ equipment }: { equipment: Equipment }) {
             </select>
           </div>
           <div className="grid gap-2">
-            <Label htmlFor="current_location">Aktueller Standort</Label>
+            <Label htmlFor="current_location" className="text-sm">Aktueller Standort</Label>
             <select
               id="current_location"
               className="h-9 rounded-md border bg-background px-3 text-sm"
@@ -269,12 +269,12 @@ export function EquipmentEditForm({ equipment }: { equipment: Equipment }) {
         </CardContent>
       </Card>
 
-      <Card className="md:col-span-4">
-        <CardHeader>
-          <CardTitle>Metadaten-Modus</CardTitle>
-          <CardDescription>Zwischen Formular und JSON wechseln</CardDescription>
+      <Card>
+        <CardHeader className="pb-3 px-4 pt-4">
+          <CardTitle className="text-base">Metadaten-Modus</CardTitle>
+          <CardDescription className="text-xs">Zwischen Formular und JSON wechseln</CardDescription>
         </CardHeader>
-        <CardContent>
+        <CardContent className="px-4 pb-4">
           <label className="flex items-center gap-2 text-sm">
             <input type="checkbox" checked={advanced} onChange={(event) => setAdvanced(event.target.checked)} />
             Expertenmodus (JSON bearbeiten)
@@ -282,9 +282,9 @@ export function EquipmentEditForm({ equipment }: { equipment: Equipment }) {
         </CardContent>
       </Card>
 
-      <div className="md:col-span-12 grid grid-cols-1 gap-6">{metadataCards}</div>
+      <div className="lg:col-span-2 xl:col-span-3 grid grid-cols-1 gap-4">{metadataCards}</div>
 
-      <div className="md:col-span-12 flex flex-wrap items-center gap-3 justify-end">
+      <div className="lg:col-span-2 xl:col-span-3 flex flex-wrap items-center gap-3 justify-end">
         <Button type="submit" disabled={saving}>{saving ? "Speichern…" : "Speichern"}</Button>
         {equipment.asset_tag && (
           <Link

@@ -9,7 +9,6 @@ import {
   Search,
   Bell,
   User,
-  X,
   LayoutDashboard,
   Package,
   Box,
@@ -19,9 +18,13 @@ import {
   Users,
   Archive,
   Wrench,
+  Scan,
+  Tag,
+  FilePlus,
+  PanelLeftOpen,
+  PanelLeftClose,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { usePathname } from "next/navigation";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -58,10 +61,19 @@ const iconMap: Record<string, ComponentType<SVGProps<SVGSVGElement>>> = {
   archive: Archive,
   settings: Settings,
   wrench: Wrench,
+  scan: Scan,
+  tag: Tag,
+  "file-plus": FilePlus,
 };
 
-export function Header({ items }: { items: NavItem[] }) {
-  const [open, setOpen] = useState(false);
+type HeaderProps = {
+  items: NavItem[];
+  onToggleSidebar?: () => void;
+  isSidebarOpen?: boolean;
+  sidebarId?: string;
+};
+
+export function Header({ items, onToggleSidebar, isSidebarOpen = false, sidebarId }: HeaderProps) {
   const { isOpen: searchOpen, openSearch, closeSearch } = useGlobalSearch();
 
   return (
@@ -72,11 +84,27 @@ export function Header({ items }: { items: NavItem[] }) {
             variant="ghost"
             size="icon"
             className="md:hidden"
-            aria-label="Open navigation"
-            onClick={() => setOpen(true)}
+            aria-label={isSidebarOpen ? "Navigation schließen" : "Navigation öffnen"}
+            aria-controls={sidebarId}
+            aria-expanded={isSidebarOpen}
+            onClick={() => onToggleSidebar?.()}
           >
             <Menu className="h-5 w-5" />
           </Button>
+
+          {onToggleSidebar ? (
+            <Button
+              variant="ghost"
+              size="icon"
+              className="hidden md:inline-flex"
+              aria-label={isSidebarOpen ? "Navigation einklappen" : "Navigation ausklappen"}
+              aria-controls={sidebarId}
+              aria-expanded={isSidebarOpen}
+              onClick={onToggleSidebar}
+            >
+              {isSidebarOpen ? <PanelLeftClose className="h-5 w-5" /> : <PanelLeftOpen className="h-5 w-5" />}
+            </Button>
+          ) : null}
 
           <div className="flex items-center gap-2 text-sm text-muted-foreground">
             <span className="hidden sm:inline">Inventory</span>
@@ -108,58 +136,11 @@ export function Header({ items }: { items: NavItem[] }) {
         </div>
 
         {/* Mobile drawer */}
-        {open ? (
-          <MobileDrawer items={items} onClose={() => setOpen(false)} />
-        ) : null}
       </header>
       
       {/* Global Search Modal */}
       <GlobalSearchModal isOpen={searchOpen} onClose={closeSearch} />
     </>
-  );
-}
-
-function MobileDrawer({ items, onClose }: { items: NavItem[]; onClose: () => void }) {
-  const pathname = usePathname();
-
-  return (
-    <div className="fixed inset-0 z-40 md:hidden">
-      <div
-        className="absolute inset-0 bg-black/40"
-        onClick={onClose}
-        aria-hidden
-      />
-      <div className="absolute inset-y-0 left-0 w-72 bg-background border-r shadow-xl flex flex-col">
-        <div className="flex h-14 items-center justify-between px-3 border-b">
-          <span className="font-semibold">Navigation</span>
-          <Button variant="ghost" size="icon" aria-label="Close" onClick={onClose}>
-            <X className="h-5 w-5" />
-          </Button>
-        </div>
-        <nav className="flex-1 overflow-y-auto p-2">
-          {items.map((item) => {
-            const ActiveIcon = iconMap[item.icon] ?? Box;
-            const active = pathname === item.href;
-            return (
-              <Link
-                key={item.href}
-                href={item.href}
-                onClick={onClose}
-                className={cn(
-                  "flex items-center gap-2 rounded-md px-2 py-2 text-sm",
-                  active
-                    ? "bg-accent text-accent-foreground"
-                    : "text-muted-foreground hover:bg-accent/50 hover:text-foreground"
-                )}
-              >
-                <ActiveIcon className="h-4 w-4" />
-                <span>{item.label}</span>
-              </Link>
-            );
-          })}
-        </nav>
-      </div>
-    </div>
   );
 }
 
@@ -250,11 +231,12 @@ function UserMenu() {
         <button
           aria-label="Benutzermenü"
           className="inline-flex h-8 w-8 items-center justify-center rounded-full bg-muted text-xs font-medium text-muted-foreground hover:bg-muted/80"
+          id="user-menu-trigger"
         >
           <User className="h-4 w-4" />
         </button>
       </DropdownMenuTrigger>
-      <DropdownMenuContent align="end" className="w-56">
+  <DropdownMenuContent align="end" className="w-56" id="user-menu-content">
         <DropdownMenuLabel>Menü</DropdownMenuLabel>
         <DropdownMenuSeparator />
         <DropdownMenuSub>

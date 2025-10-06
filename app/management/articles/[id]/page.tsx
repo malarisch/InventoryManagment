@@ -71,7 +71,7 @@ export default async function ArticleDetailPage({ params }: { params: Promise<{ 
             </CardDescription>
           </CardHeader>
           <CardContent>
-            <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
+            <div className="mb-1 flex flex-wrap items-center justify-between gap-3">
               <DeleteWithUndo table="articles" id={article.id} payload={article as Record<string, unknown>} redirectTo="/management/articles" />
               <div className="flex items-center gap-2">
                 {!article.asset_tag && (
@@ -93,9 +93,11 @@ export default async function ArticleDetailPage({ params }: { params: Promise<{ 
                 )}
               </div>
             </div>
-            <ArticleEditForm article={article} />
           </CardContent>
         </Card>
+
+        {/* Form Cards now at top level (no nesting inside another Card) */}
+        <ArticleEditForm article={article} />
 
         <Card>
           <CardHeader>

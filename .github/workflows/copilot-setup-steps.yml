@@ -36,7 +36,6 @@ jobs:
 
       - name: Install JavaScript dependencies
         run: npm ci
-      
       - name: Install Supabase CLI
         uses: supabase/setup-cli@v1
         with:

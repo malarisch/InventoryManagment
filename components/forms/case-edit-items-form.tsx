@@ -115,9 +115,9 @@ export function CaseEditItemsForm({
   }, [q, allEquipments]);
 
   return (
-    <div className="space-y-4">
+    <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
       {/* Basic Info Card */}
-      <Card>
+      <Card className="lg:col-span-4">
         <CardHeader>
           <CardTitle>Basisdaten</CardTitle>
           <CardDescription>Name und Beschreibung des Cases</CardDescription>
@@ -151,7 +151,7 @@ export function CaseEditItemsForm({
       </Card>
 
       {/* Case Equipment Card */}
-      <Card>
+      <Card className="lg:col-span-4">
         <CardHeader>
           <CardTitle>Case-Equipment</CardTitle>
           <CardDescription>Das physische Equipment, das als Case dient</CardDescription>
@@ -193,7 +193,7 @@ export function CaseEditItemsForm({
       </Card>
 
       {/* Equipments in Case Card */}
-      <Card>
+      <Card className="lg:col-span-8">
         <CardHeader>
           <CardTitle>Equipments im Case</CardTitle>
           <CardDescription>
@@ -298,7 +298,7 @@ export function CaseEditItemsForm({
       </Card>
 
       {/* Untracked Articles Card */}
-      <Card>
+      <Card className="lg:col-span-8">
         <CardHeader>
           <CardTitle>Ungetrackte Artikel</CardTitle>
           <CardDescription>
@@ -386,7 +386,7 @@ export function CaseEditItemsForm({
       </Card>
 
       {/* Status Messages */}
-      <div className="flex items-center gap-3 text-sm">
+      <div className="lg:col-span-12 flex items-center gap-3 text-sm">
         {saving && <span className="text-muted-foreground">Speichert…</span>}
         {message && <span className="text-green-600">{message}</span>}
         {error && <span className="text-red-600">{error}</span>}

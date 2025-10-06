@@ -4,7 +4,7 @@ import type { Tables } from "@/database.types";
 import { JobBookedAssetsList } from "@/components/job-booked-assets.client";
 
 type Booked = Tables<"job_booked_assets"> & {
-  equipments?: { id: number; article_id: number | null; articles?: { name: string | null } | null } | null;
+  equipments?: { id: number; article_id: number | null; articles?: { name: string | null; metadata?: unknown } | null } | null;
   cases?: { id: number } | null;
 };
 
@@ -12,7 +12,7 @@ export async function JobBookedAssetsCard({ jobId }: { jobId: number }) {
   const supabase = await createClient();
   const { data, error } = await supabase
     .from("job_booked_assets")
-    .select("*, equipments:equipment_id(id, article_id, articles(name)), cases:case_id(id)")
+    .select("*, equipments:equipment_id(id, article_id, articles(name,metadata)), cases:case_id(id)")
     .eq("job_id", jobId)
     .order("created_at", { ascending: false });
 

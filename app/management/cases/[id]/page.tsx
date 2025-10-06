@@ -84,7 +84,7 @@ export default async function CaseDetailPage({ params }: { params: Promise<{ id:
             </CardDescription>
           </CardHeader>
           <CardContent>
-            <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
+            <div className="mb-2 flex flex-wrap items-center justify-between gap-3">
               <DeleteWithUndo table="cases" id={row.id} payload={row as Record<string, unknown>} redirectTo="/management/cases" />
               {caseCompanyId ? (
                 <div className="flex items-center gap-2">
@@ -93,9 +93,17 @@ export default async function CaseDetailPage({ params }: { params: Promise<{ id:
                 </div>
               ) : null}
             </div>
-            <CaseEditItemsForm caseId={id} initialEquipments={row.contains_equipments ?? []} initialArticles={(row.contains_articles as unknown as Array<{ article_id?: number; amount?: number }>) ?? []} caseEquipmentId={row.case_equipment ?? null} initialName={row.name ?? null} initialDescription={row.description ?? null} />
           </CardContent>
         </Card>
+
+        <CaseEditItemsForm
+          caseId={id}
+          initialEquipments={row.contains_equipments ?? []}
+          initialArticles={(row.contains_articles as unknown as Array<{ article_id?: number; amount?: number }>) ?? []}
+          caseEquipmentId={row.case_equipment ?? null}
+          initialName={row.name ?? null}
+          initialDescription={row.description ?? null}
+        />
 
         <Card>
           <CardHeader>

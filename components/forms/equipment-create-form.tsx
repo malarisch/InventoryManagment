@@ -55,7 +55,7 @@ export function EquipmentCreateForm({ initialArticleId }: { initialArticleId?: n
     async function loadData() {
       if (!company?.id) return;
       const [{ data: articlesData }, { data: locationsData }, { data: tmplData }, { data: companyRow }] = await Promise.all([
-        supabase.from("articles").select("id,name,company_id,metadata").eq("company_id", company.id).order("name"),
+        supabase.from("articles").select("id,name,company_id,metadata,default_location").eq("company_id", company.id).order("name"),
         supabase.from("locations").select("id,name,company_id").eq("company_id", company.id).order("name"),
         supabase.from("asset_tag_templates").select("id,template,company_id").eq("company_id", company.id).order("created_at", { ascending: false }),
         supabase.from("companies").select("metadata").eq("id", company.id).limit(1).maybeSingle(),
@@ -120,6 +120,21 @@ export function EquipmentCreateForm({ initialArticleId }: { initialArticleId?: n
     const match = articles.find((article) => article.id === id);
     return (match?.metadata ?? null) as unknown as ArticleMetadata | null;
   }, [articleId, articles]);
+
+  // If user selects an article and hasn't chosen a location yet, inherit the article's default_location
+  useEffect(() => {
+    if (articleId === "") return;
+    const id = Number(articleId);
+    const match = articles.find((a) => a.id === id) as (Article & { default_location?: number | null }) | undefined;
+    if (!match) return;
+    // Only set if user hasn't picked any location yet
+    if (currentLocation === "" || currentLocation == null) {
+      const def = match.default_location ?? null;
+      if (typeof def === 'number') {
+        setCurrentLocation(def);
+      }
+    }
+  }, [articleId, articles, currentLocation]);
 
   const supplierContactOptions = useMemo(() => contacts.map((contact) => ({
     id: contact.id,
@@ -190,10 +205,20 @@ export function EquipmentCreateForm({ initialArticleId }: { initialArticleId?: n
         }
       }
 
+      // If no explicit current_location but article has a default_location, apply it as a safety net
+      let inheritedLocation: number | null = null;
+      if (articleId !== "") {
+        const id = Number(articleId);
+        const article = articles.find((a) => a.id === id) as (Article & { default_location?: number | null }) | undefined;
+        if (article && typeof article.default_location === 'number') {
+          inheritedLocation = article.default_location;
+        }
+      }
+
       const base: Database["public"]["Tables"]["equipments"]["Insert"] = {
         asset_tag: null,
         article_id: articleId === "" ? null : Number(articleId),
-        current_location: currentLocation === "" ? null : Number(currentLocation),
+        current_location: currentLocation === "" ? (inheritedLocation ?? null) : Number(currentLocation),
         metadata,
         company_id: company.id,
         created_by: userId,
@@ -243,7 +268,7 @@ export function EquipmentCreateForm({ initialArticleId }: { initialArticleId?: n
           <CardTitle>Asset Tag</CardTitle>
           <CardDescription>Optionales Template</CardDescription>
         </CardHeader>
-        <CardContent>
+        <CardContent className="grid gap-2 sm:grid-cols-2">
           <div className="grid gap-2">
             <Label htmlFor="asset_tag_template">Asset Tag Template</Label>
             <select
@@ -258,6 +283,7 @@ export function EquipmentCreateForm({ initialArticleId }: { initialArticleId?: n
               ))}
             </select>
           </div>
+          <div className="hidden sm:block" />
         </CardContent>
       </Card>
 
@@ -266,7 +292,7 @@ export function EquipmentCreateForm({ initialArticleId }: { initialArticleId?: n
           <CardTitle>Zuordnung</CardTitle>
           <CardDescription>Artikel und Standort</CardDescription>
         </CardHeader>
-        <CardContent className="space-y-3">
+        <CardContent className="grid gap-3 sm:grid-cols-2">
           <div className="grid gap-2">
             <Label htmlFor="article_id">Artikel</Label>
             <select
@@ -303,7 +329,7 @@ export function EquipmentCreateForm({ initialArticleId }: { initialArticleId?: n
           <CardTitle>Inventar</CardTitle>
           <CardDescription>Datum & Anzahl</CardDescription>
         </CardHeader>
-        <CardContent className="space-y-3">
+        <CardContent className="grid gap-3 sm:grid-cols-2">
           <div className="grid gap-2">
             <Label htmlFor="added">Im Lager seit</Label>
             <DatePicker id="added" name="added" value={addedAt} onChange={setAddedAt} />
@@ -328,9 +354,9 @@ export function EquipmentCreateForm({ initialArticleId }: { initialArticleId?: n
         </CardContent>
       </Card>
 
-      <div className="md:col-span-12 grid grid-cols-1 gap-6">{metadataCards}</div>
+  <div className="col-span-full">{metadataCards}</div>
 
-      <div className="md:col-span-12 flex items-center gap-3 justify-end">
+      <div className="col-span-full flex items-center gap-3 justify-end">
         <Button type="submit" disabled={saving}>{saving ? "Erstellen…" : "Erstellen"}</Button>
         {error && <span className="text-sm text-red-600">{error}</span>}
       </div>

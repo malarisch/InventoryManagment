@@ -169,41 +169,41 @@ export default async function ManagementHomePage() {
   });
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-6">
       <div>
-        <h1 className="text-3xl font-bold tracking-tight">Dashboard</h1>
-        <p className="text-muted-foreground">
+        <h1 className="text-2xl md:text-3xl font-bold tracking-tight">Dashboard</h1>
+        <p className="text-sm text-muted-foreground mt-1">
           Überblick über kommende Einsätze und die letzten Änderungen deiner Companies.
         </p>
       </div>
 
-      <section className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+      <section className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
         {stats.map((stat) => (
           <Card key={stat.key}>
-            <CardHeader className="pb-2">
-              <CardDescription>{stat.label}</CardDescription>
-              <CardTitle className="text-4xl font-bold">
+            <CardHeader className="pb-2 px-4 pt-4">
+              <CardDescription className="text-xs">{stat.label}</CardDescription>
+              <CardTitle className="text-3xl font-bold">
                 {stat.error ? "—" : stat.value.toLocaleString("de-DE")}
               </CardTitle>
             </CardHeader>
-            <CardContent>
+            <CardContent className="px-4 pb-4">
               {stat.error ? (
-                <p className="text-sm text-destructive">{stat.error}</p>
+                <p className="text-xs text-destructive">{stat.error}</p>
               ) : (
-                <p className="text-sm text-muted-foreground">{stat.hint}</p>
+                <p className="text-xs text-muted-foreground">{stat.hint}</p>
               )}
             </CardContent>
           </Card>
         ))}
       </section>
 
-      <div className="grid gap-6 lg:grid-cols-2 xl:grid-cols-5">
+      <div className="grid gap-4 lg:grid-cols-2 xl:grid-cols-5">
         <Card className="lg:col-span-1 xl:col-span-3">
-          <CardHeader className="pb-3">
-            <CardTitle>Kommende Veranstaltungen</CardTitle>
-            <CardDescription>Termine aus deinen Jobs mit Start oder Ende in der Zukunft.</CardDescription>
+          <CardHeader className="pb-3 px-4 pt-4">
+            <CardTitle className="text-lg">Kommende Veranstaltungen</CardTitle>
+            <CardDescription className="text-xs">Termine aus deinen Jobs mit Start oder Ende in der Zukunft.</CardDescription>
           </CardHeader>
-          <CardContent>
+          <CardContent className="px-4 pb-4">
             {upcomingError ? (
               <p className="text-sm text-destructive">Fehler beim Laden: {upcomingError.message}</p>
             ) : upcomingJobs.length === 0 ? (
@@ -215,23 +215,23 @@ export default async function ManagementHomePage() {
                 .
               </div>
             ) : (
-              <div className="space-y-4">
+              <div className="space-y-3">
                 {upcomingJobs.map((job) => (
                   <Link
                     key={job.id}
                     href={`/management/jobs/${job.id}`}
-                    className="block rounded-md border border-border/70 bg-card p-4 transition hover:border-primary"
+                    className="block rounded-md border border-border/70 bg-card p-3 transition hover:border-primary"
                   >
-                    <div className="flex flex-wrap items-center justify-between gap-3">
+                    <div className="flex flex-wrap items-center justify-between gap-2">
                       <div>
-                        <p className="font-semibold text-foreground">
+                        <p className="font-semibold text-sm text-foreground">
                           {job.name?.trim() || `Job #${job.id}`}
                         </p>
-                        <p className="text-sm text-muted-foreground">{jobCustomerDisplay(job.contacts)}</p>
+                        <p className="text-xs text-muted-foreground">{jobCustomerDisplay(job.contacts)}</p>
                       </div>
-                      {job.type ? <Badge variant="secondary">{job.type}</Badge> : null}
+                      {job.type ? <Badge variant="secondary" className="text-xs">{job.type}</Badge> : null}
                     </div>
-                    <dl className="mt-3 grid gap-2 text-sm sm:grid-cols-2">
+                    <dl className="mt-2 grid gap-1.5 text-xs sm:grid-cols-2">
                       <div className="flex flex-col gap-0.5">
                         <dt className="font-medium text-muted-foreground">Zeitraum</dt>
                         <dd className="text-foreground">{formatJobPeriod(job)}</dd>
@@ -249,19 +249,19 @@ export default async function ManagementHomePage() {
         </Card>
 
         <Card className="lg:col-span-1 xl:col-span-2">
-          <CardHeader className="pb-3">
-            <CardTitle>Schnellzugriffe</CardTitle>
-            <CardDescription>Arbeite direkt in den wichtigsten Bereichen weiter.</CardDescription>
+          <CardHeader className="pb-3 px-4 pt-4">
+            <CardTitle className="text-lg">Schnellzugriffe</CardTitle>
+            <CardDescription className="text-xs">Arbeite direkt in den wichtigsten Bereichen weiter.</CardDescription>
           </CardHeader>
-          <CardContent className="space-y-3">
+          <CardContent className="space-y-2 px-4 pb-4">
             {QUICK_LINKS.map((link) => (
               <Link
                 key={link.href}
                 href={link.href}
-                className="block rounded-md border border-border/60 bg-background px-3 py-3 transition hover:border-primary hover:bg-accent/20"
+                className="block rounded-md border border-border/60 bg-background px-3 py-2.5 transition hover:border-primary hover:bg-accent/20"
               >
-                <div className="font-semibold text-foreground">{link.label}</div>
-                <div className="text-sm text-muted-foreground">{link.description}</div>
+                <div className="font-semibold text-sm text-foreground">{link.label}</div>
+                <div className="text-xs text-muted-foreground">{link.description}</div>
               </Link>
             ))}
           </CardContent>
@@ -269,15 +269,15 @@ export default async function ManagementHomePage() {
       </div>
 
       <Card>
-        <CardHeader className="pb-3">
-          <CardTitle>Aktuelle Historie</CardTitle>
-          <CardDescription>Letzte 20 Änderungen über alle Tabellen hinweg.</CardDescription>
+        <CardHeader className="pb-3 px-4 pt-4">
+          <CardTitle className="text-lg">Aktuelle Historie</CardTitle>
+          <CardDescription className="text-xs">Letzte 20 Änderungen über alle Tabellen hinweg.</CardDescription>
         </CardHeader>
-        <CardContent>
+        <CardContent className="px-4 pb-4">
           {historyError ? (
-            <p className="text-sm text-destructive">Fehler beim Laden: {historyError.message}</p>
+            <p className="text-xs text-destructive">Fehler beim Laden: {historyError.message}</p>
           ) : historyEntries.length === 0 ? (
-            <div className="rounded-md border border-dashed p-6 text-sm text-muted-foreground">
+            <div className="rounded-md border border-dashed p-4 text-xs text-muted-foreground">
               Noch keine Aktivitäten vorhanden.
             </div>
           ) : (

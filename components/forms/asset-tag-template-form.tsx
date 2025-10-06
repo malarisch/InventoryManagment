@@ -8,9 +8,11 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { createClient } from '@/lib/supabase/client';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo, useCallback, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import { AssetTagTemplate, AssetTagTemplateElement } from '@/components/asset-tag-templates/types';
+
+const MM_TO_PX = 3.779527559;
 
 const preprocessOptionalNumber = (min?: number) =>
   z.preprocess((v) => {
@@ -54,6 +56,7 @@ const formSchema = z.object({
     size: preprocessOptionalNumber(1),
     height: preprocessOptionalNumber(1),
     color: z.string().optional(),
+    textAlign: z.enum(['left', 'center', 'right']).optional(),
   })),
 });
 
@@ -116,7 +119,14 @@ export function AssetTagTemplateForm({ templateId }: AssetTagTemplateFormProps) 
         setError('Template nicht gefunden');
         setTimeout(() => router.push('/management/company-settings?tab=templates'), 2000);
       } else {
-        form.reset(data.template as unknown as FormValues);
+        const template = data.template as AssetTagTemplate;
+        form.reset({
+          ...template,
+          elements: (template.elements || []).map((element) => ({
+            ...element,
+            textAlign: element.textAlign ?? 'left',
+          })),
+        } as unknown as FormValues);
       }
     }
     
@@ -127,6 +137,211 @@ export function AssetTagTemplateForm({ templateId }: AssetTagTemplateFormProps) 
     control: form.control,
     name: 'elements',
   });
+
+  const measurementCtxRef = useRef<CanvasRenderingContext2D | null>(null);
+
+  const ensureMeasurementContext = useCallback(() => {
+    if (typeof window === 'undefined') return null;
+    if (!measurementCtxRef.current) {
+      const canvas = document.createElement('canvas');
+      measurementCtxRef.current = canvas.getContext('2d');
+    }
+    return measurementCtxRef.current;
+  }, []);
+
+  const getElementGeometry = useCallback((element: FormValues['elements'][number] | undefined) => {
+    if (!element) return null;
+    const ctx = element.type === 'text' ? ensureMeasurementContext() : null;
+    const rawTextSize = form.getValues('textSizePt');
+    const defaultTextSize = typeof rawTextSize === 'number' && !Number.isNaN(rawTextSize) ? rawTextSize : 12;
+    const baseSizeCandidate = typeof element.size === 'number' && !Number.isNaN(element.size) ? element.size : undefined;
+    const baseSize = baseSizeCandidate ?? defaultTextSize;
+
+    let widthPx = 0;
+    let heightPx = 0;
+    let anchorShiftPx = 0;
+    let baselineShiftPx = 0;
+
+    if (element.type === 'text') {
+      if (!ctx) return null;
+      ctx.font = `${baseSize}px Arial, sans-serif`;
+      const metrics = ctx.measureText(element.value ?? '');
+      widthPx = metrics.width || 0;
+      const ascentPx = metrics.actualBoundingBoxAscent ?? baseSize * 0.8;
+      const descentPx = metrics.actualBoundingBoxDescent ?? baseSize * 0.2;
+      heightPx = ascentPx + descentPx;
+      anchorShiftPx = element.textAlign === 'center' ? widthPx / 2 : element.textAlign === 'right' ? widthPx : 0;
+      baselineShiftPx = ascentPx;
+    } else if (element.type === 'qrcode') {
+      widthPx = baseSize * MM_TO_PX;
+      heightPx = widthPx;
+    } else if (element.type === 'image') {
+      widthPx = baseSize * MM_TO_PX;
+      const heightCandidate = typeof element.height === 'number' && !Number.isNaN(element.height) ? element.height : undefined;
+      const targetHeight = heightCandidate ?? baseSize;
+      heightPx = targetHeight * MM_TO_PX;
+    } else if (element.type === 'barcode') {
+      widthPx = baseSize * 2;
+      heightPx = baseSize * 0.6 + 10;
+    } else {
+      widthPx = baseSize * MM_TO_PX;
+      heightPx = widthPx;
+    }
+
+    const widthMm = widthPx / MM_TO_PX;
+    const heightMm = heightPx / MM_TO_PX;
+    const anchorShiftMm = anchorShiftPx / MM_TO_PX;
+    const baselineShiftMm = baselineShiftPx / MM_TO_PX;
+    const x = element.x ?? 0;
+    const y = element.y ?? 0;
+    const leftMm = x - anchorShiftMm;
+    const topMm = y - baselineShiftMm;
+
+    return {
+      widthMm,
+      heightMm,
+      anchorShiftMm,
+      baselineShiftMm,
+      leftMm,
+      topMm,
+      rightMm: leftMm + widthMm,
+      bottomMm: topMm + heightMm,
+      centerMm: leftMm + widthMm / 2,
+      middleMm: topMm + heightMm / 2,
+    };
+  }, [ensureMeasurementContext, form]);
+
+  const [alignmentTargetsById, setAlignmentTargetsById] = useState<Record<string, string | null>>({});
+  const watchedElements = form.watch('elements');
+  const alignmentOptions = useMemo(() => {
+    return fields.map((field, idx) => {
+      const element = watchedElements?.[idx];
+      const typeLabel = element?.type ? element.type.toUpperCase() : 'Element';
+      const valueSnippet = element?.value ? ` – ${String(element.value).slice(0, 20)}${
+        element?.value && element.value.length > 20 ? '…' : ''
+      }` : '';
+      return {
+        id: field.id,
+        idx,
+        label: `#${idx + 1} ${typeLabel}${valueSnippet}`,
+      };
+    });
+  }, [fields, watchedElements]);
+
+  const handleAlignmentSelectChange = useCallback((fieldId: string, targetId: string) => {
+    setAlignmentTargetsById((prev) => ({
+      ...prev,
+      [fieldId]: targetId.length ? targetId : null,
+    }));
+  }, []);
+
+  const alignElementToTarget = useCallback((index: number, axis: 'x' | 'y') => {
+    const field = fields[index];
+    if (!field) return;
+    const targetId = alignmentTargetsById[field.id];
+    if (!targetId) return;
+    const targetIndex = fields.findIndex((f) => f.id === targetId);
+    if (targetIndex < 0) return;
+    const targetElement = form.getValues(`elements.${targetIndex}` as const) as FormValues['elements'][number] | undefined;
+    if (!targetElement) return;
+    const value = axis === 'x' ? targetElement.x : targetElement.y;
+    if (typeof value !== 'number' || Number.isNaN(value)) return;
+    form.setValue(`elements.${index}.${axis}` as const, Number(value.toFixed(2)), {
+      shouldDirty: true,
+      shouldTouch: true,
+    });
+  }, [alignmentTargetsById, fields, form]);
+
+  const alignElementToCanvas = useCallback(
+    (index: number, axis: 'x' | 'y', position: 'start' | 'center' | 'end') => {
+      const dimension = axis === 'x' ? form.getValues('tagWidthMm') : form.getValues('tagHeightMm');
+      if (typeof dimension !== 'number' || Number.isNaN(dimension)) return;
+      const element = form.getValues(`elements.${index}` as const) as FormValues['elements'][number] | undefined;
+      const geometry = getElementGeometry(element);
+      if (!element || !geometry) {
+        const fallback = position === 'start' ? 0 : position === 'center' ? dimension / 2 : dimension;
+        form.setValue(`elements.${index}.${axis}` as const, Number(fallback.toFixed(2)), {
+          shouldDirty: true,
+          shouldTouch: true,
+        });
+        return;
+      }
+
+      let newValue = element[axis] ?? 0;
+      if (axis === 'x') {
+        if (position === 'start') {
+          newValue = geometry.anchorShiftMm;
+        } else if (position === 'center') {
+          newValue = dimension / 2 - geometry.widthMm / 2 + geometry.anchorShiftMm;
+        } else {
+          newValue = dimension - geometry.widthMm + geometry.anchorShiftMm;
+        }
+      } else {
+        if (position === 'start') {
+          newValue = geometry.baselineShiftMm;
+        } else if (position === 'center') {
+          newValue = dimension / 2 - geometry.heightMm / 2 + geometry.baselineShiftMm;
+        } else {
+          newValue = dimension - geometry.heightMm + geometry.baselineShiftMm;
+        }
+      }
+
+      const clamped = Math.min(Math.max(newValue, 0), dimension);
+      form.setValue(`elements.${index}.${axis}` as const, Number(clamped.toFixed(2)), {
+        shouldDirty: true,
+        shouldTouch: true,
+      });
+    },
+    [form, getElementGeometry],
+  );
+
+  const alignElementRelativeToTarget = useCallback(
+    (index: number, axis: 'x' | 'y', position: 'start' | 'center' | 'end') => {
+      const field = fields[index];
+      if (!field) return;
+      const targetId = alignmentTargetsById[field.id];
+      if (!targetId) return;
+      const targetIndex = fields.findIndex((f) => f.id === targetId);
+      if (targetIndex < 0) return;
+
+      const element = form.getValues(`elements.${index}` as const) as FormValues['elements'][number] | undefined;
+      const targetElement = form.getValues(`elements.${targetIndex}` as const) as FormValues['elements'][number] | undefined;
+      const geometry = getElementGeometry(element);
+      const targetGeometry = getElementGeometry(targetElement);
+      const dimension = axis === 'x' ? form.getValues('tagWidthMm') : form.getValues('tagHeightMm');
+
+      if (!element || !geometry || !targetGeometry || typeof dimension !== 'number' || Number.isNaN(dimension)) {
+        alignElementToTarget(index, axis);
+        return;
+      }
+
+      let newValue = element[axis] ?? 0;
+      if (axis === 'x') {
+        if (position === 'start') {
+          newValue = targetGeometry.leftMm + geometry.anchorShiftMm;
+        } else if (position === 'center') {
+          newValue = targetGeometry.centerMm - geometry.widthMm / 2 + geometry.anchorShiftMm;
+        } else {
+          newValue = targetGeometry.rightMm - geometry.widthMm + geometry.anchorShiftMm;
+        }
+      } else {
+        if (position === 'start') {
+          newValue = targetGeometry.topMm + geometry.baselineShiftMm;
+        } else if (position === 'center') {
+          newValue = targetGeometry.middleMm - geometry.heightMm / 2 + geometry.baselineShiftMm;
+        } else {
+          newValue = targetGeometry.bottomMm - geometry.heightMm + geometry.baselineShiftMm;
+        }
+      }
+
+      const clamped = Math.min(Math.max(newValue, 0), dimension);
+      form.setValue(`elements.${index}.${axis}` as const, Number(clamped.toFixed(2)), {
+        shouldDirty: true,
+        shouldTouch: true,
+      });
+    },
+    [alignElementToTarget, alignmentTargetsById, fields, form, getElementGeometry],
+  );
 
   const onSubmit = async (raw: unknown) => {
     const values = raw as FormValues;
@@ -158,6 +373,7 @@ export function AssetTagTemplateForm({ templateId }: AssetTagTemplateFormProps) 
           ...e,
           size: e.size as number | undefined,
           height: e.height as number | undefined,
+          textAlign: e.textAlign ?? 'left',
         })),
       };
 
@@ -249,12 +465,12 @@ export function AssetTagTemplateForm({ templateId }: AssetTagTemplateFormProps) 
             </CardHeader>
             <CardContent className="space-y-3">
               <div>
-                <label className="block text-sm font-medium mb-1">Name</label>
-                <Input placeholder="My Template" {...form.register('name')} />
+                <label htmlFor="name" className="block text-sm font-medium mb-1">Name</label>
+                <Input id="name" placeholder="My Template" {...form.register('name')} />
               </div>
               <div>
-                <label className="block text-sm font-medium mb-1">Description</label>
-                <Input placeholder="Optional description" {...form.register('description')} />
+                <label htmlFor="description" className="block text-sm font-medium mb-1">Description</label>
+                <Input id="description" placeholder="Optional description" {...form.register('description')} />
               </div>
             </CardContent>
           </Card>
@@ -268,17 +484,17 @@ export function AssetTagTemplateForm({ templateId }: AssetTagTemplateFormProps) 
             <CardContent className="space-y-3">
               <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <label className="block text-sm font-medium mb-1">Width (mm)</label>
-                  <Input type="number" {...form.register('tagWidthMm', { valueAsNumber: true })} />
+                  <label htmlFor="tagWidthMm" className="block text-sm font-medium mb-1">Width (mm)</label>
+                  <Input id="tagWidthMm" type="number" {...form.register('tagWidthMm', { valueAsNumber: true })} />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium mb-1">Height (mm)</label>
-                  <Input type="number" {...form.register('tagHeightMm', { valueAsNumber: true })} />
+                  <label htmlFor="tagHeightMm" className="block text-sm font-medium mb-1">Height (mm)</label>
+                  <Input id="tagHeightMm" type="number" {...form.register('tagHeightMm', { valueAsNumber: true })} />
                 </div>
               </div>
               <div>
-                <label className="block text-sm font-medium mb-1">Margin (mm)</label>
-                <Input type="number" step="0.1" {...form.register('marginMm', { valueAsNumber: true })} />
+                <label htmlFor="marginMm" className="block text-sm font-medium mb-1">Margin (mm)</label>
+                <Input id="marginMm" type="number" step="0.1" {...form.register('marginMm', { valueAsNumber: true })} />
               </div>
             </CardContent>
           </Card>
@@ -292,28 +508,28 @@ export function AssetTagTemplateForm({ templateId }: AssetTagTemplateFormProps) 
           </CardHeader>
           <CardContent className="grid grid-cols-2 md:grid-cols-3 gap-4">
             <div>
-              <label className="block text-sm font-medium mb-1">Background Color</label>
-              <Input type="color" {...form.register('backgroundColor')} />
+              <label htmlFor="backgroundColor" className="block text-sm font-medium mb-1">Background Color</label>
+              <Input id="backgroundColor" type="color" {...form.register('backgroundColor')} />
             </div>
             <div>
-              <label className="block text-sm font-medium mb-1">Text Color</label>
-              <Input type="color" {...form.register('textColor')} />
+              <label htmlFor="textColor" className="block text-sm font-medium mb-1">Text Color</label>
+              <Input id="textColor" type="color" {...form.register('textColor')} />
             </div>
             <div>
-              <label className="block text-sm font-medium mb-1">Border Color</label>
-              <Input type="color" {...form.register('borderColor')} />
+              <label htmlFor="borderColor" className="block text-sm font-medium mb-1">Border Color</label>
+              <Input id="borderColor" type="color" {...form.register('borderColor')} />
             </div>
             <div>
-              <label className="block text-sm font-medium mb-1">Border Width (mm)</label>
-              <Input type="number" step="0.1" {...form.register('borderWidthMm', { valueAsNumber: true })} />
+              <label htmlFor="borderWidthMm" className="block text-sm font-medium mb-1">Border Width (mm)</label>
+              <Input id="borderWidthMm" type="number" step="0.1" {...form.register('borderWidthMm', { valueAsNumber: true })} />
             </div>
             <div>
-              <label className="block text-sm font-medium mb-1">Text Size (pt)</label>
-              <Input type="number" {...form.register('textSizePt', { valueAsNumber: true })} />
+              <label htmlFor="textSizePt" className="block text-sm font-medium mb-1">Text Size (pt)</label>
+              <Input id="textSizePt" type="number" {...form.register('textSizePt', { valueAsNumber: true })} />
             </div>
             <div className="flex items-center space-x-2">
-              <input type="checkbox" {...form.register('isMonochrome')} />
-              <label className="text-sm font-medium">Monochrome (Black & White)</label>
+              <input id="isMonochrome" type="checkbox" {...form.register('isMonochrome')} />
+              <label htmlFor="isMonochrome" className="text-sm font-medium">Monochrome (Black & White)</label>
             </div>
           </CardContent>
         </Card>
@@ -326,39 +542,39 @@ export function AssetTagTemplateForm({ templateId }: AssetTagTemplateFormProps) 
           </CardHeader>
           <CardContent className="grid grid-cols-2 md:grid-cols-3 gap-4">
             <div>
-              <label className="block text-sm font-medium mb-1">Prefix</label>
-              <Input placeholder="e.g., EQ" {...form.register('prefix')} />
+              <label htmlFor="prefix" className="block text-sm font-medium mb-1">Prefix</label>
+              <Input id="prefix" placeholder="e.g., EQ" {...form.register('prefix')} />
             </div>
             <div>
-              <label className="block text-sm font-medium mb-1">Number Length</label>
-              <Input type="number" {...form.register('numberLength', { valueAsNumber: true })} />
+              <label htmlFor="numberLength" className="block text-sm font-medium mb-1">Number Length</label>
+              <Input id="numberLength" type="number" {...form.register('numberLength', { valueAsNumber: true })} />
             </div>
             <div>
-              <label className="block text-sm font-medium mb-1">Suffix</label>
-              <Input placeholder="e.g., A" {...form.register('suffix')} />
+              <label htmlFor="suffix" className="block text-sm font-medium mb-1">Suffix</label>
+              <Input id="suffix" placeholder="e.g., A" {...form.register('suffix')} />
             </div>
             <div>
-              <label className="block text-sm font-medium mb-1">Numbering Scheme</label>
-              <select {...form.register('numberingScheme')} className="h-9 rounded-md border bg-background px-3 text-sm w-full">
+              <label htmlFor="numberingScheme" className="block text-sm font-medium mb-1">Numbering Scheme</label>
+              <select id="numberingScheme" {...form.register('numberingScheme')} className="h-9 rounded-md border bg-background px-3 text-sm w-full">
                 <option value="sequential">Sequential</option>
                 <option value="random">Random</option>
               </select>
             </div>
             <div className="col-span-2">
-              <label className="block text-sm font-medium mb-1">String Template</label>
-              <Input placeholder="e.g., {prefix}{number}{suffix}" {...form.register('stringTemplate')} />
+              <label htmlFor="stringTemplate" className="block text-sm font-medium mb-1">String Template</label>
+              <Input id="stringTemplate" placeholder="e.g., {prefix}{number}{suffix}" {...form.register('stringTemplate')} />
             </div>
             <div>
-              <label className="block text-sm font-medium mb-1">Code Type</label>
-              <select {...form.register('codeType')} className="h-9 rounded-md border bg-background px-3 text-sm w-full">
+              <label htmlFor="codeType" className="block text-sm font-medium mb-1">Code Type</label>
+              <select id="codeType" {...form.register('codeType')} className="h-9 rounded-md border bg-background px-3 text-sm w-full">
                 <option value="QR">QR Code</option>
                 <option value="Barcode">Barcode</option>
                 <option value="None">None</option>
               </select>
             </div>
             <div>
-              <label className="block text-sm font-medium mb-1">Code Size (mm)</label>
-              <Input type="number" {...form.register('codeSizeMm', { valueAsNumber: true })} />
+              <label htmlFor="codeSizeMm" className="block text-sm font-medium mb-1">Code Size (mm)</label>
+              <Input id="codeSizeMm" type="number" {...form.register('codeSizeMm', { valueAsNumber: true })} />
             </div>
           </CardContent>
         </Card>
@@ -374,8 +590,8 @@ export function AssetTagTemplateForm({ templateId }: AssetTagTemplateFormProps) 
               <div key={f.id} className="border border-dashed rounded-md p-4 space-y-4">
                 <div className="grid grid-cols-3 gap-4">
                   <div>
-                    <label className="block text-sm font-medium mb-1">Type</label>
-                    <select className="h-9 rounded-md border bg-background px-3 text-sm w-full" {...form.register(`elements.${index}.type` as const)}>
+                    <label htmlFor={`elements-${index}-type`} className="block text-sm font-medium mb-1">Type</label>
+                    <select id={`elements-${index}-type`} className="h-9 rounded-md border bg-background px-3 text-sm w-full" {...form.register(`elements.${index}.type` as const)}>
                       <option value="text">Text</option>
                       <option value="qrcode">QR Code</option>
                       <option value="barcode">Barcode</option>
@@ -383,40 +599,162 @@ export function AssetTagTemplateForm({ templateId }: AssetTagTemplateFormProps) 
                     </select>
                   </div>
                   <div>
-                    <label className="block text-sm font-medium mb-1">X Position (mm)</label>
-                    <Input type="number" step="0.01" {...form.register(`elements.${index}.x` as const, { valueAsNumber: true })} />
+                    <label htmlFor={`elements-${index}-x`} className="block text-sm font-medium mb-1">X Position (mm)</label>
+                    <Input id={`elements-${index}-x`} type="number" step="0.01" {...form.register(`elements.${index}.x` as const, { valueAsNumber: true })} />
                   </div>
                   <div>
-                    <label className="block text-sm font-medium mb-1">Y Position (mm)</label>
-                    <Input type="number" step="0.01" {...form.register(`elements.${index}.y` as const, { valueAsNumber: true })} />
+                    <label htmlFor={`elements-${index}-y`} className="block text-sm font-medium mb-1">Y Position (mm)</label>
+                    <Input id={`elements-${index}-y`} type="number" step="0.01" {...form.register(`elements.${index}.y` as const, { valueAsNumber: true })} />
                   </div>
                 </div>
                 <div className="grid grid-cols-3 gap-4">
                   <div className="col-span-2">
-                    <label className="block text-sm font-medium mb-1">Value / Placeholder / Image URL</label>
-                    <Input placeholder="e.g., {equipment_name} or https://...img.png" {...form.register(`elements.${index}.value` as const)} />
+                    <label htmlFor={`elements-${index}-value`} className="block text-sm font-medium mb-1">Value / Placeholder / Image URL</label>
+                    <Input id={`elements-${index}-value`} placeholder="e.g., {equipment_name} or https://...img.png" {...form.register(`elements.${index}.value` as const)} />
                   </div>
                   <div>
-                    <label className="block text-sm font-medium mb-1">Size</label>
-                    <Input type="number" placeholder="Font/code/image width" {...form.register(`elements.${index}.size` as const, { valueAsNumber: true })} />
+                    <label htmlFor={`elements-${index}-size`} className="block text-sm font-medium mb-1">Size</label>
+                    <Input id={`elements-${index}-size`} type="number" placeholder="Font/code/image width" {...form.register(`elements.${index}.size` as const, { valueAsNumber: true })} />
                   </div>
                   <div>
-                    <label className="block text-sm font-medium mb-1">Height (image)</label>
-                    <Input type="number" placeholder="Only for image" {...form.register(`elements.${index}.height` as const, { valueAsNumber: true })} />
+                    <label htmlFor={`elements-${index}-height`} className="block text-sm font-medium mb-1">Height (image)</label>
+                    <Input id={`elements-${index}-height`} type="number" placeholder="Only for image" {...form.register(`elements.${index}.height` as const, { valueAsNumber: true })} />
                   </div>
                 </div>
-                <div className="flex items-end justify-between">
-                  <div>
-                    <label className="block text-sm font-medium mb-1">Color Override</label>
-                    <Input type="color" {...form.register(`elements.${index}.color` as const)} />
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 items-end">
+                  <div className="flex items-end gap-4">
+                    <div>
+                      <label htmlFor={`elements-${index}-color`} className="block text-sm font-medium mb-1">Color Override</label>
+                      <Input id={`elements-${index}-color`} type="color" {...form.register(`elements.${index}.color` as const)} />
+                    </div>
+                    {form.watch(`elements.${index}.type`) === 'text' ? (
+                      <div>
+                        <label htmlFor={`elements-${index}-textAlign`} className="block text-sm font-medium mb-1">Text Alignment</label>
+                        <select
+                          id={`elements-${index}-textAlign`}
+                          className="h-9 rounded-md border bg-background px-3 text-sm w-full"
+                          {...form.register(`elements.${index}.textAlign` as const)}
+                        >
+                          <option value="left">Links</option>
+                          <option value="center">Zentriert</option>
+                          <option value="right">Rechts</option>
+                        </select>
+                      </div>
+                    ) : null}
                   </div>
-                  <Button type="button" variant="destructive" onClick={() => remove(index)}>
-                    Remove Element
-                  </Button>
+                  <div className="flex justify-end md:justify-end">
+                    <Button type="button" variant="destructive" onClick={() => remove(index)}>
+                      Remove Element
+                    </Button>
+                  </div>
+                </div>
+                {alignmentOptions.length > 1 ? (
+                  <div className="flex flex-wrap items-end gap-3">
+                    <div>
+                      <label htmlFor={`elements-${index}-align-target`} className="block text-sm font-medium mb-1">Ausrichten an</label>
+                      <select
+                        id={`elements-${index}-align-target`}
+                        className="h-9 rounded-md border bg-background px-3 text-sm w-full"
+                        value={alignmentTargetsById[f.id] ?? ''}
+                        onChange={(event) => handleAlignmentSelectChange(f.id, event.target.value)}
+                      >
+                        <option value="">Referenz wählen…</option>
+                        {alignmentOptions
+                          .filter((option) => option.id !== f.id)
+                          .map((option) => (
+                            <option key={option.id} value={option.id}>
+                              {option.label}
+                            </option>
+                          ))}
+                      </select>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <Button
+                        type="button"
+                        variant="outline"
+                        size="sm"
+                        disabled={!alignmentTargetsById[f.id]}
+                        onClick={() => alignElementToTarget(index, 'x')}
+                      >
+                        X angleichen
+                      </Button>
+                      <Button
+                        type="button"
+                        variant="outline"
+                        size="sm"
+                        disabled={!alignmentTargetsById[f.id]}
+                        onClick={() => alignElementToTarget(index, 'y')}
+                      >
+                        Y angleichen
+                      </Button>
+                    </div>
+                    {alignmentTargetsById[f.id] ? (
+                      <div className="flex flex-wrap gap-3">
+                        <div className="space-y-2">
+                          <span className="block text-sm font-medium">Relative Ausrichtung (X)</span>
+                          <div className="flex gap-2">
+                            <Button type="button" variant="outline" size="sm" onClick={() => alignElementRelativeToTarget(index, 'x', 'start')}>
+                              Links
+                            </Button>
+                            <Button type="button" variant="outline" size="sm" onClick={() => alignElementRelativeToTarget(index, 'x', 'center')}>
+                              Mitte
+                            </Button>
+                            <Button type="button" variant="outline" size="sm" onClick={() => alignElementRelativeToTarget(index, 'x', 'end')}>
+                              Rechts
+                            </Button>
+                          </div>
+                        </div>
+                        <div className="space-y-2">
+                          <span className="block text-sm font-medium">Relative Ausrichtung (Y)</span>
+                          <div className="flex gap-2">
+                            <Button type="button" variant="outline" size="sm" onClick={() => alignElementRelativeToTarget(index, 'y', 'start')}>
+                              Oben
+                            </Button>
+                            <Button type="button" variant="outline" size="sm" onClick={() => alignElementRelativeToTarget(index, 'y', 'center')}>
+                              Mitte
+                            </Button>
+                            <Button type="button" variant="outline" size="sm" onClick={() => alignElementRelativeToTarget(index, 'y', 'end')}>
+                              Unten
+                            </Button>
+                          </div>
+                        </div>
+                      </div>
+                    ) : null}
+                  </div>
+                ) : null}
+                <div className="flex flex-wrap items-end gap-3">
+                  <div className="space-y-2">
+                    <span className="block text-sm font-medium">Canvas-Ausrichtung (X)</span>
+                    <div className="flex gap-2">
+                      <Button type="button" variant="outline" size="sm" onClick={() => alignElementToCanvas(index, 'x', 'start')}>
+                        Links
+                      </Button>
+                      <Button type="button" variant="outline" size="sm" onClick={() => alignElementToCanvas(index, 'x', 'center')}>
+                        Mitte
+                      </Button>
+                      <Button type="button" variant="outline" size="sm" onClick={() => alignElementToCanvas(index, 'x', 'end')}>
+                        Rechts
+                      </Button>
+                    </div>
+                  </div>
+                  <div className="space-y-2">
+                    <span className="block text-sm font-medium">Canvas-Ausrichtung (Y)</span>
+                    <div className="flex gap-2">
+                      <Button type="button" variant="outline" size="sm" onClick={() => alignElementToCanvas(index, 'y', 'start')}>
+                        Oben
+                      </Button>
+                      <Button type="button" variant="outline" size="sm" onClick={() => alignElementToCanvas(index, 'y', 'center')}>
+                        Mitte
+                      </Button>
+                      <Button type="button" variant="outline" size="sm" onClick={() => alignElementToCanvas(index, 'y', 'end')}>
+                        Unten
+                      </Button>
+                    </div>
+                  </div>
                 </div>
               </div>
             ))}
-            <Button type="button" variant="outline" onClick={() => append({ type: 'text', x: 0, y: 0, value: '', size: 12 })}>
+            <Button type="button" variant="outline" onClick={() => append({ type: 'text', x: 0, y: 0, value: '', size: 12, textAlign: 'left' })}>
               Add Element
             </Button>
           </CardContent>
@@ -464,6 +802,7 @@ export function AssetTagTemplateForm({ templateId }: AssetTagTemplateFormProps) 
                   ...e,
                   size: e.size as number | undefined,
                   height: e.height as number | undefined,
+                  textAlign: e.textAlign,
                 })),
               };
               return (

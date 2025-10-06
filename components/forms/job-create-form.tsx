@@ -204,8 +204,8 @@ export function JobCreateForm() {
           <CardTitle>Basisdaten</CardTitle>
           <CardDescription>Name, Typ, Ort</CardDescription>
         </CardHeader>
-        <CardContent className="space-y-3">
-          <div className="grid gap-2">
+        <CardContent className="grid gap-3 sm:grid-cols-2">
+          <div className="grid gap-2 sm:col-span-2">
             <Label htmlFor="name">Name</Label>
             <Input id="name" name="name" value={name} onChange={(event) => setName(event.target.value)} placeholder="Jobname" />
           </div>
@@ -225,7 +225,7 @@ export function JobCreateForm() {
           <CardTitle>Termine</CardTitle>
           <CardDescription>Start und Ende</CardDescription>
         </CardHeader>
-        <CardContent className="space-y-3">
+        <CardContent className="grid gap-3">
           <div className="flex items-center gap-2">
             <input
               type="checkbox"
@@ -337,9 +337,9 @@ export function JobCreateForm() {
         </CardContent>
       </Card>
 
-      <div className="md:col-span-12 grid grid-cols-1 gap-6">{metadataCard}</div>
+  <div className="col-span-full">{metadataCard}</div>
 
-      <div className="md:col-span-12 flex items-center gap-3 justify-end">
+      <div className="col-span-full flex items-center gap-3 justify-end">
         <Button type="submit" disabled={saving}>{saving ? "Erstellen…" : "Erstellen"}</Button>
         {error && <span className="text-sm text-red-600">{error}</span>}
       </div>

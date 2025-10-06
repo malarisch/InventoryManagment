@@ -33,7 +33,6 @@ export function CompanySettingsForm() {
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [message, setMessage] = useState<string | null>(null);
-  const [dumpStatus, setDumpStatus] = useState<string | null>(null);
   const [exportStatus, setExportStatus] = useState<string | null>(null);
   const [contacts, setContacts] = useState<Contact[]>([]);
   const [contactDialogOpen, setContactDialogOpen] = useState(false);
@@ -190,22 +189,6 @@ export function CompanySettingsForm() {
     setSaving(false);
   }
 
-  async function createSeedDump() {
-    setDumpStatus("Erstelle Dump…");
-    try {
-      const res = await fetch("/api/admin/dump-seed", { method: "POST" });
-      const data = await res.json();
-      if (!res.ok) {
-        setDumpStatus(`Fehler: ${data?.error ?? res.status}`);
-      } else {
-        setDumpStatus(`OK: gespeichert unter ${data.path} (${data.bytes} Bytes)`);
-      }
-    } catch (e: unknown) {
-      const message = e instanceof Error ? e.message : String(e);
-      setDumpStatus(`Fehler: ${message}`);
-    }
-  }
-
   async function exportCompany() {
     if (!company) return;
     setExportStatus("Exportiere Company…");
@@ -256,12 +239,6 @@ export function CompanySettingsForm() {
                 <Label htmlFor="description">Beschreibung</Label>
                 <Input id="description" value={description} onChange={(e) => setDescription(e.target.value)} />
               </div>
-              
-              <div className="md:col-span-2 flex items-center gap-3 mt-4">
-                <Button type="submit" disabled={saving}>{saving ? "Speichern…" : "Speichern"}</Button>
-                {message && <span className="text-sm text-green-600">{message}</span>}
-                {error && <span className="text-sm text-red-600">{error}</span>}
-              </div>
 
               <div className="md:col-span-2 border-t pt-4 mt-2">
                 <label className="flex items-center gap-2 text-xs mb-3">
@@ -297,6 +274,15 @@ export function CompanySettingsForm() {
         />
       )}
 
+      {/* Save button for entire form */}
+      {!loading && company && (
+        <div className="md:col-span-12 flex items-center gap-3 justify-end">
+          <Button onClick={onSubmit} disabled={saving}>{saving ? "Speichern…" : "Speichern"}</Button>
+          {message && <span className="text-sm text-green-600">{message}</span>}
+          {error && <span className="text-sm text-red-600">{error}</span>}
+        </div>
+      )}
+
       <ContactFormDialog
         open={contactDialogOpen}
         onOpenChange={setContactDialogOpen}
@@ -320,19 +306,6 @@ export function CompanySettingsForm() {
         </CardContent>
       </Card>
 
-      <Card className="md:col-span-12">
-        <CardHeader>
-          <CardTitle>Seed Dump</CardTitle>
-          <CardDescription>Dump public + auth Daten nach supabase/seed.sql</CardDescription>
-        </CardHeader>
-        <CardContent>
-          <div className="flex items-center justify-between gap-3">
-            <div className="text-sm">Exportiert aktuelle Datenstände der Company.</div>
-            <Button type="button" variant="outline" onClick={createSeedDump}>Seed-Dump erstellen</Button>
-          </div>
-          {dumpStatus && <div className="mt-2 text-xs text-muted-foreground">{dumpStatus}</div>}
-        </CardContent>
-      </Card>
     </div>
   );
 }
