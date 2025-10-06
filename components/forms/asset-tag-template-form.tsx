@@ -8,9 +8,11 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { createClient } from '@/lib/supabase/client';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo, useCallback, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import { AssetTagTemplate, AssetTagTemplateElement } from '@/components/asset-tag-templates/types';
+
+const MM_TO_PX = 3.779527559;
 
 const preprocessOptionalNumber = (min?: number) =>
   z.preprocess((v) => {
@@ -135,6 +137,211 @@ export function AssetTagTemplateForm({ templateId }: AssetTagTemplateFormProps) 
     control: form.control,
     name: 'elements',
   });
+
+  const measurementCtxRef = useRef<CanvasRenderingContext2D | null>(null);
+
+  const ensureMeasurementContext = useCallback(() => {
+    if (typeof window === 'undefined') return null;
+    if (!measurementCtxRef.current) {
+      const canvas = document.createElement('canvas');
+      measurementCtxRef.current = canvas.getContext('2d');
+    }
+    return measurementCtxRef.current;
+  }, []);
+
+  const getElementGeometry = useCallback((element: FormValues['elements'][number] | undefined) => {
+    if (!element) return null;
+    const ctx = element.type === 'text' ? ensureMeasurementContext() : null;
+    const rawTextSize = form.getValues('textSizePt');
+    const defaultTextSize = typeof rawTextSize === 'number' && !Number.isNaN(rawTextSize) ? rawTextSize : 12;
+    const baseSizeCandidate = typeof element.size === 'number' && !Number.isNaN(element.size) ? element.size : undefined;
+    const baseSize = baseSizeCandidate ?? defaultTextSize;
+
+    let widthPx = 0;
+    let heightPx = 0;
+    let anchorShiftPx = 0;
+    let baselineShiftPx = 0;
+
+    if (element.type === 'text') {
+      if (!ctx) return null;
+      ctx.font = `${baseSize}px Arial, sans-serif`;
+      const metrics = ctx.measureText(element.value ?? '');
+      widthPx = metrics.width || 0;
+      const ascentPx = metrics.actualBoundingBoxAscent ?? baseSize * 0.8;
+      const descentPx = metrics.actualBoundingBoxDescent ?? baseSize * 0.2;
+      heightPx = ascentPx + descentPx;
+      anchorShiftPx = element.textAlign === 'center' ? widthPx / 2 : element.textAlign === 'right' ? widthPx : 0;
+      baselineShiftPx = ascentPx;
+    } else if (element.type === 'qrcode') {
+      widthPx = baseSize * MM_TO_PX;
+      heightPx = widthPx;
+    } else if (element.type === 'image') {
+      widthPx = baseSize * MM_TO_PX;
+      const heightCandidate = typeof element.height === 'number' && !Number.isNaN(element.height) ? element.height : undefined;
+      const targetHeight = heightCandidate ?? baseSize;
+      heightPx = targetHeight * MM_TO_PX;
+    } else if (element.type === 'barcode') {
+      widthPx = baseSize * 2;
+      heightPx = baseSize * 0.6 + 10;
+    } else {
+      widthPx = baseSize * MM_TO_PX;
+      heightPx = widthPx;
+    }
+
+    const widthMm = widthPx / MM_TO_PX;
+    const heightMm = heightPx / MM_TO_PX;
+    const anchorShiftMm = anchorShiftPx / MM_TO_PX;
+    const baselineShiftMm = baselineShiftPx / MM_TO_PX;
+    const x = element.x ?? 0;
+    const y = element.y ?? 0;
+    const leftMm = x - anchorShiftMm;
+    const topMm = y - baselineShiftMm;
+
+    return {
+      widthMm,
+      heightMm,
+      anchorShiftMm,
+      baselineShiftMm,
+      leftMm,
+      topMm,
+      rightMm: leftMm + widthMm,
+      bottomMm: topMm + heightMm,
+      centerMm: leftMm + widthMm / 2,
+      middleMm: topMm + heightMm / 2,
+    };
+  }, [ensureMeasurementContext, form]);
+
+  const [alignmentTargetsById, setAlignmentTargetsById] = useState<Record<string, string | null>>({});
+  const watchedElements = form.watch('elements');
+  const alignmentOptions = useMemo(() => {
+    return fields.map((field, idx) => {
+      const element = watchedElements?.[idx];
+      const typeLabel = element?.type ? element.type.toUpperCase() : 'Element';
+      const valueSnippet = element?.value ? ` – ${String(element.value).slice(0, 20)}${
+        element?.value && element.value.length > 20 ? '…' : ''
+      }` : '';
+      return {
+        id: field.id,
+        idx,
+        label: `#${idx + 1} ${typeLabel}${valueSnippet}`,
+      };
+    });
+  }, [fields, watchedElements]);
+
+  const handleAlignmentSelectChange = useCallback((fieldId: string, targetId: string) => {
+    setAlignmentTargetsById((prev) => ({
+      ...prev,
+      [fieldId]: targetId.length ? targetId : null,
+    }));
+  }, []);
+
+  const alignElementToTarget = useCallback((index: number, axis: 'x' | 'y') => {
+    const field = fields[index];
+    if (!field) return;
+    const targetId = alignmentTargetsById[field.id];
+    if (!targetId) return;
+    const targetIndex = fields.findIndex((f) => f.id === targetId);
+    if (targetIndex < 0) return;
+    const targetElement = form.getValues(`elements.${targetIndex}` as const) as FormValues['elements'][number] | undefined;
+    if (!targetElement) return;
+    const value = axis === 'x' ? targetElement.x : targetElement.y;
+    if (typeof value !== 'number' || Number.isNaN(value)) return;
+    form.setValue(`elements.${index}.${axis}` as const, Number(value.toFixed(2)), {
+      shouldDirty: true,
+      shouldTouch: true,
+    });
+  }, [alignmentTargetsById, fields, form]);
+
+  const alignElementToCanvas = useCallback(
+    (index: number, axis: 'x' | 'y', position: 'start' | 'center' | 'end') => {
+      const dimension = axis === 'x' ? form.getValues('tagWidthMm') : form.getValues('tagHeightMm');
+      if (typeof dimension !== 'number' || Number.isNaN(dimension)) return;
+      const element = form.getValues(`elements.${index}` as const) as FormValues['elements'][number] | undefined;
+      const geometry = getElementGeometry(element);
+      if (!element || !geometry) {
+        const fallback = position === 'start' ? 0 : position === 'center' ? dimension / 2 : dimension;
+        form.setValue(`elements.${index}.${axis}` as const, Number(fallback.toFixed(2)), {
+          shouldDirty: true,
+          shouldTouch: true,
+        });
+        return;
+      }
+
+      let newValue = element[axis] ?? 0;
+      if (axis === 'x') {
+        if (position === 'start') {
+          newValue = geometry.anchorShiftMm;
+        } else if (position === 'center') {
+          newValue = dimension / 2 - geometry.widthMm / 2 + geometry.anchorShiftMm;
+        } else {
+          newValue = dimension - geometry.widthMm + geometry.anchorShiftMm;
+        }
+      } else {
+        if (position === 'start') {
+          newValue = geometry.baselineShiftMm;
+        } else if (position === 'center') {
+          newValue = dimension / 2 - geometry.heightMm / 2 + geometry.baselineShiftMm;
+        } else {
+          newValue = dimension - geometry.heightMm + geometry.baselineShiftMm;
+        }
+      }
+
+      const clamped = Math.min(Math.max(newValue, 0), dimension);
+      form.setValue(`elements.${index}.${axis}` as const, Number(clamped.toFixed(2)), {
+        shouldDirty: true,
+        shouldTouch: true,
+      });
+    },
+    [form, getElementGeometry],
+  );
+
+  const alignElementRelativeToTarget = useCallback(
+    (index: number, axis: 'x' | 'y', position: 'start' | 'center' | 'end') => {
+      const field = fields[index];
+      if (!field) return;
+      const targetId = alignmentTargetsById[field.id];
+      if (!targetId) return;
+      const targetIndex = fields.findIndex((f) => f.id === targetId);
+      if (targetIndex < 0) return;
+
+      const element = form.getValues(`elements.${index}` as const) as FormValues['elements'][number] | undefined;
+      const targetElement = form.getValues(`elements.${targetIndex}` as const) as FormValues['elements'][number] | undefined;
+      const geometry = getElementGeometry(element);
+      const targetGeometry = getElementGeometry(targetElement);
+      const dimension = axis === 'x' ? form.getValues('tagWidthMm') : form.getValues('tagHeightMm');
+
+      if (!element || !geometry || !targetGeometry || typeof dimension !== 'number' || Number.isNaN(dimension)) {
+        alignElementToTarget(index, axis);
+        return;
+      }
+
+      let newValue = element[axis] ?? 0;
+      if (axis === 'x') {
+        if (position === 'start') {
+          newValue = targetGeometry.leftMm + geometry.anchorShiftMm;
+        } else if (position === 'center') {
+          newValue = targetGeometry.centerMm - geometry.widthMm / 2 + geometry.anchorShiftMm;
+        } else {
+          newValue = targetGeometry.rightMm - geometry.widthMm + geometry.anchorShiftMm;
+        }
+      } else {
+        if (position === 'start') {
+          newValue = targetGeometry.topMm + geometry.baselineShiftMm;
+        } else if (position === 'center') {
+          newValue = targetGeometry.middleMm - geometry.heightMm / 2 + geometry.baselineShiftMm;
+        } else {
+          newValue = targetGeometry.bottomMm - geometry.heightMm + geometry.baselineShiftMm;
+        }
+      }
+
+      const clamped = Math.min(Math.max(newValue, 0), dimension);
+      form.setValue(`elements.${index}.${axis}` as const, Number(clamped.toFixed(2)), {
+        shouldDirty: true,
+        shouldTouch: true,
+      });
+    },
+    [alignElementToTarget, alignmentTargetsById, fields, form, getElementGeometry],
+  );
 
   const onSubmit = async (raw: unknown) => {
     const values = raw as FormValues;
@@ -439,6 +646,110 @@ export function AssetTagTemplateForm({ templateId }: AssetTagTemplateFormProps) 
                     <Button type="button" variant="destructive" onClick={() => remove(index)}>
                       Remove Element
                     </Button>
+                  </div>
+                </div>
+                {alignmentOptions.length > 1 ? (
+                  <div className="flex flex-wrap items-end gap-3">
+                    <div>
+                      <label htmlFor={`elements-${index}-align-target`} className="block text-sm font-medium mb-1">Ausrichten an</label>
+                      <select
+                        id={`elements-${index}-align-target`}
+                        className="h-9 rounded-md border bg-background px-3 text-sm w-full"
+                        value={alignmentTargetsById[f.id] ?? ''}
+                        onChange={(event) => handleAlignmentSelectChange(f.id, event.target.value)}
+                      >
+                        <option value="">Referenz wählen…</option>
+                        {alignmentOptions
+                          .filter((option) => option.id !== f.id)
+                          .map((option) => (
+                            <option key={option.id} value={option.id}>
+                              {option.label}
+                            </option>
+                          ))}
+                      </select>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <Button
+                        type="button"
+                        variant="outline"
+                        size="sm"
+                        disabled={!alignmentTargetsById[f.id]}
+                        onClick={() => alignElementToTarget(index, 'x')}
+                      >
+                        X angleichen
+                      </Button>
+                      <Button
+                        type="button"
+                        variant="outline"
+                        size="sm"
+                        disabled={!alignmentTargetsById[f.id]}
+                        onClick={() => alignElementToTarget(index, 'y')}
+                      >
+                        Y angleichen
+                      </Button>
+                    </div>
+                    {alignmentTargetsById[f.id] ? (
+                      <div className="flex flex-wrap gap-3">
+                        <div className="space-y-2">
+                          <span className="block text-sm font-medium">Relative Ausrichtung (X)</span>
+                          <div className="flex gap-2">
+                            <Button type="button" variant="outline" size="sm" onClick={() => alignElementRelativeToTarget(index, 'x', 'start')}>
+                              Links
+                            </Button>
+                            <Button type="button" variant="outline" size="sm" onClick={() => alignElementRelativeToTarget(index, 'x', 'center')}>
+                              Mitte
+                            </Button>
+                            <Button type="button" variant="outline" size="sm" onClick={() => alignElementRelativeToTarget(index, 'x', 'end')}>
+                              Rechts
+                            </Button>
+                          </div>
+                        </div>
+                        <div className="space-y-2">
+                          <span className="block text-sm font-medium">Relative Ausrichtung (Y)</span>
+                          <div className="flex gap-2">
+                            <Button type="button" variant="outline" size="sm" onClick={() => alignElementRelativeToTarget(index, 'y', 'start')}>
+                              Oben
+                            </Button>
+                            <Button type="button" variant="outline" size="sm" onClick={() => alignElementRelativeToTarget(index, 'y', 'center')}>
+                              Mitte
+                            </Button>
+                            <Button type="button" variant="outline" size="sm" onClick={() => alignElementRelativeToTarget(index, 'y', 'end')}>
+                              Unten
+                            </Button>
+                          </div>
+                        </div>
+                      </div>
+                    ) : null}
+                  </div>
+                ) : null}
+                <div className="flex flex-wrap items-end gap-3">
+                  <div className="space-y-2">
+                    <span className="block text-sm font-medium">Canvas-Ausrichtung (X)</span>
+                    <div className="flex gap-2">
+                      <Button type="button" variant="outline" size="sm" onClick={() => alignElementToCanvas(index, 'x', 'start')}>
+                        Links
+                      </Button>
+                      <Button type="button" variant="outline" size="sm" onClick={() => alignElementToCanvas(index, 'x', 'center')}>
+                        Mitte
+                      </Button>
+                      <Button type="button" variant="outline" size="sm" onClick={() => alignElementToCanvas(index, 'x', 'end')}>
+                        Rechts
+                      </Button>
+                    </div>
+                  </div>
+                  <div className="space-y-2">
+                    <span className="block text-sm font-medium">Canvas-Ausrichtung (Y)</span>
+                    <div className="flex gap-2">
+                      <Button type="button" variant="outline" size="sm" onClick={() => alignElementToCanvas(index, 'y', 'start')}>
+                        Oben
+                      </Button>
+                      <Button type="button" variant="outline" size="sm" onClick={() => alignElementToCanvas(index, 'y', 'center')}>
+                        Mitte
+                      </Button>
+                      <Button type="button" variant="outline" size="sm" onClick={() => alignElementToCanvas(index, 'y', 'end')}>
+                        Unten
+                      </Button>
+                    </div>
                   </div>
                 </div>
               </div>

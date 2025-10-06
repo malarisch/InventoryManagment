@@ -1,3 +1,21 @@
+2025-10-06 07:40 — Relative alignment controls & canvas clamp
+- Ergänzte relative Ausrichtungsbuttons je Referenz-Element (Links/Mitte/Rechts und Oben/Mitte/Unten) inklusive Bounding-Box-Messung via Hidden-Canvas
+- Canvas-Ausrichtung berücksichtigt jetzt Elementbreite/-höhe und hält Rechts/Unten innerhalb des Tagbereichs
+- Files: components/forms/asset-tag-template-form.tsx
+- Verification: npm run test:tsc ✅
+
+2025-10-06 07:25 — Add canvas alignment shortcuts for tag elements
+- Ergänzte Buttons zur schnellen Ausrichtung auf Canvas-Ränder (links/mittig/rechts sowie oben/mittig/unten) mit 2-Stellen-Rundung für Koordinaten
+- Reuse Form-SetValue, verträgt gemischte Maße und ignoriert ungültige Template-Dimensionen gracefully
+- Files: components/forms/asset-tag-template-form.tsx
+- Verification: npm run test:tsc ✅
+
+2025-10-06 07:10 — Align template elements to peers
+- Ergänzte Ausrichtungskontrollen im Template-Editor: Auswahl anderer Elemente plus Buttons zum Angleichen von X- bzw. Y-Positionen mit 2‑Stellen-Rundung
+- UI verwaltet Referenz-IDs unabhängig von Feldreihenfolge und aktualisiert Formwerte via setValue
+- Files: components/forms/asset-tag-template-form.tsx
+- Verification: npm run test:tsc ✅
+
 2025-10-06 06:55 — Allow selecting form controls after dragging
 - Normalisierte Pointer-Events: Drag-End wird nun zuverlässig beim Verlassen der Canvas oder bei Klicks außerhalb beendet, sodass Form Inputs/Dropdowns den Fokus behalten
 - Files: components/asset-tag-templates/template-preview.tsx
