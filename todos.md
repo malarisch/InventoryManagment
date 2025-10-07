@@ -130,3 +130,4 @@ Diese To-Do List enthält Aufgaben, die an der Software zu bearbeiten sind. Soba
   - Abmelden (Supabase Sign-Out)
 
 - Fix: Article & Equipment Metadata Forms vollständig refactored für Case & Rack Setup. Radio-Button Modus-Auswahl (Keine/Case ist Rack/Equipment ist rackmontierbar) mit gegenseitig ausschließender Logik. "19-Zoll Rackmontage" aus Physical Card entfernt und in Case Setup integriert. Konditionale Felder je nach Modus mit visueller Border-Farb-Codierung (blau=Case, grün=Equipment). Physical Card zeigt jetzt nur noch Gewicht und Maße. Alle Rack-Konfigurationen in einer einzigen "Case & Rack Setup" Karte zusammengefasst.
+- [ ] Mobile equipment table padding fixes

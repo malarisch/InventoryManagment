@@ -1,12 +1,13 @@
 
 'use client';
 
-import { useDeferredValue, useEffect, useMemo, useState } from 'react';
+import { useDeferredValue, useEffect, useMemo, useState, type ReactNode } from 'react';
 import { createClient } from '@/lib/supabase/client';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
+import { cn } from '@/lib/utils';
 
 interface DataTableProps<T> {
   tableName: string;
@@ -18,6 +19,10 @@ interface DataTableProps<T> {
   initialQuery?: string;
   select?: string;
   filters?: { column: string; operator?: string; value: string | number | boolean | null }[];
+  searchTrailingAction?: React.ReactNode;
+  mobileHiddenColumnKeys?: string[];
+  renderMobileFooterLeft?: (row: T) => React.ReactNode;
+  renderMobileFooterRight?: (row: T) => React.ReactNode;
 }
 
 export function DataTable<T extends { id: number }>(
@@ -30,7 +35,11 @@ export function DataTable<T extends { id: number }>(
     searchableFields = [],
     initialQuery = '',
     select = '*',
-    filters = []
+    filters = [],
+    searchTrailingAction,
+    mobileHiddenColumnKeys,
+    renderMobileFooterLeft,
+    renderMobileFooterRight
   }: DataTableProps<T>
 ) {
   const supabase = useMemo(() => createClient(), []);
@@ -105,88 +114,190 @@ export function DataTable<T extends { id: number }>(
   const canPrev = page > 1;
   const canNext = page < totalPages;
 
+  const headerCellClass = 'text-left font-semibold border-b px-3 py-2 text-xs sm:px-4 sm:py-3 sm:text-sm';
+  const bodyCellClass = 'px-3 py-2 align-top text-xs sm:px-4 sm:py-3 sm:text-sm';
+  const renderCellContent = (row: T, col: (typeof columns)[number]): ReactNode => (
+    col.render
+      ? col.render(row)
+      : ((row as unknown as Record<string, unknown>)[col.key] as ReactNode)
+  );
+  const hiddenKeys = useMemo(() => {
+    const base = new Set(mobileHiddenColumnKeys ?? []);
+    base.add('id');
+    return base;
+  }, [mobileHiddenColumnKeys]);
+  const mobileColumns = useMemo(() => columns.filter((column) => !hiddenKeys.has(column.key)), [columns, hiddenKeys]);
+  const groupedColumns = useMemo(() => {
+    const groups: Array<(typeof columns)[number][]> = [];
+    for (let index = 0; index < mobileColumns.length; index += 3) {
+      groups.push(mobileColumns.slice(index, index + 3));
+    }
+    return groups;
+  }, [mobileColumns]);
+
   return (
     <Card className={className}>
-      <CardHeader>
-        <CardTitle>{tableName}</CardTitle>
-        <CardDescription>{count ?? 0} total</CardDescription>
+      <CardHeader className="p-4 sm:p-6">
+        <CardTitle className="text-base sm:text-lg">{tableName}</CardTitle>
+        <CardDescription className="text-xs sm:text-sm">{count ?? 0} total</CardDescription>
       </CardHeader>
-      <CardContent>
-        <div className="mb-2 flex items-center gap-2">
-          <Input
-            placeholder="Search…"
-            value={q}
-            onChange={(e) => { setPage(1); setQ(e.target.value); }}
-            className="w-64"
-          />
+      <CardContent className="p-3 pt-0 sm:p-6 sm:pt-0">
+        <div className="mb-3 flex flex-col gap-2 sm:mb-4 sm:flex-row sm:items-center sm:gap-3">
+          <div className="flex w-full items-center gap-2 sm:w-auto">
+            <Input
+              placeholder="Search…"
+              value={q}
+              onChange={(e) => {
+                setPage(1);
+                setQ(e.target.value);
+              }}
+              className="w-full sm:w-64"
+            />
+            {searchTrailingAction ? (
+              <div className="flex shrink-0 items-center">
+                {searchTrailingAction}
+              </div>
+            ) : null}
+          </div>
           {q !== dq && <span className="text-xs text-muted-foreground">Sucht…</span>}
         </div>
-        <div className="overflow-x-auto border rounded-md">
-          <table className="w-full border-collapse text-sm">
-            <thead className="bg-muted">
-              <tr>
-                {columns.map((col) => (
-                  <th key={col.key} className="text-left font-semibold px-4 py-3 border-b">
-                    {col.label}
-                  </th>
-                ))}
-                <th className="text-left font-semibold px-4 py-3 border-b">Aktionen</th>
-              </tr>
-            </thead>
-            <tbody>
-              {loading && rows.length === 0 && (
-                <tr>
-                  <td className="px-4 py-4 text-muted-foreground" colSpan={columns.length + 1}>
-                    Lädt…
-                  </td>
-                </tr>
-              )}
-              {!loading && error && (
-                <tr>
-                  <td className="px-4 py-4 text-red-600" colSpan={columns.length + 1}>
-                    Fehler beim Laden: {error}
-                  </td>
-                </tr>
-              )}
-              {!loading && !error && rows.length === 0 && (
-                <tr>
-                  <td className="px-4 py-4 text-muted-foreground" colSpan={columns.length + 1}>
-                    Keine Einträge gefunden.
-                  </td>
-                </tr>
-              )}
-              {!loading && !error &&
-                rows.map((row) => (
-                  <tr key={row.id} className="border-b hover:bg-muted/50">
-                    {columns.map((col) => (
-                      <td key={col.key} className="px-4 py-3 align-top">
-                        {col.render ? col.render(row) : (row as unknown as Record<string, unknown>)[col.key] as React.ReactNode}
-                      </td>
-                    ))}
-                    <td className="px-4 py-3 align-top">
+        <div className="sm:hidden">
+          {loading && rows.length === 0 && (
+            <div className="rounded-md border bg-muted/20 p-3 text-xs text-muted-foreground">
+              Lädt…
+            </div>
+          )}
+          {!loading && error && (
+            <div className="rounded-md border border-red-200 bg-red-100/60 p-3 text-xs text-red-700">
+              Fehler beim Laden: {error}
+            </div>
+          )}
+          {!loading && !error && rows.length === 0 && (
+            <div className="rounded-md border bg-muted/20 p-3 text-xs text-muted-foreground">
+              Keine Einträge gefunden.
+            </div>
+          )}
+          {!loading && !error && rows.length > 0 && (
+            <div className="space-y-2.5" data-testid="data-table-mobile">
+              {rows.map((row) => (
+                <div key={row.id} className="rounded-md border p-2.5" data-testid="data-table-mobile-card">
+                  <div className="flex items-start justify-between gap-2">
+                    {groupedColumns.length > 0 ? (
+                      <dl className="flex-1 space-y-2 text-xs">
+                        {groupedColumns.map((group, groupIndex) => (
+                          <div key={groupIndex} className="grid grid-cols-3 gap-x-3 gap-y-1.5">
+                            {group.map((col) => (
+                              <div
+                                key={col.key}
+                                className={cn('space-y-0.5', group.length === 1 ? 'col-span-3' : undefined)}
+                              >
+                                <dt className="text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">
+                                  {col.label}
+                                </dt>
+                                <dd className="text-sm font-medium leading-tight text-foreground break-words">
+                                  {renderCellContent(row, col)}
+                                </dd>
+                              </div>
+                            ))}
+                          </div>
+                        ))}
+                      </dl>
+                    ) : (
+                      <div className="flex-1" />
+                    )}
+                    <div className="shrink-0 pt-0.5">
                       {renderRowActions(row)}
-                    </td>
+                    </div>
+                  </div>
+                  {(() => {
+                    const leftContent = renderMobileFooterLeft ? renderMobileFooterLeft(row) : `ID ${row.id}`;
+                    const rightContent = renderMobileFooterRight ? renderMobileFooterRight(row) : null;
+                    const showLeft = leftContent !== null && leftContent !== undefined && leftContent !== '';
+                    const showRight = rightContent !== null && rightContent !== undefined && rightContent !== '';
+                    if (!showLeft && !showRight) return null;
+                    return (
+                      <div
+                        className={cn(
+                          'mt-1 flex items-center gap-2 text-[11px] text-muted-foreground',
+                          showRight ? 'justify-between' : 'justify-start'
+                        )}
+                      >
+                        {showLeft ? <div>{leftContent}</div> : null}
+                        {showRight ? <div className="text-right">{rightContent}</div> : null}
+                      </div>
+                    );
+                  })()}
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+        <div className="hidden sm:block">
+          <div className="rounded-md border">
+            <div className="overflow-hidden">
+              <table className="w-full border-collapse text-xs sm:text-sm">
+                <thead className="bg-muted">
+                  <tr>
+                    {columns.map((col) => (
+                      <th key={col.key} className={headerCellClass}>
+                        {col.label}
+                      </th>
+                    ))}
+                    <th className={headerCellClass}>Aktionen</th>
                   </tr>
-                ))}
-            </tbody>
-          </table>
+                </thead>
+                <tbody>
+                  {loading && rows.length === 0 && (
+                    <tr>
+                      <td className={bodyCellClass} colSpan={columns.length + 1}>
+                        Lädt…
+                      </td>
+                    </tr>
+                  )}
+                  {!loading && error && (
+                    <tr>
+                      <td className={cn(bodyCellClass, "text-red-600")} colSpan={columns.length + 1}>
+                        Fehler beim Laden: {error}
+                      </td>
+                    </tr>
+                  )}
+                  {!loading && !error && rows.length === 0 && (
+                    <tr>
+                      <td className={cn(bodyCellClass, "text-muted-foreground")} colSpan={columns.length + 1}>
+                        Keine Einträge gefunden.
+                      </td>
+                    </tr>
+                  )}
+                  {!loading && !error &&
+                    rows.map((row) => (
+                      <tr key={row.id} className="border-b hover:bg-muted/50">
+                        {columns.map((col) => (
+                          <td key={col.key} className={bodyCellClass}>
+                            {renderCellContent(row, col)}
+                          </td>
+                        ))}
+                        <td className={bodyCellClass}>{renderRowActions(row)}</td>
+                      </tr>
+                    ))}
+                </tbody>
+              </table>
+            </div>
+          </div>
         </div>
 
-        <div className="mt-4 flex items-center justify-between gap-3">
-          <div className="text-sm text-muted-foreground">
+        <div className="mt-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+          <div className="text-xs text-muted-foreground sm:text-sm">
             Seite {page} von {totalPages}
-            {typeof count === "number" && (
-              <span> • {count} Einträge</span>
-            )}
+            {typeof count === "number" && <span> • {count} Einträge</span>}
           </div>
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-2 self-end sm:self-auto">
             <Button
               variant="outline"
               size="icon"
               onClick={() => setPage((p) => Math.max(1, p - 1))}
               disabled={!canPrev || loading}
             >
-              <ChevronLeft className="w-4 h-4" />
+              <ChevronLeft className="h-4 w-4" />
             </Button>
             <Button
               variant="outline"
@@ -194,7 +305,7 @@ export function DataTable<T extends { id: number }>(
               onClick={() => setPage((p) => (canNext ? p + 1 : p))}
               disabled={!canNext || loading}
             >
-              <ChevronRight className="w-4 h-4" />
+              <ChevronRight className="h-4 w-4" />
             </Button>
           </div>
         </div>

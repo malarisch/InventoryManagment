@@ -37,6 +37,11 @@ export function CustomerTable({ pageSize = 10, className }: Props) {
     </Button>
   );
 
+  const renderMobileFooterRight = (row: Contact) => {
+    if (!row.contact_type) return null;
+    return `Typ ${row.contact_type}`;
+  };
+
   return (
     <DataTable<Contact>
       tableName="contacts"
@@ -44,6 +49,7 @@ export function CustomerTable({ pageSize = 10, className }: Props) {
       renderRowActions={renderRowActions}
       pageSize={pageSize}
       className={className}
+      renderMobileFooterRight={renderMobileFooterRight}
       searchableFields={[
         { field: 'id', type: 'number' },
         { field: 'company_name', type: 'text' },
