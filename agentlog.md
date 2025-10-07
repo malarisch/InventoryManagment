@@ -1,3 +1,9 @@
+2025-10-07 12:10 — Equipmentkarte mit Save & Asset-Tag-Button
+- Speichern-Button und „Asset Tag anzeigen“ sitzen jetzt in der Kopfkarte neben Löschen; Formular nutzt neues footerVariant.
+- Equipment-Form kann Aktionen extern platzieren (formId, footerVariant=status-only).
+- Files: app/management/equipments/[id]/page.tsx, components/forms/equipment-edit-form.tsx
+- Verification: npm run test:tsc ✅
+
 2025-10-07 11:55 — Scanner-Suche für Articles & Locations
 - Artikel- und Standorttabellen bekommen denselben Suchleisten-Scanner wie Equipments; Seiten-Header-Buttons entfernt.
 - Tabellen verstecken Asset-Tag mobil und zeigen ihn im Footer, Icon-Button sitzt neben der Suche.

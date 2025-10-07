@@ -1,4 +1,5 @@
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
 import { EquipmentEditForm } from "@/components/forms/equipment-edit-form";
 import { createClient } from "@/lib/supabase/server";
 import type { Tables } from "@/database.types";
@@ -46,6 +47,7 @@ export default async function EquipmentDetailPage({ params }: { params: Promise<
   }
 
   const eq = data as EquipmentRow;
+  const formId = "equipment-edit-form";
 
   // Creator email (if accessible), fallback to UUID
   const creator = await fetchUserDisplayAdmin(eq.created_by ?? undefined);
@@ -80,8 +82,8 @@ export default async function EquipmentDetailPage({ params }: { params: Promise<
           </CardHeader>
           <CardContent className="px-4 pb-4">
             <div className="mb-1 flex flex-wrap items-center justify-between gap-2">
-              <DeleteWithUndo table="equipments" id={eq.id} payload={eq as Record<string, unknown>} redirectTo="/management/equipments" />
-              <div className="flex items-center gap-2 flex-wrap">
+              <div className="flex flex-wrap items-center gap-2">
+                <DeleteWithUndo table="equipments" id={eq.id} payload={eq as Record<string, unknown>} redirectTo="/management/equipments" />
                 {!eq.asset_tag && (
                   <AssetTagCreateForm
                     item={{ id: eq.id, name: eq.articles?.name || `Equipment #${eq.id}` }}
@@ -89,18 +91,31 @@ export default async function EquipmentDetailPage({ params }: { params: Promise<
                     companyId={eq.company_id}
                   />
                 )}
-                {/* Workshop quick todo */}
-                <div className="flex items-center gap-2">
-                  <span className="text-xs text-muted-foreground">Werkstatt:</span>
-                  <WorkshopTodoCreateInline companyId={Number(eq.company_id)} equipmentId={Number(eq.id)} />
-                </div>
+                <Button type="submit" form={formId}>
+                  Speichern
+                </Button>
+                {eq.asset_tag && (
+                  <Button asChild variant="outline">
+                    <Link
+                      href={`/api/asset-tags/${eq.asset_tag}/render?format=svg`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                    >
+                      Asset Tag anzeigen
+                    </Link>
+                  </Button>
+                )}
+              </div>
+              <div className="flex items-center gap-2 flex-wrap">
+                <span className="text-xs text-muted-foreground">Werkstatt:</span>
+                <WorkshopTodoCreateInline companyId={Number(eq.company_id)} equipmentId={Number(eq.id)} />
               </div>
             </div>
           </CardContent>
         </Card>
 
         {/* Form now at top level (no nested Cards) */}
-        <EquipmentEditForm equipment={eq} />
+        <EquipmentEditForm equipment={eq} formId={formId} footerVariant="status-only" />
 
         <Card>
           <CardHeader className="pb-3 px-4 pt-4">
