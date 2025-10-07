@@ -23,6 +23,7 @@ export function LocationCreateForm() {
   const [assetTagTemplateId, setAssetTagTemplateId] = useState<number | "">("");
   const [assetTagTemplates, setAssetTagTemplates] = useState<AssetTagTemplate[]>([]);
   const [companyMeta, setCompanyMeta] = useState<adminCompanyMetadata | null>(null);
+  const [companyName, setCompanyName] = useState<string>("");
   const [isWorkshop, setIsWorkshop] = useState<boolean>(false);
   const [loaded, setLoaded] = useState(false);
   const [saving, setSaving] = useState(false);
@@ -33,11 +34,12 @@ export function LocationCreateForm() {
     async function loadTags() {
       const [{ data: tmplData }, { data: companyRow }] = await Promise.all([
         supabase.from("asset_tag_templates").select("id,template").order("created_at", { ascending: false }),
-        supabase.from("companies").select("metadata").limit(1).maybeSingle(),
+        supabase.from("companies").select("name,metadata").limit(1).maybeSingle(),
       ]);
       if (!active) return;
       setAssetTagTemplates((tmplData as AssetTagTemplate[]) ?? []);
       setCompanyMeta(companyRow?.metadata as unknown as adminCompanyMetadata || null);
+      setCompanyName((companyRow?.name as string) ?? "");
   const metaPartial = companyRow?.metadata as Partial<adminCompanyMetadata> | undefined;
   const defId = metaPartial?.defaultLocationAssetTagTemplateId;
       if (defId) setAssetTagTemplateId(defId);
@@ -70,7 +72,20 @@ export function LocationCreateForm() {
       if (error) throw error;
       const id = (data as Tables<"locations">).id;
       if (assetTagTemplateId !== "") {
-        const printed_code = companyMeta ? buildAssetTagCode(companyMeta, "location", id) : String(id);
+        const chosen = assetTagTemplates.find((t) => t.id === Number(assetTagTemplateId));
+        const templatePrint = chosen ? {
+          name: (chosen.template as any).name,
+          description: (chosen.template as any).description || '',
+          prefix: (chosen.template as any).prefix || '',
+          suffix: (chosen.template as any).suffix || '',
+          numberLength: (chosen.template as any).numberLength || 0,
+          numberingScheme: (chosen.template as any).numberingScheme || 'sequential',
+          stringTemplate: (chosen.template as any).stringTemplate || '{prefix}-{code}',
+          codeType: (chosen.template as any).codeType || 'QR',
+        } : undefined;
+        const printed_code = companyMeta
+          ? buildAssetTagCode(companyMeta, "location", id, templatePrint as any, { company_name: companyName })
+          : String(id);
         const { data: tag, error: tagErr } = await supabase
           .from("asset_tags")
           .insert({ printed_template: Number(assetTagTemplateId), printed_code, company_id: company.id, created_by: userId })

@@ -59,24 +59,31 @@ export default async function CustomerDetailPage({ params }: { params: Promise<{
         <div className="text-sm text-muted-foreground">
           <Link href="/management/contacts" className="hover:underline">← Zurück zur Übersicht</Link>
         </div>
-        <Card>
-          <CardHeader>
-            <CardTitle id="contact-title">{displayName(contact)}</CardTitle>
-            <CardDescription>
-              #{contact.id} {contact.customer_type ? `• ${contact.customer_type}` : ""}{contact.contact_type && contact.contact_type !== 'customer' ? ` (${contact.contact_type})` : ""}
-              <br />
-              E-Mail: {contact.email ?? "—"} • Adresse: {contact.address ?? contact.street ?? "—"}{contact.postal_code ? `, ${contact.postal_code}` : contact.zip_code ? `, ${contact.zip_code}` : ""}{contact.country ? `, ${contact.country}` : ""}
-              <br />
-              Erstellt am: {formatDateTime(safeParseDate(contact.created_at))} {`• Erstellt von: ${creator ?? (contact.created_by === currentUserId ? 'Du' : fallbackDisplayFromId(contact.created_by)) ?? '—'}`}
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <div className="mb-4">
-              <DeleteWithUndo table="contacts" id={contact.id} payload={contact as Record<string, unknown>} redirectTo="/management/contacts" />
-            </div>
-            <ContactEditForm contact={contact} />
-          </CardContent>
-        </Card>
+        <section className="space-y-2">
+          <h1 id="contact-title" className="text-2xl font-semibold tracking-tight">
+            {displayName(contact)}
+          </h1>
+          <p className="text-sm text-muted-foreground">
+            #{contact.id} {contact.customer_type ? `• ${contact.customer_type}` : ""}
+            {contact.contact_type && contact.contact_type !== 'customer' ? ` (${contact.contact_type})` : ""}
+          </p>
+          <p className="text-sm text-muted-foreground">
+            E-Mail: {contact.email ?? "—"} • Adresse: {contact.address ?? contact.street ?? "—"}
+            {contact.postal_code ? `, ${contact.postal_code}` : contact.zip_code ? `, ${contact.zip_code}` : ""}
+            {contact.country ? `, ${contact.country}` : ""}
+          </p>
+          <p className="text-xs text-muted-foreground">
+            Erstellt am: {formatDateTime(safeParseDate(contact.created_at))}
+            {` • Erstellt von: ${creator ?? (contact.created_by === currentUserId ? 'Du' : fallbackDisplayFromId(contact.created_by)) ?? '—'}`}
+          </p>
+
+          <div className="mt-3">
+            <DeleteWithUndo table="contacts" id={contact.id} payload={contact as Record<string, unknown>} redirectTo="/management/contacts" />
+          </div>
+
+          {/* Main edit form without extra Card wrapper */}
+          <ContactEditForm contact={contact} />
+        </section>
 
         <Card>
           <CardHeader>

@@ -217,13 +217,19 @@ export async function createAssetTag(companyName: string, code: string, assetTyp
         });
     }
     return prisma.asset_tags.create({
-        data: {
-            company_id: BigInt(companyId),
-            created_by: userId,
-            printed_code: companyMeta? buildAssetTagCode(companyMeta as unknown as adminCompanyMetadata, assetType, parseInt(code), template! as unknown as asset_tag_template_print) : code,
-            printed_template: BigInt(templateId),
-            printed_applied: applied
-        }
+      data: {
+        company_id: BigInt(companyId),
+        created_by: userId,
+            printed_code: companyMeta? buildAssetTagCode(
+                companyMeta as unknown as adminCompanyMetadata,
+                assetType,
+                parseInt(code),
+                template! as unknown as asset_tag_template_print,
+                { company_name: companyName }
+            ) : code,
+        printed_template: BigInt(templateId),
+        printed_applied: applied
+      }
     });
 }
 

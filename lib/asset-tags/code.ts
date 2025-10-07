@@ -14,7 +14,13 @@ export type AssetTagEntityType = "article" | "equipment" | "case" | "location";
 interface PlaceholderData {
     [key: string]: string;
 }
-export function buildAssetTagCode(meta: adminCompanyMetadata, entity: AssetTagEntityType, id: number, template?: asset_tag_template_print): string {
+export function buildAssetTagCode(
+  meta: adminCompanyMetadata,
+  entity: AssetTagEntityType,
+  id: number,
+  template?: asset_tag_template_print,
+  placeholders?: Record<string, string>
+): string {
   const companyPref = (meta.companyWidePrefix || "").trim();
   const map: Record<AssetTagEntityType, string | undefined> = {
     article: meta.assetTagArticlePrefix,
@@ -25,19 +31,23 @@ export function buildAssetTagCode(meta: adminCompanyMetadata, entity: AssetTagEn
   const entityPref = (map[entity] || "").trim();
   const parts: string[] = [];
   if (template) {
-      let value = template.stringTemplate || '';
-      const placeholderData: PlaceholderData = {
-          "prefix": template.prefix || '',
-          "suffix": template.suffix || '',
-          "company-prefix": companyPref,
-          "code": String(id).padStart(template.numberLength, "0")
-          // Add more placeholders as needed
-
+    let value = template.stringTemplate || '';
+    const placeholderData: PlaceholderData = {
+      prefix: template.prefix || '',
+      suffix: template.suffix || '',
+      'company-prefix': companyPref,
+      code: String(id).padStart(template.numberLength, '0'),
+    };
+    // Merge custom placeholders (e.g., company_name)
+    if (placeholders) {
+      for (const [k, v] of Object.entries(placeholders)) {
+        placeholderData[k] = v ?? '';
       }
-      Object.entries(placeholderData).forEach(([key, replacement]) => {
-          value = value.replace(new RegExp(`\\{${key}\\}`, 'g'), replacement);
-      });
-      return value;
+    }
+    Object.entries(placeholderData).forEach(([key, replacement]) => {
+      value = value.replace(new RegExp(`\\{${key}\\}`, 'g'), replacement);
+    });
+    return value;
   }
   if (companyPref) parts.push(companyPref);
   if (entityPref) parts.push(entityPref);

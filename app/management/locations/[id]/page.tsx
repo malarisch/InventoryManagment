@@ -61,39 +61,36 @@ export default async function LocationDetailPage({ params }: { params: Promise<{
         <div className="text-sm text-muted-foreground">
           <Link href="/management/locations" className="hover:underline">← Zurück zur Übersicht</Link>
         </div>
-        <Card>
-          <CardHeader>
-            <CardTitle>Standort: {loc.name || `#${loc.id}`}</CardTitle>
-            <CardDescription>
-              ID: {loc.id}
-              {" • Asset Tag: "}
-              {loc.asset_tag ? (loc.asset_tags?.printed_code ?? `#${loc.asset_tag}`) : "—"}
-              <br />
-              Erstellt am: {formatDateTime(safeParseDate(loc.created_at))} {`• Erstellt von: ${creator ?? (loc.created_by === currentUserId ? 'Du' : fallbackDisplayFromId(loc.created_by)) ?? '—'}`}
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
-              <DeleteWithUndo table="locations" id={loc.id} payload={loc as Record<string, unknown>} redirectTo="/management/locations" />
-              <div className="flex items-center gap-2">
-                <Button variant="outline" asChild className="flex items-center gap-2">
-                  <Link href={`/management/scanner?mode=assign-location&locationId=${loc.id}`}>
-                    <Scan className="h-4 w-4" />
-                    Kameramodus
-                  </Link>
-                </Button>
-                {!loc.asset_tag && (
-                  <AssetTagCreateForm
-                    item={{ id: loc.id, name: loc.name || `Standort #${loc.id}` }}
-                    table="locations"
-                    companyId={loc.company_id}
-                  />
-                )}
-              </div>
+        <section className="space-y-3">
+          <h1 className="text-2xl font-semibold tracking-tight">Standort: {loc.name || `#${loc.id}`}</h1>
+          <p className="text-sm text-muted-foreground">
+            ID: {loc.id} • Asset Tag: {loc.asset_tag ? (loc.asset_tags?.printed_code ?? `#${loc.asset_tag}`) : "—"}
+          </p>
+          <p className="text-xs text-muted-foreground">
+            Erstellt am: {formatDateTime(safeParseDate(loc.created_at))}
+            {` • Erstellt von: ${creator ?? (loc.created_by === currentUserId ? 'Du' : fallbackDisplayFromId(loc.created_by)) ?? '—'}`}
+          </p>
+          <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
+            <DeleteWithUndo table="locations" id={loc.id} payload={loc as Record<string, unknown>} redirectTo="/management/locations" />
+            <div className="flex items-center gap-2">
+              <Button variant="outline" asChild className="flex items-center gap-2">
+                <Link href={`/management/scanner?mode=assign-location&locationId=${loc.id}`}>
+                  <Scan className="h-4 w-4" />
+                  Kameramodus
+                </Link>
+              </Button>
+              {!loc.asset_tag && (
+                <AssetTagCreateForm
+                  item={{ id: loc.id, name: loc.name || `Standort #${loc.id}` }}
+                  table="locations"
+                  companyId={loc.company_id}
+                />
+              )}
             </div>
-            <LocationEditForm location={loc} />
-          </CardContent>
-        </Card>
+          </div>
+          {/* Main edit form without extra Card wrapper */}
+          <LocationEditForm location={loc} />
+        </section>
 
         <Card>
           <CardHeader>

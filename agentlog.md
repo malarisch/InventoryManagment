@@ -1378,3 +1378,8 @@ Files: lib/tools/deleteCompany.ts, tests/vitest/delete-company.test.ts. Next: ru
 - Entfernte den horizontalen Außenabstand der Equipment-Übersichtskarte auf kleinen Viewports über eine responsive Klassenkombination, Desktop bleibt unverändert mit Padding/Radien
 - Files: app/management/equipments/page.tsx
 - Verification: npm run test:tsc ✅
+2025-10-07 21:05 — Fix nested cards, asset-tag template usage, and placeholders
+- Removed nested Cards on Contact/Location detail pages; forms render at top level.
+- Asset Tag generation now uses selected template and supports {company_name}; one-click creation without prompts.
+- Auto-opens Case Setup on article form when data exists; added visible Save in Company Settings header.
+- Files: app/management/{contacts,locations}/[id]/page.tsx, components/forms/{asset-tag-create-form,article-create-form,equipment-create-form,location-create-form,case-create-form}.tsx, lib/asset-tags/code.ts, lib/tools/dbhelpers.ts, components/forms/partials/article-metadata-form.tsx, components/company-settings-form.tsx

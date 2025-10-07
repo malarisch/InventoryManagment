@@ -223,8 +223,17 @@ export function CompanySettingsForm() {
     <div className="grid grid-cols-1 md:grid-cols-12 gap-6">
       <Card className="md:col-span-12">
         <CardHeader>
-          <CardTitle>Company Settings</CardTitle>
-          <CardDescription>Basisdaten der Company</CardDescription>
+          <div className="flex items-start justify-between gap-2">
+            <div>
+              <CardTitle>Company Settings</CardTitle>
+              <CardDescription>Basisdaten der Company</CardDescription>
+            </div>
+            {!loading && company && (
+              <Button type="button" onClick={onSubmit} disabled={saving} className="h-8">
+                {saving ? 'Speichern…' : 'Speichern'}
+              </Button>
+            )}
+          </div>
         </CardHeader>
         <CardContent>
           {loading ? (

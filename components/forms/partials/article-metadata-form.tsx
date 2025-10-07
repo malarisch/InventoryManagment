@@ -138,6 +138,14 @@ export function ArticleMetadataForm({
     ).map((section) => section.id);
     return Array.from(new Set<SectionId>(["general", ...defaults]));
   });
+
+  // Auto-activate Case section when incoming value already carries data
+  useEffect(() => {
+    if (hasCaseData(value) && !activeSections.includes("case")) {
+      setActiveSections((prev) => [...prev, "case"]);
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [value]);
   
   const [recentlyRemoved, setRecentlyRemoved] = useState<SectionId | null>(null);
   const [removedSectionBackup, setRemovedSectionBackup] = useState<Partial<ArticleMetadata> | null>(null);

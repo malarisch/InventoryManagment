@@ -31,6 +31,7 @@ export function ArticleCreateForm() {
   const [locations, setLocations] = useState<Location[]>([]);
   const [assetTagTemplates, setAssetTagTemplates] = useState<AssetTagTemplate[]>([]);
   const [companyMeta, setCompanyMeta] = useState<adminCompanyMetadata | null>(null);
+  const [companyName, setCompanyName] = useState<string>("");
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [metaText, setMetaText] = useState<string>(() => toPrettyJSON(defaultArticleMetadataDE));
@@ -46,12 +47,13 @@ export function ArticleCreateForm() {
       const [{ data: locationsData }, { data: tmplData }, { data: companyRow }] = await Promise.all([
         supabase.from("locations").select("id,name").order("name"),
         supabase.from("asset_tag_templates").select("id,template").order("created_at", { ascending: false }),
-        supabase.from("companies").select("metadata").limit(1).maybeSingle(),
+        supabase.from("companies").select("name,metadata").limit(1).maybeSingle(),
       ]);
       if (!active) return;
       setLocations((locationsData as Location[]) ?? []);
   setAssetTagTemplates(((tmplData as Tables<"asset_tag_templates">[]) ?? []).map(t => ({ id: t.id, template: t.template as Json })));
   setCompanyMeta(companyRow?.metadata ? companyRow.metadata as unknown as adminCompanyMetadata : null);
+  setCompanyName((companyRow?.name as string) ?? "");
   // preselect default template id from metadata (loose cast for optional field presence)
   const metaAny = companyRow?.metadata as Partial<adminCompanyMetadata> | undefined;
   const defId = metaAny?.defaultArticleAssetTagTemplateId;
@@ -131,7 +133,21 @@ export function ArticleCreateForm() {
       const id = (data as Tables<"articles">).id;
       // auto create asset tag if template selected
       if (assetTagTemplateId !== "") {
-  const printed_code = companyMeta ? buildAssetTagCode(companyMeta, "article", id) : String(id);
+        // Build printed code using selected template (supports placeholders like {company_name})
+        const chosen = assetTagTemplates.find((t) => t.id === Number(assetTagTemplateId));
+        const templatePrint = chosen ? {
+          name: (chosen.template as any).name,
+          description: (chosen.template as any).description || '',
+          prefix: (chosen.template as any).prefix || '',
+          suffix: (chosen.template as any).suffix || '',
+          numberLength: (chosen.template as any).numberLength || 0,
+          numberingScheme: (chosen.template as any).numberingScheme || 'sequential',
+          stringTemplate: (chosen.template as any).stringTemplate || '{prefix}-{code}',
+          codeType: (chosen.template as any).codeType || 'QR',
+        } : undefined;
+        const printed_code = companyMeta
+          ? buildAssetTagCode(companyMeta, "article", id, templatePrint as any, { company_name: companyName })
+          : String(id);
         const { data: tagData, error: tagErr } = await supabase
           .from("asset_tags")
           .insert({
