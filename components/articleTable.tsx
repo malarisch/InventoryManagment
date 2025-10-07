@@ -3,7 +3,7 @@
 import { Button } from '@/components/ui/button';
 import type { Tables } from '@/database.types';
 import Link from 'next/link';
-import { Pencil } from 'lucide-react';
+import { Pencil, Scan } from 'lucide-react';
 import { DataTable } from '@/components/data-table';
 
 type Article = Tables<"articles">;
@@ -16,9 +16,10 @@ type ArticleRow = Article & {
 type Props = {
   pageSize?: number;
   className?: string;
+  onScanClick?: () => void;
 };
 
-export function ArticleTable({ pageSize = 10, className }: Props) {
+export function ArticleTable({ pageSize = 10, className, onScanClick }: Props) {
 
   const columns = [
     { key: 'id', label: 'ID', render: (row: ArticleRow) => <Link className="underline-offset-2 hover:underline" href={`/management/articles/${row.id}`}>{row.id}</Link> },
@@ -42,6 +43,25 @@ export function ArticleTable({ pageSize = 10, className }: Props) {
     </Button>
   );
 
+  const searchTrailingAction = onScanClick ? (
+    <Button
+      type="button"
+      variant="outline"
+      size="icon"
+      onClick={onScanClick}
+      className="h-9 w-9"
+    >
+      <Scan className="h-4 w-4" />
+      <span className="sr-only">Asset-Tag scannen</span>
+    </Button>
+  ) : null;
+
+  const renderMobileFooterRight = (row: ArticleRow) => {
+    const assetTagCode = row.asset_tags?.printed_code ?? (row.asset_tag ? `#${row.asset_tag}` : null);
+    if (!assetTagCode) return null;
+    return `Asset-Tag ${assetTagCode}`;
+  };
+
   return (
     <DataTable<ArticleRow>
       tableName="articles"
@@ -49,6 +69,9 @@ export function ArticleTable({ pageSize = 10, className }: Props) {
       renderRowActions={renderRowActions}
       pageSize={pageSize}
       className={className}
+  searchTrailingAction={searchTrailingAction}
+      mobileHiddenColumnKeys={['asset_tag']}
+      renderMobileFooterRight={renderMobileFooterRight}
       searchableFields={[
         { field: 'id', type: 'number' },
         { field: 'name', type: 'text' },

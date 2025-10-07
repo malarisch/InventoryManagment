@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import { QrScannerModal } from "@/components/camera/qr-scanner-modal";
 import { useQrScanner } from "@/components/camera/use-qr-scanner";
 import { createClient } from "@/lib/supabase/client";
-import { Camera, Plus, AlertCircle, CheckCircle2 } from "lucide-react";
+import { Plus, AlertCircle, CheckCircle2 } from "lucide-react";
 import { useState, useMemo } from "react";
 import { useRouter } from "next/navigation";
 
@@ -78,17 +78,16 @@ export default function EquipmentsPage() {
   };
 
   return (
-    <main className="min-h-screen w-full flex flex-col items-center p-5">
+    <main className="min-h-screen w-full flex flex-col items-center px-3 py-4 sm:px-5 sm:py-6">
       <div className="w-full max-w-none flex-1 flex flex-col gap-4">
-        <div className="flex items-center justify-between">
+        <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
           <h1 className="text-2xl font-semibold">Equipments</h1>
-          <div className="flex items-center gap-2">
-            <Button variant="outline" onClick={openScanner} className="flex items-center gap-2">
-              <Camera className="w-4 h-4" />
-              Asset-Tag scannen
-            </Button>
-            <Button asChild>
-              <Link href="/management/equipments/new" className="flex items-center gap-2">
+          <div className="flex w-full flex-col gap-2 sm:w-auto sm:flex-row sm:items-center">
+            <Button asChild className="w-full sm:w-auto">
+              <Link
+                href="/management/equipments/new"
+                className="flex w-full items-center justify-center gap-2 sm:w-auto sm:justify-start"
+              >
                 <Plus className="w-4 h-4" />
                 Neu
               </Link>
@@ -112,7 +111,11 @@ export default function EquipmentsPage() {
           </div>
         )}
 
-        <EquipmentTable pageSize={10} />
+        <EquipmentTable
+          pageSize={10}
+          className="-mx-3 rounded-none border-x-0 sm:mx-0 sm:rounded-xl"
+          onScanClick={openScanner}
+        />
       </div>
 
       {/* QR Scanner Modal */}

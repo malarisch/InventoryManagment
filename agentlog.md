@@ -1,3 +1,55 @@
+2025-10-07 11:55 — Scanner-Suche für Articles & Locations
+- Artikel- und Standorttabellen bekommen denselben Suchleisten-Scanner wie Equipments; Seiten-Header-Buttons entfernt.
+- Tabellen verstecken Asset-Tag mobil und zeigen ihn im Footer, Icon-Button sitzt neben der Suche.
+- Files: components/articleTable.tsx, components/locationTable.tsx, app/management/{articles,locations}/page.tsx
+- Verification: npm run test:tsc ✅
+
+2025-10-07 11:40 — Contact-Typ im mobilen Footer
+- Contacts-Tabelle zeigt jetzt den Contact Type unten rechts, passend zum globalen Footer-Layout.
+- Files: components/customerTable.tsx
+- Verification: npm run test:tsc ✅
+
+2025-10-07 11:30 — Artikel-Asset-Tag im mobilen Footer
+- Artikel-Tabelle blendet Asset-Tag mobil aus und zeigt ihn unten rechts analog zur Equipment-Liste.
+- Files: components/articleTable.tsx
+- Verification: npm run test:tsc ✅
+
+2025-10-07 11:20 — Global mobile ID footer
+- DataTable blendet die ID Spalte mobil automatisch aus und zeigt sie links im Footer; rechter Footer bleibt konfigurierbar.
+- Footer-Layout passt sich optionalem Right-Content an, Gruppenlayout nutzt Dreierspalten.
+- Files: components/data-table.tsx, components/equipmentTable.tsx
+- Verification: npm run test:tsc ✅
+
+2025-10-07 11:05 — Footer zeigt Inventardatum + kompakte Zeile
+- Mobile DataTable gruppiert die ersten drei Felder (ID, Artikel, Standort) in einer Zeile; Restfelder spannen die Breite.
+- Footer kombiniert jetzt „Im Lager seit …“ mit dem Asset-Tag als dezentes Label.
+- Files: components/data-table.tsx, components/equipmentTable.tsx
+- Verification: npm run test:tsc ✅
+
+2025-10-07 10:55 — Mobile Asset-Tag Footer
+- Asset-Tag Spalte in mobilen Karten ausgeblendet und als dezentes Footer-Label unten rechts platziert; DataTable bekam optionalen Mobile-Footer.
+- Equipment-Suche zeigt den Scan-Hinweis weiterhin über den Icon-Button.
+- Files: components/data-table.tsx, components/equipmentTable.tsx
+- Verification: npm run test:tsc ✅
+
+2025-10-07 10:35 — Pair mobile DataTable fields & add scanner icon
+- Gruppierte mobile Kartenwerte zu Zweier-Reihen (z.B. ID + Artikel) und platzierte den Asset-Tag-Scan als Icon neben dem Suchfeld.
+- Equipment-Seite gibt den Scanner-Handler nun an das Table weiter; alter Header-Button entfällt.
+- Files: components/data-table.tsx, components/equipmentTable.tsx, app/management/equipments/page.tsx
+- Verification: npm run test:tsc ✅
+
+2025-10-07 10:05 — Compact mobile cards for DataTable
+- Reduzierte Padding und stellte Label/Value in einem zweispaltigen Grid dar, damit mobile Karten deutlich weniger vertikalen Platz belegen.
+- Importierte React.Fragment für saubere Key-Nutzung.
+- Files: components/data-table.tsx
+- Verification: npm run test:tsc ✅
+
+2025-10-06 09:40 — Improve equipment table mobile layout
+- Ergänzte eine mobile Card-Ansicht im generischen DataTable, damit Tabellen auf <640px ohne Horizontal-Scroll funktionieren; Desktop behält die klassische Tabelle.
+- Markierte mobile Container mit `data-testid` und fügte Playwright-Regression für Equipment-Liste (mobile/desktop) hinzu.
+- Files: components/data-table.tsx, tests/e2e/equipment-list-responsive.loggedin.spec.ts
+- Verification: npm run test:tsc ✅, npx playwright test equipment-list-responsive.loggedin.spec.ts ⚠️ (fehlende Env: NEXT_PUBLIC_SUPABASE_URL, NEXT_PUBLIC_SUPABASE_ANON_KEY, SUPABASE_SERVICE_ROLE_KEY)
+
 2025-10-06 09:05 — Clean up header unused props after drawer removal
 - Entfernte ungenutzte Icon-Map & `items`-Prop aus dem Header, nachdem der MobileDrawer entfiel; ManagementShell-Aufruf aktualisiert
 - ESLint `no-unused-vars` Warnungen beseitigt, Typprüfung bleibt grün
@@ -1315,3 +1367,8 @@ Files: lib/tools/deleteCompany.ts, tests/vitest/delete-company.test.ts. Next: ru
   * Easier to understand what each placeholder will render
 - Files: template-preview.tsx, asset-tag-template-create-form.tsx
 - TypeScript compilation: ✅ PASSED
+2025-10-07: Mobile equipment page responsive layout overhaul; touched components/data-table.tsx, app/management/equipments/page.tsx.
+2025-10-07 — Mobile equipment table flush on phones
+- Entfernte den horizontalen Außenabstand der Equipment-Übersichtskarte auf kleinen Viewports über eine responsive Klassenkombination, Desktop bleibt unverändert mit Padding/Radien
+- Files: app/management/equipments/page.tsx
+- Verification: npm run test:tsc ✅
