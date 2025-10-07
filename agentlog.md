@@ -1383,3 +1383,8 @@ Files: lib/tools/deleteCompany.ts, tests/vitest/delete-company.test.ts. Next: ru
 - Asset Tag generation now uses selected template and supports {company_name}; one-click creation without prompts.
 - Auto-opens Case Setup on article form when data exists; added visible Save in Company Settings header.
 - Files: app/management/{contacts,locations}/[id]/page.tsx, components/forms/{asset-tag-create-form,article-create-form,equipment-create-form,location-create-form,case-create-form}.tsx, lib/asset-tags/code.ts, lib/tools/dbhelpers.ts, components/forms/partials/article-metadata-form.tsx, components/company-settings-form.tsx
+2025-10-07 21:35 — Equip create SearchPicker, dark-mode note card, workshop completion
+- Replaced Equipment create Article select with SearchPicker for faster lookup.
+- Improved dark mode styling for inherited notes card (readability, contrast).
+- Added optional completion picker in maintenance log form to mark workshop todos as done; normalized status labels.
+- Files: components/forms/{equipment-create-form,maintenance-log-create-inline}.tsx, components/forms/partials/equipment-metadata-form.tsx, components/maintenance/workshop-todos-card.tsx

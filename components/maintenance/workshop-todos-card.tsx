@@ -14,16 +14,16 @@ interface WorkshopTodosCardProps {
 
 const STATUS_LABELS: Record<string, string> = {
   open: "Offen",
-  "in-progress": "In Bearbeitung",
-  completed: "Abgeschlossen",
-  cancelled: "Abgebrochen",
+  in_progress: "In Bearbeitung",
+  done: "Abgeschlossen",
+  blocked: "Blockiert",
 };
 
 const STATUS_VARIANTS: Record<string, "default" | "secondary" | "destructive" | "outline"> = {
   open: "destructive",
-  "in-progress": "default",
-  completed: "secondary",
-  cancelled: "outline",
+  in_progress: "default",
+  done: "secondary",
+  blocked: "outline",
 };
 
 export async function WorkshopTodosCard({ equipmentId, companyId }: WorkshopTodosCardProps) {
@@ -35,7 +35,7 @@ export async function WorkshopTodosCard({ equipmentId, companyId }: WorkshopTodo
     .select("*")
     .eq("equipment_id", equipmentId)
     .eq("company_id", companyId)
-    .in("status", ["open", "in-progress"])
+    .in("status", ["open", "in_progress"])
     .order("created_at", { ascending: false });
 
   const todosList = (todos as WorkshopTodo[] | null) ?? [];

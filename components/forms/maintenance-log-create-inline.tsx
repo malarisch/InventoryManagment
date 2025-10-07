@@ -6,6 +6,9 @@ import { createClient } from "@/lib/supabase/client";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
+import { useEffect } from "react";
+
+type WorkshopTodoLite = { id: number; title: string; status: string };
 
 function toLocalDateTimeInputValue(date: Date): string {
   const offsetMs = date.getTimezoneOffset() * 60 * 1000;
@@ -27,6 +30,28 @@ export function MaintenanceLogCreateInline({ companyId, equipmentId, caseId }: M
   const [performedAt, setPerformedAt] = useState(() => toLocalDateTimeInputValue(new Date()));
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [todos, setTodos] = useState<WorkshopTodoLite[]>([]);
+  const [completeIds, setCompleteIds] = useState<number[]>([]);
+
+  useEffect(() => {
+    let active = true;
+    async function loadTodos() {
+      const filters: Record<string, unknown> = { company_id: companyId };
+      let q = supabase.from('workshop_todos').select('id, title, status').eq('company_id', companyId);
+      if (equipmentId) q = q.eq('equipment_id', equipmentId);
+      if (caseId) q = q.eq('case_id', caseId);
+      const { data, error } = await q.in('status', ['open', 'in_progress']).order('created_at', { ascending: false });
+      if (!active) return;
+      if (error) return;
+      setTodos((data as WorkshopTodoLite[] | null) ?? []);
+    }
+    loadTodos();
+    return () => { active = false; };
+  }, [supabase, companyId, equipmentId, caseId]);
+
+  function toggleComplete(id: number) {
+    setCompleteIds((prev) => prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id]);
+  }
 
   async function onSubmit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -61,6 +86,15 @@ export function MaintenanceLogCreateInline({ companyId, equipmentId, caseId }: M
 
       const { error } = await supabase.from("maintenance_logs").insert(payload);
       if (error) throw error;
+
+      // Optionally mark selected workshop todos as done
+      if (completeIds.length > 0) {
+        const nowIso = new Date().toISOString();
+        await supabase
+          .from('workshop_todos')
+          .update({ status: 'done', closed_at: nowIso })
+          .in('id', completeIds);
+      }
 
       setTitle("");
       setNotes("");
@@ -113,6 +147,24 @@ export function MaintenanceLogCreateInline({ companyId, equipmentId, caseId }: M
           disabled={saving}
         />
       </div>
+      {todos.length > 0 && (
+        <div className="grid gap-2">
+          <div className="text-sm font-medium">Werkstatt‑Jobs abschließen (optional)</div>
+          <div className="rounded-md border">
+            {todos.map((t) => (
+              <label key={t.id} className="flex items-center gap-2 px-3 py-2 text-sm border-b last:border-b-0">
+                <input
+                  type="checkbox"
+                  checked={completeIds.includes(t.id)}
+                  onChange={() => toggleComplete(t.id)}
+                />
+                <span className="truncate">{t.title}</span>
+                <span className="ml-auto text-xs text-muted-foreground">#{t.id}</span>
+              </label>
+            ))}
+          </div>
+        </div>
+      )}
       <div className="flex items-center gap-3">
         <Button type="submit" disabled={saving || !title.trim()}>
           Speichern

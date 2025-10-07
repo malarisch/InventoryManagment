@@ -16,6 +16,7 @@ import { defaultEquipmentMetadataDE, toPrettyJSON } from "@/lib/metadata/default
 import { EquipmentMetadataForm } from "@/components/forms/partials/equipment-metadata-form";
 import { ContactFormDialog } from "@/components/forms/contacts/contact-form-dialog";
 import { buildEquipmentMetadata } from "@/lib/metadata/builders";
+import { SearchPicker, type SearchItem } from "@/components/search/search-picker";
 type Article = Tables<"articles">;
 type Location = Tables<"locations">;
 type AssetTagTemplate = Tables<"asset_tag_templates">;
@@ -182,6 +183,27 @@ export function EquipmentCreateForm({ initialArticleId }: { initialArticleId?: n
     />
   );
 
+  const articleItems: SearchItem<"article", Article>[] = useMemo(() => {
+    return articles.map((a, idx) => ({
+      id: String(a.id),
+      category: "article",
+      title: a.name ?? `#${a.id}`,
+      description: undefined,
+      priority: 5,
+      matchers: [
+        { value: String(a.id), weight: 5 },
+        ...(a.name ? [{ value: a.name, weight: 0 }] : []),
+      ],
+      data: a,
+    }));
+  }, [articles]);
+
+  const selectedArticleName = useMemo(() => {
+    if (articleId === "") return "Artikel wählen";
+    const match = articles.find((a) => a.id === Number(articleId));
+    return match?.name ?? `#${articleId}`;
+  }, [articleId, articles]);
+
   async function onSubmit(e: React.FormEvent) {
     e.preventDefault();
     setSaving(true);
@@ -310,18 +332,13 @@ export function EquipmentCreateForm({ initialArticleId }: { initialArticleId?: n
         </CardHeader>
         <CardContent className="grid gap-3 sm:grid-cols-2">
           <div className="grid gap-2">
-            <Label htmlFor="article_id">Artikel</Label>
-            <select
-              id="article_id"
-              className="h-9 rounded-md border bg-background px-3 text-sm"
-              value={articleId}
-              onChange={(e) => setArticleId(e.target.value === "" ? "" : Number(e.target.value))}
-            >
-              <option value="">— Kein Artikel —</option>
-              {articles.map((a) => (
-                <option key={a.id} value={a.id}>{a.name}</option>
-              ))}
-            </select>
+            <Label htmlFor="article_id_picker">Artikel</Label>
+            <SearchPicker
+              items={articleItems}
+              onSelect={(item) => setArticleId(Number(item.id))}
+              buttonLabel={selectedArticleName}
+              buttonProps={{ id: "article_id_picker" }}
+            />
           </div>
           <div className="grid gap-2">
             <Label htmlFor="current_location">Aktueller Standort</Label>

@@ -1030,10 +1030,10 @@ export function EquipmentMetadataForm({
     return (
       <>
         {hasInheritedNotes && (
-          <Card className="border-blue-200 bg-blue-50/50">
+          <Card className="border-blue-200 bg-blue-50/50 dark:border-blue-900 dark:bg-blue-950/40">
             <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <span className="text-blue-600">📝</span>
+              <CardTitle className="flex items-center gap-2 text-blue-700 dark:text-blue-300">
+                <span aria-hidden className="">📝</span>
                 Notizen vom Artikel
               </CardTitle>
               <CardDescription>
@@ -1041,7 +1041,7 @@ export function EquipmentMetadataForm({
               </CardDescription>
             </CardHeader>
             <CardContent>
-              <div className="rounded-md bg-background p-3 text-sm text-muted-foreground whitespace-pre-wrap border">
+              <div className="rounded-md border p-3 text-sm whitespace-pre-wrap bg-muted/30 text-foreground dark:bg-muted/20 dark:text-muted-foreground">
                 {inheritedNotes}
               </div>
             </CardContent>
