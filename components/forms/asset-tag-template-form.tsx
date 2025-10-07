@@ -563,6 +563,17 @@ export function AssetTagTemplateForm({ templateId }: AssetTagTemplateFormProps) 
             <div className="col-span-2">
               <label htmlFor="stringTemplate" className="block text-sm font-medium mb-1">String Template</label>
               <Input id="stringTemplate" placeholder="e.g., {prefix}{number}{suffix}" {...form.register('stringTemplate')} />
+              <div className="mt-2 rounded-md border bg-muted/30 p-3 text-xs leading-relaxed">
+                <div className="font-medium mb-1">Verfügbare Platzhalter</div>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-4 gap-y-1">
+                  <div><code>{`{company-prefix}`}</code>: Firmenpräfix aus Metadaten</div>
+                  <div><code>{`{prefix}`}</code>: Template-Prefix (z. B. EQ)</div>
+                  <div><code>{`{code}`}</code>: Nummer mit Padding (Länge)</div>
+                  <div><code>{`{suffix}`}</code>: Template-Suffix</div>
+                  <div><code>{`{company_name}`}</code>: Firmenname</div>
+                </div>
+                <div className="mt-2 text-muted-foreground">Beispiel: <code>{`{company-prefix}-{prefix}-{code}{suffix}`}</code> → <code>ACME-EQ-00042A</code></div>
+              </div>
             </div>
             <div>
               <label htmlFor="codeType" className="block text-sm font-medium mb-1">Code Type</label>

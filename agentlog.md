@@ -1388,3 +1388,8 @@ Files: lib/tools/deleteCompany.ts, tests/vitest/delete-company.test.ts. Next: ru
 - Improved dark mode styling for inherited notes card (readability, contrast).
 - Added optional completion picker in maintenance log form to mark workshop todos as done; normalized status labels.
 - Files: components/forms/{equipment-create-form,maintenance-log-create-inline}.tsx, components/forms/partials/equipment-metadata-form.tsx, components/maintenance/workshop-todos-card.tsx
+2025-10-07 22:00 — Contact create fields, template placeholders, power section toggle fix
+- Expanded Contact create form with phone, street, zip, city, website, notes to match edit form.
+- Asset Tag Template form shows available stringTemplate placeholders incl. {company_name}.
+- Prevent auto-reopening of Power section when user hides it (respects manual hide despite company defaults).
+- Files: components/forms/{customer-create-form,asset-tag-template-form}.tsx, components/forms/partials/article-metadata-form.tsx

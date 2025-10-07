@@ -149,6 +149,7 @@ export function ArticleMetadataForm({
   
   const [recentlyRemoved, setRecentlyRemoved] = useState<SectionId | null>(null);
   const [removedSectionBackup, setRemovedSectionBackup] = useState<Partial<ArticleMetadata> | null>(null);
+  const [manuallyHidden, setManuallyHidden] = useState<Set<SectionId>>(new Set());
 
   // Sync from parent: only update local if change came from outside
   useEffect(() => {
@@ -202,7 +203,9 @@ export function ArticleMetadataForm({
         break;
     }
     setRemovedSectionBackup(backup);
-    
+    // Track manual hide to avoid auto re-adding from defaults
+    setManuallyHidden((prev) => new Set<SectionId>(prev).add(sectionId));
+
     // Clear data for this section
     update((prev) => {
       const updated = { ...prev };
@@ -252,6 +255,11 @@ export function ArticleMetadataForm({
     
     setActiveSections((current) => [...current, recentlyRemoved]);
     setRecentlyRemoved(null);
+    setManuallyHidden((prev) => {
+      const next = new Set(prev);
+      next.delete(recentlyRemoved);
+      return next;
+    });
     setRemovedSectionBackup(null);
   }
 
@@ -261,6 +269,7 @@ export function ArticleMetadataForm({
 
   function ensureSectionActive(section: SectionId, hasData: boolean) {
     if (!hasData) return;
+    if (manuallyHidden.has(section)) return; // respect user's choice to hide
     setActiveSections((current) =>
       current.includes(section) ? current : [...current, section]
     );
@@ -280,7 +289,7 @@ export function ArticleMetadataForm({
       (local.suppliers?.length ?? 0) > 0 || !!local.dailyRentalRate
     );
     ensureSectionActive("notes", !!local.notes);
-  }, [local, adminMeta]);
+  }, [local, adminMeta, manuallyHidden]);
 
   function setTextField<K extends keyof ArticleMetadata>(key: K, raw: string, trim = true) {
     const trimmed = trim ? raw.trim() : raw;
