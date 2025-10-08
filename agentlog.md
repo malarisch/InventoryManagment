@@ -1,3 +1,16 @@
+2025-10-08 23:50 — Asset Tag Template Form: Wrong Company ID Fix
+- **Issue**: Templates were created under highest company_id instead of currently selected active company
+- **Root Cause**: Form used `.order('created_at', {ascending: false}).limit(1)` to get "newest" company membership - ignores active company selection
+- **Solution**: 
+  - Replaced manual users_companies query with useCompany hook
+  - Create operation now uses company.id from active company
+  - Added company_id filter to fetch operation (edit mode) for security
+  - Added company_id filter to update operation for security
+  - Templates now properly scoped to active company
+- Files: components/forms/asset-tag-template-form.tsx, agentlog.md
+- Verification: npm run test:tsc ✅
+- Impact: Users with multiple companies can now create templates in the correct company
+
 2025-10-08 23:30 — Asset Tag Templates Section Multi-Company Fix
 - **Issue**: "No company found for user" error on company settings page - asset tag templates not displaying
 - **Root Cause**: Component used `.single()` on users_companies query, which fails when user has multiple companies
