@@ -1,3 +1,13 @@
+2025-01-15 15:00 — HOTFIX: Build Error - Client/Server Module Split
+- **Build Error**: lib/companies.ts imported by client component but contained server-only code (next/headers)
+- **Solution**: Split into two files:
+  - lib/companies.ts: Client-safe (CompanyRecord type, normalizeCompanyRelation function)
+  - lib/companies.server.ts: Server-only (getActiveCompanyId function with next/headers)
+- Updated all 9 server component imports to use companies.server.ts
+- Files: lib/companies.ts, lib/companies.server.ts, app/management/**/*.tsx (9 server pages), agentlog.md
+- Verification: npm run test:tsc ✅, npm run build progresses past error ✅
+- Next: Build still fails on pre-existing ESLint issues (any types, unused vars) - not related to this fix
+
 2025-01-15 14:30 — CRITICAL: Multi-Company Data Isolation - Phase 2B Complete (Client Components)
 - **Phase 2B - Client Components (DONE)**:
   - **Data Tables (8 files)**: articleTable, equipmentTable, locationTable, caseTable, customerTable, assetTagTable, jobTable, articleEquipmentsTable
