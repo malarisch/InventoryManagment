@@ -1,5 +1,6 @@
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { createClient } from "@/lib/supabase/server";
+import { getActiveCompanyId } from "@/lib/companies";
 import type { Tables } from "@/database.types";
 import { ArticleEditForm } from "@/components/forms/article-edit-form";
 import Link from "next/link";
@@ -23,12 +24,25 @@ export default async function ArticleDetailPage({ params }: { params: Promise<{ 
   const { id: idParam } = await params;
   const id = Number(idParam);
   const supabase = await createClient();
+  const activeCompanyId = await getActiveCompanyId();
+  
+  if (!activeCompanyId) {
+    return (
+      <main className="min-h-screen w-full flex flex-col items-center p-5">
+        <div className="w-full max-w-none flex-1">
+          <p className="text-red-600">Keine aktive Company ausgewählt.</p>
+        </div>
+      </main>
+    );
+  }
+  
   const { data: auth } = await supabase.auth.getUser();
   const currentUserId = auth.user?.id ?? null;
   const { data, error } = await supabase
     .from("articles")
     .select("*, locations:default_location(name), asset_tags:asset_tag(printed_code)")
     .eq("id", id)
+    .eq("company_id", activeCompanyId)
     .limit(1)
     .single();
 

@@ -1,3 +1,14 @@
+2025-10-09 01:30 — CRITICAL: Multi-Company Data Isolation - Phase 2A (Server Components)
+- **Phase 2A - Server Components (DONE)**:
+  - Detail Pages: articles/[id], locations/[id], contacts/[id], cases/[id], jobs/[id] - alle mit activeCompanyId Filter
+  - Special Pages: scanner, workshop - activeCompanyId Filter auf alle Queries
+  - Dashboard: management/page.tsx - alle Counts und History mit company_id Filter
+  - Alle Queries jetzt: `const activeCompanyId = await getActiveCompanyId()` + `.eq('company_id', activeCompanyId)`
+- **Phase 2B - TO DO**: Client Components (Forms, SearchPicker, Tables) müssen noch gefixed werden
+- Files: app/management/{articles,locations,contacts,cases,jobs}/[id]/page.tsx, app/management/{scanner,workshop,page}.tsx, agentlog.md
+- Verification: npm run test:tsc ✅
+- Next: Client Components Forms fixen (equipment-create, article-create, SearchPicker)
+
 2025-10-09 01:00 — CRITICAL: Multi-Company Data Isolation Bug - Phase 1
 - **KRITISCHER BUG**: User mit mehreren Companies sahen Daten von ALLEN Companies statt nur der aktiven
 - Root Cause: active_company_id nur im LocalStorage (client-only), Server Components konnten nicht filtern

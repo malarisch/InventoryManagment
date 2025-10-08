@@ -2,6 +2,7 @@ import Link from "next/link";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { createClient } from "@/lib/supabase/server";
+import { getActiveCompanyId } from "@/lib/companies";
 import { fallbackDisplayFromId } from "@/lib/userDisplay";
 import { fetchUserDisplayAdmin } from "@/lib/users/userDisplay.server";
 import type { Tables } from "@/database.types";
@@ -35,6 +36,18 @@ type HistoryRow = Tables<"history">;
  */
 export default async function ManagementHomePage() {
   const supabase = await createClient();
+  const activeCompanyId = await getActiveCompanyId();
+  
+  if (!activeCompanyId) {
+    return (
+      <main className="min-h-screen w-full flex flex-col items-center p-5">
+        <div className="w-full max-w-none flex-1">
+          <p className="text-red-600">Keine aktive Company ausgewählt.</p>
+        </div>
+      </main>
+    );
+  }
+  
   const { data: auth } = await supabase.auth.getUser();
   const currentUserId = auth.user?.id ?? null;
 
@@ -48,20 +61,21 @@ export default async function ManagementHomePage() {
     upcomingResult,
     historyResult,
   ] = await Promise.all([
-    supabase.from("equipments").select("id", { count: "exact", head: true }),
-    supabase.from("articles").select("id", { count: "exact", head: true }),
-    supabase.from("jobs").select("id", { count: "exact", head: true }),
-    supabase.from("contacts").select("id", { count: "exact", head: true }).eq("contact_type", "customer"),
+    supabase.from("equipments").select("id", { count: "exact", head: true }).eq("company_id", activeCompanyId),
+    supabase.from("articles").select("id", { count: "exact", head: true }).eq("company_id", activeCompanyId),
+    supabase.from("jobs").select("id", { count: "exact", head: true }).eq("company_id", activeCompanyId),
+    supabase.from("contacts").select("id", { count: "exact", head: true }).eq("contact_type", "customer").eq("company_id", activeCompanyId),
     supabase
       .from("jobs")
       .select(
         "id,name,startdate,enddate,type,job_location,contacts:contact_id(id,display_name,company_name,forename,surname,first_name,last_name,contact_type)",
       )
+      .eq("company_id", activeCompanyId)
       .or(`startdate.gte.${isoNow},and(startdate.is.null,enddate.gte.${isoNow})`)
       .order("startdate", { ascending: true, nullsFirst: false })
       .order("created_at", { ascending: true })
       .limit(6),
-    supabase.from("history").select("*").order("created_at", { ascending: false }).limit(20),
+    supabase.from("history").select("*").eq("company_id", activeCompanyId).order("created_at", { ascending: false }).limit(20),
   ]);
 
   const stats = [

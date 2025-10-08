@@ -1,4 +1,5 @@
 import { createClient } from "@/lib/supabase/server";
+import { getActiveCompanyId } from "@/lib/companies";
 import { ScannerScreen } from "@/components/scanner/scanner-screen";
 import type { ScannerMode } from "@/lib/scanner/actions";
 
@@ -23,6 +24,17 @@ export default async function ScannerPage({
   const jobId = typeof params.jobId === "string" ? Number(params.jobId) : undefined;
 
   const supabase = await createClient();
+  const activeCompanyId = await getActiveCompanyId();
+  
+  if (!activeCompanyId) {
+    return (
+      <main className="min-h-screen w-full flex flex-col items-center p-5">
+        <div className="w-full max-w-none flex-1">
+          <p className="text-red-600">Keine aktive Company ausgewählt.</p>
+        </div>
+      </main>
+    );
+  }
 
   let initialLocation: LocationPayload = null;
   if (typeof locationId === "number" && Number.isFinite(locationId)) {
@@ -30,6 +42,7 @@ export default async function ScannerPage({
       .from("locations")
       .select("id, name, company_id")
       .eq("id", locationId)
+      .eq("company_id", activeCompanyId)
       .maybeSingle<{ id: number; name: string | null; company_id: number }>();
     if (data) {
       initialLocation = { id: data.id, name: data.name, companyId: data.company_id };
@@ -42,6 +55,7 @@ export default async function ScannerPage({
       .from("jobs")
       .select("id, name, company_id")
       .eq("id", jobId)
+      .eq("company_id", activeCompanyId)
       .maybeSingle<{ id: number; name: string | null; company_id: number }>();
     if (data) {
       initialJob = { id: data.id, name: data.name, companyId: data.company_id };

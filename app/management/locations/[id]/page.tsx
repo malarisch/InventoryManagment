@@ -1,6 +1,7 @@
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { LocationEditForm } from "@/components/forms/location-edit-form";
 import { createClient } from "@/lib/supabase/server";
+import { getActiveCompanyId } from "@/lib/companies";
 import type { Tables } from "@/database.types";
 import Link from "next/link";
 import { safeParseDate, formatDateTime } from "@/lib/dates";
@@ -24,12 +25,25 @@ export default async function LocationDetailPage({ params }: { params: Promise<{
   const { id: idParam } = await params;
   const id = Number(idParam);
   const supabase = await createClient();
+  const activeCompanyId = await getActiveCompanyId();
+  
+  if (!activeCompanyId) {
+    return (
+      <main className="min-h-screen w-full flex flex-col items-center p-5">
+        <div className="w-full max-w-none flex-1">
+          <p className="text-red-600">Keine aktive Company ausgewählt.</p>
+        </div>
+      </main>
+    );
+  }
+  
   const { data: auth } = await supabase.auth.getUser();
   const currentUserId = auth.user?.id ?? null;
   const { data, error } = await supabase
     .from("locations")
     .select("*, asset_tags:asset_tag(printed_code)")
     .eq("id", id)
+    .eq("company_id", activeCompanyId)
     .limit(1)
     .single();
 
@@ -51,6 +65,7 @@ export default async function LocationDetailPage({ params }: { params: Promise<{
     .from("equipments")
     .select("*, articles(name), asset_tags:asset_tag(printed_code)")
     .eq("current_location", id)
+    .eq("company_id", activeCompanyId)
     .order("created_at", { ascending: false });
 
   const equipmentsHere = (equipmentsData as EquipmentRow[] | null) ?? [];

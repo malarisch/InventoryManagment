@@ -1,4 +1,5 @@
 import { createClient } from '@/lib/supabase/server';
+import { getActiveCompanyId } from '@/lib/companies';
 import Link from 'next/link';
 import { safeParseDate, formatDateTime } from '@/lib/dates';
 import { fallbackDisplayFromId } from '@/lib/userDisplay';
@@ -26,6 +27,18 @@ function combineName(profile?: ProfileLite | null): string | null {
 
 export default async function WorkshopPage() {
   const supabase = await createClient();
+  const activeCompanyId = await getActiveCompanyId();
+  
+  if (!activeCompanyId) {
+    return (
+      <main className="min-h-screen w-full flex flex-col items-center p-5">
+        <div className="w-full max-w-none flex-1">
+          <p className="text-red-600">Keine aktive Company ausgewählt.</p>
+        </div>
+      </main>
+    );
+  }
+  
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) {
     return (
@@ -33,38 +46,29 @@ export default async function WorkshopPage() {
     );
   }
 
-  // Find current company id via membership/ownership
-  const { data: uc } = await supabase
-    .from('users_companies')
-    .select('company_id')
-    .eq('user_id', user.id)
-    .order('created_at', { ascending: true })
-    .limit(1)
-    .maybeSingle();
-  const companyId = uc?.company_id as number | undefined;
-
   // Load workshop locations first, then todos and equipments filtered by those locations
   const { data: workshopLocations } = await supabase
     .from('locations')
     .select('id, name')
-    .eq('is_workshop', true);
+    .eq('is_workshop', true)
+    .eq('company_id', activeCompanyId);
   const workshopIds = (workshopLocations ?? []).map((l: { id: number }) => l.id);
 
-  const logsRequest = companyId
-    ? supabase
-        .from('maintenance_logs')
-        .select('id, title, notes, performed_at, performed_by, equipment_id, case_id, performed_by_profile:profiles!maintenance_logs_performed_by_fkey(first_name,last_name,id)')
-        .eq('company_id', companyId)
-        .order('performed_at', { ascending: false })
-        .limit(20)
-    : Promise.resolve({ data: [] as LogRow[] | null });
+  const logsRequest = supabase
+    .from('maintenance_logs')
+    .select('id, title, notes, performed_at, performed_by, equipment_id, case_id, performed_by_profile:profiles!maintenance_logs_performed_by_fkey(first_name,last_name,id)')
+    .eq('company_id', activeCompanyId)
+    .order('performed_at', { ascending: false })
+    .limit(20);
 
   const [{ data: todos }, { data: equip }, { data: logsData }] = await Promise.all([
     supabase.from('workshop_todos')
       .select('id, title, status, equipment_id, case_id, created_at')
+      .eq('company_id', activeCompanyId)
       .order('created_at', { ascending: false }),
     supabase.from('equipments')
       .select('id, articles(name), current_location, locations!equipments_current_location_fkey(name)')
+      .eq('company_id', activeCompanyId)
       .in('current_location', workshopIds.length ? workshopIds : [0]),
     logsRequest,
   ]);
@@ -76,7 +80,7 @@ export default async function WorkshopPage() {
       <div className="w-full max-w-none flex-1 flex flex-col gap-6">
         <div className="flex items-center justify-between">
           <h1 className="text-2xl font-semibold">Werkstatt</h1>
-          <div className="text-sm text-muted-foreground">Company: {companyId ?? '—'}</div>
+          <div className="text-sm text-muted-foreground">Company: {activeCompanyId ?? '—'}</div>
         </div>
 
         <section className="space-y-3">

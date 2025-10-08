@@ -1,6 +1,7 @@
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { JobNameProvider, JobNameHeading } from "@/components/jobs/job-name-context";
 import { createClient } from "@/lib/supabase/server";
+import { getActiveCompanyId } from "@/lib/companies";
 import type { Tables } from "@/database.types";
 import Link from "next/link";
 import { safeParseDate, formatDateTime } from "@/lib/dates";
@@ -27,12 +28,25 @@ export default async function JobDetailPage({ params }: { params: Promise<{ id: 
   const { id: idParam } = await params;
   const id = Number(idParam);
   const supabase = await createClient();
+  const activeCompanyId = await getActiveCompanyId();
+  
+  if (!activeCompanyId) {
+    return (
+      <main className="min-h-screen w-full flex flex-col items-center p-5">
+        <div className="w-full max-w-none flex-1">
+          <p className="text-red-600">Keine aktive Company ausgewählt.</p>
+        </div>
+      </main>
+    );
+  }
+  
   const { data: auth } = await supabase.auth.getUser();
   const currentUserId = auth.user?.id ?? null;
   const { data, error } = await supabase
     .from("jobs")
     .select("*")
     .eq("id", id)
+    .eq("company_id", activeCompanyId)
     .limit(1)
     .single();
 
@@ -55,6 +69,7 @@ export default async function JobDetailPage({ params }: { params: Promise<{ id: 
       .from("contacts")
       .select("id, display_name, company_name, first_name, last_name")
       .eq("id", job.contact_id)
+      .eq("company_id", activeCompanyId)
       .limit(1)
       .single();
     
