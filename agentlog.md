@@ -1,3 +1,17 @@
+2025-10-09 00:20 — GitHub Workflows: Optimization & Dev Branch Support
+- **Issues**: 
+  1. Workflows only triggered on main branch, not dev (where active development happens)
+  2. Dependent workflows (lint-tsc, vitest, playwright) didn't restore caches from prepare job
+  3. No restore-keys for graceful cache degradation
+- **Changes**:
+  - CI Prepare: Added dev branch to triggers, added restore-keys to all caches
+  - CI Lint+TSC: Added Prisma cache restore with fallback keys
+  - CI Vitest: Added Prisma cache restore with fallback keys
+  - CI Playwright: Added restore-keys to Prisma, Supabase, and Playwright caches
+- **Workflow Chain**: Prepare → Lint+TSC → Vitest → Playwright (all caches properly shared)
+- Files: .github/workflows/{ci-prepare,ci-lint-tsc,ci-vitest,ci-playwright}.yml, agentlog.md
+- Impact: Workflows now run on dev branch, caches properly reused, faster CI pipeline
+
 2025-10-09 00:10 — Test Helpers: Use Active Company from Storage State
 - **Issue**: Test helpers (articleMock, createCustomer, etc.) used company name lookup, creating test data under wrong company
 - **Root Cause**: Tests didn't respect user's active company selection when multiple companies exist

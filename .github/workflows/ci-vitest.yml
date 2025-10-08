@@ -23,6 +23,17 @@ jobs:
           node-version: 20
           cache: 'npm'
 
+      # Restore Prisma cache
+      - name: Cache Prisma engines
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.cache/prisma
+            node_modules/.prisma
+          key: ${{ runner.os }}-prisma-${{ hashFiles('**/package-lock.json') }}
+          restore-keys: |
+            ${{ runner.os }}-prisma-
+
       - name: Install dependencies
         run: npm ci
 

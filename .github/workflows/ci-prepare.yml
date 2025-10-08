@@ -2,9 +2,9 @@ name: CI Prepare
 
 on:
   push:
-    branches: [ main ]
+    branches: [ main, dev ]
   pull_request:
-    branches: [ main ]
+    branches: [ main, dev ]
 
 permissions:
   contents: read
@@ -43,6 +43,8 @@ jobs:
             ~/.cache/prisma
             node_modules/.prisma
           key: ${{ runner.os }}-prisma-${{ hashFiles('**/package-lock.json') }}
+          restore-keys: |
+            ${{ runner.os }}-prisma-
 
       - name: Install Supabase CLI
         uses: supabase/setup-cli@v1
@@ -61,6 +63,9 @@ jobs:
         with:
           path: .cache/supabase-images.tar
           key: ${{ runner.os }}-supabase-images-${{ steps.supabase-cli-version.outputs.version }}-${{ hashFiles('supabase/config.toml') }}
+          restore-keys: |
+            ${{ runner.os }}-supabase-images-${{ steps.supabase-cli-version.outputs.version }}-
+            ${{ runner.os }}-supabase-images-
 
       # Load cached Docker images if available
       - name: Load cached Supabase Docker images
@@ -97,6 +102,8 @@ jobs:
         with:
           path: ~/.cache/ms-playwright
           key: ${{ runner.os }}-playwright-${{ steps.playwright-version.outputs.version }}
+          restore-keys: |
+            ${{ runner.os }}-playwright-
 
       - name: Install Playwright browsers (populate cache)
         run: npx playwright install --with-deps
