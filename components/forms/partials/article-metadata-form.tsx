@@ -144,7 +144,7 @@ export function ArticleMetadataForm({
     if (hasCaseData(value) && !activeSections.includes("case")) {
       setActiveSections((prev) => [...prev, "case"]);
     }
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+  // eslint-disable-next-line react-hooks/exhaustive-deps -- activeSections is intentionally excluded to avoid re-running this effect when it changes; we only want to auto-activate the "case" section in response to changes in value.
   }, [value]);
   
   const [recentlyRemoved, setRecentlyRemoved] = useState<SectionId | null>(null);
