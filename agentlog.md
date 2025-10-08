@@ -1,3 +1,12 @@
+2025-10-09 00:30 — Article Create: Power Card nicht automatisch anzeigen
+- Power Card wird nicht mehr automatisch angezeigt wenn Company Defaults existieren
+- Power Defaults werden nur noch als Platzhalter angezeigt, sobald User explizit "Stromversorgung" hinzufügt
+- Entfernte `hasPowerDefaults(adminMeta)` Bedingung aus auto-activation useEffect
+- Gelöschte ungenutzte `hasPowerDefaults` Funktion
+- Files: components/forms/partials/article-metadata-form.tsx, agentlog.md
+- Verification: npm run test:tsc ✅
+- Next: User sollte Article Create testen und sicherstellen dass Power Card nur bei Bedarf erscheint
+
 2025-10-09 00:15 — Case Equipment Modal zum Ändern
 - Neue CaseEquipmentCard Component mit klickbarem Modal zum Ändern des Case Equipment
 - Modal zeigt alle verfügbaren Equipments mit Suchfunktion

@@ -283,7 +283,7 @@ export function ArticleMetadataForm({
     ensureSectionActive("physical", hasPhysicalData(local));
     ensureSectionActive(
       "power",
-      hasPowerData(local) || hasPowerDefaults(adminMeta)
+      hasPowerData(local)
     );
     ensureSectionActive("case", hasCaseData(local));
     ensureSectionActive("connectivity", hasConnectivityData(local));
@@ -1162,12 +1162,6 @@ function hasPowerData(metadata: ArticleMetadata) {
   if (!power) return false;
   return Object.values(power).some(
     (value) => value !== undefined && value !== null
-  );
-}
-
-function hasPowerDefaults(admin: adminCompanyMetadata) {
-  return Object.values(admin.standardData.power).some(
-    (value) => value !== undefined && value !== null && value !== ""
   );
 }
 
