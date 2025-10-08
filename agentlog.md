@@ -1,3 +1,29 @@
+2025-10-09 00:30 — GitHub Workflows: Fix workflow_run Branch Triggering
+- **Issue**: Only CI Prepare ran, dependent workflows (lint-tsc, vitest, playwright) never triggered
+- **Root Cause**: workflow_run events require explicit branch filters AND correct ref checkout
+  - workflow_run by default only triggers on default branch (main)
+  - Without ref specification, dependent workflows check out main instead of dev
+- **Solution**:
+  - Added `branches: [ main, dev ]` to all workflow_run trigger configs
+  - Added `ref: ${{ github.event.workflow_run.head_branch }}` to checkout steps
+  - Ensures workflows run on code from the triggering workflow's branch
+- Files: .github/workflows/{ci-lint-tsc,ci-vitest,ci-playwright}.yml, agentlog.md
+- Impact: Full workflow chain now triggers correctly on dev branch pushes
+
+2025-10-09 00:20 — GitHub Workflows: Optimization & Dev Branch Support
+- **Issues**: 
+  1. Workflows only triggered on main branch, not dev (where active development happens)
+  2. Dependent workflows (lint-tsc, vitest, playwright) didn't restore caches from prepare job
+  3. No restore-keys for graceful cache degradation
+- **Changes**:
+  - CI Prepare: Added dev branch to triggers, added restore-keys to all caches
+  - CI Lint+TSC: Added Prisma cache restore with fallback keys
+  - CI Vitest: Added Prisma cache restore with fallback keys
+  - CI Playwright: Added restore-keys to Prisma, Supabase, and Playwright caches
+- **Workflow Chain**: Prepare → Lint+TSC → Vitest → Playwright (all caches properly shared)
+- Files: .github/workflows/{ci-prepare,ci-lint-tsc,ci-vitest,ci-playwright}.yml, agentlog.md
+- Impact: Workflows now run on dev branch, caches properly reused, faster CI pipeline
+
 2025-10-09 00:10 — Test Helpers: Use Active Company from Storage State
 - **Issue**: Test helpers (articleMock, createCustomer, etc.) used company name lookup, creating test data under wrong company
 - **Root Cause**: Tests didn't respect user's active company selection when multiple companies exist
