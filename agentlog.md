@@ -1,3 +1,22 @@
+2025-01-15 14:30 — CRITICAL: Multi-Company Data Isolation - Phase 2B Complete (Client Components)
+- **Phase 2B - Client Components (DONE)**:
+  - **Data Tables (8 files)**: articleTable, equipmentTable, locationTable, caseTable, customerTable, assetTagTable, jobTable, articleEquipmentsTable
+    - Alle DataTable components mit useCompany hook und company_id filter versehen
+    - equipmentTable: zusätzlich Cases-Query mit company_id gefiltert
+    - Alle zeigen Fallback-Message wenn keine Company ausgewählt
+  - **Asset Tag Scanner Pages (3 files)**: articles/page, equipments/page, locations/page  
+    - Alle Scanner-Handler mit useCompany und company_id Filtern versehen
+    - Asset tag und entity lookups jetzt company-scoped
+  - **Edit Forms (1 file)**: article-edit-form.tsx
+    - Locations und Asset Tags Dropdowns jetzt company-gefiltert
+    - equipment-edit-form bereits korrekt (alle Queries company-gefiltert)
+- **Create Forms bereits korrekt**: equipment-create, article-create, location-create, customer-create, case-create, job-create
+  - Alle nutzen bereits useCompany hook und filtern alle Queries korrekt
+- **Original Test Issue**: SearchPicker in equipment-create-form findet jetzt Artikel, weil articlesData query gefiltert ist
+- Files: components/{articleTable,equipmentTable,locationTable,caseTable,customerTable,assetTagTable,jobTable,articleEquipmentsTable}.tsx, app/management/{articles,equipments,locations}/page.tsx, components/forms/article-edit-form.tsx, agentlog.md
+- Verification: npm run test:tsc ✅ (3 commits)
+- **Status**: Phase 2B komplett! Alle client-side Queries jetzt company-isoliert
+
 2025-10-09 01:30 — CRITICAL: Multi-Company Data Isolation - Phase 2A (Server Components)
 - **Phase 2A - Server Components (DONE)**:
   - Detail Pages: articles/[id], locations/[id], contacts/[id], cases/[id], jobs/[id] - alle mit activeCompanyId Filter
