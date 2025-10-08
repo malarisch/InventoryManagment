@@ -8,6 +8,7 @@ import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { MobileCard } from '@/components/ui/mobile-card';
 
 interface DataTableProps<T> {
   tableName: string;
@@ -132,13 +133,6 @@ export function DataTable<T extends { id: number }>(
     return base;
   }, [mobileHiddenColumnKeys]);
   const mobileColumns = useMemo(() => columns.filter((column) => !hiddenKeys.has(column.key)), [columns, hiddenKeys]);
-  const groupedColumns = useMemo(() => {
-    const groups: Array<(typeof columns)[number][]> = [];
-    for (let index = 0; index < mobileColumns.length; index += 3) {
-      groups.push(mobileColumns.slice(index, index + 3));
-    }
-    return groups;
-  }, [mobileColumns]);
 
   return (
     <Card className={className}>
@@ -184,56 +178,25 @@ export function DataTable<T extends { id: number }>(
           )}
           {!loading && !error && rows.length > 0 && (
             <div className="space-y-2.5" data-testid="data-table-mobile">
-              {rows.map((row) => (
-                <div key={row.id} className="rounded-md border p-2.5" data-testid="data-table-mobile-card">
-                  <div className="flex items-start justify-between gap-2">
-                    {groupedColumns.length > 0 ? (
-                      <dl className="flex-1 space-y-2 text-xs">
-                        {groupedColumns.map((group, groupIndex) => (
-                          <div key={groupIndex} className="grid grid-cols-3 gap-x-3 gap-y-1.5">
-                            {group.map((col) => (
-                              <div
-                                key={col.key}
-                                className={cn('space-y-0.5', group.length === 1 ? 'col-span-3' : undefined)}
-                              >
-                                <dt className="text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">
-                                  {col.label}
-                                </dt>
-                                <dd className="text-sm font-medium leading-tight text-foreground break-words">
-                                  {renderCellContent(row, col)}
-                                </dd>
-                              </div>
-                            ))}
-                          </div>
-                        ))}
-                      </dl>
-                    ) : (
-                      <div className="flex-1" />
-                    )}
-                    <div className="shrink-0 pt-0.5">
-                      {renderRowActions(row)}
-                    </div>
-                  </div>
-                  {(() => {
-                    const leftContent = renderMobileFooterLeft ? renderMobileFooterLeft(row) : `ID ${row.id}`;
-                    const rightContent = renderMobileFooterRight ? renderMobileFooterRight(row) : null;
-                    const showLeft = leftContent !== null && leftContent !== undefined && leftContent !== '';
-                    const showRight = rightContent !== null && rightContent !== undefined && rightContent !== '';
-                    if (!showLeft && !showRight) return null;
-                    return (
-                      <div
-                        className={cn(
-                          'mt-1 flex items-center gap-2 text-[11px] text-muted-foreground',
-                          showRight ? 'justify-between' : 'justify-start'
-                        )}
-                      >
-                        {showLeft ? <div>{leftContent}</div> : null}
-                        {showRight ? <div className="text-right">{rightContent}</div> : null}
-                      </div>
-                    );
-                  })()}
-                </div>
-              ))}
+              {rows.map((row) => {
+                const fields = mobileColumns.map((col) => ({
+                  label: col.label,
+                  value: renderCellContent(row, col)
+                }));
+                
+                const leftContent = renderMobileFooterLeft ? renderMobileFooterLeft(row) : `ID ${row.id}`;
+                const rightContent = renderMobileFooterRight ? renderMobileFooterRight(row) : null;
+
+                return (
+                  <MobileCard
+                    key={row.id}
+                    fields={fields}
+                    actions={renderRowActions(row)}
+                    footerLeft={leftContent}
+                    footerRight={rightContent}
+                  />
+                );
+              })}
             </div>
           )}
         </div>

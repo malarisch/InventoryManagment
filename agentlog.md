@@ -1,3 +1,13 @@
+2025-10-08 23:45 — Mobile Cards für Case Edit Equipment Liste
+- Extrahierte generalisierte MobileCard Component aus DataTable für Wiederverwendung
+- Neue EquipmentMobileCard Component für Equipment-spezifische mobile Ansicht
+- Case Edit Items Form nutzt jetzt mobile Cards statt breiter Tabellen auf kleinen Bildschirmen
+- DataTable refactored um die neue MobileCard Component zu nutzen (konsistent über die App)
+- Mobile: Cards mit 3-Spalten-Grid, Desktop: Tabelle wie bisher
+- Files: components/ui/mobile-card.tsx, components/equipment-mobile-card.tsx, components/forms/case-edit-items-form.tsx, components/data-table.tsx
+- Verification: npm run test:tsc ✅
+- Next: User sollte Case Edit Seite auf Mobile testen und Equipment Liste überprüfen
+
 2025-10-08 23:15 — Asset Tag button triggers page refresh
 - AssetTagCreateForm now calls router.refresh() after creating a tag so the page re-renders and shows the new tag immediately.
 - Previously the button would create the tag but not update the UI until manual refresh.

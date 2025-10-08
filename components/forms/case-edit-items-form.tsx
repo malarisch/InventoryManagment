@@ -8,8 +8,14 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import Link from "next/link";
+import { EquipmentMobileCard } from "@/components/equipment-mobile-card";
+import { X } from "lucide-react";
 
-type Equipment = Tables<"equipments"> & { articles?: { name: string } | null };
+type Equipment = Tables<"equipments"> & { 
+  articles?: { name: string } | null;
+  asset_tags?: { printed_code: string | null } | null;
+  current_location_location?: { id: number; name: string | null } | null;
+};
 type Article = Tables<"articles">;
 
 export function CaseEditItemsForm({
@@ -52,7 +58,7 @@ export function CaseEditItemsForm({
       const [{ data: eqData }, { data: artData }] = await Promise.all([
         supabase
           .from("equipments")
-          .select("*, articles(name)")
+          .select("*, articles(name), asset_tags:asset_tag(printed_code), current_location_location:current_location(id,name)")
           .order("created_at", { ascending: false })
           .limit(500),
         supabase.from("articles").select("id,name").order("name"),
@@ -206,45 +212,77 @@ export function CaseEditItemsForm({
         </CardHeader>
         <CardContent className="space-y-3">
           {equipments.length > 0 ? (
-            <div className="overflow-x-auto rounded border">
-              <table className="w-full border-collapse text-sm">
-                <thead className="bg-muted/50">
-                  <tr>
-                    <th className="text-left font-medium px-3 py-2 border-b">ID</th>
-                    <th className="text-left font-medium px-3 py-2 border-b">Artikel</th>
-                    <th className="px-3 py-2 border-b"></th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {equipments.map((id) => {
-                    const eq = allEquipments.find((x) => x.id === id);
-                    const articleName = eq?.articles?.name ?? "—";
-                    return (
-                      <tr key={id} className="odd:bg-background even:bg-muted/20">
-                        <td className="px-3 py-2 border-t">
-                          <Link href={`/management/equipments/${id}`} className="text-blue-600 hover:underline">
-                            #{id}
-                          </Link>
-                        </td>
-                        <td className="px-3 py-2 border-t">{articleName}</td>
-                        <td className="px-3 py-2 border-t text-right">
-                          <Button
-                            type="button"
-                            variant="outline"
-                            size="sm"
-                            onClick={() => {
-                              const next = equipments.filter((x) => x !== id);
-                              setEquipments(next);
-                              void updateEquipments(next);
-                            }}
-                          >Entfernen</Button>
-                        </td>
-                      </tr>
-                    );
-                  })}
-                </tbody>
-              </table>
-            </div>
+            <>
+              {/* Mobile view: Cards */}
+              <div className="space-y-2.5 sm:hidden">
+                {equipments.map((id) => {
+                  const eq = allEquipments.find((x) => x.id === id);
+                  if (!eq) return null;
+                  return (
+                    <EquipmentMobileCard
+                      key={id}
+                      equipment={eq}
+                      showFooter={false}
+                      actions={
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          size="icon"
+                          onClick={() => {
+                            const next = equipments.filter((x) => x !== id);
+                            setEquipments(next);
+                            void updateEquipments(next);
+                          }}
+                        >
+                          <X className="h-4 w-4" />
+                        </Button>
+                      }
+                    />
+                  );
+                })}
+              </div>
+              
+              {/* Desktop view: Table */}
+              <div className="hidden sm:block overflow-x-auto rounded border">
+                <table className="w-full border-collapse text-sm">
+                  <thead className="bg-muted/50">
+                    <tr>
+                      <th className="text-left font-medium px-3 py-2 border-b">ID</th>
+                      <th className="text-left font-medium px-3 py-2 border-b">Artikel</th>
+                      <th className="px-3 py-2 border-b"></th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {equipments.map((id) => {
+                      const eq = allEquipments.find((x) => x.id === id);
+                      const articleName = eq?.articles?.name ?? "—";
+                      return (
+                        <tr key={id} className="odd:bg-background even:bg-muted/20">
+                          <td className="px-3 py-2 border-t">
+                            <Link href={`/management/equipments/${id}`} className="text-blue-600 hover:underline">
+                              #{id}
+                            </Link>
+                          </td>
+                          <td className="px-3 py-2 border-t">{articleName}</td>
+                          <td className="px-3 py-2 border-t text-right">
+                            <Button
+                              type="button"
+                              variant="outline"
+                              size="sm"
+                              onClick={() => {
+                                const next = equipments.filter((x) => x !== id);
+                                setEquipments(next);
+                                void updateEquipments(next);
+                              }}
+                            >Entfernen</Button>
+                          </td>
+                        </tr>
+                      );
+                    })}
+                  </tbody>
+                </table>
+              </div>
+            </>
           ) : (
             <div className="text-sm text-muted-foreground">Keine Equipments im Case.</div>
           )}
@@ -254,7 +292,37 @@ export function CaseEditItemsForm({
             <div className="flex items-center gap-2">
               <Input className="w-64" placeholder="Suche (ID oder Artikelname)" value={q} onChange={(e) => setQ(e.target.value)} />
             </div>
-            <div className="overflow-x-auto rounded border max-h-72">
+            
+            {/* Mobile view: Cards */}
+            <div className="space-y-2.5 sm:hidden max-h-72 overflow-y-auto">
+              {filtered
+                .filter((e) => !eqInCase.has(e.id))
+                .filter((e) => (caseEquipment ? e.id !== caseEquipment : true))
+                .slice((page - 1) * pageSize, (page - 1) * pageSize + pageSize)
+                .map((e) => (
+                  <EquipmentMobileCard
+                    key={e.id}
+                    equipment={e}
+                    showFooter={false}
+                    actions={
+                      <Button
+                        type="button"
+                        size="sm"
+                        onClick={() => {
+                          const next = [...equipments, e.id];
+                          setEquipments(next);
+                          void updateEquipments(next);
+                        }}
+                      >
+                        Hinzufügen
+                      </Button>
+                    }
+                  />
+                ))}
+            </div>
+
+            {/* Desktop view: Table */}
+            <div className="hidden sm:block overflow-x-auto rounded border max-h-72">
               <table className="w-full border-collapse text-sm">
                 <thead className="bg-muted/50">
                   <tr>
@@ -288,6 +356,7 @@ export function CaseEditItemsForm({
                 </tbody>
               </table>
             </div>
+            
             <div className="mt-2 flex items-center justify-between text-xs">
               <span className="text-muted-foreground">Seite {page}</span>
               <div className="flex items-center gap-2">
