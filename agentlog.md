@@ -1,3 +1,12 @@
+2025-01-15 15:30 — ESLint Production Build Fixes Complete
+- **Fixed ESLint errors blocking production build** (11 total errors in 2 files):
+  - equipment-create-form.tsx (10 errors): Added asset_tag_template_print import, fixed template handling with proper types (Record<string, unknown> → typed object), removed unused 'idx' param
+  - maintenance-log-create-inline.tsx (1 error): Removed unused 'filters' variable from workshop todos query
+- Pattern: Cast template as Record<string, unknown>, build typed object with explicit type guards for codeType/numberingScheme unions
+- Files: components/forms/{equipment-create-form,maintenance-log-create-inline}.tsx, agentlog.md
+- Verification: npm run build ✅ (complete success, all routes compiled)
+- Status: Production build ready, all ESLint + TypeScript checks passing
+
 2025-01-15 15:00 — HOTFIX: Build Error - Client/Server Module Split
 - **Build Error**: lib/companies.ts imported by client component but contained server-only code (next/headers)
 - **Solution**: Split into two files:

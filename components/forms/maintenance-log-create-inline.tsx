@@ -36,7 +36,6 @@ export function MaintenanceLogCreateInline({ companyId, equipmentId, caseId }: M
   useEffect(() => {
     let active = true;
     async function loadTodos() {
-      const filters: Record<string, unknown> = { company_id: companyId };
       let q = supabase.from('workshop_todos').select('id, title, status').eq('company_id', companyId);
       if (equipmentId) q = q.eq('equipment_id', equipmentId);
       if (caseId) q = q.eq('case_id', caseId);

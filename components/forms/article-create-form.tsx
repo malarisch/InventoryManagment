@@ -4,7 +4,7 @@ import { useEffect, useMemo, useState } from "react";
 import { createClient } from "@/lib/supabase/client";
 import type { Tables } from "@/database.types";
 import { buildAssetTagCode } from "@/lib/asset-tags/code";
-import type { adminCompanyMetadata } from "@/components/metadataTypes.types";
+import type { adminCompanyMetadata, asset_tag_template_print } from "@/components/metadataTypes.types";
 import type { ArticleMetadata } from "@/components/metadataTypes.types";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -135,18 +135,19 @@ export function ArticleCreateForm() {
       if (assetTagTemplateId !== "") {
         // Build printed code using selected template (supports placeholders like {company_name})
         const chosen = assetTagTemplates.find((t) => t.id === Number(assetTagTemplateId));
-        const templatePrint = chosen ? {
-          name: (chosen.template as any).name,
-          description: (chosen.template as any).description || '',
-          prefix: (chosen.template as any).prefix || '',
-          suffix: (chosen.template as any).suffix || '',
-          numberLength: (chosen.template as any).numberLength || 0,
-          numberingScheme: (chosen.template as any).numberingScheme || 'sequential',
-          stringTemplate: (chosen.template as any).stringTemplate || '{prefix}-{code}',
-          codeType: (chosen.template as any).codeType || 'QR',
+        const templateData = chosen?.template as Record<string, unknown> | undefined;
+        const templatePrint: asset_tag_template_print | undefined = templateData ? {
+          name: String(templateData.name || ''),
+          description: String(templateData.description || ''),
+          prefix: String(templateData.prefix || ''),
+          suffix: String(templateData.suffix || ''),
+          numberLength: Number(templateData.numberLength || 0),
+          numberingScheme: (templateData.numberingScheme === 'random' ? 'random' : 'sequential'),
+          stringTemplate: String(templateData.stringTemplate || '{prefix}-{code}'),
+          codeType: (templateData.codeType === 'Barcode' ? 'Barcode' : templateData.codeType === 'None' ? 'None' : 'QR'),
         } : undefined;
         const printed_code = companyMeta
-          ? buildAssetTagCode(companyMeta, "article", id, templatePrint as any, { company_name: companyName })
+          ? buildAssetTagCode(companyMeta, "article", id, templatePrint, { company_name: companyName })
           : String(id);
         const { data: tagData, error: tagErr } = await supabase
           .from("asset_tags")
