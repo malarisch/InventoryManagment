@@ -16,10 +16,10 @@ const timestamp = Date.now();
     
     // Check page title and header
     await expect(page).toHaveTitle(/Management/);
-    await expect(page.locator('h1')).toContainText(/Kunden|Customers/);
+    await expect(page.locator('h1')).toContainText(/Kontakte|Contacts/);
     
     // Check for new customer button
-    const newButton = page.locator('a[href="/management/contacts/new"], button:has-text("Neuer Kunde"), button:has-text("New Customer")');
+    const newButton = page.locator('a[href="/management/contacts/new"], button:has-text("Neu"), button:has-text("New")');
     await expect(newButton).toBeVisible();
     
     // Take screenshot for visual verification
@@ -92,7 +92,7 @@ const timestamp = Date.now();
     const isDetail = /\/management\/customers\/[0-9]+$/.test(page.url());
     if (isDetail) {
       // We're on detail page - check for customer heading
-      await expect(page.locator('#customer-title')).toContainText(firstName + ' ' + lastName);
+      await expect(page.locator('#contact-title')).toContainText(firstName + ' ' + lastName);
       
       // Simple verification that we successfully created a customer
       console.log('✓ Customer created successfully and redirected to detail page');
@@ -185,7 +185,7 @@ const timestamp = Date.now();
             console.log('✓ Customer deleted successfully - returns 404');
           } else {
             // Check for error messages or redirect
-            const hasError = await page.locator('text="Not found", text="404", text="Kunde nicht gefunden"').isVisible();
+            const hasError = await page.locator('text="Not found", text="404", text="Kontakt nicht gefunden"').isVisible();
             if (hasError) {
               console.log('✓ Customer deleted successfully - shows error message');
             }
@@ -201,15 +201,12 @@ const timestamp = Date.now();
       const fullName = `${firstName} ${lastName}`;
       await page.goto('/management/contacts');
       await page.waitForLoadState('networkidle');
-      const link = page.locator(`a:has-text("${fullName}")`).first();
+      const link = page.getByTestId("cell-display_name").getByText(fullName);
       await expect(link).toBeVisible();
       await link.click();
       // Wait for navigation to detail page; tolerate client-side rendering
-      try {
-        await page.waitForURL(/\/management\/customers\/[0-9]+$/, { timeout: 5000 });
-      } catch {
-        await expect(page.locator('#customer-title')).toBeVisible();
-      }
+        await page.waitForURL(/\/management\/contacts\/[0-9]+$/, { timeout: 5000 });
+      
     }
     
     // Take screenshot of success state
@@ -257,7 +254,7 @@ const timestamp = Date.now();
     // Should redirect to detail page
     if (page.url().includes('/management/contacts/')) {
       // We're on detail page
-      await expect(page.locator('#customer-title')).toContainText(companyName);
+      await expect(page.locator('#contact-title')).toContainText(companyName);
       
       console.log('✓ Company customer created successfully and redirected to detail page');
       
@@ -350,7 +347,7 @@ const timestamp = Date.now();
     await expect(page.locator(`text="${customerName} Test"`)).toBeVisible();
     
     // Check for jobs section
-    await expect(page.locator('text="Jobs dieses Kunden"')).toBeVisible();
+    await expect(page.locator('text="Jobs dieses Kontakts"')).toBeVisible();
     
     // Check for edit functionality
     const editButton = page.locator('a[href*="/edit"], button:has-text("Bearbeiten"), button:has-text("Edit")');
@@ -374,7 +371,7 @@ const timestamp = Date.now();
     
     // Check responsive layout
     await expect(page.locator('h1')).toBeVisible();
-    const newButton = page.locator('a[href="/management/contacts/new"], button:has-text("Neuer Kunde")');
+    const newButton = page.locator('a[href="/management/contacts/new"], button:has-text("Neu")');
     await expect(newButton).toBeVisible();
     
     // Take mobile screenshot

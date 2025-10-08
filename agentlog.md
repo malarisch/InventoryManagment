@@ -1,3 +1,12 @@
+2025-10-08 23:30 — Asset Tag Templates Section Multi-Company Fix
+- **Issue**: "No company found for user" error on company settings page - asset tag templates not displaying
+- **Root Cause**: Component used `.single()` on users_companies query, which fails when user has multiple companies
+- **Solution**: Replaced manual company query with useCompany hook (same pattern as other client components)
+- Added company_id filter to delete operation for security (prevent cross-company deletes)
+- Files: components/asset-tag-templates-section.tsx, agentlog.md
+- Verification: npm run test:tsc ✅
+- Pattern: useCompany hook is the standard way to get active company in client components
+
 2025-01-15 15:30 — ESLint Production Build Fixes Complete
 - **Fixed ESLint errors blocking production build** (11 total errors in 2 files):
   - equipment-create-form.tsx (10 errors): Added asset_tag_template_print import, fixed template handling with proper types (Record<string, unknown> → typed object), removed unused 'idx' param
