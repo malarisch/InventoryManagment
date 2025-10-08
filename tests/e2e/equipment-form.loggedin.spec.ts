@@ -12,7 +12,6 @@ test.describe('Equipment Form Tests', () => {
   test.describe.configure({ mode: 'serial' });
 
     let testArticleId: bigint
-    
     let mockarticle: { id: bigint, name: string, equipments: { id: bigint, metadata: JsonValue }[] , default_location: bigint | null, location?: { id: bigint, name: string } | null};
     const timestamp = Date.now();
     test.beforeAll(async ({companyName}) => {
