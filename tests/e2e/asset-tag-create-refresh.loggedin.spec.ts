@@ -2,7 +2,6 @@ import 'dotenv/config';
 import { expect } from '@playwright/test';
 import { test } from '../playwright_setup.types';
 import { articleMock } from '@/lib/tools/dbhelpers';
-import { PrismaClient } from '@/lib/generated/prisma';
 
 test.describe('Asset Tag Create and Refresh Tests', () => {
   test.describe.configure({ mode: 'serial' });
@@ -84,7 +83,7 @@ test.describe('Asset Tag Create and Refresh Tests', () => {
     await expect(viewTagButton).toBeVisible();
   });
 
-  test('should show asset tag on locations page after creation', async ({ page, companyName }) => {
+  test('should show asset tag on locations page after creation', async ({ page }) => {
     // Create a location mock via Prisma
     
     await page.goto("/management")
