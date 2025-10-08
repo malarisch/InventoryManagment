@@ -9,8 +9,11 @@ import {FileManager} from "@/components/files/file-manager";
 import { WorkshopTodoCreateInline } from "@/components/forms/workshop-todo-create-inline";
 import { MaintenanceLogsCard } from "@/components/maintenance/maintenance-logs-card";
 import { fetchUserDisplayAdmin } from "@/lib/users/userDisplay.server";
+import { EquipmentMobileCard } from "@/components/equipment-mobile-card";
 
-type CaseEquipmentRow = Pick<Tables<"equipments">, "id" | "current_location"> & {
+type CaseEquipmentRow = Tables<"equipments"> & {
+  articles?: { name: string } | null;
+  asset_tags?: { printed_code: string | null } | null;
   current_location_location?: { id: number; name: string | null } | null;
 };
 
@@ -26,7 +29,7 @@ export default async function CaseDetailPage({ params }: { params: Promise<{ id:
   const { data, error } = await supabase
     .from("cases")
     .select(
-      "*, case_equipment_equipment:case_equipment(id, current_location, current_location_location:current_location(id,name))",
+      "*, case_equipment_equipment:case_equipment(id, article_id, current_location, added_to_inventory_at, asset_tag, articles(name), asset_tags:asset_tag(printed_code), current_location_location:current_location(id,name))",
     )
     .eq("id", id)
     .single();
@@ -44,8 +47,6 @@ export default async function CaseDetailPage({ params }: { params: Promise<{ id:
   const row = data as CaseRow;
   const caseCompanyId = typeof row.company_id === "number" ? row.company_id : null;
   const caseEquipment = row.case_equipment_equipment ?? null;
-  const derivedLocationId = caseEquipment?.current_location ?? null;
-  const derivedLocationName = caseEquipment?.current_location_location?.name ?? null;
 
   // Fetch creator display name
   const creatorDisplay = row.created_by ? await fetchUserDisplayAdmin(row.created_by) : null;
@@ -64,25 +65,6 @@ export default async function CaseDetailPage({ params }: { params: Promise<{ id:
             <CardTitle>{row.name ?? `Case #${row.id}`}</CardTitle>
             <CardDescription>
               {row.description && (<><div className="mb-2">{row.description}</div></>)}
-              Case-Equipment: {row.case_equipment ? (
-                <Link className="underline-offset-2 hover:underline" href={`/management/equipments/${row.case_equipment}`}>#{row.case_equipment}</Link>
-              ) : "—"}
-              <br />
-              Standort: {caseEquipment ? (
-                derivedLocationId ? (
-                  <Link
-                    className="underline-offset-2 hover:underline"
-                    href={`/management/locations/${derivedLocationId}`}
-                  >
-                    {derivedLocationName ?? `#${derivedLocationId}`}
-                  </Link>
-                ) : (
-                  "— (Case-Equipment ohne Standort)"
-                )
-              ) : (
-                "— (kein Case-Equipment)"
-              )}
-              <br />
               Erstellt von: {creatorDisplay ?? "—"}
               {createdAt && ` am ${createdAt}`}
               {row.asset_tag ? (
@@ -110,6 +92,33 @@ export default async function CaseDetailPage({ params }: { params: Promise<{ id:
             </div>
           </CardContent>
         </Card>
+
+        {/* Case Equipment Card */}
+        {caseEquipment ? (
+          <Card>
+            <CardHeader>
+              <CardTitle>Case Equipment</CardTitle>
+              <CardDescription>
+                Das physische Equipment, das als Case dient. Der Standort des Cases entspricht dem Standort dieses Equipments.
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <EquipmentMobileCard
+                equipment={caseEquipment}
+                showFooter={true}
+              />
+            </CardContent>
+          </Card>
+        ) : (
+          <Card>
+            <CardHeader>
+              <CardTitle>Case Equipment</CardTitle>
+              <CardDescription>
+                Kein Case-Equipment zugewiesen. Weise unten in den Einstellungen ein Equipment als physischen Case zu.
+              </CardDescription>
+            </CardHeader>
+          </Card>
+        )}
 
         <CaseEditItemsForm
           caseId={id}

@@ -1,3 +1,13 @@
+2025-10-09 00:00 — Case Equipment Card auf Detail Seite
+- Case Equipment wird nun in einer schönen EquipmentMobileCard statt als einfacher Link angezeigt
+- Card zeigt Equipment ID, Artikel, Standort mit vollständigen Informationen
+- Zeigt auch Asset-Tag und Inventardatum im Footer der Card
+- Separate Card mit Titel und Beschreibung für bessere Struktur
+- Fallback-Card wenn kein Case Equipment zugewiesen ist
+- Files: app/management/cases/[id]/page.tsx
+- Verification: npm run test:tsc ✅
+- Next: User sollte Case Detail Seite testen und Equipment Card überprüfen
+
 2025-10-08 23:45 — Mobile Cards für Case Edit Equipment Liste
 - Extrahierte generalisierte MobileCard Component aus DataTable für Wiederverwendung
 - Neue EquipmentMobileCard Component für Equipment-spezifische mobile Ansicht
