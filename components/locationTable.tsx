@@ -5,6 +5,7 @@ import type { Tables } from '@/database.types';
 import Link from 'next/link';
 import { Pencil, Scan } from 'lucide-react';
 import { DataTable } from '@/components/data-table';
+import { useCompany } from '@/app/management/_libs/companyHook';
 
 type LocationRow = Tables<"locations"> & { asset_tags?: { printed_code: string | null } | null };
 
@@ -15,6 +16,15 @@ type Props = {
 };
 
 export function LocationTable({ pageSize = 10, className, onScanClick }: Props) {
+  const { company } = useCompany();
+
+  if (!company) {
+    return (
+      <div className="p-4 text-center text-muted-foreground">
+        No company selected. Please select a company to view locations.
+      </div>
+    );
+  }
   const columns = [
     { key: 'id', label: 'ID', render: (row: LocationRow) => <Link className="underline-offset-2 hover:underline" href={`/management/locations/${row.id}`}>{row.id}</Link> },
     { key: 'name', label: 'Name', render: (row: LocationRow) => <Link className="underline-offset-2 hover:underline" href={`/management/locations/${row.id}`}>{row.name}</Link> },
@@ -64,6 +74,7 @@ export function LocationTable({ pageSize = 10, className, onScanClick }: Props) 
         { field: 'asset_tag', type: 'number' },
       ]}
       select="*, asset_tags:asset_tag(printed_code)"
+      filters={[{ column: 'company_id', value: company.id }]}
     />
   );
 }

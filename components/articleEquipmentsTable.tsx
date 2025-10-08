@@ -7,6 +7,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
 import { safeParseDate, formatDate } from "@/lib/dates";
+import { useCompany } from "@/app/management/_libs/companyHook";
 
 type EquipmentRow = Tables<"equipments"> & {
   asset_tags?: { printed_code: string | null } | null;
@@ -14,6 +15,7 @@ type EquipmentRow = Tables<"equipments"> & {
 };
 
 export function ArticleEquipmentsTable({ articleId, pageSize = 10 }: { articleId: number; pageSize?: number }) {
+  const { company } = useCompany();
   const supabase = useMemo(() => createClient(), []);
   const [page, setPage] = useState(1);
   const [rows, setRows] = useState<EquipmentRow[]>([]);
@@ -22,6 +24,11 @@ export function ArticleEquipmentsTable({ articleId, pageSize = 10 }: { articleId
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
+    if (!company) {
+      setRows([]);
+      setCount(0);
+      return;
+    }
     let active = true;
     async function load() {
       setLoading(true);
@@ -35,6 +42,7 @@ export function ArticleEquipmentsTable({ articleId, pageSize = 10 }: { articleId
           { count: "exact" }
         )
         .eq("article_id", articleId)
+        .eq("company_id", company!.id)
         .order("created_at", { ascending: false })
         .range(from, to);
       if (!active) return;
@@ -50,7 +58,7 @@ export function ArticleEquipmentsTable({ articleId, pageSize = 10 }: { articleId
     }
     load();
     return () => { active = false; };
-  }, [articleId, page, pageSize, supabase]);
+  }, [articleId, page, pageSize, supabase, company]);
 
   const totalPages = useMemo(() => (count ? Math.max(1, Math.ceil(count / pageSize)) : 1), [count, pageSize]);
   const canPrev = page > 1;

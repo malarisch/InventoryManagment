@@ -8,6 +8,7 @@ import { AlertTriangle, Pencil, Scan } from 'lucide-react';
 import { DataTable } from '@/components/data-table';
 import { safeParseDate, formatDate } from '@/lib/dates';
 import { createClient } from '@/lib/supabase/client';
+import { useCompany } from '@/app/management/_libs/companyHook';
 
 type EquipmentRow = Tables<"equipments"> & {
   articles?: { name: string } | null;
@@ -40,6 +41,7 @@ type Props = {
 };
 
 export function EquipmentTable({ pageSize = 10, className, onScanClick }: Props) {
+  const { company } = useCompany();
   const supabase = useMemo(() => createClient(), []);
   const [visibleEquipmentIds, setVisibleEquipmentIds] = useState<number[]>([]);
   const [equipmentCases, setEquipmentCases] = useState<EquipmentCaseMap>({});
@@ -58,13 +60,14 @@ export function EquipmentTable({ pageSize = 10, className, onScanClick }: Props)
   }, []);
 
   useEffect(() => {
-    if (visibleEquipmentIds.length === 0) {
+    if (visibleEquipmentIds.length === 0 || !company) {
       setEquipmentCases({});
       return;
     }
     let cancelled = false;
     const ids = visibleEquipmentIds;
     const idSet = new Set(ids);
+    const companyId = company.id; // Capture company ID to satisfy TypeScript
 
     async function loadCases() {
       const selectColumns = 'id, name, contains_equipments, case_equipment, case_equipment_equipment:case_equipment(id, current_location, current_location_location:current_location(id,name))';
@@ -73,10 +76,12 @@ export function EquipmentTable({ pageSize = 10, className, onScanClick }: Props)
         supabase
           .from('cases')
           .select(selectColumns)
+          .eq('company_id', companyId)
           .overlaps('contains_equipments', ids),
         supabase
           .from('cases')
           .select(selectColumns)
+          .eq('company_id', companyId)
           .in('case_equipment', ids),
       ]);
 
@@ -144,7 +149,15 @@ export function EquipmentTable({ pageSize = 10, className, onScanClick }: Props)
     return () => {
       cancelled = true;
     };
-  }, [supabase, visibleEquipmentIds]);
+  }, [supabase, visibleEquipmentIds, company]);
+
+  if (!company) {
+    return (
+      <div className="p-4 text-center text-muted-foreground">
+        No company selected. Please select a company to view equipment.
+      </div>
+    );
+  }
 
   const columns = [
     { key: 'id', label: 'ID', render: (row: EquipmentRow) => <Link className="underline-offset-2 hover:underline" href={`/management/equipments/${row.id}`}>{row.id}</Link> },
@@ -284,6 +297,7 @@ export function EquipmentTable({ pageSize = 10, className, onScanClick }: Props)
       ]}
       select="*, articles(name), asset_tags:asset_tag(printed_code), current_location_location:current_location(id,name)"
       onRowsLoaded={handleRowsLoaded}
+      filters={[{ column: 'company_id', value: company.id }]}
     />
   );
 }

@@ -5,6 +5,7 @@ import type { Tables } from '@/database.types';
 import Link from 'next/link';
 import { Pencil, Scan } from 'lucide-react';
 import { DataTable } from '@/components/data-table';
+import { useCompany } from '@/app/management/_libs/companyHook';
 
 type Article = Tables<"articles">;
 type ArticleRow = Article & {
@@ -20,6 +21,15 @@ type Props = {
 };
 
 export function ArticleTable({ pageSize = 10, className, onScanClick }: Props) {
+  const { company } = useCompany();
+  
+  if (!company) {
+    return (
+      <div className="p-4 text-center text-muted-foreground">
+        No company selected. Please select a company to view articles.
+      </div>
+    );
+  }
 
   const columns = [
     { key: 'id', label: 'ID', render: (row: ArticleRow) => <Link className="underline-offset-2 hover:underline" href={`/management/articles/${row.id}`}>{row.id}</Link> },
@@ -69,7 +79,7 @@ export function ArticleTable({ pageSize = 10, className, onScanClick }: Props) {
       renderRowActions={renderRowActions}
       pageSize={pageSize}
       className={className}
-  searchTrailingAction={searchTrailingAction}
+      searchTrailingAction={searchTrailingAction}
       mobileHiddenColumnKeys={['asset_tag']}
       renderMobileFooterRight={renderMobileFooterRight}
       searchableFields={[
@@ -79,6 +89,7 @@ export function ArticleTable({ pageSize = 10, className, onScanClick }: Props) {
         { field: 'default_location', type: 'number' },
       ]}
       select="*, equipments(count), locations:default_location(name), asset_tags:asset_tag(printed_code)"
+      filters={[{ column: 'company_id', value: company.id }]}
     />
   );
 }

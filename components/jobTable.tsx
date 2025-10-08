@@ -6,6 +6,7 @@ import Link from 'next/link';
 import { Pencil } from 'lucide-react';
 import { DataTable } from '@/components/data-table';
 import { safeParseDate, formatDate } from '@/lib/dates';
+import { useCompany } from '@/app/management/_libs/companyHook';
 
 type JobRow = Tables<"jobs"> & {
   contacts?: {
@@ -37,6 +38,15 @@ type Props = {
 };
 
 export function JobTable({ pageSize = 10, className }: Props) {
+  const { company } = useCompany();
+
+  if (!company) {
+    return (
+      <div className="p-4 text-center text-muted-foreground">
+        No company selected. Please select a company to view jobs.
+      </div>
+    );
+  }
   const columns = [
     { key: 'id', label: 'ID', render: (row: JobRow) => <Link className="underline-offset-2 hover:underline" href={`/management/jobs/${row.id}`}>{row.id}</Link> },
     { key: 'name', label: 'Name', render: (row: JobRow) => <Link className="underline-offset-2 hover:underline" href={`/management/jobs/${row.id}`}>{row.name ?? "—"}</Link> },
@@ -77,6 +87,7 @@ export function JobTable({ pageSize = 10, className }: Props) {
         { field: 'contact_id', type: 'number' },
       ]}
       select="*, contacts:contact_id(id,display_name,company_name,forename,surname,first_name,last_name,contact_type)"
+      filters={[{ column: 'company_id', value: company.id }]}
     />
   );
 }
