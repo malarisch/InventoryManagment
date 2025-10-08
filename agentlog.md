@@ -1,3 +1,19 @@
+2025-10-09 01:00 — CRITICAL: Multi-Company Data Isolation Bug - Phase 1
+- **KRITISCHER BUG**: User mit mehreren Companies sahen Daten von ALLEN Companies statt nur der aktiven
+- Root Cause: active_company_id nur im LocalStorage (client-only), Server Components konnten nicht filtern
+- **Phase 1 - Infrastructure (DONE)**:
+  - management-header.tsx: Cookie setzen zusätzlich zu LocalStorage bei Company Switch
+  - lib/companies.ts: getActiveCompanyId() Server-Funktion zum Cookie-Lesen mit Zugriffs-Validierung
+  - companyHook.ts: Cookie synchronisieren mit LocalStorage
+  - app/management/equipments/[id]/page.tsx: Beispiel-Fix mit company_id Filter
+- **Phase 2 - TO DO**: ALLE verbleibenden Queries müssen gefixed werden:
+  - Alle Server Components (articles, locations, contacts, cases, jobs, workshop, scanner, search)
+  - Alle Client Components (forms, SearchPicker, DataTable queries)
+  - Dashboard counts und statistics
+- Files: app/management/_libs/management-header.tsx, lib/companies.ts, app/management/_libs/companyHook.ts, app/management/equipments/[id]/page.tsx, agentlog.md
+- Verification: npm run test:tsc ✅
+- **URGENT**: Phase 2 muss SOFORT fortgesetzt werden - Security/Data Leak!
+
 2025-10-09 00:30 — Article Create: Power Card nicht automatisch anzeigen
 - Power Card wird nicht mehr automatisch angezeigt wenn Company Defaults existieren
 - Power Defaults werden nur noch als Platzhalter angezeigt, sobald User explizit "Stromversorgung" hinzufügt

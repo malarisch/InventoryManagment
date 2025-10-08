@@ -38,6 +38,10 @@ export function useCompany() {
             // ignore and fall through
           } else if (desired) {
             setCompany(desired);
+            // Ensure cookie is synced with localStorage
+            if (typeof window !== "undefined") {
+              document.cookie = `active_company_id=${desiredId}; path=/; max-age=31536000; SameSite=Lax`;
+            }
             return;
           }
         }
@@ -63,7 +67,10 @@ export function useCompany() {
           if (picked) {
             setCompany(picked);
             if (typeof window !== "undefined" && !desiredId) {
-              try { localStorage.setItem("active_company_id", String(picked.id)); } catch {}
+              try { 
+                localStorage.setItem("active_company_id", String(picked.id));
+                document.cookie = `active_company_id=${picked.id}; path=/; max-age=31536000; SameSite=Lax`;
+              } catch {}
             }
             return;
           }

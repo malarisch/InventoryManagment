@@ -1,6 +1,7 @@
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { EquipmentEditForm } from "@/components/forms/equipment-edit-form";
 import { createClient } from "@/lib/supabase/server";
+import { getActiveCompanyId } from "@/lib/companies";
 import type { Tables } from "@/database.types";
 import Link from "next/link";
 import { safeParseDate, formatDate, formatDateTime } from "@/lib/dates";
@@ -28,6 +29,18 @@ export default async function EquipmentDetailPage({ params }: { params: Promise<
   const { id: idParam } = await params;
   const id = Number(idParam);
   const supabase = await createClient();
+  const activeCompanyId = await getActiveCompanyId();
+  
+  if (!activeCompanyId) {
+    return (
+      <main className="min-h-screen w-full flex flex-col items-center p-5">
+        <div className="w-full max-w-none flex-1">
+          <p className="text-red-600">Keine aktive Company ausgewählt.</p>
+        </div>
+      </main>
+    );
+  }
+  
   const { data: auth } = await supabase.auth.getUser();
   const currentUserId = auth.user?.id ?? null;
   const { data, error } = await supabase
@@ -36,6 +49,7 @@ export default async function EquipmentDetailPage({ params }: { params: Promise<
       "*, articles(name), asset_tags:asset_tag(printed_code), current_location_location:current_location(id,name)"
     )
     .eq("id", id)
+    .eq("company_id", activeCompanyId)
     .limit(1)
     .single();
 
@@ -54,10 +68,12 @@ export default async function EquipmentDetailPage({ params }: { params: Promise<
     supabase
       .from("cases")
       .select("id,name")
+      .eq("company_id", activeCompanyId)
       .contains("contains_equipments", [eq.id]),
     supabase
       .from("cases")
       .select("id,name")
+      .eq("company_id", activeCompanyId)
       .eq("case_equipment", eq.id),
   ]);
 
