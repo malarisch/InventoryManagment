@@ -25,9 +25,10 @@ type EquipmentEditFormProps = {
   formId?: string;
   footerVariant?: "default" | "none" | "status-only";
   onStatusChange?: (status: { saving: boolean; message: string | null; error: string | null }) => void;
+  statusElementId?: string;
 };
 
-export function EquipmentEditForm({ equipment, formId = "equipment-edit-form", footerVariant = "default", onStatusChange }: EquipmentEditFormProps) {
+export function EquipmentEditForm({ equipment, formId = "equipment-edit-form", footerVariant = "default", onStatusChange, statusElementId }: EquipmentEditFormProps) {
   const supabase = useMemo(() => createClient(), []);
   const [assetTagId, setAssetTagId] = useState<number | "">(equipment.asset_tag ?? "");
   const [articleId, setArticleId] = useState<number | "">(equipment.article_id ?? "");
@@ -213,6 +214,23 @@ export function EquipmentEditForm({ equipment, formId = "equipment-edit-form", f
   }
 
   useEffect(() => {
+    // Mirror status updates into the external aria-live region used by the save button.
+    if (!statusElementId) return;
+    const el = document.getElementById(statusElementId);
+    if (!el) return;
+    const text = error ?? message ?? "";
+    el.classList.remove("text-green-600", "text-red-600", "text-muted-foreground");
+    if (error) {
+      el.classList.add("text-red-600");
+    } else if (message) {
+      el.classList.add("text-green-600");
+    } else {
+      el.classList.add("text-muted-foreground");
+    }
+    el.textContent = text;
+  }, [statusElementId, message, error]);
+
+  useEffect(() => {
     onStatusChange?.({ saving, message, error });
   }, [saving, message, error, onStatusChange]);
 
@@ -308,11 +326,11 @@ export function EquipmentEditForm({ equipment, formId = "equipment-edit-form", f
               Asset Tag anzeigen
             </Link>
           )}
-          {message && <span className="text-sm text-green-600">{message}</span>}
-          {error && <span className="text-sm text-red-600">{error}</span>}
+          {!statusElementId && message && <span className="text-sm text-green-600">{message}</span>}
+          {!statusElementId && error && <span className="text-sm text-red-600">{error}</span>}
         </div>
       )}
-      {footerVariant === "status-only" && (message || error) && (
+      {footerVariant === "status-only" && !statusElementId && (message || error) && (
         <div className="lg:col-span-2 xl:col-span-3 flex flex-wrap items-center gap-3 justify-end">
           {message && <span className="text-sm text-green-600">{message}</span>}
           {error && <span className="text-sm text-red-600">{error}</span>}

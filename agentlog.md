@@ -4,6 +4,19 @@
 - Files: app/management/equipments/[id]/page.tsx, components/forms/equipment-edit-form.tsx
 - Verification: npm run test:tsc ✅
 
+2025-10-08 20:05 — Equipment save status neben Button
+- Detailseite zeigt ein `aria-live` Status-Element direkt neben dem Speichern-Button; Form schreibt Erfolg/Fehler hinein statt separatem Footer.
+- EquipmentEditForm akzeptiert optionales `statusElementId` und vermeidet doppelte Inline-Meldungen.
+- Files: app/management/equipments/[id]/page.tsx, components/forms/equipment-edit-form.tsx
+- Verification: npm run test:tsc ✅
+
+2025-10-08 22:25 — Restore equipment edit status wiring
+- Reinstated EquipmentEditForm success/error state and optional statusElementId syncing with the external save status span.
+- Detailseite bindet das Status-Element neben dem Speichern-Button ein und blendet doppelte Inline-Meldungen aus.
+- Files: components/forms/equipment-edit-form.tsx, app/management/equipments/[id]/page.tsx
+- Verification: npm run test:tsc ✅
+- Next: Rollout beobachten und bei Bedarf visuelles QA nachziehen.
+
 2025-10-07 11:55 — Scanner-Suche für Articles & Locations
 - Artikel- und Standorttabellen bekommen denselben Suchleisten-Scanner wie Equipments; Seiten-Header-Buttons entfernt.
 - Tabellen verstecken Asset-Tag mobil und zeigen ihn im Footer, Icon-Button sitzt neben der Suche.

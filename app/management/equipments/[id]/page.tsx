@@ -10,7 +10,6 @@ import { HistoryCard } from "@/components/historyCard";
 import { FileManager } from "@/components/files/file-manager";
 import { MaintenanceLogsCard } from "@/components/maintenance/maintenance-logs-card";
 import { WorkshopTodosCard } from "@/components/maintenance/workshop-todos-card";
-
 import { AssetTagCreateForm } from "@/components/forms/asset-tag-create-form";
 import { WorkshopTodoCreateInline } from "@/components/forms/workshop-todo-create-inline";
 import { DeleteWithUndo } from "@/components/forms/delete-with-undo";
@@ -83,6 +82,7 @@ export default async function EquipmentDetailPage({ params }: { params: Promise<
     return nameA.localeCompare(nameB, "de-DE");
   });
   const formId = "equipment-edit-form";
+  const statusElementId = "equipment-edit-status";
 
   // Creator email (if accessible), fallback to UUID
   const creator = await fetchUserDisplayAdmin(eq.created_by ?? undefined);
@@ -153,6 +153,11 @@ export default async function EquipmentDetailPage({ params }: { params: Promise<
                     </Link>
                   </Button>
                 )}
+                <span
+                  id={statusElementId}
+                  aria-live="polite"
+                  className="min-h-[1.25rem] text-sm text-muted-foreground"
+                />
               </div>
               <div className="flex items-center gap-2 flex-wrap">
                 <span className="text-xs text-muted-foreground">Werkstatt:</span>
@@ -163,7 +168,12 @@ export default async function EquipmentDetailPage({ params }: { params: Promise<
         </Card>
 
         {/* Form now at top level (no nested Cards) */}
-        <EquipmentEditForm equipment={eq} formId={formId} footerVariant="status-only" />
+        <EquipmentEditForm
+          equipment={eq}
+          formId={formId}
+          footerVariant="none"
+          statusElementId={statusElementId}
+        />
 
         <Card>
           <CardHeader className="pb-3 px-4 pt-4">
