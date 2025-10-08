@@ -5,6 +5,7 @@ on:
     workflows: [ "CI Vitest" ]
     types:
       - completed
+    branches: [ main, dev ]
 
 permissions:
   contents: read
@@ -17,6 +18,8 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.workflow_run.head_branch }}
 
       - name: Use Node.js 20.x
         uses: actions/setup-node@v4

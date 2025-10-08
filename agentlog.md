@@ -1,3 +1,15 @@
+2025-10-09 00:30 — GitHub Workflows: Fix workflow_run Branch Triggering
+- **Issue**: Only CI Prepare ran, dependent workflows (lint-tsc, vitest, playwright) never triggered
+- **Root Cause**: workflow_run events require explicit branch filters AND correct ref checkout
+  - workflow_run by default only triggers on default branch (main)
+  - Without ref specification, dependent workflows check out main instead of dev
+- **Solution**:
+  - Added `branches: [ main, dev ]` to all workflow_run trigger configs
+  - Added `ref: ${{ github.event.workflow_run.head_branch }}` to checkout steps
+  - Ensures workflows run on code from the triggering workflow's branch
+- Files: .github/workflows/{ci-lint-tsc,ci-vitest,ci-playwright}.yml, agentlog.md
+- Impact: Full workflow chain now triggers correctly on dev branch pushes
+
 2025-10-09 00:20 — GitHub Workflows: Optimization & Dev Branch Support
 - **Issues**: 
   1. Workflows only triggered on main branch, not dev (where active development happens)
