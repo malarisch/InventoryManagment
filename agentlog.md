@@ -1,3 +1,30 @@
+2025-10-09 01:00 — Scanner: Fullscreen Camera Overhaul
+- **Changes**: Major redesign of scanner functionality with fullscreen camera experience
+  - Created new FullscreenScanner component (components/scanner/fullscreen-scanner.tsx)
+    - Full-screen takeover with z-50 fixed positioning
+    - Black background with video as full viewport
+    - Header overlay with back/close buttons and mode title
+    - Bottom overlay with camera controls (flash, camera switch)
+    - Manual entry toggle with expandable input field
+    - Improved visual feedback with badges and loading states
+  - Refactored ScannerScreen (components/scanner/scanner-screen.tsx)
+    - Removed embedded ContinuousQrScanner from main page
+    - Added "Scannen starten" button that opens fullscreen scanner
+    - Scanner only opens after mode selection
+    - Maintained all existing mode logic (lookup, assign-location, job-book, job-pack)
+  - Enhanced lookup mode functionality (lib/scanner/actions.ts)
+    - Direct navigation to edit page after successful scan
+    - Supports Equipment, Case, Article, and Location assets
+  - E2E test coverage (tests/e2e/scanner-fullscreen.loggedin.spec.ts)
+    - Mode selection and switching
+    - Fullscreen scanner open/close with back and X buttons
+    - Manual entry functionality
+    - Camera controls visibility
+    - Location picker integration
+- Files: components/scanner/fullscreen-scanner.tsx (new), components/scanner/scanner-screen.tsx, tests/e2e/scanner-fullscreen.loggedin.spec.ts (new), agentlog.md
+- Verification: npm run test:tsc ✅, npm run test:e2e scanner-fullscreen ✅ (14/14 passed)
+- Impact: Mobile-optimized fullscreen scanning experience, better UX for all scanner modes
+
 2025-10-09 00:30 — GitHub Workflows: Fix workflow_run Branch Triggering
 - **Issue**: Only CI Prepare ran, dependent workflows (lint-tsc, vitest, playwright) never triggered
 - **Root Cause**: workflow_run events require explicit branch filters AND correct ref checkout

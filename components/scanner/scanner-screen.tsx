@@ -8,7 +8,7 @@ import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
-import { ContinuousQrScanner } from "@/components/camera/continuous-qr-scanner";
+import { FullscreenScanner } from "@/components/scanner/fullscreen-scanner";
 import { resolveAssetByCode, type ResolvedAsset } from "@/lib/scanner/resolve";
 import { performScannerAction, type ScannerMode, type ScannerActionResult } from "@/lib/scanner/actions";
 import { cn } from "@/lib/utils";
@@ -51,6 +51,7 @@ export function ScannerScreen({ initialMode, initialLocation, initialJob }: Scan
   const supabase = useMemo(() => createClient(), []);
 
   const [mode, setMode] = useState<ScannerMode | null>(initialMode ?? null);
+  const [scannerOpen, setScannerOpen] = useState(false);
   const [statusFeed, setStatusFeed] = useState<StatusEntry[]>([]);
   const [targetLocation, setTargetLocation] = useState<{ id: number; name: string | null; companyId: number } | null>(initialLocation ?? null);
   const job = useMemo<JobLite | null>(
@@ -149,6 +150,20 @@ export function ScannerScreen({ initialMode, initialLocation, initialJob }: Scan
           return;
         }
 
+        // Lookup-Modus: Direkt zur Edit-Seite navigieren
+        if (activeMode === "lookup") {
+          if (resolved.kind === "equipment") {
+            router.push(`/management/equipments/${resolved.equipment.id}`);
+          } else if (resolved.kind === "case") {
+            router.push(`/management/cases/${resolved.case.id}`);
+          } else if (resolved.kind === "article") {
+            router.push(`/management/articles/${resolved.article.id}`);
+          } else if (resolved.kind === "location") {
+            router.push(`/management/locations/${resolved.location.id}`);
+          }
+          return;
+        }
+
         if (activeMode === "assign-location") {
           if (resolved.kind === "location") {
             setTargetLocation({ id: resolved.location.id, name: resolved.location.name ?? null, companyId: resolved.companyId });
@@ -196,7 +211,7 @@ export function ScannerScreen({ initialMode, initialLocation, initialJob }: Scan
         });
       }
     },
-    [mode, supabase, ensureLocation, ensureJob, targetLocation, job, pushStatus, addResultToFeed],
+    [mode, supabase, ensureLocation, ensureJob, targetLocation, job, pushStatus, addResultToFeed, router],
   );
 
   const activeModeDefinition = MODE_DEFINITIONS.find((entry) => entry.mode === mode) ?? null;
@@ -279,7 +294,19 @@ export function ScannerScreen({ initialMode, initialLocation, initialJob }: Scan
         </section>
       ) : null}
 
-      <ContinuousQrScanner onScan={handleScan} className="mt-2" instructions="Code auf Höhe der Markierung halten" />
+      {/* Scanner starten Button */}
+      {mode && (
+        <section className="mt-6">
+          <Button
+            size="lg"
+            className="w-full h-16 text-lg"
+            onClick={() => setScannerOpen(true)}
+          >
+            <Scan className="mr-2 h-6 w-6" />
+            Scannen starten
+          </Button>
+        </section>
+      )}
 
       <section className="space-y-3">
         <h2 className="text-xl font-semibold">Verlauf</h2>
@@ -357,6 +384,15 @@ export function ScannerScreen({ initialMode, initialLocation, initialJob }: Scan
           </div>
         </DialogContent>
       </Dialog>
+
+      {/* Fullscreen Scanner */}
+      <FullscreenScanner
+        isOpen={scannerOpen}
+        onClose={() => setScannerOpen(false)}
+        onScan={handleScan}
+        title={activeModeDefinition?.label ?? "Scanner"}
+        instructions="Code auf Höhe der Markierung halten"
+      />
     </div>
   );
 }
