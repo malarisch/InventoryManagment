@@ -207,7 +207,7 @@ export function DataTable<T extends { id: number }>(
                 <thead className="bg-muted">
                   <tr>
                     {columns.map((col) => (
-                      <th key={col.key} className={headerCellClass}>
+                      <th key={col.key} className={headerCellClass} data-testid={`thead-${col.key}`}>
                         {col.label}
                       </th>
                     ))}
@@ -217,21 +217,21 @@ export function DataTable<T extends { id: number }>(
                 <tbody>
                   {loading && rows.length === 0 && (
                     <tr>
-                      <td className={bodyCellClass} colSpan={columns.length + 1}>
+                      <td className={bodyCellClass} colSpan={columns.length + 1} data-testid="loading-msg">
                         Lädt…
                       </td>
                     </tr>
                   )}
                   {!loading && error && (
                     <tr>
-                      <td className={cn(bodyCellClass, "text-red-600")} colSpan={columns.length + 1}>
+                      <td className={cn(bodyCellClass, "text-red-600")} colSpan={columns.length + 1} data-testid="error-msg">
                         Fehler beim Laden: {error}
                       </td>
                     </tr>
                   )}
                   {!loading && !error && rows.length === 0 && (
                     <tr>
-                      <td className={cn(bodyCellClass, "text-muted-foreground")} colSpan={columns.length + 1}>
+                      <td className={cn(bodyCellClass, "text-muted-foreground")} colSpan={columns.length + 1} data-testid="no-entries">
                         Keine Einträge gefunden.
                       </td>
                     </tr>
@@ -240,7 +240,7 @@ export function DataTable<T extends { id: number }>(
                     rows.map((row) => (
                       <tr key={row.id} className="border-b hover:bg-muted/50">
                         {columns.map((col) => (
-                          <td key={col.key} className={bodyCellClass}>
+                          <td key={col.key} className={bodyCellClass} data-testid={`cell-${col.key}`}>
                             {renderCellContent(row, col)}
                           </td>
                         ))}

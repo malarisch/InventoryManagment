@@ -35,7 +35,7 @@ export function MobileCard({ fields, actions, footerLeft, footerRight, className
   const showFooter = showLeft || showRight;
 
   return (
-    <div className={cn('rounded-md border p-2.5', className)} data-testid="mobile-card">
+    <div className={cn('rounded-md border p-2.5', className)} data-testid="data-table-mobile-card">
       <div className="flex items-start justify-between gap-2">
         {groupedFields.length > 0 ? (
           <dl className="flex-1 space-y-2 text-xs">

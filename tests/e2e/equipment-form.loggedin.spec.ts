@@ -12,10 +12,12 @@ test.describe('Equipment Form Tests', () => {
   test.describe.configure({ mode: 'serial' });
 
     let testArticleId: bigint
+    
     let mockarticle: { id: bigint, name: string, equipments: { id: bigint, metadata: JsonValue }[] , default_location: bigint | null, location?: { id: bigint, name: string } | null};
     const timestamp = Date.now();
     test.beforeAll(async ({companyName}) => {
           mockarticle = await articleMock(companyName, {createEquipments: 2, createLocation: true});
+          console.log("Created Mock Article: ", mockarticle.id, mockarticle.name)
           testArticleId = mockarticle.id
 
     })
@@ -142,7 +144,7 @@ test.describe('Equipment Form Tests', () => {
     await page.waitForLoadState('networkidle');
     
     // Click on the test article
-    const articleLink = page.locator(`text="${mockarticle.name}"`);
+    const articleLink = page.getByTestId("cell-name").getByText(mockarticle.name);
     await articleLink.click();
     await page.waitForLoadState('networkidle');
     
@@ -225,9 +227,13 @@ test.describe('Equipment Form Tests', () => {
     // Now test equipment with location
     await page.goto('/management/equipments/new');
     await page.waitForLoadState('networkidle');
+  
+    await page.getByRole('button', { name: 'Artikel' }).click();
+    await page.getByRole('textbox', { name: 'Suche…' }).click();
+    await page.getByRole('textbox', { name: 'Suche…' }).fill(mockarticle.name);
+    await page.getByRole('button', { name: mockarticle.name }).click();
     
-    // Select article
-      await selectTestArticle(page);
+
     
     // Select location if field exists
     const locationSelect = page.locator('select[name="current_location"], select[name="location"]');
