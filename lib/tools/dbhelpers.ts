@@ -7,7 +7,6 @@ import {
 } from "@/components/metadataTypes.types";
 import {AssetTagEntityType, buildAssetTagCode} from "@/lib/asset-tags/code";
 import fs from 'fs';
-import path from 'path';
 import {STORAGE_STATE} from '@/playwright.config';
 
 function genArticle({companyId, userid}: {companyId: number, userid: string}): Prisma.articlesUncheckedCreateInput {

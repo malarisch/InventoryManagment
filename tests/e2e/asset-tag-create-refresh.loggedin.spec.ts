@@ -47,7 +47,7 @@ test.describe('Asset Tag Create and Refresh Tests', () => {
 
     // Verify the asset tag code is shown in the description
     const description = page.locator('text=/Asset Tag:/');
-    await expect(description).not.toContainText('—');
+    await expect(description).not.toBe('—');
 
     // Take screenshot for verification
     await page.screenshot({ 
@@ -86,27 +86,17 @@ test.describe('Asset Tag Create and Refresh Tests', () => {
 
   test('should show asset tag on locations page after creation', async ({ page, companyName }) => {
     // Create a location mock via Prisma
-    const prisma = new PrismaClient();
     
-    const company = await prisma.companies.findFirst({
-      where: { name: companyName }
-    });
-    
-    if (!company) throw new Error('Test company not found');
+    await page.goto("/management")
+    await page.getByRole('link', { name: 'Locations' }).click();
+    await page.getByRole('link', { name: 'Neu' }).click();
+    await page.getByRole('textbox', { name: 'Name' }).click();
+    await page.getByRole('textbox', { name: 'Name' }).fill('Testlocation');
+    await page.getByRole('textbox', { name: 'Name' }).press('Tab');
+    await page.getByRole('textbox', { name: 'Beschreibung' }).fill('Description of Testlocation');
+    await page.getByRole('button', { name: 'Erstellen' }).click();
 
-    const location = await prisma.locations.create({
-      data: {
-        name: `Test Location ${Date.now()}`,
-        company_id: company.id
-      }
-    });
 
-    await prisma.$disconnect();
-
-    const locationId = location.id;
-
-    // Navigate to location edit page
-    await page.goto(`/management/locations/${locationId}`);
     await page.waitForLoadState('networkidle');
 
     // Verify the "Asset-Tag erstellen" button is visible

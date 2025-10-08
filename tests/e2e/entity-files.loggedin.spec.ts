@@ -224,7 +224,7 @@ test.describe('Entity Files Tests', () => {
     await page.click('button[type="submit"]');
     
     // Wait for navigation to customer detail page
-    await page.waitForURL('**/customers/**');
+    await page.waitForURL('**/contacts/**');
     
     // Check if FileManager is present (customers may or may not support files)
     const fileManagerTitle = page.locator('text="Dateien"');

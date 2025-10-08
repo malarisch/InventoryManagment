@@ -25,7 +25,7 @@ export function FileManager({
   isPublic,
   initial,
   className,
-  showTitle = true
+  showTitle = false
 }: {
   table: string;
   rowId: number;
@@ -190,7 +190,7 @@ export function FileManager({
         <div className="mb-2 text-sm font-medium">Dateien</div>
       )}
       {items.length === 0 ? (
-        <div className="text-xs text-muted-foreground mb-2">Keine Dateien vorhanden.</div>
+        <div className="text-xs text-muted-foreground mb-2" data-testid="no-files-message">Keine Dateien vorhanden.</div>
       ) : (
         <ul className="mb-3 space-y-2">
           {items.map((f, i) => (
