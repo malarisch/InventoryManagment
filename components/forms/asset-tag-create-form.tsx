@@ -6,6 +6,7 @@ import { createClient } from '@/lib/supabase/client';
 import { AssetTagTemplate } from '@/components/asset-tag-templates/types';
 import type { TablesInsert } from '@/database.types';
 import { useEffect, useState } from 'react';
+import { useRouter } from 'next/navigation';
 import { buildAssetTagCode, defaultTemplateId, type AssetTagEntityType } from '@/lib/asset-tags/code';
 import type { adminCompanyMetadata, asset_tag_template_print } from '@/components/metadataTypes.types';
 
@@ -22,6 +23,7 @@ export function AssetTagCreateForm({ item, table, companyId }: { item: { id: num
   const [companyMeta, setCompanyMeta] = useState<adminCompanyMetadata | null>(null);
   const [companyName, setCompanyName] = useState<string>("");
   const supabase = createClient();
+  const router = useRouter();
 
   const entityType = tableToEntityType[table] || "equipment";
 
@@ -70,6 +72,9 @@ export function AssetTagCreateForm({ item, table, companyId }: { item: { id: num
       const { data, error } = await supabase.from('asset_tags').insert(payload).select().single();
       if (error) throw error;
       await supabase.from(table).update({ asset_tag: (data as { id: number }).id }).eq('id', item.id);
+      
+      // Refresh the page to show the new asset tag
+      router.refresh();
     } finally {
       setBusy(false);
     }

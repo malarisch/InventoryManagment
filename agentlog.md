@@ -1,3 +1,11 @@
+2025-10-08 23:15 — Asset Tag button triggers page refresh
+- AssetTagCreateForm now calls router.refresh() after creating a tag so the page re-renders and shows the new tag immediately.
+- Previously the button would create the tag but not update the UI until manual refresh.
+- Added E2E test covering asset tag creation and refresh for equipments, articles, and locations.
+- Files: components/forms/asset-tag-create-form.tsx, tests/e2e/asset-tag-create-refresh.loggedin.spec.ts
+- Verification: npm run test:tsc ✅
+- Next: User should test the fix by creating asset tags via the "Asset-Tag erstellen" button and verifying instant UI update.
+
 2025-10-07 12:10 — Equipmentkarte mit Save & Asset-Tag-Button
 - Speichern-Button und „Asset Tag anzeigen“ sitzen jetzt in der Kopfkarte neben Löschen; Formular nutzt neues footerVariant.
 - Equipment-Form kann Aktionen extern platzieren (formId, footerVariant=status-only).
