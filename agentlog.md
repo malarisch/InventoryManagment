@@ -1,3 +1,16 @@
+2025-10-09 00:15 — Case Equipment Modal zum Ändern
+- Neue CaseEquipmentCard Component mit klickbarem Modal zum Ändern des Case Equipment
+- Modal zeigt alle verfügbaren Equipments mit Suchfunktion
+- Equipments werden als EquipmentMobileCards angezeigt (konsistent mit Rest der App)
+- Klick auf Card oder Edit-Button öffnet Modal
+- Visual feedback: ausgewähltes Equipment hervorgehoben
+- Option zum Entfernen der Case Equipment Zuweisung
+- Alte Case Equipment Auswahl aus CaseEditItemsForm entfernt (jetzt in eigener Card)
+- Page refresh nach Speichern für sofortige Aktualisierung
+- Files: components/case-equipment-card.tsx, app/management/cases/[id]/page.tsx, components/forms/case-edit-items-form.tsx, agentlog.md
+- Verification: npm run test:tsc ✅
+- Next: User sollte Modal testen und Case Equipment ändern
+
 2025-10-09 00:00 — Case Equipment Card auf Detail Seite
 - Case Equipment wird nun in einer schönen EquipmentMobileCard statt als einfacher Link angezeigt
 - Card zeigt Equipment ID, Artikel, Standort mit vollständigen Informationen

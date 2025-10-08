@@ -50,7 +50,6 @@ export function CaseEditItemsForm({
   const [message, setMessage] = useState<string | null>(null);
   const [name, setName] = useState<string>(initialName ?? "");
   const [description, setDescription] = useState<string>(initialDescription ?? "");
-  const [caseEquipment, setCaseEquipment] = useState<number | null>(caseEquipmentId);
 
   useEffect(() => {
     let active = true;
@@ -95,18 +94,6 @@ export function CaseEditItemsForm({
       .update({ contains_articles: payload })
       .eq("id", caseId);
     if (error) setError(error.message); else setMessage("Artikel aktualisiert.");
-    setSaving(false);
-  }
-
-  async function updateCaseEquipment(nextEqId: number | null) {
-    setSaving(true);
-    setError(null);
-    setMessage(null);
-    const { error } = await supabase
-      .from("cases")
-      .update({ case_equipment: nextEqId })
-      .eq("id", caseId);
-    if (error) setError(error.message); else setMessage("Case-Equipment aktualisiert.");
     setSaving(false);
   }
 
@@ -156,52 +143,8 @@ export function CaseEditItemsForm({
         </CardContent>
       </Card>
 
-      {/* Case Equipment Card */}
-      <Card className="lg:col-span-4">
-        <CardHeader>
-          <CardTitle>Case-Equipment</CardTitle>
-          <CardDescription>
-            Das physische Equipment, das als Case dient. Der Standort des Cases entspricht immer dem Standort dieses Equipments.
-          </CardDescription>
-        </CardHeader>
-        <CardContent className="space-y-3">
-          {caseEquipment && (
-            <div className="text-sm space-y-1">
-              <div className="font-medium">Aktuelles Case-Equipment:</div>
-              <div className="flex items-center gap-2">
-                <Link href={`/management/equipments/${caseEquipment}`} className="text-blue-600 hover:underline">
-                  #{caseEquipment} • {allEquipments.find((x) => x.id === caseEquipment)?.articles?.name ?? "—"}
-                </Link>
-              </div>
-            </div>
-          )}
-          <div className="grid gap-2">
-            <Label htmlFor="case_equipment">Case-Equipment ändern</Label>
-            <select
-              id="case_equipment"
-              className="h-9 rounded-md border bg-background px-3 text-sm"
-              value={caseEquipment ?? ""}
-              onChange={(e) => {
-                const val = e.target.value === "" ? null : Number(e.target.value);
-                setCaseEquipment(val);
-                void updateCaseEquipment(val);
-              }}
-            >
-              <option value="">— Kein Case-Equipment —</option>
-              {allEquipments
-                .filter((e) => !eqInCase.has(e.id))
-                .map((e) => (
-                  <option key={e.id} value={e.id}>
-                    #{e.id} • {e.articles?.name ?? "—"}
-                  </option>
-                ))}
-            </select>
-          </div>
-        </CardContent>
-      </Card>
-
       {/* Equipments in Case Card */}
-      <Card className="lg:col-span-8">
+      <Card className="lg:col-span-12">
         <CardHeader>
           <CardTitle>Equipments im Case</CardTitle>
           <CardDescription>
@@ -297,7 +240,7 @@ export function CaseEditItemsForm({
             <div className="space-y-2.5 sm:hidden max-h-72 overflow-y-auto">
               {filtered
                 .filter((e) => !eqInCase.has(e.id))
-                .filter((e) => (caseEquipment ? e.id !== caseEquipment : true))
+                .filter((e) => (caseEquipmentId ? e.id !== caseEquipmentId : true))
                 .slice((page - 1) * pageSize, (page - 1) * pageSize + pageSize)
                 .map((e) => (
                   <EquipmentMobileCard
@@ -334,7 +277,7 @@ export function CaseEditItemsForm({
                 <tbody>
                   {filtered
                     .filter((e) => !eqInCase.has(e.id))
-                    .filter((e) => (caseEquipment ? e.id !== caseEquipment : true))
+                    .filter((e) => (caseEquipmentId ? e.id !== caseEquipmentId : true))
                     .slice((page - 1) * pageSize, (page - 1) * pageSize + pageSize)
                     .map((e) => (
                       <tr key={e.id} className="odd:bg-background even:bg-muted/20">

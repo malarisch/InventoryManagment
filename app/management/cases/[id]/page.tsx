@@ -9,7 +9,7 @@ import {FileManager} from "@/components/files/file-manager";
 import { WorkshopTodoCreateInline } from "@/components/forms/workshop-todo-create-inline";
 import { MaintenanceLogsCard } from "@/components/maintenance/maintenance-logs-card";
 import { fetchUserDisplayAdmin } from "@/lib/users/userDisplay.server";
-import { EquipmentMobileCard } from "@/components/equipment-mobile-card";
+import { CaseEquipmentCard } from "@/components/case-equipment-card";
 
 type CaseEquipmentRow = Tables<"equipments"> & {
   articles?: { name: string } | null;
@@ -93,32 +93,15 @@ export default async function CaseDetailPage({ params }: { params: Promise<{ id:
           </CardContent>
         </Card>
 
-        {/* Case Equipment Card */}
-        {caseEquipment ? (
-          <Card>
-            <CardHeader>
-              <CardTitle>Case Equipment</CardTitle>
-              <CardDescription>
-                Das physische Equipment, das als Case dient. Der Standort des Cases entspricht dem Standort dieses Equipments.
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <EquipmentMobileCard
-                equipment={caseEquipment}
-                showFooter={true}
-              />
-            </CardContent>
-          </Card>
-        ) : (
-          <Card>
-            <CardHeader>
-              <CardTitle>Case Equipment</CardTitle>
-              <CardDescription>
-                Kein Case-Equipment zugewiesen. Weise unten in den Einstellungen ein Equipment als physischen Case zu.
-              </CardDescription>
-            </CardHeader>
-          </Card>
-        )}
+        {/* Case Equipment Card with edit modal */}
+        {caseCompanyId ? (
+          <CaseEquipmentCard
+            caseId={id}
+            caseEquipment={caseEquipment}
+            companyId={caseCompanyId}
+            containsEquipments={row.contains_equipments ?? []}
+          />
+        ) : null}
 
         <CaseEditItemsForm
           caseId={id}
