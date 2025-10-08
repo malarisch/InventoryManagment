@@ -1,5 +1,4 @@
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
 import { EquipmentEditForm } from "@/components/forms/equipment-edit-form";
 import { createClient } from "@/lib/supabase/server";
 import type { Tables } from "@/database.types";
@@ -8,18 +7,23 @@ import { safeParseDate, formatDate, formatDateTime } from "@/lib/dates";
 import { fallbackDisplayFromId } from "@/lib/userDisplay";
 import { fetchUserDisplayAdmin } from "@/lib/users/userDisplay.server";
 import { HistoryCard } from "@/components/historyCard";
-import { DeleteWithUndo } from "@/components/forms/delete-with-undo";
 import { FileManager } from "@/components/files/file-manager";
-import { AssetTagCreateForm } from "@/components/forms/asset-tag-create-form";
-import { WorkshopTodoCreateInline } from "@/components/forms/workshop-todo-create-inline";
 import { MaintenanceLogsCard } from "@/components/maintenance/maintenance-logs-card";
 import { WorkshopTodosCard } from "@/components/maintenance/workshop-todos-card";
+
+import { AssetTagCreateForm } from "@/components/forms/asset-tag-create-form";
+import { WorkshopTodoCreateInline } from "@/components/forms/workshop-todo-create-inline";
+import { DeleteWithUndo } from "@/components/forms/delete-with-undo";
+import { Button } from "@/components/ui/button";
+
 
 type EquipmentRow = Tables<"equipments"> & {
   articles?: { name: string } | null;
   asset_tags?: { printed_code: string | null } | null;
   current_location_location?: { id: number; name: string | null } | null;
 };
+
+type CaseSummary = Pick<Tables<"cases">, "id" | "name">;
 
 export default async function EquipmentDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const { id: idParam } = await params;
@@ -47,6 +51,37 @@ export default async function EquipmentDetailPage({ params }: { params: Promise<
   }
 
   const eq = data as EquipmentRow;
+  const [containsCases, containerCases] = await Promise.all([
+    supabase
+      .from("cases")
+      .select("id,name")
+      .contains("contains_equipments", [eq.id]),
+    supabase
+      .from("cases")
+      .select("id,name")
+      .eq("case_equipment", eq.id),
+  ]);
+
+  const caseMembershipMap = new Map<number, CaseSummary>();
+  const pushCases = (rows: CaseSummary[] | null | undefined) => {
+    if (!rows) return;
+    for (const row of rows) {
+      if (!row || typeof row.id !== "number") continue;
+      caseMembershipMap.set(row.id, row);
+    }
+  };
+
+  if (!containsCases.error) {
+    pushCases(containsCases.data as CaseSummary[] | null);
+  }
+  if (!containerCases.error) {
+    pushCases(containerCases.data as CaseSummary[] | null);
+  }
+  const caseMembership = Array.from(caseMembershipMap.values()).sort((a, b) => {
+    const nameA = a.name ?? `Case #${a.id}`;
+    const nameB = b.name ?? `Case #${b.id}`;
+    return nameA.localeCompare(nameB, "de-DE");
+  });
   const formId = "equipment-edit-form";
 
   // Creator email (if accessible), fallback to UUID
@@ -75,13 +110,26 @@ export default async function EquipmentDetailPage({ params }: { params: Promise<
                   {eq.current_location_location?.name ?? `#${eq.current_location}`}
                 </Link>
               ) : "—"}
+              {caseMembership.length > 0 ? (
+                <>
+                  {" • Case: "}
+                  {caseMembership.map((c, index) => (
+                    <span key={c.id}>
+                      <Link className="underline-offset-2 hover:underline" href={`/management/cases/${c.id}`}>
+                        {c.name ?? `Case #${c.id}`}
+                      </Link>
+                      {index < caseMembership.length - 1 ? ", " : null}
+                    </span>
+                  ))}
+                </>
+              ) : null}
               <br />
               Im Lager seit: {formatDate(safeParseDate(eq.added_to_inventory_at))}
               {" • Erstellt am: "}{formatDateTime(safeParseDate(eq.created_at))} {`• Erstellt von: ${creator ?? (eq.created_by === currentUserId ? 'Du' : fallbackDisplayFromId(eq.created_by)) ?? '—'}`}
             </CardDescription>
           </CardHeader>
           <CardContent className="px-4 pb-4">
-            <div className="mb-1 flex flex-wrap items-center justify-between gap-2">
+                      <div className="mb-1 flex flex-wrap items-center justify-between gap-2">
               <div className="flex flex-wrap items-center gap-2">
                 <DeleteWithUndo table="equipments" id={eq.id} payload={eq as Record<string, unknown>} redirectTo="/management/equipments" />
                 {!eq.asset_tag && (

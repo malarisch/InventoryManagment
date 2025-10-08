@@ -137,6 +137,22 @@
 - Files: components/job-booked-assets.client.tsx, components/forms/job-quick-book.tsx
 - Verification: npm run test:tsc ✅
 
+2025-10-06 05:25 — Show case context in equipment overview
+- Added a case membership lookup for the equipment table so items inside cases display their location as "Standort (Case)" with quick links to the containing cases
+- Extended the generic DataTable to expose an `onRowsLoaded` hook and pull relevant case rows via Supabase overlaps/in filters when equipment pages change
+- Files: components/equipmentTable.tsx, components/data-table.tsx
+- Verification: npm run test:tsc ✅
+
+2025-10-06 05:33 — Surface case membership in equipment header summary
+- Queried cases that contain or represent the equipment and highlighted them in the detail page summary header with deep links when memberships exist
+- Files: app/management/equipments/[id]/page.tsx
+- Verification: npm run test:tsc ✅
+
+2025-10-06 05:12 — Stabilize article metadata auto-enable effect
+- Wrapped `ensureSectionActive` in `useCallback` and added it to the section auto-activation effect dependencies to satisfy exhaustive-deps linting without rerunning every render
+- Files: components/forms/partials/article-metadata-form.tsx
+- Verification: npm run test:tsc ✅
+
 2025-10-06 05:05 — Block quick booking of case-contained equipment
 - Extended the quick book loader to merge case contents and container equipment into the booked set so assets already assigned via Cases no longer appear as selectable items
 - Deduplicate booked equipment IDs when booking directly or in batches to keep the picker state consistent
@@ -1082,6 +1098,7 @@ Hinweise
 - 2025-09-19 15:40 – MCP Timeout Fix: Angleichen von .codex/mcp.json an .codex/config.toml (DSN-Arg hinzugefügt). Hinweis an Nutzer: Supabase-Stack starten und npx vermeiden, wenn möglich lokal installieren.
 
 - 2025-09-19 15:59 – Agent Guidelines Update: AGENTS.md ergänzt um Pflicht zum Commit nach jeder Aufgabe.
+- 2025-10-08 11:42 – Cases Location Refactor: Entfernt `cases.current_location`, Migration synct Standort auf Case-Equipment. UI & Scanner zeigen/setzen Standorte über Equipment, Typdefinitionen & Import/Export-Test angepasst. Dateien: supabase/migrations/20251004103000_drop_case_current_location.sql, prisma/schema.prisma, database.types.ts, app/management/cases/[id]/page.tsx, components/forms/case-edit-items-form.tsx, lib/scanner/{resolve,actions}.ts, tests/vitest/importexport.test.ts, AGENTS.md. Nächste Schritte: Migration in Supabase laufen lassen und Seed/Export-Flows prüfen.
 
 - 2025-09-19 16:06 – Artikel Equipment Button Fix: nur noch ein Add-Button im Artikel-Detail (app/management/articles/[id]/page.tsx, components/articleEquipmentsTable.tsx, todos.md).
 - 2025-09-19 16:31 – Dashboard-Refresh: /management zeigt Kennzahlen, kommende Jobs und History-Tabelle (app/management/page.tsx); AGENTS.md um Context7-Regel ergänzt, todos.md aktualisiert. Nächster Schritt: Tests & File-Upload-Feature.

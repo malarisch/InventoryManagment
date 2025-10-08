@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import type { ArticleMetadata } from "@/components/metadataTypes.types";
 import type { adminCompanyMetadata } from "@/components/metadataTypes.types";
 import { Input } from "@/components/ui/input";
@@ -267,13 +267,16 @@ export function ArticleMetadataForm({
     return sectionId !== "general";
   }
 
-  function ensureSectionActive(section: SectionId, hasData: boolean) {
-    if (!hasData) return;
-    if (manuallyHidden.has(section)) return; // respect user's choice to hide
-    setActiveSections((current) =>
-      current.includes(section) ? current : [...current, section]
-    );
-  }
+  const ensureSectionActive = useCallback(
+    (section: SectionId, hasData: boolean) => {
+      if (!hasData) return;
+      if (manuallyHidden.has(section)) return; // respect user's choice to hide
+      setActiveSections((current) =>
+        current.includes(section) ? current : [...current, section]
+      );
+    },
+    [manuallyHidden]
+  );
 
   // Auto-enable sections when metadata values appear from outside (e.g., JSON mode, inheritance)
   useEffect(() => {
@@ -289,7 +292,7 @@ export function ArticleMetadataForm({
       (local.suppliers?.length ?? 0) > 0 || !!local.dailyRentalRate
     );
     ensureSectionActive("notes", !!local.notes);
-  }, [local, adminMeta, manuallyHidden]);
+  }, [local, adminMeta, ensureSectionActive]);
 
   function setTextField<K extends keyof ArticleMetadata>(key: K, raw: string, trim = true) {
     const trimmed = trim ? raw.trim() : raw;

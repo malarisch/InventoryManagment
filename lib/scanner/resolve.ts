@@ -4,7 +4,12 @@ import type { Database, Tables } from "@/database.types";
 type Client = SupabaseClient<Database>;
 
 type EquipmentRow = Pick<Tables<"equipments">, "id" | "company_id" | "article_id" | "current_location">;
-type CaseRow = Pick<Tables<"cases">, "id" | "company_id" | "current_location">;
+type CaseEquipmentRow = Pick<Tables<"equipments">, "id" | "company_id" | "current_location"> & {
+  current_location_location?: Pick<Tables<"locations">, "id" | "name"> | null;
+};
+type CaseRow = Pick<Tables<"cases">, "id" | "company_id" | "case_equipment"> & {
+  case_equipment_equipment?: CaseEquipmentRow | null;
+};
 type ArticleRow = Pick<Tables<"articles">, "id" | "company_id" | "default_location">;
 type LocationRow = Pick<Tables<"locations">, "id" | "company_id" | "name">;
 type AssetTagRow = Pick<Tables<"asset_tags">, "id" | "company_id" | "printed_code">;
@@ -88,7 +93,9 @@ export async function resolveAssetByCode(
       .maybeSingle<EquipmentRow>(),
     supabase
       .from("cases")
-      .select("id, company_id, current_location")
+      .select(
+        "id, company_id, case_equipment, case_equipment_equipment:case_equipment(id, company_id, current_location, current_location_location:current_location(id,name))",
+      )
       .eq("asset_tag", assetTagId)
       .limit(1)
       .maybeSingle<CaseRow>(),

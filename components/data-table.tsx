@@ -23,6 +23,7 @@ interface DataTableProps<T> {
   mobileHiddenColumnKeys?: string[];
   renderMobileFooterLeft?: (row: T) => React.ReactNode;
   renderMobileFooterRight?: (row: T) => React.ReactNode;
+  onRowsLoaded?: (rows: T[]) => void;
 }
 
 export function DataTable<T extends { id: number }>(
@@ -39,7 +40,8 @@ export function DataTable<T extends { id: number }>(
     searchTrailingAction,
     mobileHiddenColumnKeys,
     renderMobileFooterLeft,
-    renderMobileFooterRight
+    renderMobileFooterRight,
+    onRowsLoaded
   }: DataTableProps<T>
 ) {
   const supabase = useMemo(() => createClient(), []);
@@ -92,8 +94,11 @@ export function DataTable<T extends { id: number }>(
         setError(error.message);
         setRows([]);
         setCount(0);
+        onRowsLoaded?.([]);
       } else {
-  setRows(((data as unknown) as T[]) ?? []);
+        const typedRows = ((data as unknown) as T[]) ?? [];
+        setRows(typedRows);
+        onRowsLoaded?.(typedRows);
         setCount(typeof count === 'number' ? count : 0);
       }
       setLoading(false);
@@ -104,7 +109,7 @@ export function DataTable<T extends { id: number }>(
     };
     // Use serialized keys instead of array references to prevent infinite loops
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [page, pageSize, dq, supabase, tableName, filtersKey, searchableFieldsKey, select]);
+  }, [page, pageSize, dq, supabase, tableName, filtersKey, searchableFieldsKey, select, onRowsLoaded]);
 
   const totalPages = useMemo(() => {
     if (!count || count <= 0) return 1;

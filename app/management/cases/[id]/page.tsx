@@ -10,8 +10,12 @@ import { WorkshopTodoCreateInline } from "@/components/forms/workshop-todo-creat
 import { MaintenanceLogsCard } from "@/components/maintenance/maintenance-logs-card";
 import { fetchUserDisplayAdmin } from "@/lib/users/userDisplay.server";
 
-type CaseRow = Tables<"cases"> & {
+type CaseEquipmentRow = Pick<Tables<"equipments">, "id" | "current_location"> & {
   current_location_location?: { id: number; name: string | null } | null;
+};
+
+type CaseRow = Tables<"cases"> & {
+  case_equipment_equipment?: CaseEquipmentRow | null;
 };
 
 export default async function CaseDetailPage({ params }: { params: Promise<{ id: string }> }) {
@@ -21,7 +25,9 @@ export default async function CaseDetailPage({ params }: { params: Promise<{ id:
 
   const { data, error } = await supabase
     .from("cases")
-    .select("*, current_location_location:current_location(id,name)")
+    .select(
+      "*, case_equipment_equipment:case_equipment(id, current_location, current_location_location:current_location(id,name))",
+    )
     .eq("id", id)
     .single();
 
@@ -37,6 +43,9 @@ export default async function CaseDetailPage({ params }: { params: Promise<{ id:
 
   const row = data as CaseRow;
   const caseCompanyId = typeof row.company_id === "number" ? row.company_id : null;
+  const caseEquipment = row.case_equipment_equipment ?? null;
+  const derivedLocationId = caseEquipment?.current_location ?? null;
+  const derivedLocationName = caseEquipment?.current_location_location?.name ?? null;
 
   // Fetch creator display name
   const creatorDisplay = row.created_by ? await fetchUserDisplayAdmin(row.created_by) : null;
@@ -59,14 +68,20 @@ export default async function CaseDetailPage({ params }: { params: Promise<{ id:
                 <Link className="underline-offset-2 hover:underline" href={`/management/equipments/${row.case_equipment}`}>#{row.case_equipment}</Link>
               ) : "—"}
               <br />
-              Standort: {row.current_location ? (
-                <Link
-                  className="underline-offset-2 hover:underline"
-                  href={`/management/locations/${row.current_location}`}
-                >
-                  {row.current_location_location?.name ?? `#${row.current_location}`}
-                </Link>
-              ) : "—"}
+              Standort: {caseEquipment ? (
+                derivedLocationId ? (
+                  <Link
+                    className="underline-offset-2 hover:underline"
+                    href={`/management/locations/${derivedLocationId}`}
+                  >
+                    {derivedLocationName ?? `#${derivedLocationId}`}
+                  </Link>
+                ) : (
+                  "— (Case-Equipment ohne Standort)"
+                )
+              ) : (
+                "— (kein Case-Equipment)"
+              )}
               <br />
               Erstellt von: {creatorDisplay ?? "—"}
               {createdAt && ` am ${createdAt}`}

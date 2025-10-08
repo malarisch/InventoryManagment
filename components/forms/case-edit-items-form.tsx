@@ -154,7 +154,9 @@ export function CaseEditItemsForm({
       <Card className="lg:col-span-4">
         <CardHeader>
           <CardTitle>Case-Equipment</CardTitle>
-          <CardDescription>Das physische Equipment, das als Case dient</CardDescription>
+          <CardDescription>
+            Das physische Equipment, das als Case dient. Der Standort des Cases entspricht immer dem Standort dieses Equipments.
+          </CardDescription>
         </CardHeader>
         <CardContent className="space-y-3">
           {caseEquipment && (
