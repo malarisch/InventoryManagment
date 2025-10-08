@@ -46,8 +46,8 @@ export function ArticleEditForm({ article }: { article: Article }) {
     let active = true;
     async function loadData() {
       const [{ data: locationsData }, { data: assetTagData }, { data: companyRow }] = await Promise.all([
-        supabase.from("locations").select("id,name").order("name"),
-        supabase.from("asset_tags").select("id, printed_code, printed_applied").order("created_at", { ascending: false }),
+        supabase.from("locations").select("id,name").eq("company_id", article.company_id).order("name"),
+        supabase.from("asset_tags").select("id, printed_code, printed_applied").eq("company_id", article.company_id).order("created_at", { ascending: false }),
         supabase.from("companies").select("metadata").eq("id", article.company_id).maybeSingle(),
       ]);
       if (!active) return;
