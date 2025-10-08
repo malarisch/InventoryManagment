@@ -12,7 +12,7 @@ export type AssetTagEntityType = "article" | "equipment" | "case" | "location";
  */
 
 interface PlaceholderData {
-    [key: string]: string;
+  [key: string]: string;
 }
 export function buildAssetTagCode(
   meta: adminCompanyMetadata,
@@ -32,11 +32,26 @@ export function buildAssetTagCode(
   const parts: string[] = [];
   if (template) {
     let value = template.stringTemplate || '';
+    const paddedNumber = template.numberLength ? String(id).padStart(template.numberLength, '0') : String(id);
     const placeholderData: PlaceholderData = {
       prefix: template.prefix || '',
       suffix: template.suffix || '',
       'company-prefix': companyPref,
-      code: String(id).padStart(template.numberLength, '0'),
+      companyprefix: companyPref,
+      companyPrefix: companyPref,
+      company_prefix: companyPref,
+      globalprefix: companyPref,
+      'global-prefix': companyPref,
+      global_prefix: companyPref,
+      globalPrefix: companyPref,
+      'entity-prefix': entityPref,
+      entityprefix: entityPref,
+      entityPrefix: entityPref,
+      entity_prefix: entityPref,
+      
+      code: paddedNumber,
+      number: paddedNumber,
+      id: String(id),
     };
     // Merge custom placeholders (e.g., company_name)
     if (placeholders) {

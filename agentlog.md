@@ -1423,3 +1423,9 @@ Files: lib/tools/deleteCompany.ts, tests/vitest/delete-company.test.ts. Next: ru
 - Asset Tag Template form shows available stringTemplate placeholders incl. {company_name}.
 - Prevent auto-reopening of Power section when user hides it (respects manual hide despite company defaults).
 - Files: components/forms/{customer-create-form,asset-tag-template-form}.tsx, components/forms/partials/article-metadata-form.tsx
+
+2025-10-08 22:45 — Fix asset tag string templates
+- buildAssetTagCode ersetzt jetzt auch {number}/{globalprefix} Synonyme, damit Template-Codes aus Kategorien korrekt greifen.
+- Tests decken Placeholder-Varianten ab; TypeScript läuft grün.
+- Files: lib/asset-tags/code.ts, tests/vitest/asset-tag-code.test.ts
+- Verification: npm run test:tsc ✅, npm run test:unit -- tests/vitest/asset-tag-code.test.ts ✅

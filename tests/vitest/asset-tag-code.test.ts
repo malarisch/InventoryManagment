@@ -56,6 +56,20 @@ describe("buildAssetTagCode (template stringTemplate)", () => {
     expect(result).toBe("TAG-009");
   });
 
+  it("replaces {number} placeholder with padded id", () => {
+    const meta = makeMeta({ companyWidePrefix: "SC" });
+    const template = makeTemplate({ stringTemplate: "{prefix}-{number}", prefix: "EQ", numberLength: 4 });
+    const result = buildAssetTagCode(meta, "equipment", 12, template);
+    expect(result).toBe("EQ-0012");
+  });
+
+  it("replaces {globalprefix} placeholder with company prefix", () => {
+    const meta = makeMeta({ companyWidePrefix: "SC" });
+    const template = makeTemplate({ stringTemplate: "{globalprefix}--{code}", prefix: "", numberLength: 3 });
+    const result = buildAssetTagCode(meta, "equipment", 7, template);
+    expect(result).toBe("SC--007");
+  });
+
   it("returns empty string if stringTemplate is empty (current behavior)", () => {
     const meta = makeMeta({ companyWidePrefix: "ACME" });
     const template = makeTemplate({ stringTemplate: "" });
@@ -85,4 +99,3 @@ describe("buildAssetTagCode (fallback without template)", () => {
     expect(result).toBe("42");
   });
 });
-
