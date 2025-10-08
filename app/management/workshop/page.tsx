@@ -1,5 +1,5 @@
 import { createClient } from '@/lib/supabase/server';
-import { getActiveCompanyId } from '@/lib/companies';
+import { getActiveCompanyId } from '@/lib/companies.server';
 import Link from 'next/link';
 import { safeParseDate, formatDateTime } from '@/lib/dates';
 import { fallbackDisplayFromId } from '@/lib/userDisplay';

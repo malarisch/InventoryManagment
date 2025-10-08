@@ -1,5 +1,5 @@
 import { createClient } from "@/lib/supabase/server";
-import { getActiveCompanyId } from "@/lib/companies";
+import { getActiveCompanyId } from "@/lib/companies.server";
 import { ScannerScreen } from "@/components/scanner/scanner-screen";
 import type { ScannerMode } from "@/lib/scanner/actions";
 

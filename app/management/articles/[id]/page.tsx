@@ -1,6 +1,6 @@
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { createClient } from "@/lib/supabase/server";
-import { getActiveCompanyId } from "@/lib/companies";
+import { getActiveCompanyId } from "@/lib/companies.server";
 import type { Tables } from "@/database.types";
 import { ArticleEditForm } from "@/components/forms/article-edit-form";
 import Link from "next/link";

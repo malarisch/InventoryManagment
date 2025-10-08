@@ -1,7 +1,7 @@
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { JobNameProvider, JobNameHeading } from "@/components/jobs/job-name-context";
 import { createClient } from "@/lib/supabase/server";
-import { getActiveCompanyId } from "@/lib/companies";
+import { getActiveCompanyId } from "@/lib/companies.server";
 import type { Tables } from "@/database.types";
 import Link from "next/link";
 import { safeParseDate, formatDateTime } from "@/lib/dates";
