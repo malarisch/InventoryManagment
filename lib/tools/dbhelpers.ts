@@ -6,6 +6,9 @@ import {
     asset_tag_template_print,
 } from "@/components/metadataTypes.types";
 import {AssetTagEntityType, buildAssetTagCode} from "@/lib/asset-tags/code";
+import fs from 'fs';
+import path from 'path';
+import {STORAGE_STATE} from '@/playwright.config';
 
 function genArticle({companyId, userid}: {companyId: number, userid: string}): Prisma.articlesUncheckedCreateInput {
 
@@ -50,11 +53,64 @@ function genEquipment({companyId, userid, sn }: {companyId: number, userid: stri
 // Use a single PrismaClient instance across tests
 const prisma = new PrismaClient();
 
+/**
+ * Get active company ID from Playwright storage state.
+ * Reads the active_company_id cookie from the storage state JSON file.
+ * @returns Company ID as number, or null if not found
+ */
+export function getActiveCompanyIdFromStorageState(): number | null {
+  try {
+    if (!fs.existsSync(STORAGE_STATE)) {
+      console.warn('Storage state file not found:', STORAGE_STATE);
+      return null;
+    }
+    
+    const storageState = JSON.parse(fs.readFileSync(STORAGE_STATE, 'utf-8'));
+    const activeCompanyCookie = storageState.cookies?.find(
+      (cookie: { name: string; value: string }) => cookie.name === 'active_company_id'
+    );
+    
+    if (activeCompanyCookie && activeCompanyCookie.value) {
+      const companyId = Number(activeCompanyCookie.value);
+      if (!isNaN(companyId)) {
+        return companyId;
+      }
+    }
+    
+    console.warn('active_company_id cookie not found in storage state');
+    return null;
+  } catch (error) {
+    console.error('Error reading storage state:', error);
+    return null;
+  }
+}
+
 export async function getCompanyAndUserId(companyName: string) {
-  const company = await prisma.companies.findFirst({
-    where: { name: companyName },
-    select: { id: true, owner_user_id: true, metadata: true },
-  });
+  // Try to get company ID from storage state (active company from browser)
+  const activeCompanyId = getActiveCompanyIdFromStorageState();
+  
+  let company;
+  if (activeCompanyId !== null) {
+    // Use active company ID from storage state
+    company = await prisma.companies.findFirst({
+      where: { id: BigInt(activeCompanyId) },
+      select: { id: true, owner_user_id: true, metadata: true },
+    });
+    
+    if (company) {
+      console.log(`Using active company from storage state: ID ${activeCompanyId}`);
+    } else {
+      console.warn(`Active company ID ${activeCompanyId} from storage state not found in database, falling back to company name lookup`);
+    }
+  }
+  
+  // Fallback: lookup by name if storage state didn't work
+  if (!company) {
+    company = await prisma.companies.findFirst({
+      where: { name: companyName },
+      select: { id: true, owner_user_id: true, metadata: true },
+    });
+  }
 
   if (!company) {
     console.error('Company not found:', companyName);

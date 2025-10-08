@@ -1,3 +1,15 @@
+2025-10-09 00:10 — Test Helpers: Use Active Company from Storage State
+- **Issue**: Test helpers (articleMock, createCustomer, etc.) used company name lookup, creating test data under wrong company
+- **Root Cause**: Tests didn't respect user's active company selection when multiple companies exist
+- **Solution**:
+  - Added getActiveCompanyIdFromStorageState() to read active_company_id from Playwright storage state
+  - Modified getCompanyAndUserId() to prefer active company ID from storage state cookies
+  - Falls back to company name lookup if storage state unavailable
+  - Pattern: STORAGE_STATE JSON → cookies[].value where name='active_company_id'
+- Files: lib/tools/dbhelpers.ts, agentlog.md
+- Verification: npm run test:tsc ✅
+- Impact: All E2E tests now create mock data under correct active company
+
 2025-10-08 23:50 — Asset Tag Template Form: Wrong Company ID Fix
 - **Issue**: Templates were created under highest company_id instead of currently selected active company
 - **Root Cause**: Form used `.order('created_at', {ascending: false}).limit(1)` to get "newest" company membership - ignores active company selection
