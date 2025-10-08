@@ -209,7 +209,6 @@ export type Database = {
           contains_equipments: number[] | null
           created_at: string
           created_by: string | null
-          current_location: number | null
           description: string | null
           files: Json | null
           id: number
@@ -224,7 +223,6 @@ export type Database = {
           contains_equipments?: number[] | null
           created_at?: string
           created_by?: string | null
-          current_location?: number | null
           description?: string | null
           files?: Json | null
           id?: number
@@ -239,7 +237,6 @@ export type Database = {
           contains_equipments?: number[] | null
           created_at?: string
           created_by?: string | null
-          current_location?: number | null
           description?: string | null
           files?: Json | null
           id?: number
@@ -273,13 +270,6 @@ export type Database = {
             columns: ["created_by"]
             isOneToOne: false
             referencedRelation: "profiles"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "cases_current_location_fkey"
-            columns: ["current_location"]
-            isOneToOne: false
-            referencedRelation: "locations"
             referencedColumns: ["id"]
           },
         ]

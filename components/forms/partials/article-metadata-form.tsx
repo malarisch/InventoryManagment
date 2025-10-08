@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import type { ArticleMetadata } from "@/components/metadataTypes.types";
 import type { adminCompanyMetadata } from "@/components/metadataTypes.types";
 import { Input } from "@/components/ui/input";
@@ -138,9 +138,18 @@ export function ArticleMetadataForm({
     ).map((section) => section.id);
     return Array.from(new Set<SectionId>(["general", ...defaults]));
   });
+
+  // Auto-activate Case section when incoming value already carries data
+  useEffect(() => {
+    if (hasCaseData(value) && !activeSections.includes("case")) {
+      setActiveSections((prev) => [...prev, "case"]);
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps -- activeSections is intentionally excluded to avoid re-running this effect when it changes; we only want to auto-activate the "case" section in response to changes in value.
+  }, [value]);
   
   const [recentlyRemoved, setRecentlyRemoved] = useState<SectionId | null>(null);
   const [removedSectionBackup, setRemovedSectionBackup] = useState<Partial<ArticleMetadata> | null>(null);
+  const [manuallyHidden, setManuallyHidden] = useState<Set<SectionId>>(new Set());
 
   // Sync from parent: only update local if change came from outside
   useEffect(() => {
@@ -194,7 +203,9 @@ export function ArticleMetadataForm({
         break;
     }
     setRemovedSectionBackup(backup);
-    
+    // Track manual hide to avoid auto re-adding from defaults
+    setManuallyHidden((prev) => new Set<SectionId>(prev).add(sectionId));
+
     // Clear data for this section
     update((prev) => {
       const updated = { ...prev };
@@ -244,6 +255,11 @@ export function ArticleMetadataForm({
     
     setActiveSections((current) => [...current, recentlyRemoved]);
     setRecentlyRemoved(null);
+    setManuallyHidden((prev) => {
+      const next = new Set(prev);
+      next.delete(recentlyRemoved);
+      return next;
+    });
     setRemovedSectionBackup(null);
   }
 
@@ -251,19 +267,23 @@ export function ArticleMetadataForm({
     return sectionId !== "general";
   }
 
-  function ensureSectionActive(section: SectionId, hasData: boolean) {
-    if (!hasData) return;
-    setActiveSections((current) =>
-      current.includes(section) ? current : [...current, section]
-    );
-  }
+  const ensureSectionActive = useCallback(
+    (section: SectionId, hasData: boolean) => {
+      if (!hasData) return;
+      if (manuallyHidden.has(section)) return; // respect user's choice to hide
+      setActiveSections((current) =>
+        current.includes(section) ? current : [...current, section]
+      );
+    },
+    [manuallyHidden]
+  );
 
   // Auto-enable sections when metadata values appear from outside (e.g., JSON mode, inheritance)
   useEffect(() => {
     ensureSectionActive("physical", hasPhysicalData(local));
     ensureSectionActive(
       "power",
-      hasPowerData(local) || hasPowerDefaults(adminMeta)
+      hasPowerData(local)
     );
     ensureSectionActive("case", hasCaseData(local));
     ensureSectionActive("connectivity", hasConnectivityData(local));
@@ -272,7 +292,7 @@ export function ArticleMetadataForm({
       (local.suppliers?.length ?? 0) > 0 || !!local.dailyRentalRate
     );
     ensureSectionActive("notes", !!local.notes);
-  }, [local, adminMeta]);
+  }, [local, adminMeta, ensureSectionActive]);
 
   function setTextField<K extends keyof ArticleMetadata>(key: K, raw: string, trim = true) {
     const trimmed = trim ? raw.trim() : raw;
@@ -1142,12 +1162,6 @@ function hasPowerData(metadata: ArticleMetadata) {
   if (!power) return false;
   return Object.values(power).some(
     (value) => value !== undefined && value !== null
-  );
-}
-
-function hasPowerDefaults(admin: adminCompanyMetadata) {
-  return Object.values(admin.standardData.power).some(
-    (value) => value !== undefined && value !== null && value !== ""
   );
 }
 

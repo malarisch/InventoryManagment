@@ -22,9 +22,13 @@ export function CustomerCreateForm() {
   const [forename, setForename] = useState<string>("");
   const [surname, setSurname] = useState<string>("");
   const [email, setEmail] = useState<string>("");
-  const [address, setAddress] = useState<string>("");
+  const [phone, setPhone] = useState<string>("");
+  const [street, setStreet] = useState<string>("");
   const [postalCode, setPostalCode] = useState<string>("");
+  const [city, setCity] = useState<string>("");
   const [country, setCountry] = useState<string>("");
+  const [website, setWebsite] = useState<string>("");
+  const [notes, setNotes] = useState<string>("");
   const [metaText, setMetaText] = useState<string>(() => toPrettyJSON(defaultCustomerMetadataDE));
   const [metaObj, setMetaObj] = useState(defaultCustomerMetadataDE);
   const [advanced, setAdvanced] = useState(false);
@@ -91,11 +95,14 @@ export function CustomerCreateForm() {
           ? companyName.trim() || "Unbenannte Firma"
           : `${forename} ${surname}`.trim() || "Unbenannter Kunde",
         email: email.trim() || null,
-        address: address.trim() || null,
-        street: address.trim() || null,
+        phone: phone.trim() || null,
+        street: street.trim() || null,
         postal_code: postalCode.trim() || null,
         zip_code: postalCode.trim() || null,
+        city: city.trim() || null,
         country: country.trim() || null,
+        website: website.trim() || null,
+        notes: notes.trim() || null,
         metadata,
         files: null,
         company_id: company.id,
@@ -174,23 +181,46 @@ export function CustomerCreateForm() {
 
           {customerType && (
             <>
-              <div className="grid gap-2">
-                <Label htmlFor="email">E-Mail</Label>
-                <Input id="email" name="email" type="email" value={email} onChange={(e) => setEmail(e.target.value)} placeholder="mail@example.com" />
+              <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
+                <div className="grid gap-2">
+                  <Label htmlFor="email">E-Mail</Label>
+                  <Input id="email" name="email" type="email" value={email} onChange={(e) => setEmail(e.target.value)} placeholder="mail@example.com" />
+                </div>
+                <div className="grid gap-2">
+                  <Label htmlFor="phone">Telefon</Label>
+                  <Input id="phone" name="phone" value={phone} onChange={(e) => setPhone(e.target.value)} placeholder="+49 123 456789" />
+                </div>
               </div>
+
               <div className="grid grid-cols-1 gap-2 sm:grid-cols-3">
                 <div className="grid gap-2 sm:col-span-2">
-                  <Label htmlFor="address">Adresse</Label>
-                  <Input id="address" name="address" value={address} onChange={(e) => setAddress(e.target.value)} placeholder="Straße Hausnr, Stadt" />
+                  <Label htmlFor="street">Straße</Label>
+                  <Input id="street" name="street" value={street} onChange={(e) => setStreet(e.target.value)} placeholder="Straße Hausnr" />
                 </div>
                 <div className="grid gap-2">
                   <Label htmlFor="postal_code">PLZ</Label>
                   <Input id="postal_code" name="postal_code" value={postalCode} onChange={(e) => setPostalCode(e.target.value)} />
                 </div>
               </div>
-              <div className="grid gap-2">
-                <Label htmlFor="country">Land</Label>
-                <Input id="country" name="country" value={country} onChange={(e) => setCountry(e.target.value)} />
+              <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
+                <div className="grid gap-2">
+                  <Label htmlFor="city">Stadt</Label>
+                  <Input id="city" name="city" value={city} onChange={(e) => setCity(e.target.value)} />
+                </div>
+                <div className="grid gap-2">
+                  <Label htmlFor="country">Land</Label>
+                  <Input id="country" name="country" value={country} onChange={(e) => setCountry(e.target.value)} />
+                </div>
+              </div>
+              <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
+                <div className="grid gap-2">
+                  <Label htmlFor="website">Website</Label>
+                  <Input id="website" name="website" value={website} onChange={(e) => setWebsite(e.target.value)} placeholder="https://example.com" />
+                </div>
+                <div className="grid gap-2">
+                  <Label htmlFor="notes">Notizen</Label>
+                  <Input id="notes" name="notes" value={notes} onChange={(e) => setNotes(e.target.value)} placeholder="Interne Notizen…" />
+                </div>
               </div>
             </>
           )}

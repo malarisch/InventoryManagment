@@ -8,6 +8,7 @@ import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { MobileCard } from '@/components/ui/mobile-card';
 
 interface DataTableProps<T> {
   tableName: string;
@@ -23,6 +24,7 @@ interface DataTableProps<T> {
   mobileHiddenColumnKeys?: string[];
   renderMobileFooterLeft?: (row: T) => React.ReactNode;
   renderMobileFooterRight?: (row: T) => React.ReactNode;
+  onRowsLoaded?: (rows: T[]) => void;
 }
 
 export function DataTable<T extends { id: number }>(
@@ -39,7 +41,8 @@ export function DataTable<T extends { id: number }>(
     searchTrailingAction,
     mobileHiddenColumnKeys,
     renderMobileFooterLeft,
-    renderMobileFooterRight
+    renderMobileFooterRight,
+    onRowsLoaded
   }: DataTableProps<T>
 ) {
   const supabase = useMemo(() => createClient(), []);
@@ -92,8 +95,11 @@ export function DataTable<T extends { id: number }>(
         setError(error.message);
         setRows([]);
         setCount(0);
+        onRowsLoaded?.([]);
       } else {
-  setRows(((data as unknown) as T[]) ?? []);
+        const typedRows = ((data as unknown) as T[]) ?? [];
+        setRows(typedRows);
+        onRowsLoaded?.(typedRows);
         setCount(typeof count === 'number' ? count : 0);
       }
       setLoading(false);
@@ -104,7 +110,7 @@ export function DataTable<T extends { id: number }>(
     };
     // Use serialized keys instead of array references to prevent infinite loops
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [page, pageSize, dq, supabase, tableName, filtersKey, searchableFieldsKey, select]);
+  }, [page, pageSize, dq, supabase, tableName, filtersKey, searchableFieldsKey, select, onRowsLoaded]);
 
   const totalPages = useMemo(() => {
     if (!count || count <= 0) return 1;
@@ -127,13 +133,6 @@ export function DataTable<T extends { id: number }>(
     return base;
   }, [mobileHiddenColumnKeys]);
   const mobileColumns = useMemo(() => columns.filter((column) => !hiddenKeys.has(column.key)), [columns, hiddenKeys]);
-  const groupedColumns = useMemo(() => {
-    const groups: Array<(typeof columns)[number][]> = [];
-    for (let index = 0; index < mobileColumns.length; index += 3) {
-      groups.push(mobileColumns.slice(index, index + 3));
-    }
-    return groups;
-  }, [mobileColumns]);
 
   return (
     <Card className={className}>
@@ -179,56 +178,25 @@ export function DataTable<T extends { id: number }>(
           )}
           {!loading && !error && rows.length > 0 && (
             <div className="space-y-2.5" data-testid="data-table-mobile">
-              {rows.map((row) => (
-                <div key={row.id} className="rounded-md border p-2.5" data-testid="data-table-mobile-card">
-                  <div className="flex items-start justify-between gap-2">
-                    {groupedColumns.length > 0 ? (
-                      <dl className="flex-1 space-y-2 text-xs">
-                        {groupedColumns.map((group, groupIndex) => (
-                          <div key={groupIndex} className="grid grid-cols-3 gap-x-3 gap-y-1.5">
-                            {group.map((col) => (
-                              <div
-                                key={col.key}
-                                className={cn('space-y-0.5', group.length === 1 ? 'col-span-3' : undefined)}
-                              >
-                                <dt className="text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">
-                                  {col.label}
-                                </dt>
-                                <dd className="text-sm font-medium leading-tight text-foreground break-words">
-                                  {renderCellContent(row, col)}
-                                </dd>
-                              </div>
-                            ))}
-                          </div>
-                        ))}
-                      </dl>
-                    ) : (
-                      <div className="flex-1" />
-                    )}
-                    <div className="shrink-0 pt-0.5">
-                      {renderRowActions(row)}
-                    </div>
-                  </div>
-                  {(() => {
-                    const leftContent = renderMobileFooterLeft ? renderMobileFooterLeft(row) : `ID ${row.id}`;
-                    const rightContent = renderMobileFooterRight ? renderMobileFooterRight(row) : null;
-                    const showLeft = leftContent !== null && leftContent !== undefined && leftContent !== '';
-                    const showRight = rightContent !== null && rightContent !== undefined && rightContent !== '';
-                    if (!showLeft && !showRight) return null;
-                    return (
-                      <div
-                        className={cn(
-                          'mt-1 flex items-center gap-2 text-[11px] text-muted-foreground',
-                          showRight ? 'justify-between' : 'justify-start'
-                        )}
-                      >
-                        {showLeft ? <div>{leftContent}</div> : null}
-                        {showRight ? <div className="text-right">{rightContent}</div> : null}
-                      </div>
-                    );
-                  })()}
-                </div>
-              ))}
+              {rows.map((row) => {
+                const fields = mobileColumns.map((col) => ({
+                  label: col.label,
+                  value: renderCellContent(row, col)
+                }));
+                
+                const leftContent = renderMobileFooterLeft ? renderMobileFooterLeft(row) : `ID ${row.id}`;
+                const rightContent = renderMobileFooterRight ? renderMobileFooterRight(row) : null;
+
+                return (
+                  <MobileCard
+                    key={row.id}
+                    fields={fields}
+                    actions={renderRowActions(row)}
+                    footerLeft={leftContent}
+                    footerRight={rightContent}
+                  />
+                );
+              })}
             </div>
           )}
         </div>
@@ -239,7 +207,7 @@ export function DataTable<T extends { id: number }>(
                 <thead className="bg-muted">
                   <tr>
                     {columns.map((col) => (
-                      <th key={col.key} className={headerCellClass}>
+                      <th key={col.key} className={headerCellClass} data-testid={`thead-${col.key}`}>
                         {col.label}
                       </th>
                     ))}
@@ -249,21 +217,21 @@ export function DataTable<T extends { id: number }>(
                 <tbody>
                   {loading && rows.length === 0 && (
                     <tr>
-                      <td className={bodyCellClass} colSpan={columns.length + 1}>
+                      <td className={bodyCellClass} colSpan={columns.length + 1} data-testid="loading-msg">
                         Lädt…
                       </td>
                     </tr>
                   )}
                   {!loading && error && (
                     <tr>
-                      <td className={cn(bodyCellClass, "text-red-600")} colSpan={columns.length + 1}>
+                      <td className={cn(bodyCellClass, "text-red-600")} colSpan={columns.length + 1} data-testid="error-msg">
                         Fehler beim Laden: {error}
                       </td>
                     </tr>
                   )}
                   {!loading && !error && rows.length === 0 && (
                     <tr>
-                      <td className={cn(bodyCellClass, "text-muted-foreground")} colSpan={columns.length + 1}>
+                      <td className={cn(bodyCellClass, "text-muted-foreground")} colSpan={columns.length + 1} data-testid="no-entries">
                         Keine Einträge gefunden.
                       </td>
                     </tr>
@@ -272,7 +240,7 @@ export function DataTable<T extends { id: number }>(
                     rows.map((row) => (
                       <tr key={row.id} className="border-b hover:bg-muted/50">
                         {columns.map((col) => (
-                          <td key={col.key} className={bodyCellClass}>
+                          <td key={col.key} className={bodyCellClass} data-testid={`cell-${col.key}`}>
                             {renderCellContent(row, col)}
                           </td>
                         ))}

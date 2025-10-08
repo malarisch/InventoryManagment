@@ -3,7 +3,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { createClient } from "@/lib/supabase/client";
 import type { Tables, Json, Database } from "@/database.types";
-import type { adminCompanyMetadata, ArticleMetadata, EquipmentMetadata } from "@/components/metadataTypes.types";
+import type { adminCompanyMetadata, ArticleMetadata, EquipmentMetadata, asset_tag_template_print } from "@/components/metadataTypes.types";
 import { buildAssetTagCode } from "@/lib/asset-tags/code";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
@@ -16,6 +16,7 @@ import { defaultEquipmentMetadataDE, toPrettyJSON } from "@/lib/metadata/default
 import { EquipmentMetadataForm } from "@/components/forms/partials/equipment-metadata-form";
 import { ContactFormDialog } from "@/components/forms/contacts/contact-form-dialog";
 import { buildEquipmentMetadata } from "@/lib/metadata/builders";
+import { SearchPicker, type SearchItem } from "@/components/search/search-picker";
 type Article = Tables<"articles">;
 type Location = Tables<"locations">;
 type AssetTagTemplate = Tables<"asset_tag_templates">;
@@ -32,6 +33,7 @@ export function EquipmentCreateForm({ initialArticleId }: { initialArticleId?: n
   const [locations, setLocations] = useState<Location[]>([]);
   const [assetTagTemplates, setAssetTagTemplates] = useState<AssetTagTemplate[]>([]);
   const [companyMeta, setCompanyMeta] = useState<adminCompanyMetadata | null>(null);
+  const [companyName, setCompanyName] = useState<string>("");
   const [currentLocation, setCurrentLocation] = useState<number | "">("");
   const [addedAt, setAddedAt] = useState<string>(() => {
     const d = new Date();
@@ -58,13 +60,14 @@ export function EquipmentCreateForm({ initialArticleId }: { initialArticleId?: n
         supabase.from("articles").select("id,name,company_id,metadata,default_location").eq("company_id", company.id).order("name"),
         supabase.from("locations").select("id,name,company_id").eq("company_id", company.id).order("name"),
         supabase.from("asset_tag_templates").select("id,template,company_id").eq("company_id", company.id).order("created_at", { ascending: false }),
-        supabase.from("companies").select("metadata").eq("id", company.id).limit(1).maybeSingle(),
+        supabase.from("companies").select("name,metadata").eq("id", company.id).limit(1).maybeSingle(),
       ]);
       if (!active) return;
       setArticles((articlesData as Article[]) ?? []);
       setLocations((locationsData as Location[]) ?? []);
       setAssetTagTemplates((tmplData as AssetTagTemplate[]) ?? []);
       setCompanyMeta(companyRow?.metadata ? (companyRow.metadata as unknown as adminCompanyMetadata) : null);
+      setCompanyName((companyRow?.name as string) ?? "");
       const metaPartial = companyRow?.metadata as Partial<adminCompanyMetadata> | undefined;
       const defId = metaPartial?.defaultEquipmentAssetTagTemplateId;
       if (defId) setAssetTagTemplateId(defId);
@@ -180,6 +183,27 @@ export function EquipmentCreateForm({ initialArticleId }: { initialArticleId?: n
     />
   );
 
+  const articleItems: SearchItem<"article", Article>[] = useMemo(() => {
+    return articles.map((a) => ({
+      id: String(a.id),
+      category: "article",
+      title: a.name ?? `#${a.id}`,
+      description: undefined,
+      priority: 5,
+      matchers: [
+        { value: String(a.id), weight: 5 },
+        ...(a.name ? [{ value: a.name, weight: 0 }] : []),
+      ],
+      data: a,
+    }));
+  }, [articles]);
+
+  const selectedArticleName = useMemo(() => {
+    if (articleId === "") return "Artikel wählen";
+    const match = articles.find((a) => a.id === Number(articleId));
+    return match?.name ?? `#${articleId}`;
+  }, [articleId, articles]);
+
   async function onSubmit(e: React.FormEvent) {
     e.preventDefault();
     setSaving(true);
@@ -237,7 +261,22 @@ export function EquipmentCreateForm({ initialArticleId }: { initialArticleId?: n
         if (error) throw error;
         const id = (data as Tables<"equipments">).id;
         if (assetTagTemplateId !== "") {
-          const printed_code = companyMeta ? buildAssetTagCode(companyMeta, "equipment", id) : String(id);
+          // Use selected template to build code; support {company_name}
+          const chosen = assetTagTemplates.find((t) => t.id === Number(assetTagTemplateId));
+          const templateData = chosen?.template as Record<string, unknown> | undefined;
+          const templatePrint: asset_tag_template_print | undefined = templateData ? {
+            name: String(templateData.name || ''),
+            description: String(templateData.description || ''),
+            prefix: String(templateData.prefix || ''),
+            suffix: String(templateData.suffix || ''),
+            numberLength: Number(templateData.numberLength || 0),
+            numberingScheme: (templateData.numberingScheme === 'random' ? 'random' : 'sequential'),
+            stringTemplate: String(templateData.stringTemplate || '{prefix}-{code}'),
+            codeType: (templateData.codeType === 'Barcode' ? 'Barcode' : templateData.codeType === 'None' ? 'None' : 'QR'),
+          } : undefined;
+          const printed_code = companyMeta
+            ? buildAssetTagCode(companyMeta, "equipment", id, templatePrint, { company_name: companyName })
+            : String(id);
             const { data: tag, error: tagErr } = await supabase
               .from("asset_tags")
               .insert({ printed_template: Number(assetTagTemplateId), printed_code, company_id: company.id, created_by: userId })
@@ -294,18 +333,13 @@ export function EquipmentCreateForm({ initialArticleId }: { initialArticleId?: n
         </CardHeader>
         <CardContent className="grid gap-3 sm:grid-cols-2">
           <div className="grid gap-2">
-            <Label htmlFor="article_id">Artikel</Label>
-            <select
-              id="article_id"
-              className="h-9 rounded-md border bg-background px-3 text-sm"
-              value={articleId}
-              onChange={(e) => setArticleId(e.target.value === "" ? "" : Number(e.target.value))}
-            >
-              <option value="">— Kein Artikel —</option>
-              {articles.map((a) => (
-                <option key={a.id} value={a.id}>{a.name}</option>
-              ))}
-            </select>
+            <Label htmlFor="article_id_picker">Artikel</Label>
+            <SearchPicker
+              items={articleItems}
+              onSelect={(item) => setArticleId(Number(item.id))}
+              buttonLabel={selectedArticleName}
+              buttonProps={{ id: "article_id_picker" }}
+            />
           </div>
           <div className="grid gap-2">
             <Label htmlFor="current_location">Aktueller Standort</Label>

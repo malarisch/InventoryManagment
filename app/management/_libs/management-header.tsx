@@ -167,7 +167,12 @@ function UserMenu() {
 
       if (!active) return;
       setCompanies(list);
-      setSelectedCompanyId(desired ?? (list[0] ? String(list[0].id) : null));
+      const activeId = desired ?? (list[0] ? String(list[0].id) : null);
+      setSelectedCompanyId(activeId);
+      // Ensure cookie is set on initial load
+      if (activeId && typeof window !== "undefined") {
+        document.cookie = `active_company_id=${activeId}; path=/; max-age=31536000; SameSite=Lax`;
+      }
       setLoadingCompanies(false);
     }
     load();
@@ -180,6 +185,8 @@ function UserMenu() {
     setSelectedCompanyId(id);
     if (typeof window !== "undefined") {
       localStorage.setItem("active_company_id", id);
+      // Set cookie for server-side access (expires in 1 year)
+      document.cookie = `active_company_id=${id}; path=/; max-age=31536000; SameSite=Lax`;
     }
     // Refresh UI so components reading company update
     router.refresh();

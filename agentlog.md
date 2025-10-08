@@ -1,3 +1,171 @@
+2025-10-09 00:10 — Test Helpers: Use Active Company from Storage State
+- **Issue**: Test helpers (articleMock, createCustomer, etc.) used company name lookup, creating test data under wrong company
+- **Root Cause**: Tests didn't respect user's active company selection when multiple companies exist
+- **Solution**:
+  - Added getActiveCompanyIdFromStorageState() to read active_company_id from Playwright storage state
+  - Modified getCompanyAndUserId() to prefer active company ID from storage state cookies
+  - Falls back to company name lookup if storage state unavailable
+  - Pattern: STORAGE_STATE JSON → cookies[].value where name='active_company_id'
+- Files: lib/tools/dbhelpers.ts, agentlog.md
+- Verification: npm run test:tsc ✅
+- Impact: All E2E tests now create mock data under correct active company
+
+2025-10-08 23:50 — Asset Tag Template Form: Wrong Company ID Fix
+- **Issue**: Templates were created under highest company_id instead of currently selected active company
+- **Root Cause**: Form used `.order('created_at', {ascending: false}).limit(1)` to get "newest" company membership - ignores active company selection
+- **Solution**: 
+  - Replaced manual users_companies query with useCompany hook
+  - Create operation now uses company.id from active company
+  - Added company_id filter to fetch operation (edit mode) for security
+  - Added company_id filter to update operation for security
+  - Templates now properly scoped to active company
+- Files: components/forms/asset-tag-template-form.tsx, agentlog.md
+- Verification: npm run test:tsc ✅
+- Impact: Users with multiple companies can now create templates in the correct company
+
+2025-10-08 23:30 — Asset Tag Templates Section Multi-Company Fix
+- **Issue**: "No company found for user" error on company settings page - asset tag templates not displaying
+- **Root Cause**: Component used `.single()` on users_companies query, which fails when user has multiple companies
+- **Solution**: Replaced manual company query with useCompany hook (same pattern as other client components)
+- Added company_id filter to delete operation for security (prevent cross-company deletes)
+- Files: components/asset-tag-templates-section.tsx, agentlog.md
+- Verification: npm run test:tsc ✅
+- Pattern: useCompany hook is the standard way to get active company in client components
+
+2025-01-15 15:30 — ESLint Production Build Fixes Complete
+- **Fixed ESLint errors blocking production build** (11 total errors in 2 files):
+  - equipment-create-form.tsx (10 errors): Added asset_tag_template_print import, fixed template handling with proper types (Record<string, unknown> → typed object), removed unused 'idx' param
+  - maintenance-log-create-inline.tsx (1 error): Removed unused 'filters' variable from workshop todos query
+- Pattern: Cast template as Record<string, unknown>, build typed object with explicit type guards for codeType/numberingScheme unions
+- Files: components/forms/{equipment-create-form,maintenance-log-create-inline}.tsx, agentlog.md
+- Verification: npm run build ✅ (complete success, all routes compiled)
+- Status: Production build ready, all ESLint + TypeScript checks passing
+
+2025-01-15 15:00 — HOTFIX: Build Error - Client/Server Module Split
+- **Build Error**: lib/companies.ts imported by client component but contained server-only code (next/headers)
+- **Solution**: Split into two files:
+  - lib/companies.ts: Client-safe (CompanyRecord type, normalizeCompanyRelation function)
+  - lib/companies.server.ts: Server-only (getActiveCompanyId function with next/headers)
+- Updated all 9 server component imports to use companies.server.ts
+- Files: lib/companies.ts, lib/companies.server.ts, app/management/**/*.tsx (9 server pages), agentlog.md
+- Verification: npm run test:tsc ✅, npm run build progresses past error ✅
+- Next: Build still fails on pre-existing ESLint issues (any types, unused vars) - not related to this fix
+
+2025-01-15 14:30 — CRITICAL: Multi-Company Data Isolation - Phase 2B Complete (Client Components)
+- **Phase 2B - Client Components (DONE)**:
+  - **Data Tables (8 files)**: articleTable, equipmentTable, locationTable, caseTable, customerTable, assetTagTable, jobTable, articleEquipmentsTable
+    - Alle DataTable components mit useCompany hook und company_id filter versehen
+    - equipmentTable: zusätzlich Cases-Query mit company_id gefiltert
+    - Alle zeigen Fallback-Message wenn keine Company ausgewählt
+  - **Asset Tag Scanner Pages (3 files)**: articles/page, equipments/page, locations/page  
+    - Alle Scanner-Handler mit useCompany und company_id Filtern versehen
+    - Asset tag und entity lookups jetzt company-scoped
+  - **Edit Forms (1 file)**: article-edit-form.tsx
+    - Locations und Asset Tags Dropdowns jetzt company-gefiltert
+    - equipment-edit-form bereits korrekt (alle Queries company-gefiltert)
+- **Create Forms bereits korrekt**: equipment-create, article-create, location-create, customer-create, case-create, job-create
+  - Alle nutzen bereits useCompany hook und filtern alle Queries korrekt
+- **Original Test Issue**: SearchPicker in equipment-create-form findet jetzt Artikel, weil articlesData query gefiltert ist
+- Files: components/{articleTable,equipmentTable,locationTable,caseTable,customerTable,assetTagTable,jobTable,articleEquipmentsTable}.tsx, app/management/{articles,equipments,locations}/page.tsx, components/forms/article-edit-form.tsx, agentlog.md
+- Verification: npm run test:tsc ✅ (3 commits)
+- **Status**: Phase 2B komplett! Alle client-side Queries jetzt company-isoliert
+
+2025-10-09 01:30 — CRITICAL: Multi-Company Data Isolation - Phase 2A (Server Components)
+- **Phase 2A - Server Components (DONE)**:
+  - Detail Pages: articles/[id], locations/[id], contacts/[id], cases/[id], jobs/[id] - alle mit activeCompanyId Filter
+  - Special Pages: scanner, workshop - activeCompanyId Filter auf alle Queries
+  - Dashboard: management/page.tsx - alle Counts und History mit company_id Filter
+  - Alle Queries jetzt: `const activeCompanyId = await getActiveCompanyId()` + `.eq('company_id', activeCompanyId)`
+- **Phase 2B - TO DO**: Client Components (Forms, SearchPicker, Tables) müssen noch gefixed werden
+- Files: app/management/{articles,locations,contacts,cases,jobs}/[id]/page.tsx, app/management/{scanner,workshop,page}.tsx, agentlog.md
+- Verification: npm run test:tsc ✅
+- Next: Client Components Forms fixen (equipment-create, article-create, SearchPicker)
+
+2025-10-09 01:00 — CRITICAL: Multi-Company Data Isolation Bug - Phase 1
+- **KRITISCHER BUG**: User mit mehreren Companies sahen Daten von ALLEN Companies statt nur der aktiven
+- Root Cause: active_company_id nur im LocalStorage (client-only), Server Components konnten nicht filtern
+- **Phase 1 - Infrastructure (DONE)**:
+  - management-header.tsx: Cookie setzen zusätzlich zu LocalStorage bei Company Switch
+  - lib/companies.ts: getActiveCompanyId() Server-Funktion zum Cookie-Lesen mit Zugriffs-Validierung
+  - companyHook.ts: Cookie synchronisieren mit LocalStorage
+  - app/management/equipments/[id]/page.tsx: Beispiel-Fix mit company_id Filter
+- **Phase 2 - TO DO**: ALLE verbleibenden Queries müssen gefixed werden:
+  - Alle Server Components (articles, locations, contacts, cases, jobs, workshop, scanner, search)
+  - Alle Client Components (forms, SearchPicker, DataTable queries)
+  - Dashboard counts und statistics
+- Files: app/management/_libs/management-header.tsx, lib/companies.ts, app/management/_libs/companyHook.ts, app/management/equipments/[id]/page.tsx, agentlog.md
+- Verification: npm run test:tsc ✅
+- **URGENT**: Phase 2 muss SOFORT fortgesetzt werden - Security/Data Leak!
+
+2025-10-09 00:30 — Article Create: Power Card nicht automatisch anzeigen
+- Power Card wird nicht mehr automatisch angezeigt wenn Company Defaults existieren
+- Power Defaults werden nur noch als Platzhalter angezeigt, sobald User explizit "Stromversorgung" hinzufügt
+- Entfernte `hasPowerDefaults(adminMeta)` Bedingung aus auto-activation useEffect
+- Gelöschte ungenutzte `hasPowerDefaults` Funktion
+- Files: components/forms/partials/article-metadata-form.tsx, agentlog.md
+- Verification: npm run test:tsc ✅
+- Next: User sollte Article Create testen und sicherstellen dass Power Card nur bei Bedarf erscheint
+
+2025-10-09 00:15 — Case Equipment Modal zum Ändern
+- Neue CaseEquipmentCard Component mit klickbarem Modal zum Ändern des Case Equipment
+- Modal zeigt alle verfügbaren Equipments mit Suchfunktion
+- Equipments werden als EquipmentMobileCards angezeigt (konsistent mit Rest der App)
+- Klick auf Card oder Edit-Button öffnet Modal
+- Visual feedback: ausgewähltes Equipment hervorgehoben
+- Option zum Entfernen der Case Equipment Zuweisung
+- Alte Case Equipment Auswahl aus CaseEditItemsForm entfernt (jetzt in eigener Card)
+- Page refresh nach Speichern für sofortige Aktualisierung
+- Files: components/case-equipment-card.tsx, app/management/cases/[id]/page.tsx, components/forms/case-edit-items-form.tsx, agentlog.md
+- Verification: npm run test:tsc ✅
+- Next: User sollte Modal testen und Case Equipment ändern
+
+2025-10-09 00:00 — Case Equipment Card auf Detail Seite
+- Case Equipment wird nun in einer schönen EquipmentMobileCard statt als einfacher Link angezeigt
+- Card zeigt Equipment ID, Artikel, Standort mit vollständigen Informationen
+- Zeigt auch Asset-Tag und Inventardatum im Footer der Card
+- Separate Card mit Titel und Beschreibung für bessere Struktur
+- Fallback-Card wenn kein Case Equipment zugewiesen ist
+- Files: app/management/cases/[id]/page.tsx
+- Verification: npm run test:tsc ✅
+- Next: User sollte Case Detail Seite testen und Equipment Card überprüfen
+
+2025-10-08 23:45 — Mobile Cards für Case Edit Equipment Liste
+- Extrahierte generalisierte MobileCard Component aus DataTable für Wiederverwendung
+- Neue EquipmentMobileCard Component für Equipment-spezifische mobile Ansicht
+- Case Edit Items Form nutzt jetzt mobile Cards statt breiter Tabellen auf kleinen Bildschirmen
+- DataTable refactored um die neue MobileCard Component zu nutzen (konsistent über die App)
+- Mobile: Cards mit 3-Spalten-Grid, Desktop: Tabelle wie bisher
+- Files: components/ui/mobile-card.tsx, components/equipment-mobile-card.tsx, components/forms/case-edit-items-form.tsx, components/data-table.tsx
+- Verification: npm run test:tsc ✅
+- Next: User sollte Case Edit Seite auf Mobile testen und Equipment Liste überprüfen
+
+2025-10-08 23:15 — Asset Tag button triggers page refresh
+- AssetTagCreateForm now calls router.refresh() after creating a tag so the page re-renders and shows the new tag immediately.
+- Previously the button would create the tag but not update the UI until manual refresh.
+- Added E2E test covering asset tag creation and refresh for equipments, articles, and locations.
+- Files: components/forms/asset-tag-create-form.tsx, tests/e2e/asset-tag-create-refresh.loggedin.spec.ts
+- Verification: npm run test:tsc ✅
+- Next: User should test the fix by creating asset tags via the "Asset-Tag erstellen" button and verifying instant UI update.
+
+2025-10-07 12:10 — Equipmentkarte mit Save & Asset-Tag-Button
+- Speichern-Button und „Asset Tag anzeigen“ sitzen jetzt in der Kopfkarte neben Löschen; Formular nutzt neues footerVariant.
+- Equipment-Form kann Aktionen extern platzieren (formId, footerVariant=status-only).
+- Files: app/management/equipments/[id]/page.tsx, components/forms/equipment-edit-form.tsx
+- Verification: npm run test:tsc ✅
+
+2025-10-08 20:05 — Equipment save status neben Button
+- Detailseite zeigt ein `aria-live` Status-Element direkt neben dem Speichern-Button; Form schreibt Erfolg/Fehler hinein statt separatem Footer.
+- EquipmentEditForm akzeptiert optionales `statusElementId` und vermeidet doppelte Inline-Meldungen.
+- Files: app/management/equipments/[id]/page.tsx, components/forms/equipment-edit-form.tsx
+- Verification: npm run test:tsc ✅
+
+2025-10-08 22:25 — Restore equipment edit status wiring
+- Reinstated EquipmentEditForm success/error state and optional statusElementId syncing with the external save status span.
+- Detailseite bindet das Status-Element neben dem Speichern-Button ein und blendet doppelte Inline-Meldungen aus.
+- Files: components/forms/equipment-edit-form.tsx, app/management/equipments/[id]/page.tsx
+- Verification: npm run test:tsc ✅
+- Next: Rollout beobachten und bei Bedarf visuelles QA nachziehen.
+
 2025-10-07 11:55 — Scanner-Suche für Articles & Locations
 - Artikel- und Standorttabellen bekommen denselben Suchleisten-Scanner wie Equipments; Seiten-Header-Buttons entfernt.
 - Tabellen verstecken Asset-Tag mobil und zeigen ihn im Footer, Icon-Button sitzt neben der Suche.
@@ -129,6 +297,22 @@
 - Trigger router.refresh() after booking, removing, or undoing assets so the server-side summary updates immediately
 - Hooked the quick book picker into the shared refresh event to reload availability when bookings change elsewhere on the page
 - Files: components/job-booked-assets.client.tsx, components/forms/job-quick-book.tsx
+- Verification: npm run test:tsc ✅
+
+2025-10-06 05:25 — Show case context in equipment overview
+- Added a case membership lookup for the equipment table so items inside cases display their location as "Standort (Case)" with quick links to the containing cases
+- Extended the generic DataTable to expose an `onRowsLoaded` hook and pull relevant case rows via Supabase overlaps/in filters when equipment pages change
+- Files: components/equipmentTable.tsx, components/data-table.tsx
+- Verification: npm run test:tsc ✅
+
+2025-10-06 05:33 — Surface case membership in equipment header summary
+- Queried cases that contain or represent the equipment and highlighted them in the detail page summary header with deep links when memberships exist
+- Files: app/management/equipments/[id]/page.tsx
+- Verification: npm run test:tsc ✅
+
+2025-10-06 05:12 — Stabilize article metadata auto-enable effect
+- Wrapped `ensureSectionActive` in `useCallback` and added it to the section auto-activation effect dependencies to satisfy exhaustive-deps linting without rerunning every render
+- Files: components/forms/partials/article-metadata-form.tsx
 - Verification: npm run test:tsc ✅
 
 2025-10-06 05:05 — Block quick booking of case-contained equipment
@@ -1076,6 +1260,7 @@ Hinweise
 - 2025-09-19 15:40 – MCP Timeout Fix: Angleichen von .codex/mcp.json an .codex/config.toml (DSN-Arg hinzugefügt). Hinweis an Nutzer: Supabase-Stack starten und npx vermeiden, wenn möglich lokal installieren.
 
 - 2025-09-19 15:59 – Agent Guidelines Update: AGENTS.md ergänzt um Pflicht zum Commit nach jeder Aufgabe.
+- 2025-10-08 11:42 – Cases Location Refactor: Entfernt `cases.current_location`, Migration synct Standort auf Case-Equipment. UI & Scanner zeigen/setzen Standorte über Equipment, Typdefinitionen & Import/Export-Test angepasst. Dateien: supabase/migrations/20251004103000_drop_case_current_location.sql, prisma/schema.prisma, database.types.ts, app/management/cases/[id]/page.tsx, components/forms/case-edit-items-form.tsx, lib/scanner/{resolve,actions}.ts, tests/vitest/importexport.test.ts, AGENTS.md. Nächste Schritte: Migration in Supabase laufen lassen und Seed/Export-Flows prüfen.
 
 - 2025-09-19 16:06 – Artikel Equipment Button Fix: nur noch ein Add-Button im Artikel-Detail (app/management/articles/[id]/page.tsx, components/articleEquipmentsTable.tsx, todos.md).
 - 2025-09-19 16:31 – Dashboard-Refresh: /management zeigt Kennzahlen, kommende Jobs und History-Tabelle (app/management/page.tsx); AGENTS.md um Context7-Regel ergänzt, todos.md aktualisiert. Nächster Schritt: Tests & File-Upload-Feature.
@@ -1372,3 +1557,24 @@ Files: lib/tools/deleteCompany.ts, tests/vitest/delete-company.test.ts. Next: ru
 - Entfernte den horizontalen Außenabstand der Equipment-Übersichtskarte auf kleinen Viewports über eine responsive Klassenkombination, Desktop bleibt unverändert mit Padding/Radien
 - Files: app/management/equipments/page.tsx
 - Verification: npm run test:tsc ✅
+2025-10-07 21:05 — Fix nested cards, asset-tag template usage, and placeholders
+- Removed nested Cards on Contact/Location detail pages; forms render at top level.
+- Asset Tag generation now uses selected template and supports {company_name}; one-click creation without prompts.
+- Auto-opens Case Setup on article form when data exists; added visible Save in Company Settings header.
+- Files: app/management/{contacts,locations}/[id]/page.tsx, components/forms/{asset-tag-create-form,article-create-form,equipment-create-form,location-create-form,case-create-form}.tsx, lib/asset-tags/code.ts, lib/tools/dbhelpers.ts, components/forms/partials/article-metadata-form.tsx, components/company-settings-form.tsx
+2025-10-07 21:35 — Equip create SearchPicker, dark-mode note card, workshop completion
+- Replaced Equipment create Article select with SearchPicker for faster lookup.
+- Improved dark mode styling for inherited notes card (readability, contrast).
+- Added optional completion picker in maintenance log form to mark workshop todos as done; normalized status labels.
+- Files: components/forms/{equipment-create-form,maintenance-log-create-inline}.tsx, components/forms/partials/equipment-metadata-form.tsx, components/maintenance/workshop-todos-card.tsx
+2025-10-07 22:00 — Contact create fields, template placeholders, power section toggle fix
+- Expanded Contact create form with phone, street, zip, city, website, notes to match edit form.
+- Asset Tag Template form shows available stringTemplate placeholders incl. {company_name}.
+- Prevent auto-reopening of Power section when user hides it (respects manual hide despite company defaults).
+- Files: components/forms/{customer-create-form,asset-tag-template-form}.tsx, components/forms/partials/article-metadata-form.tsx
+
+2025-10-08 22:45 — Fix asset tag string templates
+- buildAssetTagCode ersetzt jetzt auch {number}/{globalprefix} Synonyme, damit Template-Codes aus Kategorien korrekt greifen.
+- Tests decken Placeholder-Varianten ab; TypeScript läuft grün.
+- Files: lib/asset-tags/code.ts, tests/vitest/asset-tag-code.test.ts
+- Verification: npm run test:tsc ✅, npm run test:unit -- tests/vitest/asset-tag-code.test.ts ✅

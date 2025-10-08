@@ -1,5 +1,6 @@
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { createClient } from "@/lib/supabase/server";
+import { getActiveCompanyId } from "@/lib/companies.server";
 import type { Tables } from "@/database.types";
 import Link from "next/link";
 import { safeParseDate, formatDateTime } from "@/lib/dates";
@@ -23,12 +24,25 @@ export default async function CustomerDetailPage({ params }: { params: Promise<{
   const { id: idParam } = await params;
   const id = Number(idParam);
   const supabase = await createClient();
+  const activeCompanyId = await getActiveCompanyId();
+  
+  if (!activeCompanyId) {
+    return (
+      <main className="min-h-screen w-full flex flex-col items-center p-5">
+        <div className="w-full max-w-none flex-1">
+          <p className="text-red-600">Keine aktive Company ausgewählt.</p>
+        </div>
+      </main>
+    );
+  }
+  
   const { data: auth } = await supabase.auth.getUser();
   const currentUserId = auth.user?.id ?? null;
   const { data, error } = await supabase
     .from("contacts")
     .select("*")
     .eq("id", id)
+    .eq("company_id", activeCompanyId)
     .limit(1)
     .single();
 
@@ -49,6 +63,7 @@ export default async function CustomerDetailPage({ params }: { params: Promise<{
     .from("jobs")
     .select("id, name, startdate, enddate")
     .eq("contact_id", id)
+    .eq("company_id", activeCompanyId)
     .order("created_at", { ascending: false })
     .limit(50);
   const jobs = (jobsData as Array<{ id: number; name: string | null; startdate: string | null; enddate: string | null }> | null) ?? [];
@@ -59,24 +74,31 @@ export default async function CustomerDetailPage({ params }: { params: Promise<{
         <div className="text-sm text-muted-foreground">
           <Link href="/management/contacts" className="hover:underline">← Zurück zur Übersicht</Link>
         </div>
-        <Card>
-          <CardHeader>
-            <CardTitle id="contact-title">{displayName(contact)}</CardTitle>
-            <CardDescription>
-              #{contact.id} {contact.customer_type ? `• ${contact.customer_type}` : ""}{contact.contact_type && contact.contact_type !== 'customer' ? ` (${contact.contact_type})` : ""}
-              <br />
-              E-Mail: {contact.email ?? "—"} • Adresse: {contact.address ?? contact.street ?? "—"}{contact.postal_code ? `, ${contact.postal_code}` : contact.zip_code ? `, ${contact.zip_code}` : ""}{contact.country ? `, ${contact.country}` : ""}
-              <br />
-              Erstellt am: {formatDateTime(safeParseDate(contact.created_at))} {`• Erstellt von: ${creator ?? (contact.created_by === currentUserId ? 'Du' : fallbackDisplayFromId(contact.created_by)) ?? '—'}`}
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <div className="mb-4">
-              <DeleteWithUndo table="contacts" id={contact.id} payload={contact as Record<string, unknown>} redirectTo="/management/contacts" />
-            </div>
-            <ContactEditForm contact={contact} />
-          </CardContent>
-        </Card>
+        <section className="space-y-2">
+          <h1 id="contact-title" className="text-2xl font-semibold tracking-tight">
+            {displayName(contact)}
+          </h1>
+          <p className="text-sm text-muted-foreground">
+            #{contact.id} {contact.customer_type ? `• ${contact.customer_type}` : ""}
+            {contact.contact_type && contact.contact_type !== 'customer' ? ` (${contact.contact_type})` : ""}
+          </p>
+          <p className="text-sm text-muted-foreground">
+            E-Mail: {contact.email ?? "—"} • Adresse: {contact.address ?? contact.street ?? "—"}
+            {contact.postal_code ? `, ${contact.postal_code}` : contact.zip_code ? `, ${contact.zip_code}` : ""}
+            {contact.country ? `, ${contact.country}` : ""}
+          </p>
+          <p className="text-xs text-muted-foreground">
+            Erstellt am: {formatDateTime(safeParseDate(contact.created_at))}
+            {` • Erstellt von: ${creator ?? (contact.created_by === currentUserId ? 'Du' : fallbackDisplayFromId(contact.created_by)) ?? '—'}`}
+          </p>
+
+          <div className="mt-3">
+            <DeleteWithUndo table="contacts" id={contact.id} payload={contact as Record<string, unknown>} redirectTo="/management/contacts" />
+          </div>
+
+          {/* Main edit form without extra Card wrapper */}
+          <ContactEditForm contact={contact} />
+        </section>
 
         <Card>
           <CardHeader>

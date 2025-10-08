@@ -1,18 +1,21 @@
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { EquipmentEditForm } from "@/components/forms/equipment-edit-form";
 import { createClient } from "@/lib/supabase/server";
+import { getActiveCompanyId } from "@/lib/companies.server";
 import type { Tables } from "@/database.types";
 import Link from "next/link";
 import { safeParseDate, formatDate, formatDateTime } from "@/lib/dates";
 import { fallbackDisplayFromId } from "@/lib/userDisplay";
 import { fetchUserDisplayAdmin } from "@/lib/users/userDisplay.server";
 import { HistoryCard } from "@/components/historyCard";
-import { DeleteWithUndo } from "@/components/forms/delete-with-undo";
 import { FileManager } from "@/components/files/file-manager";
-import { AssetTagCreateForm } from "@/components/forms/asset-tag-create-form";
-import { WorkshopTodoCreateInline } from "@/components/forms/workshop-todo-create-inline";
 import { MaintenanceLogsCard } from "@/components/maintenance/maintenance-logs-card";
 import { WorkshopTodosCard } from "@/components/maintenance/workshop-todos-card";
+import { AssetTagCreateForm } from "@/components/forms/asset-tag-create-form";
+import { WorkshopTodoCreateInline } from "@/components/forms/workshop-todo-create-inline";
+import { DeleteWithUndo } from "@/components/forms/delete-with-undo";
+import { Button } from "@/components/ui/button";
+
 
 type EquipmentRow = Tables<"equipments"> & {
   articles?: { name: string } | null;
@@ -20,10 +23,24 @@ type EquipmentRow = Tables<"equipments"> & {
   current_location_location?: { id: number; name: string | null } | null;
 };
 
+type CaseSummary = Pick<Tables<"cases">, "id" | "name">;
+
 export default async function EquipmentDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const { id: idParam } = await params;
   const id = Number(idParam);
   const supabase = await createClient();
+  const activeCompanyId = await getActiveCompanyId();
+  
+  if (!activeCompanyId) {
+    return (
+      <main className="min-h-screen w-full flex flex-col items-center p-5">
+        <div className="w-full max-w-none flex-1">
+          <p className="text-red-600">Keine aktive Company ausgewählt.</p>
+        </div>
+      </main>
+    );
+  }
+  
   const { data: auth } = await supabase.auth.getUser();
   const currentUserId = auth.user?.id ?? null;
   const { data, error } = await supabase
@@ -32,6 +49,7 @@ export default async function EquipmentDetailPage({ params }: { params: Promise<
       "*, articles(name), asset_tags:asset_tag(printed_code), current_location_location:current_location(id,name)"
     )
     .eq("id", id)
+    .eq("company_id", activeCompanyId)
     .limit(1)
     .single();
 
@@ -46,6 +64,41 @@ export default async function EquipmentDetailPage({ params }: { params: Promise<
   }
 
   const eq = data as EquipmentRow;
+  const [containsCases, containerCases] = await Promise.all([
+    supabase
+      .from("cases")
+      .select("id,name")
+      .eq("company_id", activeCompanyId)
+      .contains("contains_equipments", [eq.id]),
+    supabase
+      .from("cases")
+      .select("id,name")
+      .eq("company_id", activeCompanyId)
+      .eq("case_equipment", eq.id),
+  ]);
+
+  const caseMembershipMap = new Map<number, CaseSummary>();
+  const pushCases = (rows: CaseSummary[] | null | undefined) => {
+    if (!rows) return;
+    for (const row of rows) {
+      if (!row || typeof row.id !== "number") continue;
+      caseMembershipMap.set(row.id, row);
+    }
+  };
+
+  if (!containsCases.error) {
+    pushCases(containsCases.data as CaseSummary[] | null);
+  }
+  if (!containerCases.error) {
+    pushCases(containerCases.data as CaseSummary[] | null);
+  }
+  const caseMembership = Array.from(caseMembershipMap.values()).sort((a, b) => {
+    const nameA = a.name ?? `Case #${a.id}`;
+    const nameB = b.name ?? `Case #${b.id}`;
+    return nameA.localeCompare(nameB, "de-DE");
+  });
+  const formId = "equipment-edit-form";
+  const statusElementId = "equipment-edit-status";
 
   // Creator email (if accessible), fallback to UUID
   const creator = await fetchUserDisplayAdmin(eq.created_by ?? undefined);
@@ -73,15 +126,28 @@ export default async function EquipmentDetailPage({ params }: { params: Promise<
                   {eq.current_location_location?.name ?? `#${eq.current_location}`}
                 </Link>
               ) : "—"}
+              {caseMembership.length > 0 ? (
+                <>
+                  {" • Case: "}
+                  {caseMembership.map((c, index) => (
+                    <span key={c.id}>
+                      <Link className="underline-offset-2 hover:underline" href={`/management/cases/${c.id}`}>
+                        {c.name ?? `Case #${c.id}`}
+                      </Link>
+                      {index < caseMembership.length - 1 ? ", " : null}
+                    </span>
+                  ))}
+                </>
+              ) : null}
               <br />
               Im Lager seit: {formatDate(safeParseDate(eq.added_to_inventory_at))}
               {" • Erstellt am: "}{formatDateTime(safeParseDate(eq.created_at))} {`• Erstellt von: ${creator ?? (eq.created_by === currentUserId ? 'Du' : fallbackDisplayFromId(eq.created_by)) ?? '—'}`}
             </CardDescription>
           </CardHeader>
           <CardContent className="px-4 pb-4">
-            <div className="mb-1 flex flex-wrap items-center justify-between gap-2">
-              <DeleteWithUndo table="equipments" id={eq.id} payload={eq as Record<string, unknown>} redirectTo="/management/equipments" />
-              <div className="flex items-center gap-2 flex-wrap">
+                      <div className="mb-1 flex flex-wrap items-center justify-between gap-2">
+              <div className="flex flex-wrap items-center gap-2">
+                <DeleteWithUndo table="equipments" id={eq.id} payload={eq as Record<string, unknown>} redirectTo="/management/equipments" />
                 {!eq.asset_tag && (
                   <AssetTagCreateForm
                     item={{ id: eq.id, name: eq.articles?.name || `Equipment #${eq.id}` }}
@@ -89,18 +155,41 @@ export default async function EquipmentDetailPage({ params }: { params: Promise<
                     companyId={eq.company_id}
                   />
                 )}
-                {/* Workshop quick todo */}
-                <div className="flex items-center gap-2">
-                  <span className="text-xs text-muted-foreground">Werkstatt:</span>
-                  <WorkshopTodoCreateInline companyId={Number(eq.company_id)} equipmentId={Number(eq.id)} />
-                </div>
+                <Button type="submit" form={formId}>
+                  Speichern
+                </Button>
+                {eq.asset_tag && (
+                  <Button asChild variant="outline">
+                    <Link
+                      href={`/api/asset-tags/${eq.asset_tag}/render?format=svg`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                    >
+                      Asset Tag anzeigen
+                    </Link>
+                  </Button>
+                )}
+                <span
+                  id={statusElementId}
+                  aria-live="polite"
+                  className="min-h-[1.25rem] text-sm text-muted-foreground"
+                />
+              </div>
+              <div className="flex items-center gap-2 flex-wrap">
+                <span className="text-xs text-muted-foreground">Werkstatt:</span>
+                <WorkshopTodoCreateInline companyId={Number(eq.company_id)} equipmentId={Number(eq.id)} />
               </div>
             </div>
           </CardContent>
         </Card>
 
         {/* Form now at top level (no nested Cards) */}
-        <EquipmentEditForm equipment={eq} />
+        <EquipmentEditForm
+          equipment={eq}
+          formId={formId}
+          footerVariant="none"
+          statusElementId={statusElementId}
+        />
 
         <Card>
           <CardHeader className="pb-3 px-4 pt-4">

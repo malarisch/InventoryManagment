@@ -20,7 +20,15 @@ type Location = Tables<"locations">;
 type AssetTag = Tables<"asset_tags">;
 type Contact = Tables<"contacts">;
 
-export function EquipmentEditForm({ equipment }: { equipment: Equipment }) {
+type EquipmentEditFormProps = {
+  equipment: Equipment;
+  formId?: string;
+  footerVariant?: "default" | "none" | "status-only";
+  onStatusChange?: (status: { saving: boolean; message: string | null; error: string | null }) => void;
+  statusElementId?: string;
+};
+
+export function EquipmentEditForm({ equipment, formId = "equipment-edit-form", footerVariant = "default", onStatusChange, statusElementId }: EquipmentEditFormProps) {
   const supabase = useMemo(() => createClient(), []);
   const [assetTagId, setAssetTagId] = useState<number | "">(equipment.asset_tag ?? "");
   const [articleId, setArticleId] = useState<number | "">(equipment.article_id ?? "");
@@ -205,8 +213,29 @@ export function EquipmentEditForm({ equipment }: { equipment: Equipment }) {
     setSaving(false);
   }
 
+  useEffect(() => {
+    // Mirror status updates into the external aria-live region used by the save button.
+    if (!statusElementId) return;
+    const el = document.getElementById(statusElementId);
+    if (!el) return;
+    const text = error ?? message ?? "";
+    el.classList.remove("text-green-600", "text-red-600", "text-muted-foreground");
+    if (error) {
+      el.classList.add("text-red-600");
+    } else if (message) {
+      el.classList.add("text-green-600");
+    } else {
+      el.classList.add("text-muted-foreground");
+    }
+    el.textContent = text;
+  }, [statusElementId, message, error]);
+
+  useEffect(() => {
+    onStatusChange?.({ saving, message, error });
+  }, [saving, message, error, onStatusChange]);
+
   return (
-    <form onSubmit={onSubmit} className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-4">
+    <form id={formId} onSubmit={onSubmit} className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-4">
       <Card>
         <CardHeader className="pb-3 px-4 pt-4">
           <CardTitle className="text-base">Asset Tag</CardTitle>
@@ -284,20 +313,29 @@ export function EquipmentEditForm({ equipment }: { equipment: Equipment }) {
 
       <div className="lg:col-span-2 xl:col-span-3 grid grid-cols-1 gap-4">{metadataCards}</div>
 
-      <div className="lg:col-span-2 xl:col-span-3 flex flex-wrap items-center gap-3 justify-end">
-        <Button type="submit" disabled={saving}>{saving ? "Speichern…" : "Speichern"}</Button>
-        {equipment.asset_tag && (
-          <Link
-            href={`/api/asset-tags/${equipment.asset_tag}/render?format=svg`}
-            target="_blank"
-            className="text-sm underline underline-offset-2 text-blue-600 hover:text-blue-800"
-          >
-            Asset Tag anzeigen
-          </Link>
-        )}
-        {message && <span className="text-sm text-green-600">{message}</span>}
-        {error && <span className="text-sm text-red-600">{error}</span>}
-      </div>
+      {footerVariant === "default" && (
+        <div className="lg:col-span-2 xl:col-span-3 flex flex-wrap items-center gap-3 justify-end">
+          <Button type="submit" disabled={saving}>{saving ? "Speichern…" : "Speichern"}</Button>
+          {equipment.asset_tag && (
+            <Link
+              href={`/api/asset-tags/${equipment.asset_tag}/render?format=svg`}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-sm underline underline-offset-2 text-blue-600 hover:text-blue-800"
+            >
+              Asset Tag anzeigen
+            </Link>
+          )}
+          {!statusElementId && message && <span className="text-sm text-green-600">{message}</span>}
+          {!statusElementId && error && <span className="text-sm text-red-600">{error}</span>}
+        </div>
+      )}
+      {footerVariant === "status-only" && !statusElementId && (message || error) && (
+        <div className="lg:col-span-2 xl:col-span-3 flex flex-wrap items-center gap-3 justify-end">
+          {message && <span className="text-sm text-green-600">{message}</span>}
+          {error && <span className="text-sm text-red-600">{error}</span>}
+        </div>
+      )}
 
       <ContactFormDialog
         open={contactDialogOpen}

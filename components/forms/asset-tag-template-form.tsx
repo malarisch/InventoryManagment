@@ -11,6 +11,7 @@ import { createClient } from '@/lib/supabase/client';
 import { useState, useEffect, useMemo, useCallback, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import { AssetTagTemplate, AssetTagTemplateElement } from '@/components/asset-tag-templates/types';
+import { useCompany } from '@/app/management/_libs/companyHook';
 
 const MM_TO_PX = 3.779527559;
 
@@ -83,6 +84,7 @@ export function AssetTagTemplateForm({ templateId }: AssetTagTemplateFormProps) 
   const [error, setError] = useState<string | null>(null);
   const router = useRouter();
   const supabase = createClient();
+  const { company } = useCompany();
   const isEditMode = templateId !== undefined;
 
   const form = useForm({
@@ -105,18 +107,21 @@ export function AssetTagTemplateForm({ templateId }: AssetTagTemplateFormProps) 
 
   // Load existing template data in edit mode
   useEffect(() => {
-    if (!isEditMode) return;
+    if (!isEditMode || !company) return;
     
     async function fetchTemplate() {
+      if (!company) return; // TypeScript guard
+      
       const { data, error: fetchError } = await supabase
         .from('asset_tag_templates')
-        .select('template')
+        .select('template, company_id')
         .eq('id', templateId)
+        .eq('company_id', company.id)
         .single();
         
       if (fetchError || !data) {
         console.error('Failed to fetch template data', fetchError);
-        setError('Template nicht gefunden');
+        setError('Template nicht gefunden oder gehört nicht zur aktuellen Company');
         setTimeout(() => router.push('/management/company-settings?tab=templates'), 2000);
       } else {
         const template = data.template as AssetTagTemplate;
@@ -131,7 +136,7 @@ export function AssetTagTemplateForm({ templateId }: AssetTagTemplateFormProps) 
     }
     
     fetchTemplate();
-  }, [isEditMode, templateId, supabase, router, form]);
+  }, [isEditMode, templateId, supabase, router, form, company]);
 
   const { fields, append, remove } = useFieldArray({
     control: form.control,
@@ -379,10 +384,15 @@ export function AssetTagTemplateForm({ templateId }: AssetTagTemplateFormProps) 
 
       if (isEditMode) {
         // Update existing template
+        if (!company) {
+          throw new Error('No active company selected');
+        }
+
         const { error: updateError } = await supabase
           .from('asset_tag_templates')
           .update({ template: templatePayload })
-          .eq('id', templateId);
+          .eq('id', templateId)
+          .eq('company_id', company.id);
 
         if (updateError) {
           throw updateError;
@@ -396,24 +406,15 @@ export function AssetTagTemplateForm({ templateId }: AssetTagTemplateFormProps) 
           throw new Error('User not authenticated');
         }
 
-        // Get user's company
-        const { data: membership, error: companyError } = await supabase
-          .from('users_companies')
-          .select('company_id, created_at')
-          .eq('user_id', user.id)
-          .order('created_at', { ascending: false })
-          .limit(1)
-          .maybeSingle();
-
-        if (companyError || !membership) {
-          throw companyError || new Error('User has no associated company');
+        if (!company) {
+          throw new Error('No active company selected');
         }
 
         const { error: insertError } = await supabase
           .from('asset_tag_templates')
           .insert({
             template: templatePayload,
-            company_id: membership.company_id,
+            company_id: company.id,
             created_by: user.id
           });
 
@@ -563,6 +564,17 @@ export function AssetTagTemplateForm({ templateId }: AssetTagTemplateFormProps) 
             <div className="col-span-2">
               <label htmlFor="stringTemplate" className="block text-sm font-medium mb-1">String Template</label>
               <Input id="stringTemplate" placeholder="e.g., {prefix}{number}{suffix}" {...form.register('stringTemplate')} />
+              <div className="mt-2 rounded-md border bg-muted/30 p-3 text-xs leading-relaxed">
+                <div className="font-medium mb-1">Verfügbare Platzhalter</div>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-4 gap-y-1">
+                  <div><code>{`{company-prefix}`}</code>: Firmenpräfix aus Metadaten</div>
+                  <div><code>{`{prefix}`}</code>: Template-Prefix (z. B. EQ)</div>
+                  <div><code>{`{code}`}</code>: Nummer mit Padding (Länge)</div>
+                  <div><code>{`{suffix}`}</code>: Template-Suffix</div>
+                  <div><code>{`{company_name}`}</code>: Firmenname</div>
+                </div>
+                <div className="mt-2 text-muted-foreground">Beispiel: <code>{`{company-prefix}-{prefix}-{code}{suffix}`}</code> → <code>ACME-EQ-00042A</code></div>
+              </div>
             </div>
             <div>
               <label htmlFor="codeType" className="block text-sm font-medium mb-1">Code Type</label>

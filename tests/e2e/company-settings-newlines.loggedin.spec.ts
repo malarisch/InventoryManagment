@@ -91,7 +91,7 @@ test.describe('Company Settings - Custom Types Newline Entry', () => {
     await locationTypesTextarea.fill('Lager\nBühne');
     
     // Save the form
-    const saveButton = page.locator('button[type="submit"]').first();
+    const saveButton = page.getByRole('button', { name: 'Speichern' }).first()
     await saveButton.click();
     
     // Wait for save confirmation or success message

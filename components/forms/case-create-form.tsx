@@ -3,7 +3,7 @@
 import {useEffect, useMemo, useState} from "react";
 import {createClient} from "@/lib/supabase/client";
 import type {Json, Tables, TablesInsert} from "@/database.types";
-import type {adminCompanyMetadata} from "@/components/metadataTypes.types";
+import type {adminCompanyMetadata, asset_tag_template_print} from "@/components/metadataTypes.types";
 import {buildAssetTagCode} from "@/lib/asset-tags/code";
 import {Label} from "@/components/ui/label";
 import {Button} from "@/components/ui/button";
@@ -35,6 +35,7 @@ export function CaseCreateForm() {
   const [assetTagTemplateId, setAssetTagTemplateId] = useState<number | "">("");
   const [assetTagTemplates, setAssetTagTemplates] = useState<Tables<"asset_tag_templates">[]>([]);
   const [companyMeta, setCompanyMeta] = useState<adminCompanyMetadata | null>(null);
+  const [companyName, setCompanyName] = useState<string>("");
 
   useEffect(() => {
     let active = true;
@@ -53,13 +54,14 @@ export function CaseCreateForm() {
         .order("name");
       const [{ data: tmplData }, { data: companyRow }] = await Promise.all([
         supabase.from("asset_tag_templates").select("id,template,company_id").eq("company_id", company.id).order("created_at", { ascending: false }),
-        supabase.from("companies").select("metadata").eq("id", company.id).limit(1).maybeSingle(),
+        supabase.from("companies").select("name,metadata").eq("id", company.id).limit(1).maybeSingle(),
       ]);
       if (!active) return;
       setEquipments((data as Equipment[]) ?? []);
       setArticles((arts as Article[]) ?? []);
       setAssetTagTemplates((tmplData as Tables<"asset_tag_templates">[]) ?? []);
       setCompanyMeta((companyRow?.metadata as unknown as adminCompanyMetadata) || null);
+      setCompanyName((companyRow?.name as string) ?? "");
       const metaPartial = companyRow?.metadata as Partial<adminCompanyMetadata> | undefined;
       const defId = metaPartial?.defaultCaseAssetTagTemplateId;
       if (defId) setAssetTagTemplateId(defId);
@@ -111,7 +113,21 @@ export function CaseCreateForm() {
       if (error) throw error;
       const id = (data as Tables<"cases">).id;
       if (assetTagTemplateId !== "") {
-        const printed_code = companyMeta ? buildAssetTagCode(companyMeta, "case", id) : String(id);
+        const chosen = assetTagTemplates.find((t) => t.id === Number(assetTagTemplateId));
+        const templateData = chosen?.template as Record<string, unknown> | undefined;
+        const templatePrint: asset_tag_template_print | undefined = templateData ? {
+          name: String(templateData.name || ''),
+          description: String(templateData.description || ''),
+          prefix: String(templateData.prefix || ''),
+          suffix: String(templateData.suffix || ''),
+          numberLength: Number(templateData.numberLength || 0),
+          numberingScheme: (templateData.numberingScheme === 'random' ? 'random' : 'sequential'),
+          stringTemplate: String(templateData.stringTemplate || '{prefix}-{code}'),
+          codeType: (templateData.codeType === 'Barcode' ? 'Barcode' : templateData.codeType === 'None' ? 'None' : 'QR'),
+        } : undefined;
+        const printed_code = companyMeta
+          ? buildAssetTagCode(companyMeta, "case", id, templatePrint, { company_name: companyName })
+          : String(id);
         const { data: tag, error: tagErr } = await supabase
           .from("asset_tags")
           .insert({ printed_template: Number(assetTagTemplateId), printed_code, company_id: company.id, created_by: userId })

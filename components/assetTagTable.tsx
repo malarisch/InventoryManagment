@@ -6,6 +6,7 @@ import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigge
 import type { Tables } from "@/database.types";
 import { MoreHorizontal, Eye, Edit, Trash2 } from "lucide-react";
 import Link from "next/link";
+import { useCompany } from "@/app/management/_libs/companyHook";
 
 type AssetTagRow = Tables<"asset_tags"> & {
   printed_template_relation?: { 
@@ -24,6 +25,15 @@ interface Props {
 }
 
 export function AssetTagTable({ pageSize = 10, className }: Props) {
+  const { company } = useCompany();
+
+  if (!company) {
+    return (
+      <div className="p-4 text-center text-muted-foreground">
+        No company selected. Please select a company to view asset tags.
+      </div>
+    );
+  }
   const columns = [
     { 
       key: "id", 
@@ -158,6 +168,7 @@ export function AssetTagTable({ pageSize = 10, className }: Props) {
         equipments:equipments!asset_tag(id, articles(name)),
         locations:locations!asset_tag(id, name)
       `}
+      filters={[{ column: 'company_id', value: company.id }]}
     />
   );
 }

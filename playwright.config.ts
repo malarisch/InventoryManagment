@@ -1,6 +1,6 @@
 import {defineConfig} from "@playwright/test";
 import path from "path";
-import 'dotenv/config';
+import '@/lib/setup-env'
 import type {TestOptions} from "./tests/playwright_setup.types";
 
 

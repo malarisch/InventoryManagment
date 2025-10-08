@@ -1,6 +1,7 @@
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { LocationEditForm } from "@/components/forms/location-edit-form";
 import { createClient } from "@/lib/supabase/server";
+import { getActiveCompanyId } from "@/lib/companies.server";
 import type { Tables } from "@/database.types";
 import Link from "next/link";
 import { safeParseDate, formatDateTime } from "@/lib/dates";
@@ -24,12 +25,25 @@ export default async function LocationDetailPage({ params }: { params: Promise<{
   const { id: idParam } = await params;
   const id = Number(idParam);
   const supabase = await createClient();
+  const activeCompanyId = await getActiveCompanyId();
+  
+  if (!activeCompanyId) {
+    return (
+      <main className="min-h-screen w-full flex flex-col items-center p-5">
+        <div className="w-full max-w-none flex-1">
+          <p className="text-red-600">Keine aktive Company ausgewählt.</p>
+        </div>
+      </main>
+    );
+  }
+  
   const { data: auth } = await supabase.auth.getUser();
   const currentUserId = auth.user?.id ?? null;
   const { data, error } = await supabase
     .from("locations")
     .select("*, asset_tags:asset_tag(printed_code)")
     .eq("id", id)
+    .eq("company_id", activeCompanyId)
     .limit(1)
     .single();
 
@@ -51,6 +65,7 @@ export default async function LocationDetailPage({ params }: { params: Promise<{
     .from("equipments")
     .select("*, articles(name), asset_tags:asset_tag(printed_code)")
     .eq("current_location", id)
+    .eq("company_id", activeCompanyId)
     .order("created_at", { ascending: false });
 
   const equipmentsHere = (equipmentsData as EquipmentRow[] | null) ?? [];
@@ -61,39 +76,36 @@ export default async function LocationDetailPage({ params }: { params: Promise<{
         <div className="text-sm text-muted-foreground">
           <Link href="/management/locations" className="hover:underline">← Zurück zur Übersicht</Link>
         </div>
-        <Card>
-          <CardHeader>
-            <CardTitle>Standort: {loc.name || `#${loc.id}`}</CardTitle>
-            <CardDescription>
-              ID: {loc.id}
-              {" • Asset Tag: "}
-              {loc.asset_tag ? (loc.asset_tags?.printed_code ?? `#${loc.asset_tag}`) : "—"}
-              <br />
-              Erstellt am: {formatDateTime(safeParseDate(loc.created_at))} {`• Erstellt von: ${creator ?? (loc.created_by === currentUserId ? 'Du' : fallbackDisplayFromId(loc.created_by)) ?? '—'}`}
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
-              <DeleteWithUndo table="locations" id={loc.id} payload={loc as Record<string, unknown>} redirectTo="/management/locations" />
-              <div className="flex items-center gap-2">
-                <Button variant="outline" asChild className="flex items-center gap-2">
-                  <Link href={`/management/scanner?mode=assign-location&locationId=${loc.id}`}>
-                    <Scan className="h-4 w-4" />
-                    Kameramodus
-                  </Link>
-                </Button>
-                {!loc.asset_tag && (
-                  <AssetTagCreateForm
-                    item={{ id: loc.id, name: loc.name || `Standort #${loc.id}` }}
-                    table="locations"
-                    companyId={loc.company_id}
-                  />
-                )}
-              </div>
+        <section className="space-y-3">
+          <h1 className="text-2xl font-semibold tracking-tight">Standort: {loc.name || `#${loc.id}`}</h1>
+          <p className="text-sm text-muted-foreground">
+            ID: {loc.id} • Asset Tag: {loc.asset_tag ? (loc.asset_tags?.printed_code ?? `#${loc.asset_tag}`) : "—"}
+          </p>
+          <p className="text-xs text-muted-foreground">
+            Erstellt am: {formatDateTime(safeParseDate(loc.created_at))}
+            {` • Erstellt von: ${creator ?? (loc.created_by === currentUserId ? 'Du' : fallbackDisplayFromId(loc.created_by)) ?? '—'}`}
+          </p>
+          <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
+            <DeleteWithUndo table="locations" id={loc.id} payload={loc as Record<string, unknown>} redirectTo="/management/locations" />
+            <div className="flex items-center gap-2">
+              <Button variant="outline" asChild className="flex items-center gap-2">
+                <Link href={`/management/scanner?mode=assign-location&locationId=${loc.id}`}>
+                  <Scan className="h-4 w-4" />
+                  Kameramodus
+                </Link>
+              </Button>
+              {!loc.asset_tag && (
+                <AssetTagCreateForm
+                  item={{ id: loc.id, name: loc.name || `Standort #${loc.id}` }}
+                  table="locations"
+                  companyId={loc.company_id}
+                />
+              )}
             </div>
-            <LocationEditForm location={loc} />
-          </CardContent>
-        </Card>
+          </div>
+          {/* Main edit form without extra Card wrapper */}
+          <LocationEditForm location={loc} />
+        </section>
 
         <Card>
           <CardHeader>

@@ -76,22 +76,36 @@ async function assignEquipmentLocation(
 
 async function assignCaseLocation(
   supabase: SupabaseClient<Database>,
-  caseRow: Pick<Tables<"cases">, "id" | "current_location">,
+  caseRow: Pick<Tables<"cases">, "id" | "case_equipment"> & {
+    case_equipment_equipment?: Pick<Tables<"equipments">, "id" | "current_location"> | null;
+  },
   locationId: number,
 ): Promise<ScannerActionResult> {
-  if (caseRow.current_location === locationId) {
+  const caseEquipmentId = caseRow.case_equipment ?? null;
+  if (caseEquipmentId == null) {
+    return {
+      status: "error",
+      message: "Case hat kein Case-Equipment. Standort kann nicht zugewiesen werden.",
+      entityType: "case",
+      entityId: caseRow.id,
+    };
+  }
+
+  const currentEquipmentLocation = caseRow.case_equipment_equipment?.current_location ?? null;
+
+  if (currentEquipmentLocation === locationId) {
     return {
       status: "info",
-      message: `Case #${caseRow.id} befindet sich bereits an diesem Standort.`,
+      message: `Case #${caseRow.id} (Equipment #${caseEquipmentId}) befindet sich bereits an diesem Standort.`,
       entityType: "case",
       entityId: caseRow.id,
     };
   }
 
   const { error } = await supabase
-    .from("cases")
+    .from("equipments")
     .update({ current_location: locationId })
-    .eq("id", caseRow.id);
+    .eq("id", caseEquipmentId);
 
   if (error) {
     return {
@@ -104,7 +118,7 @@ async function assignCaseLocation(
 
   return {
     status: "success",
-    message: `Case #${caseRow.id} wurde dem Standort zugewiesen.`,
+    message: `Case #${caseRow.id} steht nun mit Equipment #${caseEquipmentId} an diesem Standort.`,
     entityType: "case",
     entityId: caseRow.id,
   };

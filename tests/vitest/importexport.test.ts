@@ -159,7 +159,6 @@ describe('importexport end-to-end', () => {
         description: 'Holds lamps',
         asset_tag: atag.id,
         case_equipment: eq.id,
-        current_location: loc.id,
         contains_equipments: [eq.id],
         contains_articles: [],
         files: Prisma.JsonNull,
@@ -267,5 +266,16 @@ describe('importexport end-to-end', () => {
     // Asset tag relations preserved
     const importedAtag = await prisma.asset_tags.findFirst({ where: { company_id: newCompanyId } });
     expect(importedAtag?.printed_template).toBeTruthy();
+
+    // Imported case location follows its case equipment location
+    const importedCase = await prisma.cases.findFirst({ where: { company_id: newCompanyId } });
+    expect(importedCase?.case_equipment).toBeTruthy();
+
+    if (importedCase?.case_equipment) {
+      const importedCaseEquipment = await prisma.equipments.findUnique({ where: { id: importedCase.case_equipment } });
+      const importedLocation = await prisma.locations.findFirst({ where: { company_id: newCompanyId, name: 'Main Warehouse' } });
+      expect(importedLocation?.id).toBeTruthy();
+      expect(importedCaseEquipment?.current_location).toBe(importedLocation?.id ?? null);
+    }
   });
 });

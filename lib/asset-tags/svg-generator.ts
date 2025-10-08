@@ -186,7 +186,7 @@ export function getAssetTagPlaceholders(
     case_name: caseeq?.name || '',
     company_name: company?.name || '',
     current_date: new Date().toLocaleDateString(),
-    safe_name: safeName
+    general_name: safeName
 
     // Add more placeholders as needed
   };

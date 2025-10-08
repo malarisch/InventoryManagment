@@ -1,5 +1,6 @@
 import {Card, CardContent, CardDescription, CardHeader, CardTitle} from "@/components/ui/card";
 import {createClient} from "@/lib/supabase/server";
+import {getActiveCompanyId} from "@/lib/companies.server";
 import type {Tables} from "@/database.types";
 import Link from "next/link";
 import {HistoryCard} from "@/components/historyCard";
@@ -9,20 +10,41 @@ import {FileManager} from "@/components/files/file-manager";
 import { WorkshopTodoCreateInline } from "@/components/forms/workshop-todo-create-inline";
 import { MaintenanceLogsCard } from "@/components/maintenance/maintenance-logs-card";
 import { fetchUserDisplayAdmin } from "@/lib/users/userDisplay.server";
+import { CaseEquipmentCard } from "@/components/case-equipment-card";
+
+type CaseEquipmentRow = Tables<"equipments"> & {
+  articles?: { name: string } | null;
+  asset_tags?: { printed_code: string | null } | null;
+  current_location_location?: { id: number; name: string | null } | null;
+};
 
 type CaseRow = Tables<"cases"> & {
-  current_location_location?: { id: number; name: string | null } | null;
+  case_equipment_equipment?: CaseEquipmentRow | null;
 };
 
 export default async function CaseDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const { id: idParam } = await params;
   const id = Number(idParam);
   const supabase = await createClient();
+  const activeCompanyId = await getActiveCompanyId();
+  
+  if (!activeCompanyId) {
+    return (
+      <main className="min-h-screen w-full flex flex-col items-center p-5">
+        <div className="w-full max-w-none flex-1">
+          <p className="text-red-600">Keine aktive Company ausgewählt.</p>
+        </div>
+      </main>
+    );
+  }
 
   const { data, error } = await supabase
     .from("cases")
-    .select("*, current_location_location:current_location(id,name)")
+    .select(
+      "*, case_equipment_equipment:case_equipment(id, article_id, current_location, added_to_inventory_at, asset_tag, articles(name), asset_tags:asset_tag(printed_code), current_location_location:current_location(id,name))",
+    )
     .eq("id", id)
+    .eq("company_id", activeCompanyId)
     .single();
 
   if (error || !data) {
@@ -37,6 +59,7 @@ export default async function CaseDetailPage({ params }: { params: Promise<{ id:
 
   const row = data as CaseRow;
   const caseCompanyId = typeof row.company_id === "number" ? row.company_id : null;
+  const caseEquipment = row.case_equipment_equipment ?? null;
 
   // Fetch creator display name
   const creatorDisplay = row.created_by ? await fetchUserDisplayAdmin(row.created_by) : null;
@@ -55,19 +78,6 @@ export default async function CaseDetailPage({ params }: { params: Promise<{ id:
             <CardTitle>{row.name ?? `Case #${row.id}`}</CardTitle>
             <CardDescription>
               {row.description && (<><div className="mb-2">{row.description}</div></>)}
-              Case-Equipment: {row.case_equipment ? (
-                <Link className="underline-offset-2 hover:underline" href={`/management/equipments/${row.case_equipment}`}>#{row.case_equipment}</Link>
-              ) : "—"}
-              <br />
-              Standort: {row.current_location ? (
-                <Link
-                  className="underline-offset-2 hover:underline"
-                  href={`/management/locations/${row.current_location}`}
-                >
-                  {row.current_location_location?.name ?? `#${row.current_location}`}
-                </Link>
-              ) : "—"}
-              <br />
               Erstellt von: {creatorDisplay ?? "—"}
               {createdAt && ` am ${createdAt}`}
               {row.asset_tag ? (
@@ -95,6 +105,16 @@ export default async function CaseDetailPage({ params }: { params: Promise<{ id:
             </div>
           </CardContent>
         </Card>
+
+        {/* Case Equipment Card with edit modal */}
+        {caseCompanyId ? (
+          <CaseEquipmentCard
+            caseId={id}
+            caseEquipment={caseEquipment}
+            companyId={caseCompanyId}
+            containsEquipments={row.contains_equipments ?? []}
+          />
+        ) : null}
 
         <CaseEditItemsForm
           caseId={id}

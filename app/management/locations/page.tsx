@@ -9,8 +9,10 @@ import { createClient } from "@/lib/supabase/client";
 import { Plus, AlertCircle, CheckCircle2 } from "lucide-react";
 import { useState, useMemo } from "react";
 import { useRouter } from "next/navigation";
+import { useCompany } from "@/app/management/_libs/companyHook";
 
 export default function LocationsPage() {
+  const { company } = useCompany();
   const router = useRouter();
   const supabase = useMemo(() => createClient(), []);
   const { isOpen, openScanner, closeScanner, handleScanResult } = useQrScanner();
@@ -20,6 +22,14 @@ export default function LocationsPage() {
   }>({ type: null, message: '' });
 
   const handleAssetTagScan = async (scannedCode: string) => {
+    if (!company) {
+      setScanStatus({
+        type: 'error',
+        message: 'Keine Company ausgewählt.'
+      });
+      return;
+    }
+
     try {
       setScanStatus({ type: null, message: '' });
       
@@ -28,6 +38,7 @@ export default function LocationsPage() {
         .from('asset_tags')
         .select('id')
         .eq('printed_code', scannedCode)
+        .eq('company_id', company.id)
         .single();
 
       if (assetError || !assetTag) {
@@ -43,6 +54,7 @@ export default function LocationsPage() {
         .from('locations')
         .select('id, name')
         .eq('asset_tag', assetTag.id)
+        .eq('company_id', company.id)
         .single();
 
       if (locationError || !location) {

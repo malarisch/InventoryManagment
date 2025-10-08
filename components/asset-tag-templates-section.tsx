@@ -12,6 +12,7 @@ import { AssetTagTemplatePreview } from '@/components/asset-tag-templates/templa
 import Link from 'next/link';
 import { AssetTagTemplate } from '@/components/asset-tag-templates/types';
 import { MoreHorizontal, Plus, Eye, Edit, Trash2 } from 'lucide-react';
+import { useCompany } from '@/app/management/_libs/companyHook';
 
 type AssetTagTemplateFromDB = {
   id: number;
@@ -25,34 +26,24 @@ export function AssetTagTemplatesSection() {
   const [error, setError] = useState<string | null>(null);
   const [previewTemplate, setPreviewTemplate] = useState<AssetTagTemplate | null>(null);
   const supabase = createClient();
+  const { company } = useCompany();
 
   const loadTemplates = useCallback(async () => {
+    if (!company) {
+      setTemplates([]);
+      setLoading(false);
+      return;
+    }
+
     setLoading(true);
     setError(null);
     
     try {
-      const { data: { user }, error: userError } = await supabase.auth.getUser();
-      if (userError || !user) {
-        throw new Error('User not authenticated');
-      }
-
-      // Get user's company
-      const { data: userCompany, error: companyError } = await supabase
-        .from('users_companies')
-        .select('company_id')
-        .eq('user_id', user.id)
-        .single();
-console.log(companyError, userCompany, user.id);
-      if (companyError || !userCompany) {
-        console.log(companyError, userCompany, user.id);
-        throw new Error('No company found for user');
-      }
-
-      // Load templates
+      // Load templates for active company
       const { data, error: templatesError } = await supabase
         .from('asset_tag_templates')
         .select('id, created_at, template')
-        .eq('company_id', userCompany.company_id)
+        .eq('company_id', company.id)
         .order('created_at', { ascending: false });
 
       if (templatesError) {
@@ -66,9 +57,11 @@ console.log(companyError, userCompany, user.id);
     } finally {
       setLoading(false);
     }
-  }, [supabase]);
+  }, [supabase, company]);
 
   const deleteTemplate = async (id: number) => {
+    if (!company) return;
+    
     if (!confirm('Are you sure you want to delete this template?')) {
       return;
     }
@@ -77,7 +70,8 @@ console.log(companyError, userCompany, user.id);
       const { error } = await supabase
         .from('asset_tag_templates')
         .delete()
-        .eq('id', id);
+        .eq('id', id)
+        .eq('company_id', company.id);
 
       if (error) {
         throw error;
