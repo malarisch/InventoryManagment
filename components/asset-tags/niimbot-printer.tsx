@@ -3,6 +3,7 @@
 import { useState, useEffect, useRef } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Label } from "@/components/ui/label";
 import { Loader2 } from "lucide-react";
 import { 
   NiimbotBluetoothClient, 
@@ -47,6 +48,7 @@ export function NiimbotPrinter({ assetTagId, onComplete, onCancel }: NiimbotPrin
   const [rfidInfo, setRfidInfo] = useState<RfidInfo | null>(null);
   const [assetTag, setAssetTag] = useState<AssetTag | null>(null);
   const [loadingAssetTag, setLoadingAssetTag] = useState(true);
+  const [paperSize, setPaperSize] = useState<"50x30" | "50x40">("50x30");
   const [debugInfo, setDebugInfo] = useState<{ 
     templateMm: string; 
     calculatedPx: string; 
@@ -180,18 +182,22 @@ export function NiimbotPrinter({ assetTagId, onComplete, onCancel }: NiimbotPrin
     try {
       const template = assetTag.printed_template;
       const dpi = printerInfo.dpi || 203;
-      
-      // Paper dimensions: width from printer, height from template
-      const paperWidthPx = printerInfo.printheadPixels || 384; // Fallback to 384px for D11
       const mmToInch = 1 / 25.4;
-      const templateHeightPx = Math.round(template.tagHeightMm * mmToInch * dpi);
-      const paperHeightPx = templateHeightPx;
+      
+      // Paper dimensions from selected paper size
+      const [paperWidthMm, paperHeightMm] = paperSize === "50x30" 
+        ? [50, 30] 
+        : [50, 40];
+      
+      const paperWidthPx = Math.round(paperWidthMm * mmToInch * dpi);
+      const paperHeightPx = Math.round(paperHeightMm * mmToInch * dpi);
       
       // Align width to multiple of 8 (printer requirement)
       const alignedPaperWidthPx = Math.ceil(paperWidthPx / 8) * 8;
       
       // Calculate template dimensions in pixels
       const templateWidthPx = Math.round(template.tagWidthMm * mmToInch * dpi);
+      const templateHeightPx = Math.round(template.tagHeightMm * mmToInch * dpi);
       
       // Calculate scale to fit template into paper while preserving aspect ratio
       const scaleX = alignedPaperWidthPx / templateWidthPx;
@@ -208,7 +214,7 @@ export function NiimbotPrinter({ assetTagId, onComplete, onCancel }: NiimbotPrin
       // Store debug info
       setDebugInfo({
         templateMm: `Template: ${template.tagWidthMm}mm × ${template.tagHeightMm}mm`,
-        calculatedPx: `Paper: ${paperWidthPx}px × ${paperHeightPx}px (from printer: ${printerInfo.printheadPixels}px width)`,
+        calculatedPx: `Paper: ${paperWidthMm}mm × ${paperHeightMm}mm (${paperSize}) = ${paperWidthPx}px × ${paperHeightPx}px`,
         alignedPx: `Aligned Paper: ${alignedPaperWidthPx}px × ${paperHeightPx}px, Scale: ${(scale * 100).toFixed(1)}%`,
         imgPx: `Template scaled: ${scaledTemplateWidth}px × ${scaledTemplateHeight}px, Offset: (${offsetX}, ${offsetY})`,
         canvasPx: "", // Will be set after canvas is drawn
@@ -351,6 +357,36 @@ export function NiimbotPrinter({ assetTagId, onComplete, onCancel }: NiimbotPrin
                 <div><strong>Paper Remaining:</strong> {rfidInfo.allPaper - rfidInfo.usedPaper} / {rfidInfo.allPaper}</div>
               </>
             )}
+          </div>
+        )}
+
+        {printerInfo && (
+          <div className="p-3 bg-muted rounded-md space-y-2">
+            <Label className="text-sm font-semibold">Papiergröße (Label Size)</Label>
+            <div className="flex gap-4">
+              <label className="flex items-center gap-2 cursor-pointer">
+                <input
+                  type="radio"
+                  name="paperSize"
+                  value="50x30"
+                  checked={paperSize === "50x30"}
+                  onChange={(e) => setPaperSize(e.target.value as "50x30" | "50x40")}
+                  className="cursor-pointer"
+                />
+                <span className="text-sm">50×30mm</span>
+              </label>
+              <label className="flex items-center gap-2 cursor-pointer">
+                <input
+                  type="radio"
+                  name="paperSize"
+                  value="50x40"
+                  checked={paperSize === "50x40"}
+                  onChange={(e) => setPaperSize(e.target.value as "50x30" | "50x40")}
+                  className="cursor-pointer"
+                />
+                <span className="text-sm">50×40mm</span>
+              </label>
+            </div>
           </div>
         )}
 
