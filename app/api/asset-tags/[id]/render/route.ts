@@ -9,6 +9,12 @@ export async function GET(req: NextRequest, context: { params: Promise<{ id: str
     const supabase = await createClient();
     const { id } = await context.params;
     const format = req.nextUrl.searchParams.get('format') || 'svg';
+    const widthParam = req.nextUrl.searchParams.get('width');
+    const heightParam = req.nextUrl.searchParams.get('height');
+
+    // Parse custom dimensions (optional)
+    const customWidth = widthParam ? parseInt(widthParam, 10) : undefined;
+    const customHeight = heightParam ? parseInt(heightParam, 10) : undefined;
 
     // Fetch asset tag + template (FK)
     const { data: assetTag, error: tagError } = await supabase
@@ -103,17 +109,24 @@ export async function GET(req: NextRequest, context: { params: Promise<{ id: str
     const svgBuffer = Buffer.from(svgText);
     let imageBuffer: Buffer;
     let contentType: string;
+    
+    // Apply custom dimensions if provided
+    const sharpInstance = sharp(svgBuffer);
+    if (customWidth && customHeight) {
+      sharpInstance.resize(customWidth, customHeight, { fit: 'contain', background: { r: 255, g: 255, b: 255, alpha: 1 } });
+    }
+    
     switch (format) {
       case 'png':
-        imageBuffer = await sharp(svgBuffer).png().toBuffer();
+        imageBuffer = await sharpInstance.png().toBuffer();
         contentType = 'image/png';
         break;
       case 'bmp':
-        imageBuffer = await (sharp(svgBuffer) as unknown as { bmp: () => sharp.Sharp }).bmp().toBuffer();
+        imageBuffer = await (sharpInstance as unknown as { bmp: () => sharp.Sharp }).bmp().toBuffer();
         contentType = 'image/bmp';
         break;
       case 'gif':
-        imageBuffer = await sharp(svgBuffer).gif().toBuffer();
+        imageBuffer = await sharpInstance.gif().toBuffer();
         contentType = 'image/gif';
         break;
       default:
