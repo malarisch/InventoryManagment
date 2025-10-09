@@ -18,7 +18,9 @@ type PrinterStatus =
   | "connecting" 
   | "connected" 
   | "fetching-specs" 
-  | "ready" 
+  | "ready"
+  | "preparing"
+  | "preview"
   | "printing" 
   | "error";
 
@@ -39,6 +41,13 @@ export function NiimbotPrinter({ assetTagId, onComplete, onCancel }: NiimbotPrin
   const [printerInfo, setPrinterInfo] = useState<{ model?: string; dpi?: number; resolution?: string } | null>(null);
   const [rfidInfo, setRfidInfo] = useState<RfidInfo | null>(null);
   const [assetTag, setAssetTag] = useState<AssetTag | null>(null);
+  const [debugInfo, setDebugInfo] = useState<{ 
+    templateMm: string; 
+    calculatedPx: string; 
+    alignedPx: string; 
+    canvasPx: string;
+    imgPx: string;
+  } | null>(null);
   
   const clientRef = useRef<NiimbotBluetoothClient | null>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
@@ -124,27 +133,45 @@ export function NiimbotPrinter({ assetTagId, onComplete, onCancel }: NiimbotPrin
     }
   };
 
-  const handlePrint = async () => {
-    if (!clientRef.current || !printerInfo || !canvasRef.current || !assetTag?.printed_template) {
+  const handleDisconnect = () => {
+    if (clientRef.current) {
+      clientRef.current.disconnect();
+      clientRef.current = null;
+    }
+    setStatus("disconnected");
+    setPrinterInfo(null);
+    setRfidInfo(null);
+    setDebugInfo(null);
+  };
+
+  const handlePrepareLabel = async () => {
+    if (!printerInfo || !canvasRef.current || !assetTag?.printed_template) {
       setError("Printer not ready or asset tag template missing");
       return;
     }
 
-    setStatus("printing");
+    setStatus("preparing");
     setError(null);
 
     try {
-      const client = clientRef.current;
-      
-      // Calculate pixel dimensions from template (mm) and printer DPI
       const template = assetTag.printed_template;
       const mmToInch = 1 / 25.4;
       const dpi = printerInfo.dpi || 203; // Fallback to 203 DPI
-      let widthPx = Math.round(template.tagWidthMm * mmToInch * dpi);
-      const heightPx = Math.round(template.tagHeightMm * mmToInch * dpi);
+      const widthPxCalculated = Math.round(template.tagWidthMm * mmToInch * dpi);
+      const heightPxCalculated = Math.round(template.tagHeightMm * mmToInch * dpi);
       
       // Niimbot printers require width to be a multiple of 8
-      widthPx = Math.ceil(widthPx / 8) * 8;
+      const widthPx = Math.ceil(widthPxCalculated / 8) * 8;
+      const heightPx = heightPxCalculated;
+      
+      // Store debug info
+      setDebugInfo({
+        templateMm: `${template.tagWidthMm}mm × ${template.tagHeightMm}mm`,
+        calculatedPx: `${widthPxCalculated}px × ${heightPxCalculated}px`,
+        alignedPx: `${widthPx}px × ${heightPx}px`,
+        canvasPx: "", // Will be set after canvas is drawn
+        imgPx: "", // Will be set after image loads
+      });
       
       // Fetch asset tag render as PNG at calculated dimensions
       const renderUrl = `/api/asset-tags/${assetTagId}/render?format=png&width=${widthPx}&height=${heightPx}`;
@@ -161,6 +188,8 @@ export function NiimbotPrinter({ assetTagId, onComplete, onCancel }: NiimbotPrin
       await new Promise<void>((resolve, reject) => {
         img.onload = () => {
           URL.revokeObjectURL(imgUrl);
+          // Update debug info with actual image dimensions
+          setDebugInfo(prev => prev ? { ...prev, imgPx: `${img.width}px × ${img.height}px` } : null);
           resolve();
         };
         img.onerror = () => {
@@ -180,6 +209,32 @@ export function NiimbotPrinter({ assetTagId, onComplete, onCancel }: NiimbotPrin
       ctx.fillStyle = "white";
       ctx.fillRect(0, 0, canvas.width, canvas.height);
       ctx.drawImage(img, 0, 0);
+      
+      // Update debug info with actual canvas dimensions
+      setDebugInfo(prev => prev ? { 
+        ...prev, 
+        canvasPx: `${canvas.width}px × ${canvas.height}px` 
+      } : null);
+
+      setStatus("preview");
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Failed to prepare label");
+      setStatus("error");
+    }
+  };
+
+  const handlePrint = async () => {
+    if (!clientRef.current || !canvasRef.current) {
+      setError("Printer not connected or canvas not ready");
+      return;
+    }
+
+    setStatus("printing");
+    setError(null);
+
+    try {
+      const client = clientRef.current;
+      const canvas = canvasRef.current;
 
       // Encode for printer (ImageEncoder is a static class)
       const modelMeta = client.getModelMetadata();
@@ -198,22 +253,12 @@ export function NiimbotPrinter({ assetTagId, onComplete, onCancel }: NiimbotPrin
       await printTask.waitForFinished();
       await printTask.printEnd();
 
-      setStatus("ready");
+      setStatus("preview");
       onComplete?.();
     } catch (err) {
       setError(err instanceof Error ? err.message : "Print failed");
       setStatus("error");
     }
-  };
-
-  const handleDisconnect = () => {
-    if (clientRef.current) {
-      clientRef.current.disconnect();
-      clientRef.current = null;
-    }
-    setStatus("disconnected");
-    setPrinterInfo(null);
-    setRfidInfo(null);
   };
 
   return (
@@ -246,7 +291,30 @@ export function NiimbotPrinter({ assetTagId, onComplete, onCancel }: NiimbotPrin
           </div>
         )}
 
-        <div className="flex gap-2">
+        {debugInfo && (
+          <div className="p-3 bg-blue-50 dark:bg-blue-950 rounded-md space-y-1 text-sm border border-blue-200 dark:border-blue-800">
+            <div className="font-semibold mb-2">Debug Information:</div>
+            <div><strong>Template Size:</strong> {debugInfo.templateMm}</div>
+            <div><strong>Calculated:</strong> {debugInfo.calculatedPx}</div>
+            <div><strong>Aligned (÷8):</strong> {debugInfo.alignedPx}</div>
+            {debugInfo.imgPx && <div><strong>Image Loaded:</strong> {debugInfo.imgPx}</div>}
+            {debugInfo.canvasPx && <div><strong>Canvas Size:</strong> {debugInfo.canvasPx}</div>}
+          </div>
+        )}
+
+        {canvasRef.current && (status === "preview" || status === "printing") && (
+          <div className="border rounded-md p-3 bg-white dark:bg-gray-900">
+            <div className="text-sm font-semibold mb-2">Canvas Preview (will be sent to printer):</div>
+            <div className="overflow-auto max-h-96 border border-gray-300 dark:border-gray-700 rounded">
+              <canvas 
+                ref={canvasRef} 
+                className="max-w-full h-auto"
+              />
+            </div>
+          </div>
+        )}
+
+        <div className="flex gap-2 flex-wrap">
           {status === "disconnected" && (
             <Button onClick={handleConnect}>
               Connect Printer
@@ -269,8 +337,29 @@ export function NiimbotPrinter({ assetTagId, onComplete, onCancel }: NiimbotPrin
 
           {status === "ready" && (
             <>
-              <Button onClick={() => handlePrint()}>
-                Print Label
+              <Button onClick={handlePrepareLabel}>
+                Prepare Label
+              </Button>
+              <Button variant="outline" onClick={handleDisconnect}>
+                Disconnect
+              </Button>
+            </>
+          )}
+
+          {status === "preparing" && (
+            <Button disabled>
+              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+              Preparing Label...
+            </Button>
+          )}
+
+          {status === "preview" && (
+            <>
+              <Button onClick={handlePrint}>
+                Send to Printer
+              </Button>
+              <Button variant="outline" onClick={() => setStatus("ready")}>
+                Back
               </Button>
               <Button variant="outline" onClick={handleDisconnect}>
                 Disconnect
@@ -289,9 +378,6 @@ export function NiimbotPrinter({ assetTagId, onComplete, onCancel }: NiimbotPrin
             Cancel
           </Button>
         </div>
-
-        {/* Hidden canvas for image processing */}
-        <canvas ref={canvasRef} className="hidden" />
       </CardContent>
     </Card>
   );
