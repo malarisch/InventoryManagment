@@ -2,7 +2,6 @@
 
 import { useCallback, useEffect, useRef, useState } from "react";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import {
   Camera as CameraIcon,
@@ -30,13 +29,24 @@ interface QrScannerInstance {
   toggleFlash: () => Promise<void>;
 }
 
+export interface AssignmentInfo {
+  entityType: "equipment" | "case" | "article";
+  entityId: number;
+  entityName?: string;
+  previousLocationId: number | null;
+  previousLocationName?: string;
+  newLocationId: number;
+  newLocationName?: string;
+}
+
 export interface FullscreenScannerProps {
   isOpen: boolean;
   onClose: () => void;
   onScan: (code: string) => Promise<void> | void;
+  onUndo?: (assignmentInfo: AssignmentInfo) => Promise<void> | void;
   title?: string;
   instructions?: string;
-  manualEntryLabel?: string;
+  assignmentInfo?: AssignmentInfo | null;
 }
 
 const SCAN_COOLDOWN_MS = 1500;
@@ -45,9 +55,10 @@ export function FullscreenScanner({
   isOpen,
   onClose,
   onScan,
+  onUndo,
   title = "Scanner",
   instructions = "Code auf Höhe der Markierung halten",
-  manualEntryLabel = "Code manuell eingeben",
+  assignmentInfo,
 }: FullscreenScannerProps) {
   const videoRef = useRef<HTMLVideoElement | null>(null);
   const scannerRef = useRef<QrScannerInstance | null>(null);
@@ -61,8 +72,6 @@ export function FullscreenScanner({
   const [selectedCamera, setSelectedCamera] = useState<string>("");
   const [hasFlash, setHasFlash] = useState<boolean>(false);
   const [isFlashOn, setIsFlashOn] = useState<boolean>(false);
-  const [manualCode, setManualCode] = useState<string>("");
-  const [showManualEntry, setShowManualEntry] = useState(false);
   const [isScannerReady, setIsScannerReady] = useState(false);
 
   const resetScanner = useCallback(() => {
@@ -281,25 +290,6 @@ export function FullscreenScanner({
     }
   }, [hasFlash]);
 
-  const submitManualCode = useCallback(async () => {
-    const code = manualCode.trim();
-    if (!code || isProcessingRef.current) return;
-    resetScanner();
-    try {
-      isProcessingRef.current = true;
-      setIsProcessing(true);
-      await onScan(code);
-      setManualCode("");
-      setShowManualEntry(false);
-    } catch (err) {
-      console.error("Manual scan failed", err);
-      setError(err instanceof Error ? err.message : String(err));
-    } finally {
-      isProcessingRef.current = false;
-      setIsProcessing(false);
-    }
-  }, [manualCode, onScan, resetScanner]);
-
   if (!isOpen) return null;
 
   return (
@@ -420,60 +410,40 @@ export function FullscreenScanner({
               </div>
             </div>
 
-            {/* Manual Entry Toggle */}
-            <div className="flex justify-center">
-              <Button
-                type="button"
-                variant="secondary"
-                className="bg-white/20 text-white hover:bg-white/30 border-0 backdrop-blur-md"
-                onClick={() => setShowManualEntry(!showManualEntry)}
-              >
-                {showManualEntry ? "Manuelle Eingabe ausblenden" : "Code manuell eingeben"}
-              </Button>
-            </div>
-
-            {/* Manual Entry Field */}
-            {showManualEntry && (
-              <div 
-                className="space-y-2 rounded-lg bg-black/50 backdrop-blur-md p-4"
-                style={{ touchAction: "auto" }}
-              >
-                <label className="text-sm font-medium text-white/90" htmlFor="manual-code-fullscreen">
-                  {manualEntryLabel}
-                </label>
-                <div className="flex items-center gap-2">
-                  <Input
-                    id="manual-code-fullscreen"
-                    value={manualCode}
-                    onChange={(event) => setManualCode(event.target.value)}
-                    onKeyDown={(event) => {
-                      if (event.key === "Enter") {
-                        void submitManualCode();
-                      }
-                    }}
-                    placeholder="z. B. EQP-00123"
-                    autoCapitalize="characters"
-                    autoComplete="off"
-                    spellCheck={false}
-                    className="flex-1 bg-white/20 text-white border-white/30 placeholder:text-white/50"
-                    disabled={isProcessing}
-                  />
+            {/* Assignment Feedback Toast */}
+            {assignmentInfo && (
+              <div className="rounded-lg bg-green-500/90 backdrop-blur-md p-4 text-white shadow-lg space-y-3">
+                <div className="flex items-start justify-between gap-3">
+                  <div className="flex-1 space-y-1">
+                    <div className="font-semibold">
+                      {assignmentInfo.entityType === "equipment" && `Equipment #${assignmentInfo.entityId}`}
+                      {assignmentInfo.entityType === "case" && `Case #${assignmentInfo.entityId}`}
+                      {assignmentInfo.entityType === "article" && `Artikel #${assignmentInfo.entityId}`}
+                      {assignmentInfo.entityName && ` - ${assignmentInfo.entityName}`}
+                    </div>
+                    <div className="text-sm text-white/90">
+                      Standort aktualisiert: {assignmentInfo.newLocationName ?? `#${assignmentInfo.newLocationId}`}
+                    </div>
+                    {assignmentInfo.previousLocationId !== null && (
+                      <div className="text-xs text-white/70">
+                        Vorher: {assignmentInfo.previousLocationName ?? `#${assignmentInfo.previousLocationId}`}
+                      </div>
+                    )}
+                  </div>
+                </div>
+                {onUndo && (
                   <Button
                     type="button"
-                    onClick={submitManualCode}
-                    disabled={!manualCode.trim() || isProcessing}
-                    className="bg-white/20 text-white hover:bg-white/30 border-0"
+                    variant="secondary"
+                    size="sm"
+                    className="w-full bg-white/20 text-white hover:bg-white/30 border-0"
+                    onClick={() => {
+                      void onUndo(assignmentInfo);
+                    }}
                   >
-                    Scannen
+                    Rückgängig machen
                   </Button>
-                </div>
-              </div>
-            )}
-
-            {/* Camera Info */}
-            {cameras.length > 1 && selectedCamera && (
-              <div className="text-center text-xs text-white/60">
-                {cameras.find((c) => c.id === selectedCamera)?.label || "—"}
+                )}
               </div>
             )}
           </div>

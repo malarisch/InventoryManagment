@@ -8,7 +8,7 @@ import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
-import { FullscreenScanner } from "@/components/scanner/fullscreen-scanner";
+import { FullscreenScanner, type AssignmentInfo } from "@/components/scanner/fullscreen-scanner";
 import { resolveAssetByCode, type ResolvedAsset } from "@/lib/scanner/resolve";
 import { performScannerAction, type ScannerMode, type ScannerActionResult } from "@/lib/scanner/actions";
 import { cn } from "@/lib/utils";
@@ -53,6 +53,7 @@ export function ScannerScreen({ initialMode, initialLocation, initialJob }: Scan
   const [mode, setMode] = useState<ScannerMode | null>(initialMode ?? null);
   const [scannerOpen, setScannerOpen] = useState(false);
   const [statusFeed, setStatusFeed] = useState<StatusEntry[]>([]);
+  const [assignmentInfo, setAssignmentInfo] = useState<AssignmentInfo | null>(null);
   const [targetLocation, setTargetLocation] = useState<{ id: number; name: string | null; companyId: number } | null>(initialLocation ?? null);
   const job = useMemo<JobLite | null>(
     () => (initialJob ? { id: initialJob.id, companyId: initialJob.companyId, name: initialJob.name ?? null } : null),
@@ -202,6 +203,35 @@ export function ScannerScreen({ initialMode, initialLocation, initialJob }: Scan
         });
 
         addResultToFeed(code, resolved, result);
+
+        // Track location assignments for feedback toast
+        if (activeMode === "assign-location" && result.status === "success" && targetLocation) {
+          if (resolved.kind === "equipment") {
+            setAssignmentInfo({
+              entityType: "equipment",
+              entityId: resolved.equipment.id,
+              previousLocationId: resolved.equipment.current_location,
+              newLocationId: targetLocation.id,
+              newLocationName: targetLocation.name ?? undefined,
+            });
+          } else if (resolved.kind === "case" && resolved.case.case_equipment) {
+            setAssignmentInfo({
+              entityType: "case",
+              entityId: resolved.case.id,
+              previousLocationId: resolved.case.case_equipment_equipment?.current_location ?? null,
+              newLocationId: targetLocation.id,
+              newLocationName: targetLocation.name ?? undefined,
+            });
+          } else if (resolved.kind === "article") {
+            setAssignmentInfo({
+              entityType: "article",
+              entityId: resolved.article.id,
+              previousLocationId: resolved.article.default_location,
+              newLocationId: targetLocation.id,
+              newLocationName: targetLocation.name ?? undefined,
+            });
+          }
+        }
       } catch (err) {
         console.error("Scanner failure", err);
         pushStatus({
@@ -212,6 +242,55 @@ export function ScannerScreen({ initialMode, initialLocation, initialJob }: Scan
       }
     },
     [mode, supabase, ensureLocation, ensureJob, targetLocation, job, pushStatus, addResultToFeed, router],
+  );
+
+  const handleUndo = useCallback(
+    async (info: AssignmentInfo) => {
+      try {
+        if (info.entityType === "equipment") {
+          const { error } = await supabase
+            .from("equipments")
+            .update({ current_location: info.previousLocationId })
+            .eq("id", info.entityId);
+          if (error) throw error;
+        } else if (info.entityType === "case") {
+          // For cases, we need to get the case_equipment ID first
+          const { data: caseData } = await supabase
+            .from("cases")
+            .select("case_equipment")
+            .eq("id", info.entityId)
+            .single();
+          if (caseData?.case_equipment) {
+            const { error } = await supabase
+              .from("equipments")
+              .update({ current_location: info.previousLocationId })
+              .eq("id", caseData.case_equipment);
+            if (error) throw error;
+          }
+        } else if (info.entityType === "article") {
+          const { error } = await supabase
+            .from("articles")
+            .update({ default_location: info.previousLocationId })
+            .eq("id", info.entityId);
+          if (error) throw error;
+        }
+        
+        pushStatus({
+          status: "info",
+          message: "Standortzuweisung rückgängig gemacht.",
+          code: "—",
+        });
+        setAssignmentInfo(null);
+      } catch (err) {
+        console.error("Undo failed", err);
+        pushStatus({
+          status: "error",
+          message: err instanceof Error ? err.message : "Rückgängig machen fehlgeschlagen.",
+          code: "—",
+        });
+      }
+    },
+    [supabase, pushStatus],
   );
 
   const activeModeDefinition = MODE_DEFINITIONS.find((entry) => entry.mode === mode) ?? null;
@@ -388,8 +467,13 @@ export function ScannerScreen({ initialMode, initialLocation, initialJob }: Scan
       {/* Fullscreen Scanner */}
       <FullscreenScanner
         isOpen={scannerOpen}
-        onClose={() => setScannerOpen(false)}
+        onClose={() => {
+          setScannerOpen(false);
+          setAssignmentInfo(null);
+        }}
         onScan={handleScan}
+        onUndo={handleUndo}
+        assignmentInfo={assignmentInfo}
         title={activeModeDefinition?.label ?? "Scanner"}
         instructions={
           mode === "assign-location" && targetLocation

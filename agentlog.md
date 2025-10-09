@@ -1,3 +1,25 @@
+2025-10-09 02:15 — Scanner: Overlay UI Cleanup & Assignment Feedback Toast
+- **User Request**:
+  - Remove "Code manuell eingeben" button from camera overlay (already on previous page)
+  - Remove camera name display (redundant)
+  - Add feedback toast when equipment assigned to location
+  - Include undo button in toast to revert assignment
+- **Implementation**:
+  - **Removed from FullscreenScanner**: manualCode state, showManualEntry state, submitManualCode function, Manual Entry UI section, camera name display
+  - **Added AssignmentInfo interface**: tracks entityType, entityId, previousLocationId, newLocationId, location names
+  - **New props**: onUndo callback, assignmentInfo prop for displaying toast
+  - **Assignment Toast**: Green feedback banner showing entity info, new location, previous location; includes "Rückgängig machen" button
+  - **Undo Logic in ScannerScreen**: handleUndo function restores previous location for equipment/case/article
+  - **Assignment Tracking**: handleScan captures location assignments and populates assignmentInfo state
+- Files: components/scanner/fullscreen-scanner.tsx, components/scanner/scanner-screen.tsx, agentlog.md
+- Technical Details:
+  - Toast only shows for successful location assignments in assign-location mode
+  - Undo directly calls Supabase to update previous location
+  - onClose callback clears assignmentInfo to dismiss toast
+  - Case undo fetches case_equipment ID before updating equipment location
+- Verification: npm run test:tsc ✅
+- Impact: Cleaner overlay UI, immediate visual feedback for assignments, ability to quickly undo mistakes
+
 2025-10-09 02:00 — Scanner: Fix AbortError with Initialization Guard
 - **Issue (AbortError during initialization)**:
   - User reported "[Error] Scanner initialization error – AbortError: The operation was aborted"
