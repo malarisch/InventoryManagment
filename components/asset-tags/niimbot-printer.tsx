@@ -335,7 +335,8 @@ export function NiimbotPrinter({ assetTagId, onComplete, onCancel }: NiimbotPrin
           </div>
         )}
 
-        {canvasRef.current && (status === "preview" || status === "printing") && (
+        {/* Canvas Preview - show when we have content to display */}
+        {debugInfo && (status === "preview" || status === "printing") && (
           <div className="border rounded-md p-3 bg-white dark:bg-gray-900">
             <div className="text-sm font-semibold mb-2">Canvas Preview (will be sent to printer):</div>
             <div className="overflow-auto max-h-96 border border-gray-300 dark:border-gray-700 rounded">
@@ -345,6 +346,11 @@ export function NiimbotPrinter({ assetTagId, onComplete, onCancel }: NiimbotPrin
               />
             </div>
           </div>
+        )}
+
+        {/* Hidden canvas for initial rendering - always mounted so ref is available */}
+        {(status !== "preview" && status !== "printing") && (
+          <canvas ref={canvasRef} className="hidden" />
         )}
 
         <div className="flex gap-2 flex-wrap">
