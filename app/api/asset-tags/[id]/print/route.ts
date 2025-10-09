@@ -1,6 +1,5 @@
 import {createClient} from '@/lib/supabase/server';
 import {NextRequest, NextResponse} from 'next/server';
-import sharp from 'sharp';
 import {generateSVG, getAssetTagPlaceholders} from '@/lib/asset-tags/svg-generator';
 import type {AssetTagTemplate} from '@/components/asset-tag-templates/types';
 
@@ -8,13 +7,12 @@ export async function GET(req: NextRequest, context: { params: Promise<{ id: str
   try {
     const supabase = await createClient();
     const { id } = await context.params;
-    const format = req.nextUrl.searchParams.get('format') || 'svg';
     const widthParam = req.nextUrl.searchParams.get('width');
     const heightParam = req.nextUrl.searchParams.get('height');
 
-    // Parse custom dimensions (optional)
-    const customWidth = widthParam ? parseInt(widthParam, 10) : undefined;
-    const customHeight = heightParam ? parseInt(heightParam, 10) : undefined;
+    // Parse dimensions (mm from template)
+    const widthMm = widthParam ? parseFloat(widthParam) : undefined;
+    const heightMm = heightParam ? parseFloat(heightParam) : undefined;
 
     // Fetch asset tag + template (FK)
     const { data: assetTag, error: tagError } = await supabase
@@ -48,7 +46,6 @@ export async function GET(req: NextRequest, context: { params: Promise<{ id: str
       supabase.from('articles').select('id, name, company_id').eq('asset_tag', id).maybeSingle(),
       supabase.from('locations').select('id, name, company_id').eq('asset_tag', id).maybeSingle(),
       supabase.from('cases').select('id, name, company_id').eq('asset_tag', id).maybeSingle(),
-      // Try to fetch company from asset tag's company_id if available
       assetTag.company_id 
         ? supabase.from('companies').select('id, name').eq('id', assetTag.company_id).maybeSingle()
         : Promise.resolve({ data: null, error: null })
@@ -102,32 +99,110 @@ export async function GET(req: NextRequest, context: { params: Promise<{ id: str
     );
     const svgText = await generateSVG(templateJson, placeholderData);
 
-    if (format === 'svg') {
-      return new NextResponse(svgText, { headers: { 'Content-Type': 'image/svg+xml' } });
-    }
+    // Use dimensions from template or query params
+    const finalWidth = widthMm || templateJson.tagWidthMm;
+    const finalHeight = heightMm || templateJson.tagHeightMm;
 
-    const svgBuffer = Buffer.from(svgText);
-    let imageBuffer: Buffer;
-    let contentType: string;
-    
-    // Apply custom dimensions if provided
-    const sharpInstance = sharp(svgBuffer);
-    if (customWidth && customHeight) {
-      sharpInstance.resize(customWidth, customHeight, { fit: 'contain', background: { r: 255, g: 255, b: 255, alpha: 1 } });
+    // Generate HTML page optimized for printing with exact dimensions
+    const html = `<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Asset Tag ${assetTag.printed_code || id}</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
     }
     
-    switch (format) {
-      case 'png':
-        imageBuffer = await sharpInstance.png().toBuffer();
-        contentType = 'image/png';
-        break;
-      default:
-        return new NextResponse('Invalid format. Supported: svg, png', { status: 400 });
+    @page {
+      size: ${finalWidth}mm ${finalHeight}mm;
+      margin: 0;
     }
+    
+    body {
+      margin: 0;
+      padding: 0;
+      width: ${finalWidth}mm;
+      height: ${finalHeight}mm;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: white;
+    }
+    
+    .asset-tag-container {
+      width: ${finalWidth}mm;
+      height: ${finalHeight}mm;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      page-break-after: always;
+    }
+    
+    svg {
+      width: 100%;
+      height: 100%;
+      display: block;
+    }
+    
+    @media print {
+      body {
+        width: ${finalWidth}mm;
+        height: ${finalHeight}mm;
+      }
+      
+      .no-print {
+        display: none !important;
+      }
+    }
+    
+    .print-button {
+      position: fixed;
+      top: 20px;
+      right: 20px;
+      padding: 10px 20px;
+      background: #0070f3;
+      color: white;
+      border: none;
+      border-radius: 5px;
+      cursor: pointer;
+      font-size: 16px;
+      z-index: 1000;
+    }
+    
+    .print-button:hover {
+      background: #0051cc;
+    }
+  </style>
+</head>
+<body>
+  <button class="print-button no-print" onclick="window.print()">Drucken</button>
+  <div class="asset-tag-container">
+    ${svgText}
+  </div>
+  <script>
+    // Auto-print after load (can be disabled if annoying)
+    window.addEventListener('load', () => {
+      setTimeout(() => {
+        // Uncomment to enable auto-print:
+        // window.print();
+      }, 500);
+    });
+  </script>
+</body>
+</html>`;
 
-    return new NextResponse(new Uint8Array(imageBuffer), { headers: { 'Content-Type': contentType } });
+    return new NextResponse(html, { 
+      headers: { 
+        'Content-Type': 'text/html; charset=utf-8',
+        'Cache-Control': 'no-cache, no-store, must-revalidate'
+      } 
+    });
   } catch (err) {
-    console.error('render asset tag fatal error', err);
+    console.error('print asset tag fatal error', err);
     return new NextResponse('Internal server error', { status: 500 });
   }
 }

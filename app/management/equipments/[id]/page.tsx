@@ -15,6 +15,7 @@ import { AssetTagCreateForm } from "@/components/forms/asset-tag-create-form";
 import { WorkshopTodoCreateInline } from "@/components/forms/workshop-todo-create-inline";
 import { DeleteWithUndo } from "@/components/forms/delete-with-undo";
 import { Button } from "@/components/ui/button";
+import { AssetTagPrintButton } from "@/components/asset-tags/asset-tag-print-button";
 
 
 type EquipmentRow = Tables<"equipments"> & {
@@ -159,15 +160,18 @@ export default async function EquipmentDetailPage({ params }: { params: Promise<
                   Speichern
                 </Button>
                 {eq.asset_tag && (
-                  <Button asChild variant="outline">
-                    <Link
-                      href={`/api/asset-tags/${eq.asset_tag}/render?format=svg`}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                    >
-                      Asset Tag anzeigen
-                    </Link>
-                  </Button>
+                  <>
+                    <AssetTagPrintButton assetTagId={eq.asset_tag} />
+                    <Button asChild variant="outline">
+                      <Link
+                        href={`/api/asset-tags/${eq.asset_tag}/render?format=svg`}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                      >
+                        Asset Tag anzeigen
+                      </Link>
+                    </Button>
+                  </>
                 )}
                 <span
                   id={statusElementId}

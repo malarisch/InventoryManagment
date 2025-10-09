@@ -1,3 +1,183 @@
+2025-10-09 15:15 — Fix: Print Dialog UX und korrekte Druck-Dimensionen
+- **UX Issues Fixed**:
+  * Modal zu schmal → `sm:max-w-md` (448px) → `sm:max-w-lg` (512px)
+  * Button-Text überläuft → `whitespace-normal text-left` hinzugefügt
+  * Icons schrumpfen → `shrink-0` für Icons
+  * Beschreibungstexte gekürzt für bessere Lesbarkeit
+- **Proper Print Dimensions**: Neue `/api/asset-tags/[id]/print` Route
+  * HTML-Seite mit exakten `@page` Dimensionen aus Template (mm)
+  * CSS: `size: {width}mm {height}mm` + `margin: 0`
+  * SVG embedded mit 100% width/height für perfekten Fit
+  * Print-Button + optionales Auto-Print nach 500ms
+  * Verwendet `tagWidthMm` und `tagHeightMm` aus AssetTagTemplate
+- **Property Name Fixes**: template.width/height → tagWidthMm/tagHeightMm in allen Components
+- **Normal Print Flow**: Öffnet jetzt druckoptimierte HTML-Seite statt raw SVG
+- **Files**: app/api/asset-tags/[id]/print/route.ts (neu), components/asset-tags/{asset-tag-print-dialog,niimbot-printer}.tsx
+
+2025-10-09 14:45 — Niimbot Bluetooth Label Printer Integration
+- **User Request**: Integrate Niimbot Bluetooth label printer for direct printing from browser
+- **Library Integration**: Installed @mmote/niimbluelib, researched actual API via GitHub repo (Context7 docs showed low-level protocol only)
+- **Components Created**:
+  * **NiimbotPrinter**: Full Bluetooth printing workflow (connect → fetchPrinterInfo → getModelMetadata → rfidInfo → render BMP → encode canvas → print task)
+  * **AssetTagPrintDialog**: Dual-mode selection (Normal system dialog vs Niimbot Bluetooth)
+  * **AssetTagPrintButton**: Wrapper component with Printer icon
+- **API Extension**: Extended /api/asset-tags/[id]/render to accept width/height query params, uses sharp resize with 'contain' fit
+- **Dimension Calculation**: Loads asset_tag.printed_template, converts mm → pixels using printer DPI (e.g., 203 DPI), calculates exact bitmap size
+- **Print Buttons Added**: Equipment and Article detail pages now have "Drucken" button next to "Asset Tag anzeigen"
+- **Key API Corrections**: Fixed incorrect usage (PrinterModelId → PrinterModel, ImageEncoder is static class, abstraction.newPrintTask() not formPrintTask(), no Alert component)
+- **Files**: components/asset-tags/{niimbot-printer,asset-tag-print-dialog,asset-tag-print-button}.tsx, app/api/asset-tags/[id]/render/route.ts, app/management/{equipments,articles}/[id]/page.tsx
+- **Next**: Test with physical printer, add print buttons to Case/Location when they support asset tags
+
+2025-10-09 02:30 — Scanner: Case-Packing in Location Mode
+- **User Request**:
+  - In Location mode, allow scanning a Case as the target (first scan)
+  - When Equipment is scanned after Case, pack it into the Case
+  - Set Equipment's current_location to NULL (indicating it's in the Case)
+- **Implementation**:
+  - **Added targetCase state**: tracks selected Case as packing target (id, name, companyId)
+  - **Case-as-Target Logic**: When Case scanned in assign-location mode, set as targetCase and clear targetLocation
+  - **Equipment Packing Flow**:
+    1. Check if equipment already in case's contained_equipment array
+    2. Add equipment ID to case's contained_equipment array
+    3. Set equipment's current_location to NULL
+    4. Show success toast with "Equipment #X in Case #Y gepackt"
+  - **Enhanced Undo**: When undoing case-packing:
+    * Remove equipment from case's contained_equipment array
+    * Restore equipment's previous location
+    * Detects case-packing by checking if newLocationName starts with "Case #"
+  - **Dynamic Instructions**: Scanner shows different instructions based on state:
+    * No target: "Scanne Location oder Case als Ziel"
+    * Case selected: "Ziel-Case: #X - Scanne Equipment zum Einpacken"
+    * Location selected: "Location: [name]"
+- Files: components/scanner/scanner-screen.tsx, agentlog.md
+- Technical Details:
+  - targetCase and targetLocation are mutually exclusive (one clears the other)
+  - Location picker dialog also clears targetCase when location manually selected
+  - Company boundary checks ensure equipment and case belong to same company
+  - Assignment toast tracks case ID in newLocationId field for undo functionality
+- Verification: npm run test:tsc ✅
+- Impact: Users can now pack equipment into cases directly via scanner, matching physical workflow
+
+2025-10-09 02:15 — Scanner: Overlay UI Cleanup & Assignment Feedback Toast
+- **User Request**:
+  - Remove "Code manuell eingeben" button from camera overlay (already on previous page)
+  - Remove camera name display (redundant)
+  - Add feedback toast when equipment assigned to location
+  - Include undo button in toast to revert assignment
+- **Implementation**:
+  - **Removed from FullscreenScanner**: manualCode state, showManualEntry state, submitManualCode function, Manual Entry UI section, camera name display
+  - **Added AssignmentInfo interface**: tracks entityType, entityId, previousLocationId, newLocationId, location names
+  - **New props**: onUndo callback, assignmentInfo prop for displaying toast
+  - **Assignment Toast**: Green feedback banner showing entity info, new location, previous location; includes "Rückgängig machen" button
+  - **Undo Logic in ScannerScreen**: handleUndo function restores previous location for equipment/case/article
+  - **Assignment Tracking**: handleScan captures location assignments and populates assignmentInfo state
+- Files: components/scanner/fullscreen-scanner.tsx, components/scanner/scanner-screen.tsx, agentlog.md
+- Technical Details:
+  - Toast only shows for successful location assignments in assign-location mode
+  - Undo directly calls Supabase to update previous location
+  - onClose callback clears assignmentInfo to dismiss toast
+  - Case undo fetches case_equipment ID before updating equipment location
+- Verification: npm run test:tsc ✅
+- Impact: Cleaner overlay UI, immediate visual feedback for assignments, ability to quickly undo mistakes
+
+2025-10-09 02:00 — Scanner: Fix AbortError with Initialization Guard
+- **Issue (AbortError during initialization)**:
+  - User reported "[Error] Scanner initialization error – AbortError: The operation was aborted"
+  - Occurred in lookup/Simple Scan mode at fullscreen-scanner.tsx:172
+  - Camera displayed but wouldn't scan
+- **Root Cause**:
+  - Auto-restart useEffect ran immediately on mount
+  - Conflicted with initialization useEffect trying to start scanner
+  - Both effects attempted to access camera simultaneously → AbortError
+- **Solution**:
+  - Added `isScannerReady` state (default: false)
+  - Set to `true` after successful scanner.start() and camera initialization
+  - Modified auto-restart useEffect to check `!isScannerReady` guard
+  - Added `isScannerReady` to dependency array of auto-restart effect
+- Files: components/scanner/fullscreen-scanner.tsx (lines 66, 171, 186, 200, 256), agentlog.md
+- Verification: npm run test:tsc ✅, npm run test:e2e scanner-fullscreen ✅ (14/14 passed)
+- Impact: Scanner initializes cleanly without camera access conflicts, auto-restart only activates after full initialization
+
+2025-10-09 01:45 — Scanner: Auto-Restart for Lost Video Stream
+- **Issue (scroll working, video still failing)**:
+  - Video lost srcObject after scanning, causing black screen
+  - Log showed "Video lost srcObject, reinitializing..." repeatedly
+  - Camera only resumed when manually clicking camera switcher button
+- **Root Cause**:
+  - QR-Scanner stops/resets video stream after successful scan
+  - State updates from onScan callback trigger React re-renders
+  - Video element loses connection to camera stream (srcObject becomes null)
+  - Previous solution only logged the issue, didn't fix it
+- **Solution**:
+  - **Active Scanner Restart**: When srcObject is lost, explicitly call stop() then start() on scanner
+  - **Restart Guard**: Added isRestartingScanner flag to prevent concurrent restart attempts
+  - **Stream Verification**: Check for srcObject existence before attempting video.play()
+  - **Logging**: Enhanced logs to track restart lifecycle ("restarting..." → "successfully restarted")
+- Files: components/scanner/fullscreen-scanner.tsx, agentlog.md
+- Verification: npm run test:tsc ✅, npm run test:e2e scanner-fullscreen ✅ (14/14 passed)
+- Impact: Camera stream automatically recovers after each scan, no manual intervention needed
+
+2025-10-09 01:30 — Scanner: Enhanced Scroll Prevention & Video Stability
+- **Issues (reported after initial fix)**:
+  1. Scroll prevention still allowed scrolling past fullscreen scanner
+  2. Camera continued to deactivate after scanning
+- **Root Causes**:
+  - Body overflow:hidden insufficient on mobile - needs position:fixed + touchmove prevention
+  - Video health check interval too slow (1000ms) and lacking visibility change handling
+- **Enhanced Solutions**:
+  - **Scroll Prevention**: Added position:fixed to body, width:100%, touchmove event prevention with passive:false
+  - **Touch Handling**: Added touchAction:none to scanner container, preserved auto for input fields
+  - **Video Stability**: 
+    - Reduced health check interval from 1000ms to 500ms
+    - Added srcObject monitoring to detect disconnected video streams
+    - Added visibility change event handler to resume video when tab becomes visible
+    - Enhanced logging for debugging camera state issues
+  - **Input Accessibility**: Manual entry area preserves touchAction:auto for text input
+- Files: components/scanner/fullscreen-scanner.tsx, agentlog.md
+- Verification: npm run test:tsc ✅, npm run test:e2e scanner-fullscreen ✅ (14/14 passed)
+- Impact: Robust scroll lock on all devices, proactive video stream monitoring, better debugging
+
+2025-10-09 01:15 — Scanner: UX Fixes for Fullscreen Camera
+- **Issues Fixed**:
+  1. Body scroll prevention: Users could scroll past fullscreen scanner
+  2. Black camera after location scan: Video element stopped working after setting location in assign-location mode
+  3. Location name in instructions: Needed dynamic badge text showing selected location
+- **Solutions**:
+  - Added body overflow:hidden when fullscreen scanner is open (components/scanner/fullscreen-scanner.tsx)
+  - Added video health check that resumes paused video elements every second
+  - Made instructions prop dynamic based on mode and targetLocation (components/scanner/scanner-screen.tsx)
+  - In assign-location mode with location set: shows "Location: [name]" instead of generic instruction
+- Files: components/scanner/fullscreen-scanner.tsx, components/scanner/scanner-screen.tsx, tests/e2e/scanner-fullscreen.loggedin.spec.ts, agentlog.md
+- Verification: npm run test:tsc ✅, npm run test:e2e scanner-fullscreen ✅ (14/14 passed)
+- Impact: Fixed scroll leak, camera reliability improved, better user feedback in location mode
+
+2025-10-09 01:00 — Scanner: Fullscreen Camera Overhaul
+- **Changes**: Major redesign of scanner functionality with fullscreen camera experience
+  - Created new FullscreenScanner component (components/scanner/fullscreen-scanner.tsx)
+    - Full-screen takeover with z-50 fixed positioning
+    - Black background with video as full viewport
+    - Header overlay with back/close buttons and mode title
+    - Bottom overlay with camera controls (flash, camera switch)
+    - Manual entry toggle with expandable input field
+    - Improved visual feedback with badges and loading states
+  - Refactored ScannerScreen (components/scanner/scanner-screen.tsx)
+    - Removed embedded ContinuousQrScanner from main page
+    - Added "Scannen starten" button that opens fullscreen scanner
+    - Scanner only opens after mode selection
+    - Maintained all existing mode logic (lookup, assign-location, job-book, job-pack)
+  - Enhanced lookup mode functionality (lib/scanner/actions.ts)
+    - Direct navigation to edit page after successful scan
+    - Supports Equipment, Case, Article, and Location assets
+  - E2E test coverage (tests/e2e/scanner-fullscreen.loggedin.spec.ts)
+    - Mode selection and switching
+    - Fullscreen scanner open/close with back and X buttons
+    - Manual entry functionality
+    - Camera controls visibility
+    - Location picker integration
+- Files: components/scanner/fullscreen-scanner.tsx (new), components/scanner/scanner-screen.tsx, tests/e2e/scanner-fullscreen.loggedin.spec.ts (new), agentlog.md
+- Verification: npm run test:tsc ✅, npm run test:e2e scanner-fullscreen ✅ (14/14 passed)
+- Impact: Mobile-optimized fullscreen scanning experience, better UX for all scanner modes
+
 2025-10-09 00:30 — GitHub Workflows: Fix workflow_run Branch Triggering
 - **Issue**: Only CI Prepare ran, dependent workflows (lint-tsc, vitest, playwright) never triggered
 - **Root Cause**: workflow_run events require explicit branch filters AND correct ref checkout

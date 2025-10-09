@@ -14,6 +14,7 @@ import { fallbackDisplayFromId } from "@/lib/userDisplay";
 import { fetchUserDisplayAdmin } from "@/lib/users/userDisplay.server";
 import { FileManager } from "@/components/files/file-manager";
 import { AssetTagCreateForm } from "@/components/forms/asset-tag-create-form";
+import { AssetTagPrintButton } from "@/components/asset-tags/asset-tag-print-button";
 
 type ArticleRow = Tables<"articles"> & {
   locations?: { name: string } | null;
@@ -99,11 +100,14 @@ export default async function ArticleDetailPage({ params }: { params: Promise<{ 
                   <Link href={`/management/equipments/new?articleId=${article.id}`}>Equipment hinzufügen</Link>
                 </Button>
                 {article.asset_tag && (
-                  <Button asChild variant="outline">
-                    <Link href={`/api/asset-tags/${article.asset_tag}/render?format=svg`} target="_blank" rel="noopener noreferrer">
-                      Asset Tag anzeigen
-                    </Link>
-                  </Button>
+                  <>
+                    <AssetTagPrintButton assetTagId={article.asset_tag} />
+                    <Button asChild variant="outline">
+                      <Link href={`/api/asset-tags/${article.asset_tag}/render?format=svg`} target="_blank" rel="noopener noreferrer">
+                        Asset Tag anzeigen
+                      </Link>
+                    </Button>
+                  </>
                 )}
               </div>
             </div>

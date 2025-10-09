@@ -1,0 +1,485 @@
+"use client";
+
+import { useState, useEffect, useRef } from "react";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Label } from "@/components/ui/label";
+import { Loader2 } from "lucide-react";
+import { 
+  NiimbotBluetoothClient, 
+  ImageEncoder, 
+  type ConnectionInfo,
+  type RfidInfo,
+  type PrinterModelMeta
+} from "@mmote/niimbluelib";
+import type { AssetTagTemplate } from "@/components/asset-tag-templates/types";
+
+type PrinterStatus = 
+  | "disconnected" 
+  | "connecting" 
+  | "connected" 
+  | "fetching-specs" 
+  | "ready"
+  | "preparing"
+  | "preview"
+  | "printing" 
+  | "error";
+
+interface AssetTag {
+  id: string;
+  printed_template: AssetTagTemplate | null;
+}
+
+interface NiimbotPrinterProps {
+  assetTagId: string;
+  onComplete?: () => void;
+  onCancel?: () => void;
+}
+
+export function NiimbotPrinter({ assetTagId, onComplete, onCancel }: NiimbotPrinterProps) {
+  const [status, setStatus] = useState<PrinterStatus>("disconnected");
+  const [error, setError] = useState<string | null>(null);
+  const [printerInfo, setPrinterInfo] = useState<{ 
+    model?: string; 
+    dpi?: number; 
+    resolution?: string;
+    printheadPixels?: number;
+  } | null>(null);
+  const [rfidInfo, setRfidInfo] = useState<RfidInfo | null>(null);
+  const [assetTag, setAssetTag] = useState<AssetTag | null>(null);
+  const [loadingAssetTag, setLoadingAssetTag] = useState(true);
+  const [paperSize, setPaperSize] = useState<"50x30" | "50x40">("50x30");
+  const [debugInfo, setDebugInfo] = useState<{ 
+    templateMm: string; 
+    calculatedPx: string; 
+    alignedPx: string; 
+    canvasPx: string;
+    imgPx: string;
+  } | null>(null);
+  
+  const clientRef = useRef<NiimbotBluetoothClient | null>(null);
+  const canvasRef = useRef<HTMLCanvasElement>(null);
+
+  useEffect(() => {
+    // Load asset tag data
+    const loadAssetTag = async () => {
+      try {
+        setLoadingAssetTag(true);
+        const response = await fetch(`/api/asset-tags/${assetTagId}`);
+        if (!response.ok) throw new Error("Failed to load asset tag");
+        const data = await response.json();
+        console.log("Loaded asset tag:", data);
+        console.log("Template exists:", !!data.printed_template);
+        setAssetTag(data);
+      } catch (err) {
+        setError(err instanceof Error ? err.message : "Failed to load asset tag");
+      } finally {
+        setLoadingAssetTag(false);
+      }
+    };
+
+    loadAssetTag();
+
+    // Cleanup on unmount
+    return () => {
+      if (clientRef.current) {
+        clientRef.current.disconnect();
+      }
+    };
+  }, [assetTagId]);
+
+  const handleConnect = async () => {
+    setStatus("connecting");
+    setError(null);
+
+    try {
+      const client = new NiimbotBluetoothClient();
+      clientRef.current = client;
+
+      const connectionInfo: ConnectionInfo = await client.connect();
+      
+      if (!connectionInfo.deviceName) {
+        throw new Error("No device selected");
+      }
+
+      setStatus("connected");
+      await fetchPrinterSpecs(client);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Connection failed");
+      setStatus("error");
+    }
+  };
+
+  const fetchPrinterSpecs = async (client: NiimbotBluetoothClient) => {
+    setStatus("fetching-specs");
+
+    try {
+      // Fetch printer info
+      await client.fetchPrinterInfo();
+      
+      // Get model metadata from library
+      const modelMeta: PrinterModelMeta | undefined = client.getModelMetadata();
+      
+      if (!modelMeta) {
+        throw new Error("Unknown printer model");
+      }
+
+      setPrinterInfo({
+        model: modelMeta.model,
+        dpi: modelMeta.dpi,
+        resolution: `${modelMeta.printheadPixels}px`,
+        printheadPixels: modelMeta.printheadPixels,
+      });
+
+      // Check for RFID label info if supported
+      try {
+        const rfid: RfidInfo = await client.abstraction.rfidInfo();
+        setRfidInfo(rfid);
+      } catch {
+        // RFID not supported or no label detected
+        setRfidInfo(null);
+      }
+
+      setStatus("ready");
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Failed to fetch printer specs");
+      setStatus("error");
+    }
+  };
+
+  const handleDisconnect = () => {
+    if (clientRef.current) {
+      clientRef.current.disconnect();
+      clientRef.current = null;
+    }
+    setStatus("disconnected");
+    setPrinterInfo(null);
+    setRfidInfo(null);
+    setDebugInfo(null);
+  };
+
+  const handlePrepareLabel = async () => {
+    if (!printerInfo) {
+      setError("Printer not connected or specs not fetched");
+      return;
+    }
+    if (!canvasRef.current) {
+      setError("Canvas element not ready");
+      return;
+    }
+    if (!assetTag) {
+      setError("Asset tag not loaded yet");
+      return;
+    }
+    if (!assetTag.printed_template) {
+      setError("Asset tag has no template assigned. Please assign a template to this asset tag first.");
+      return;
+    }
+
+    setStatus("preparing");
+    setError(null);
+
+    try {
+      const template = assetTag.printed_template;
+      const dpi = printerInfo.dpi || 203;
+      const mmToInch = 1 / 25.4;
+      
+      // Paper dimensions from selected paper size
+      const [paperWidthMm, paperHeightMm] = paperSize === "50x30" 
+        ? [50, 30] 
+        : [50, 40];
+      
+      const paperWidthPx = Math.round(paperWidthMm * mmToInch * dpi);
+      const paperHeightPx = Math.round(paperHeightMm * mmToInch * dpi);
+      
+      // Align width to multiple of 8 (printer requirement)
+      const alignedPaperWidthPx = Math.ceil(paperWidthPx / 8) * 8;
+      
+      // Calculate template dimensions in pixels
+      const templateWidthPx = Math.round(template.tagWidthMm * mmToInch * dpi);
+      const templateHeightPx = Math.round(template.tagHeightMm * mmToInch * dpi);
+      
+      // Calculate scale to fit template into paper while preserving aspect ratio
+      const scaleX = alignedPaperWidthPx / templateWidthPx;
+      const scaleY = paperHeightPx / templateHeightPx;
+      const scale = Math.min(scaleX, scaleY, 1); // Don't scale up, only down if needed
+      
+      const scaledTemplateWidth = Math.round(templateWidthPx * scale);
+      const scaledTemplateHeight = Math.round(templateHeightPx * scale);
+      
+      // Center the template on the paper
+      const offsetX = Math.round((alignedPaperWidthPx - scaledTemplateWidth) / 2);
+      const offsetY = Math.round((paperHeightPx - scaledTemplateHeight) / 2);
+      
+      // Store debug info
+      setDebugInfo({
+        templateMm: `Template: ${template.tagWidthMm}mm × ${template.tagHeightMm}mm`,
+        calculatedPx: `Paper: ${paperWidthMm}mm × ${paperHeightMm}mm (${paperSize}) = ${paperWidthPx}px × ${paperHeightPx}px`,
+        alignedPx: `Aligned Paper: ${alignedPaperWidthPx}px × ${paperHeightPx}px, Scale: ${(scale * 100).toFixed(1)}%`,
+        imgPx: `Template scaled: ${scaledTemplateWidth}px × ${scaledTemplateHeight}px, Offset: (${offsetX}, ${offsetY})`,
+        canvasPx: "", // Will be set after canvas is drawn
+      });
+      
+      // Fetch template render at scaled dimensions
+      const renderUrl = `/api/asset-tags/${assetTagId}/render?format=png&width=${scaledTemplateWidth}&height=${scaledTemplateHeight}`;
+      const response = await fetch(renderUrl);
+      
+      if (!response.ok) {
+        throw new Error("Failed to render asset tag");
+      }
+
+      const blob = await response.blob();
+      const img = new Image();
+      const imgUrl = URL.createObjectURL(blob);
+
+      await new Promise<void>((resolve, reject) => {
+        img.onload = () => {
+          URL.revokeObjectURL(imgUrl);
+          resolve();
+        };
+        img.onerror = () => {
+          URL.revokeObjectURL(imgUrl);
+          reject(new Error("Failed to load image"));
+        };
+        img.src = imgUrl;
+      });
+
+      // Set canvas to paper size
+      const canvas = canvasRef.current;
+      canvas.width = alignedPaperWidthPx;
+      canvas.height = paperHeightPx;
+      const ctx = canvas.getContext("2d");
+      if (!ctx) throw new Error("Canvas context unavailable");
+      
+      console.log("Canvas setup:", { width: canvas.width, height: canvas.height });
+      console.log("Image dimensions:", { width: img.width, height: img.height });
+      console.log("Drawing at offset:", { offsetX, offsetY, scaledTemplateWidth, scaledTemplateHeight });
+      
+      // Fill with white background
+      ctx.fillStyle = "white";
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
+      
+      // Draw scaled and centered template
+      ctx.drawImage(img, offsetX, offsetY, scaledTemplateWidth, scaledTemplateHeight);
+      
+      console.log("Canvas drawing completed");
+      
+      // Update debug info with actual canvas dimensions
+      setDebugInfo(prev => prev ? { 
+        ...prev, 
+        canvasPx: `Canvas: ${canvas.width}×${canvas.height}px` 
+      } : null);
+
+      setStatus("preview");
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Failed to prepare label");
+      setStatus("error");
+    }
+  };
+
+  const handlePrint = async () => {
+    if (!clientRef.current || !canvasRef.current) {
+      setError("Printer not connected or canvas not ready");
+      return;
+    }
+
+    setStatus("printing");
+    setError(null);
+
+    try {
+      const client = clientRef.current;
+      const canvas = canvasRef.current;
+
+      // Encode for printer (ImageEncoder is a static class)
+      const modelMeta = client.getModelMetadata();
+      const printDirection = modelMeta?.printDirection || "left";
+      const encodedImage = ImageEncoder.encodeCanvas(canvas, printDirection);
+
+      // Create and execute print task
+      const printTaskType = client.getPrintTaskType() || "B1"; // Fallback to B1
+      const printTask = client.abstraction.newPrintTask(printTaskType, {
+        totalPages: 1,
+        density: 3,
+      });
+
+      await printTask.printInit();
+      await printTask.printPage(encodedImage, 1);
+      await printTask.waitForFinished();
+      await printTask.printEnd();
+
+      setStatus("preview");
+      onComplete?.();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Print failed");
+      setStatus("error");
+    }
+  };
+
+  return (
+    <Card>
+      <CardHeader>
+        <CardTitle>Niimbot Bluetooth Printer</CardTitle>
+        <CardDescription>
+          Connect and print directly to your Niimbot label printer
+        </CardDescription>
+      </CardHeader>
+      <CardContent className="space-y-4">
+        {loadingAssetTag && (
+          <div className="p-3 bg-muted rounded-md text-sm flex items-center gap-2">
+            <Loader2 className="h-4 w-4 animate-spin" />
+            Loading asset tag...
+          </div>
+        )}
+
+        {!loadingAssetTag && assetTag && !assetTag.printed_template && (
+          <Card className="border-yellow-500 bg-yellow-50 dark:bg-yellow-950">
+            <CardContent className="pt-4 text-yellow-800 dark:text-yellow-200 text-sm">
+              ⚠️ This asset tag has no template assigned. Please assign a template first.
+            </CardContent>
+          </Card>
+        )}
+
+        {error && (
+          <Card className="border-destructive">
+            <CardContent className="pt-4 text-destructive text-sm">
+              {error}
+            </CardContent>
+          </Card>
+        )}
+
+        {printerInfo && (
+          <div className="p-3 bg-muted rounded-md space-y-1 text-sm">
+            <div><strong>Model:</strong> {printerInfo.model}</div>
+            <div><strong>DPI:</strong> {printerInfo.dpi}</div>
+            <div><strong>Resolution:</strong> {printerInfo.resolution}</div>
+            {rfidInfo?.tagPresent && (
+              <>
+                <div><strong>Paper Remaining:</strong> {rfidInfo.allPaper - rfidInfo.usedPaper} / {rfidInfo.allPaper}</div>
+              </>
+            )}
+          </div>
+        )}
+
+        {printerInfo && (
+          <div className="p-3 bg-muted rounded-md space-y-2">
+            <Label className="text-sm font-semibold">Papiergröße (Label Size)</Label>
+            <div className="flex gap-4">
+              <label className="flex items-center gap-2 cursor-pointer">
+                <input
+                  type="radio"
+                  name="paperSize"
+                  value="50x30"
+                  checked={paperSize === "50x30"}
+                  onChange={(e) => setPaperSize(e.target.value as "50x30" | "50x40")}
+                  className="cursor-pointer"
+                />
+                <span className="text-sm">50×30mm</span>
+              </label>
+              <label className="flex items-center gap-2 cursor-pointer">
+                <input
+                  type="radio"
+                  name="paperSize"
+                  value="50x40"
+                  checked={paperSize === "50x40"}
+                  onChange={(e) => setPaperSize(e.target.value as "50x30" | "50x40")}
+                  className="cursor-pointer"
+                />
+                <span className="text-sm">50×40mm</span>
+              </label>
+            </div>
+          </div>
+        )}
+
+        {debugInfo && (
+          <div className="p-3 bg-blue-50 dark:bg-blue-950 rounded-md space-y-1 text-sm border border-blue-200 dark:border-blue-800">
+            <div className="font-semibold mb-2">Debug Information:</div>
+            <div><strong>Template:</strong> {debugInfo.templateMm}</div>
+            <div><strong>Paper:</strong> {debugInfo.calculatedPx}</div>
+            <div><strong>Aligned:</strong> {debugInfo.alignedPx}</div>
+            <div><strong>Scaled:</strong> {debugInfo.imgPx}</div>
+            {debugInfo.canvasPx && <div><strong>Canvas:</strong> {debugInfo.canvasPx}</div>}
+          </div>
+        )}
+
+        {/* Canvas - always mounted, visibility controlled by status */}
+        <div className={`border rounded-md p-3 bg-white dark:bg-gray-900 ${(status === "preview" || status === "printing") ? "" : "hidden"}`}>
+          <div className="text-sm font-semibold mb-2">Canvas Preview (will be sent to printer):</div>
+          <div className="overflow-auto max-h-96 border border-gray-300 dark:border-gray-700 rounded">
+            <canvas 
+              ref={canvasRef} 
+              className="max-w-full h-auto"
+            />
+          </div>
+        </div>
+
+        <div className="flex gap-2 flex-wrap">
+          {status === "disconnected" && (
+            <Button onClick={handleConnect}>
+              Connect Printer
+            </Button>
+          )}
+
+          {status === "connecting" && (
+            <Button disabled>
+              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+              Connecting...
+            </Button>
+          )}
+
+          {status === "fetching-specs" && (
+            <Button disabled>
+              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+              Fetching Printer Info...
+            </Button>
+          )}
+
+          {status === "ready" && (
+            <>
+              <Button 
+                onClick={handlePrepareLabel}
+                disabled={!assetTag?.printed_template || loadingAssetTag}
+              >
+                Prepare Label
+              </Button>
+              <Button variant="outline" onClick={handleDisconnect}>
+                Disconnect
+              </Button>
+            </>
+          )}
+
+          {status === "preparing" && (
+            <Button disabled>
+              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+              Preparing Label...
+            </Button>
+          )}
+
+          {status === "preview" && (
+            <>
+              <Button onClick={handlePrint}>
+                Send to Printer
+              </Button>
+              <Button variant="outline" onClick={() => setStatus("ready")}>
+                Back
+              </Button>
+              <Button variant="outline" onClick={handleDisconnect}>
+                Disconnect
+              </Button>
+            </>
+          )}
+
+          {status === "printing" && (
+            <Button disabled>
+              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+              Printing...
+            </Button>
+          )}
+
+          <Button variant="ghost" onClick={onCancel}>
+            Cancel
+          </Button>
+        </div>
+      </CardContent>
+    </Card>
+  );
+}

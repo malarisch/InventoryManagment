@@ -8,7 +8,7 @@ import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
-import { ContinuousQrScanner } from "@/components/camera/continuous-qr-scanner";
+import { FullscreenScanner, type AssignmentInfo } from "@/components/scanner/fullscreen-scanner";
 import { resolveAssetByCode, type ResolvedAsset } from "@/lib/scanner/resolve";
 import { performScannerAction, type ScannerMode, type ScannerActionResult } from "@/lib/scanner/actions";
 import { cn } from "@/lib/utils";
@@ -51,8 +51,11 @@ export function ScannerScreen({ initialMode, initialLocation, initialJob }: Scan
   const supabase = useMemo(() => createClient(), []);
 
   const [mode, setMode] = useState<ScannerMode | null>(initialMode ?? null);
+  const [scannerOpen, setScannerOpen] = useState(false);
   const [statusFeed, setStatusFeed] = useState<StatusEntry[]>([]);
+  const [assignmentInfo, setAssignmentInfo] = useState<AssignmentInfo | null>(null);
   const [targetLocation, setTargetLocation] = useState<{ id: number; name: string | null; companyId: number } | null>(initialLocation ?? null);
+  const [targetCase, setTargetCase] = useState<{ id: number; name?: string; companyId: number } | null>(null);
   const job = useMemo<JobLite | null>(
     () => (initialJob ? { id: initialJob.id, companyId: initialJob.companyId, name: initialJob.name ?? null } : null),
     [initialJob],
@@ -149,9 +152,38 @@ export function ScannerScreen({ initialMode, initialLocation, initialJob }: Scan
           return;
         }
 
+        // Lookup-Modus: Direkt zur Edit-Seite navigieren
+        if (activeMode === "lookup") {
+          if (resolved.kind === "equipment") {
+            router.push(`/management/equipments/${resolved.equipment.id}`);
+          } else if (resolved.kind === "case") {
+            router.push(`/management/cases/${resolved.case.id}`);
+          } else if (resolved.kind === "article") {
+            router.push(`/management/articles/${resolved.article.id}`);
+          } else if (resolved.kind === "location") {
+            router.push(`/management/locations/${resolved.location.id}`);
+          }
+          return;
+        }
+
         if (activeMode === "assign-location") {
+          // Case als Ziel scannen (allererster Scan)
+          if (resolved.kind === "case") {
+            setTargetCase({ id: resolved.case.id, companyId: resolved.companyId });
+            setTargetLocation(null); // Clear location when case is selected
+            pushStatus({
+              status: "info",
+              message: `Ziel-Case auf Case #${resolved.case.id} gesetzt. Scanne jetzt Equipment um es ins Case zu packen.`,
+              code,
+              link: { href: `/management/cases/${resolved.case.id}`, label: "Case öffnen" },
+            });
+            return;
+          }
+
+          // Location als Ziel scannen
           if (resolved.kind === "location") {
             setTargetLocation({ id: resolved.location.id, name: resolved.location.name ?? null, companyId: resolved.companyId });
+            setTargetCase(null); // Clear case when location is selected
             pushStatus({
               status: "info",
               message: `Zielstandort auf ${resolved.location.name ?? `#${resolved.location.id}`} gesetzt.`,
@@ -160,6 +192,97 @@ export function ScannerScreen({ initialMode, initialLocation, initialJob }: Scan
             });
             return;
           }
+
+          // Equipment ins Case packen
+          if (targetCase && resolved.kind === "equipment") {
+            if (resolved.companyId !== targetCase.companyId) {
+              pushStatus({
+                status: "error",
+                message: "Equipment gehört zu einer anderen Company als das Ziel-Case.",
+                code,
+              });
+              return;
+            }
+
+            // Fetch current case data to get contained_equipment array
+            const { data: caseData, error: caseError } = await supabase
+              .from("cases")
+              .select("contained_equipment")
+              .eq("id", targetCase.id)
+              .single();
+
+            if (caseError || !caseData) {
+              pushStatus({
+                status: "error",
+                message: "Case konnte nicht geladen werden.",
+                code,
+              });
+              return;
+            }
+
+            const currentContained = Array.isArray(caseData.contained_equipment) ? caseData.contained_equipment : [];
+            
+            // Check if equipment is already in case
+            if (currentContained.includes(resolved.equipment.id)) {
+              pushStatus({
+                status: "info",
+                message: `Equipment #${resolved.equipment.id} ist bereits in Case #${targetCase.id}.`,
+                code,
+                link: { href: `/management/equipments/${resolved.equipment.id}`, label: `Equipment #${resolved.equipment.id}` },
+              });
+              return;
+            }
+
+            // Add equipment to case and null its location
+            const { error: updateError } = await supabase
+              .from("cases")
+              .update({ contained_equipment: [...currentContained, resolved.equipment.id] })
+              .eq("id", targetCase.id);
+
+            if (updateError) {
+              pushStatus({
+                status: "error",
+                message: updateError.message || "Equipment konnte nicht zum Case hinzugefügt werden.",
+                code,
+              });
+              return;
+            }
+
+            // Null the equipment's location (it's now in the case)
+            const { error: equipError } = await supabase
+              .from("equipments")
+              .update({ current_location: null })
+              .eq("id", resolved.equipment.id);
+
+            if (equipError) {
+              pushStatus({
+                status: "error",
+                message: equipError.message || "Equipment-Standort konnte nicht aktualisiert werden.",
+                code,
+              });
+              return;
+            }
+
+            pushStatus({
+              status: "success",
+              message: `Equipment #${resolved.equipment.id} wurde in Case #${targetCase.id} gepackt.`,
+              code,
+              link: { href: `/management/equipments/${resolved.equipment.id}`, label: `Equipment #${resolved.equipment.id}` },
+            });
+
+            // Set assignment info for undo functionality
+            setAssignmentInfo({
+              entityType: "equipment",
+              entityId: resolved.equipment.id,
+              previousLocationId: resolved.equipment.current_location,
+              newLocationId: targetCase.id, // Use case ID as "location" for tracking
+              newLocationName: `Case #${targetCase.id}`,
+            });
+
+            return;
+          }
+
+          // Regular location assignment
           if (!ensureLocation()) return;
           if (targetLocation && resolved.companyId !== targetLocation.companyId) {
             pushStatus({
@@ -187,6 +310,35 @@ export function ScannerScreen({ initialMode, initialLocation, initialJob }: Scan
         });
 
         addResultToFeed(code, resolved, result);
+
+        // Track location assignments for feedback toast
+        if (activeMode === "assign-location" && result.status === "success" && targetLocation) {
+          if (resolved.kind === "equipment") {
+            setAssignmentInfo({
+              entityType: "equipment",
+              entityId: resolved.equipment.id,
+              previousLocationId: resolved.equipment.current_location,
+              newLocationId: targetLocation.id,
+              newLocationName: targetLocation.name ?? undefined,
+            });
+          } else if (resolved.kind === "case" && resolved.case.case_equipment) {
+            setAssignmentInfo({
+              entityType: "case",
+              entityId: resolved.case.id,
+              previousLocationId: resolved.case.case_equipment_equipment?.current_location ?? null,
+              newLocationId: targetLocation.id,
+              newLocationName: targetLocation.name ?? undefined,
+            });
+          } else if (resolved.kind === "article") {
+            setAssignmentInfo({
+              entityType: "article",
+              entityId: resolved.article.id,
+              previousLocationId: resolved.article.default_location,
+              newLocationId: targetLocation.id,
+              newLocationName: targetLocation.name ?? undefined,
+            });
+          }
+        }
       } catch (err) {
         console.error("Scanner failure", err);
         pushStatus({
@@ -196,7 +348,84 @@ export function ScannerScreen({ initialMode, initialLocation, initialJob }: Scan
         });
       }
     },
-    [mode, supabase, ensureLocation, ensureJob, targetLocation, job, pushStatus, addResultToFeed],
+    [mode, supabase, ensureLocation, ensureJob, targetLocation, targetCase, job, pushStatus, addResultToFeed, router],
+  );
+
+  const handleUndo = useCallback(
+    async (info: AssignmentInfo) => {
+      try {
+        if (info.entityType === "equipment") {
+          // Check if newLocationName indicates a case (starts with "Case #")
+          const isPackedInCase = info.newLocationName?.startsWith("Case #");
+          
+          if (isPackedInCase) {
+            // Extract case ID from newLocationId (we stored case ID there)
+            const caseId = info.newLocationId;
+            
+            // Remove equipment from case's contained_equipment array
+            const { data: caseData, error: fetchError } = await supabase
+              .from("cases")
+              .select("contained_equipment")
+              .eq("id", caseId)
+              .single();
+
+            if (fetchError) throw fetchError;
+
+            const currentContained = Array.isArray(caseData.contained_equipment) ? caseData.contained_equipment : [];
+            const updatedContained = currentContained.filter((id) => id !== info.entityId);
+
+            const { error: updateCaseError } = await supabase
+              .from("cases")
+              .update({ contained_equipment: updatedContained })
+              .eq("id", caseId);
+
+            if (updateCaseError) throw updateCaseError;
+          }
+
+          // Restore previous location
+          const { error } = await supabase
+            .from("equipments")
+            .update({ current_location: info.previousLocationId })
+            .eq("id", info.entityId);
+          if (error) throw error;
+        } else if (info.entityType === "case") {
+          // For cases, we need to get the case_equipment ID first
+          const { data: caseData } = await supabase
+            .from("cases")
+            .select("case_equipment")
+            .eq("id", info.entityId)
+            .single();
+          if (caseData?.case_equipment) {
+            const { error } = await supabase
+              .from("equipments")
+              .update({ current_location: info.previousLocationId })
+              .eq("id", caseData.case_equipment);
+            if (error) throw error;
+          }
+        } else if (info.entityType === "article") {
+          const { error } = await supabase
+            .from("articles")
+            .update({ default_location: info.previousLocationId })
+            .eq("id", info.entityId);
+          if (error) throw error;
+        }
+        
+        pushStatus({
+          status: "info",
+          message: "Standortzuweisung rückgängig gemacht.",
+          code: "—",
+        });
+        setAssignmentInfo(null);
+      } catch (err) {
+        console.error("Undo failed", err);
+        pushStatus({
+          status: "error",
+          message: err instanceof Error ? err.message : "Rückgängig machen fehlgeschlagen.",
+          code: "—",
+        });
+      }
+    },
+    [supabase, pushStatus],
   );
 
   const activeModeDefinition = MODE_DEFINITIONS.find((entry) => entry.mode === mode) ?? null;
@@ -279,7 +508,19 @@ export function ScannerScreen({ initialMode, initialLocation, initialJob }: Scan
         </section>
       ) : null}
 
-      <ContinuousQrScanner onScan={handleScan} className="mt-2" instructions="Code auf Höhe der Markierung halten" />
+      {/* Scanner starten Button */}
+      {mode && (
+        <section className="mt-6">
+          <Button
+            size="lg"
+            className="w-full h-16 text-lg"
+            onClick={() => setScannerOpen(true)}
+          >
+            <Scan className="mr-2 h-6 w-6" />
+            Scannen starten
+          </Button>
+        </section>
+      )}
 
       <section className="space-y-3">
         <h2 className="text-xl font-semibold">Verlauf</h2>
@@ -344,6 +585,7 @@ export function ScannerScreen({ initialMode, initialLocation, initialJob }: Scan
                     className="flex w-full flex-col items-start gap-1 px-3 py-2 text-left hover:bg-muted"
                     onClick={() => {
                       setTargetLocation({ id: location.id, name: location.name ?? null, companyId: location.company_id });
+                      setTargetCase(null); // Clear case when location is manually picked
                       setLocationPickerOpen(false);
                       setLocationSearch("");
                     }}
@@ -357,6 +599,28 @@ export function ScannerScreen({ initialMode, initialLocation, initialJob }: Scan
           </div>
         </DialogContent>
       </Dialog>
+
+      {/* Fullscreen Scanner */}
+      <FullscreenScanner
+        isOpen={scannerOpen}
+        onClose={() => {
+          setScannerOpen(false);
+          setAssignmentInfo(null);
+        }}
+        onScan={handleScan}
+        onUndo={handleUndo}
+        assignmentInfo={assignmentInfo}
+        title={activeModeDefinition?.label ?? "Scanner"}
+        instructions={
+          mode === "assign-location"
+            ? targetCase
+              ? `Ziel-Case: #${targetCase.id} - Scanne Equipment zum Einpacken`
+              : targetLocation
+                ? `Location: ${targetLocation.name ?? `#${targetLocation.id}`}`
+                : "Scanne Location oder Case als Ziel"
+            : "Code auf Höhe der Markierung halten"
+        }
+      />
     </div>
   );
 }
