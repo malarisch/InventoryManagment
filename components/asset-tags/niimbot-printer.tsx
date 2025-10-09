@@ -143,8 +143,8 @@ export function NiimbotPrinter({ assetTagId, onComplete, onCancel }: NiimbotPrin
       const widthPx = Math.round(template.tagWidthMm * mmToInch * dpi);
       const heightPx = Math.round(template.tagHeightMm * mmToInch * dpi);
       
-      // Fetch asset tag render as BMP at calculated dimensions
-      const renderUrl = `/api/asset-tags/${assetTagId}/render?format=bmp&width=${widthPx}&height=${heightPx}`;
+      // Fetch asset tag render as PNG at calculated dimensions
+      const renderUrl = `/api/asset-tags/${assetTagId}/render?format=png&width=${widthPx}&height=${heightPx}`;
       const response = await fetch(renderUrl);
       
       if (!response.ok) {

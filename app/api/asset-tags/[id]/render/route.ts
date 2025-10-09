@@ -121,16 +121,8 @@ export async function GET(req: NextRequest, context: { params: Promise<{ id: str
         imageBuffer = await sharpInstance.png().toBuffer();
         contentType = 'image/png';
         break;
-      case 'bmp':
-        imageBuffer = await (sharpInstance as unknown as { bmp: () => sharp.Sharp }).bmp().toBuffer();
-        contentType = 'image/bmp';
-        break;
-      case 'gif':
-        imageBuffer = await sharpInstance.gif().toBuffer();
-        contentType = 'image/gif';
-        break;
       default:
-        return new NextResponse('Invalid format', { status: 400 });
+        return new NextResponse('Invalid format. Supported: svg, png', { status: 400 });
     }
 
     return new NextResponse(new Uint8Array(imageBuffer), { headers: { 'Content-Type': contentType } });
