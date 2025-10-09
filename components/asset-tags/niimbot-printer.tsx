@@ -140,8 +140,11 @@ export function NiimbotPrinter({ assetTagId, onComplete, onCancel }: NiimbotPrin
       const template = assetTag.printed_template;
       const mmToInch = 1 / 25.4;
       const dpi = printerInfo.dpi || 203; // Fallback to 203 DPI
-      const widthPx = Math.round(template.tagWidthMm * mmToInch * dpi);
+      let widthPx = Math.round(template.tagWidthMm * mmToInch * dpi);
       const heightPx = Math.round(template.tagHeightMm * mmToInch * dpi);
+      
+      // Niimbot printers require width to be a multiple of 8
+      widthPx = Math.ceil(widthPx / 8) * 8;
       
       // Fetch asset tag render as PNG at calculated dimensions
       const renderUrl = `/api/asset-tags/${assetTagId}/render?format=png&width=${widthPx}&height=${heightPx}`;
