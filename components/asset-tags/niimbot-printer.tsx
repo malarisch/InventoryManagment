@@ -41,6 +41,7 @@ export function NiimbotPrinter({ assetTagId, onComplete, onCancel }: NiimbotPrin
   const [printerInfo, setPrinterInfo] = useState<{ model?: string; dpi?: number; resolution?: string } | null>(null);
   const [rfidInfo, setRfidInfo] = useState<RfidInfo | null>(null);
   const [assetTag, setAssetTag] = useState<AssetTag | null>(null);
+  const [loadingAssetTag, setLoadingAssetTag] = useState(true);
   const [debugInfo, setDebugInfo] = useState<{ 
     templateMm: string; 
     calculatedPx: string; 
@@ -56,12 +57,17 @@ export function NiimbotPrinter({ assetTagId, onComplete, onCancel }: NiimbotPrin
     // Load asset tag data
     const loadAssetTag = async () => {
       try {
+        setLoadingAssetTag(true);
         const response = await fetch(`/api/asset-tags/${assetTagId}`);
         if (!response.ok) throw new Error("Failed to load asset tag");
         const data = await response.json();
+        console.log("Loaded asset tag:", data);
+        console.log("Template exists:", !!data.printed_template);
         setAssetTag(data);
       } catch (err) {
         setError(err instanceof Error ? err.message : "Failed to load asset tag");
+      } finally {
+        setLoadingAssetTag(false);
       }
     };
 
@@ -145,8 +151,20 @@ export function NiimbotPrinter({ assetTagId, onComplete, onCancel }: NiimbotPrin
   };
 
   const handlePrepareLabel = async () => {
-    if (!printerInfo || !canvasRef.current || !assetTag?.printed_template) {
-      setError("Printer not ready or asset tag template missing");
+    if (!printerInfo) {
+      setError("Printer not connected or specs not fetched");
+      return;
+    }
+    if (!canvasRef.current) {
+      setError("Canvas element not ready");
+      return;
+    }
+    if (!assetTag) {
+      setError("Asset tag not loaded yet");
+      return;
+    }
+    if (!assetTag.printed_template) {
+      setError("Asset tag has no template assigned. Please assign a template to this asset tag first.");
       return;
     }
 
@@ -270,6 +288,21 @@ export function NiimbotPrinter({ assetTagId, onComplete, onCancel }: NiimbotPrin
         </CardDescription>
       </CardHeader>
       <CardContent className="space-y-4">
+        {loadingAssetTag && (
+          <div className="p-3 bg-muted rounded-md text-sm flex items-center gap-2">
+            <Loader2 className="h-4 w-4 animate-spin" />
+            Loading asset tag...
+          </div>
+        )}
+
+        {!loadingAssetTag && assetTag && !assetTag.printed_template && (
+          <Card className="border-yellow-500 bg-yellow-50 dark:bg-yellow-950">
+            <CardContent className="pt-4 text-yellow-800 dark:text-yellow-200 text-sm">
+              ⚠️ This asset tag has no template assigned. Please assign a template first.
+            </CardContent>
+          </Card>
+        )}
+
         {error && (
           <Card className="border-destructive">
             <CardContent className="pt-4 text-destructive text-sm">
@@ -337,7 +370,10 @@ export function NiimbotPrinter({ assetTagId, onComplete, onCancel }: NiimbotPrin
 
           {status === "ready" && (
             <>
-              <Button onClick={handlePrepareLabel}>
+              <Button 
+                onClick={handlePrepareLabel}
+                disabled={!assetTag?.printed_template || loadingAssetTag}
+              >
                 Prepare Label
               </Button>
               <Button variant="outline" onClick={handleDisconnect}>
