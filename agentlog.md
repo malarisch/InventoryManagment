@@ -1,3 +1,33 @@
+2025-10-09 02:30 — Scanner: Case-Packing in Location Mode
+- **User Request**:
+  - In Location mode, allow scanning a Case as the target (first scan)
+  - When Equipment is scanned after Case, pack it into the Case
+  - Set Equipment's current_location to NULL (indicating it's in the Case)
+- **Implementation**:
+  - **Added targetCase state**: tracks selected Case as packing target (id, name, companyId)
+  - **Case-as-Target Logic**: When Case scanned in assign-location mode, set as targetCase and clear targetLocation
+  - **Equipment Packing Flow**:
+    1. Check if equipment already in case's contained_equipment array
+    2. Add equipment ID to case's contained_equipment array
+    3. Set equipment's current_location to NULL
+    4. Show success toast with "Equipment #X in Case #Y gepackt"
+  - **Enhanced Undo**: When undoing case-packing:
+    * Remove equipment from case's contained_equipment array
+    * Restore equipment's previous location
+    * Detects case-packing by checking if newLocationName starts with "Case #"
+  - **Dynamic Instructions**: Scanner shows different instructions based on state:
+    * No target: "Scanne Location oder Case als Ziel"
+    * Case selected: "Ziel-Case: #X - Scanne Equipment zum Einpacken"
+    * Location selected: "Location: [name]"
+- Files: components/scanner/scanner-screen.tsx, agentlog.md
+- Technical Details:
+  - targetCase and targetLocation are mutually exclusive (one clears the other)
+  - Location picker dialog also clears targetCase when location manually selected
+  - Company boundary checks ensure equipment and case belong to same company
+  - Assignment toast tracks case ID in newLocationId field for undo functionality
+- Verification: npm run test:tsc ✅
+- Impact: Users can now pack equipment into cases directly via scanner, matching physical workflow
+
 2025-10-09 02:15 — Scanner: Overlay UI Cleanup & Assignment Feedback Toast
 - **User Request**:
   - Remove "Code manuell eingeben" button from camera overlay (already on previous page)
