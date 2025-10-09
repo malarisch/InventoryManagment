@@ -38,7 +38,12 @@ interface NiimbotPrinterProps {
 export function NiimbotPrinter({ assetTagId, onComplete, onCancel }: NiimbotPrinterProps) {
   const [status, setStatus] = useState<PrinterStatus>("disconnected");
   const [error, setError] = useState<string | null>(null);
-  const [printerInfo, setPrinterInfo] = useState<{ model?: string; dpi?: number; resolution?: string } | null>(null);
+  const [printerInfo, setPrinterInfo] = useState<{ 
+    model?: string; 
+    dpi?: number; 
+    resolution?: string;
+    printheadPixels?: number;
+  } | null>(null);
   const [rfidInfo, setRfidInfo] = useState<RfidInfo | null>(null);
   const [assetTag, setAssetTag] = useState<AssetTag | null>(null);
   const [loadingAssetTag, setLoadingAssetTag] = useState(true);
@@ -121,6 +126,7 @@ export function NiimbotPrinter({ assetTagId, onComplete, onCancel }: NiimbotPrin
         model: modelMeta.model,
         dpi: modelMeta.dpi,
         resolution: `${modelMeta.printheadPixels}px`,
+        printheadPixels: modelMeta.printheadPixels,
       });
 
       // Check for RFID label info if supported
@@ -173,26 +179,43 @@ export function NiimbotPrinter({ assetTagId, onComplete, onCancel }: NiimbotPrin
 
     try {
       const template = assetTag.printed_template;
-      const mmToInch = 1 / 25.4;
-      const dpi = printerInfo.dpi || 203; // Fallback to 203 DPI
-      const widthPxCalculated = Math.round(template.tagWidthMm * mmToInch * dpi);
-      const heightPxCalculated = Math.round(template.tagHeightMm * mmToInch * dpi);
+      const dpi = printerInfo.dpi || 203;
       
-      // Niimbot printers require width to be a multiple of 8
-      const widthPx = Math.ceil(widthPxCalculated / 8) * 8;
-      const heightPx = heightPxCalculated;
+      // Paper dimensions: width from printer, height from template
+      const paperWidthPx = printerInfo.printheadPixels || 384; // Fallback to 384px for D11
+      const mmToInch = 1 / 25.4;
+      const templateHeightPx = Math.round(template.tagHeightMm * mmToInch * dpi);
+      const paperHeightPx = templateHeightPx;
+      
+      // Align width to multiple of 8 (printer requirement)
+      const alignedPaperWidthPx = Math.ceil(paperWidthPx / 8) * 8;
+      
+      // Calculate template dimensions in pixels
+      const templateWidthPx = Math.round(template.tagWidthMm * mmToInch * dpi);
+      
+      // Calculate scale to fit template into paper while preserving aspect ratio
+      const scaleX = alignedPaperWidthPx / templateWidthPx;
+      const scaleY = paperHeightPx / templateHeightPx;
+      const scale = Math.min(scaleX, scaleY, 1); // Don't scale up, only down if needed
+      
+      const scaledTemplateWidth = Math.round(templateWidthPx * scale);
+      const scaledTemplateHeight = Math.round(templateHeightPx * scale);
+      
+      // Center the template on the paper
+      const offsetX = Math.round((alignedPaperWidthPx - scaledTemplateWidth) / 2);
+      const offsetY = Math.round((paperHeightPx - scaledTemplateHeight) / 2);
       
       // Store debug info
       setDebugInfo({
         templateMm: `${template.tagWidthMm}mm × ${template.tagHeightMm}mm`,
-        calculatedPx: `${widthPxCalculated}px × ${heightPxCalculated}px`,
-        alignedPx: `${widthPx}px × ${heightPx}px`,
+        calculatedPx: `Template: ${templateWidthPx}×${templateHeightPx}px, Paper: ${paperWidthPx}×${paperHeightPx}px`,
+        alignedPx: `Paper: ${alignedPaperWidthPx}×${paperHeightPx}px, Scale: ${(scale * 100).toFixed(1)}%`,
+        imgPx: `Scaled: ${scaledTemplateWidth}×${scaledTemplateHeight}px, Offset: (${offsetX}, ${offsetY})`,
         canvasPx: "", // Will be set after canvas is drawn
-        imgPx: "", // Will be set after image loads
       });
       
-      // Fetch asset tag render as PNG at calculated dimensions
-      const renderUrl = `/api/asset-tags/${assetTagId}/render?format=png&width=${widthPx}&height=${heightPx}`;
+      // Fetch template render at scaled dimensions
+      const renderUrl = `/api/asset-tags/${assetTagId}/render?format=png&width=${scaledTemplateWidth}&height=${scaledTemplateHeight}`;
       const response = await fetch(renderUrl);
       
       if (!response.ok) {
@@ -206,8 +229,6 @@ export function NiimbotPrinter({ assetTagId, onComplete, onCancel }: NiimbotPrin
       await new Promise<void>((resolve, reject) => {
         img.onload = () => {
           URL.revokeObjectURL(imgUrl);
-          // Update debug info with actual image dimensions
-          setDebugInfo(prev => prev ? { ...prev, imgPx: `${img.width}px × ${img.height}px` } : null);
           resolve();
         };
         img.onerror = () => {
@@ -217,21 +238,24 @@ export function NiimbotPrinter({ assetTagId, onComplete, onCancel }: NiimbotPrin
         img.src = imgUrl;
       });
 
-      // Draw to canvas
+      // Set canvas to paper size
       const canvas = canvasRef.current;
-      canvas.width = img.width;
-      canvas.height = img.height;
+      canvas.width = alignedPaperWidthPx;
+      canvas.height = paperHeightPx;
       const ctx = canvas.getContext("2d");
       if (!ctx) throw new Error("Canvas context unavailable");
       
+      // Fill with white background
       ctx.fillStyle = "white";
       ctx.fillRect(0, 0, canvas.width, canvas.height);
-      ctx.drawImage(img, 0, 0);
+      
+      // Draw scaled and centered template
+      ctx.drawImage(img, offsetX, offsetY, scaledTemplateWidth, scaledTemplateHeight);
       
       // Update debug info with actual canvas dimensions
       setDebugInfo(prev => prev ? { 
         ...prev, 
-        canvasPx: `${canvas.width}px × ${canvas.height}px` 
+        canvasPx: `Canvas: ${canvas.width}×${canvas.height}px` 
       } : null);
 
       setStatus("preview");
