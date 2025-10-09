@@ -1,3 +1,17 @@
+2025-10-09 14:45 — Niimbot Bluetooth Label Printer Integration
+- **User Request**: Integrate Niimbot Bluetooth label printer for direct printing from browser
+- **Library Integration**: Installed @mmote/niimbluelib, researched actual API via GitHub repo (Context7 docs showed low-level protocol only)
+- **Components Created**:
+  * **NiimbotPrinter**: Full Bluetooth printing workflow (connect → fetchPrinterInfo → getModelMetadata → rfidInfo → render BMP → encode canvas → print task)
+  * **AssetTagPrintDialog**: Dual-mode selection (Normal system dialog vs Niimbot Bluetooth)
+  * **AssetTagPrintButton**: Wrapper component with Printer icon
+- **API Extension**: Extended /api/asset-tags/[id]/render to accept width/height query params, uses sharp resize with 'contain' fit
+- **Dimension Calculation**: Loads asset_tag.printed_template, converts mm → pixels using printer DPI (e.g., 203 DPI), calculates exact bitmap size
+- **Print Buttons Added**: Equipment and Article detail pages now have "Drucken" button next to "Asset Tag anzeigen"
+- **Key API Corrections**: Fixed incorrect usage (PrinterModelId → PrinterModel, ImageEncoder is static class, abstraction.newPrintTask() not formPrintTask(), no Alert component)
+- **Files**: components/asset-tags/{niimbot-printer,asset-tag-print-dialog,asset-tag-print-button}.tsx, app/api/asset-tags/[id]/render/route.ts, app/management/{equipments,articles}/[id]/page.tsx
+- **Next**: Test with physical printer, add print buttons to Case/Location when they support asset tags
+
 2025-10-09 02:30 — Scanner: Case-Packing in Location Mode
 - **User Request**:
   - In Location mode, allow scanning a Case as the target (first scan)

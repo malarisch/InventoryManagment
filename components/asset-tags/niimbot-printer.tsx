@@ -11,6 +11,7 @@ import {
   type RfidInfo,
   type PrinterModelMeta
 } from "@mmote/niimbluelib";
+import type { AssetTagTemplate } from "@/components/asset-tag-templates/types";
 
 type PrinterStatus = 
   | "disconnected" 
@@ -20,13 +21,6 @@ type PrinterStatus =
   | "ready" 
   | "printing" 
   | "error";
-
-interface AssetTagTemplate {
-  width: number;
-  height: number;
-  unit?: string;
-  // ... other template fields
-}
 
 interface AssetTag {
   id: string;
@@ -146,8 +140,8 @@ export function NiimbotPrinter({ assetTagId, onComplete, onCancel }: NiimbotPrin
       const template = assetTag.printed_template;
       const mmToInch = 1 / 25.4;
       const dpi = printerInfo.dpi || 203; // Fallback to 203 DPI
-      const widthPx = Math.round(template.width * mmToInch * dpi);
-      const heightPx = Math.round(template.height * mmToInch * dpi);
+      const widthPx = Math.round(template.tagWidthMm * mmToInch * dpi);
+      const heightPx = Math.round(template.tagHeightMm * mmToInch * dpi);
       
       // Fetch asset tag render as BMP at calculated dimensions
       const renderUrl = `/api/asset-tags/${assetTagId}/render?format=bmp&width=${widthPx}&height=${heightPx}`;
