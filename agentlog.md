@@ -1,3 +1,21 @@
+2025-10-09 02:00 — Scanner: Fix AbortError with Initialization Guard
+- **Issue (AbortError during initialization)**:
+  - User reported "[Error] Scanner initialization error – AbortError: The operation was aborted"
+  - Occurred in lookup/Simple Scan mode at fullscreen-scanner.tsx:172
+  - Camera displayed but wouldn't scan
+- **Root Cause**:
+  - Auto-restart useEffect ran immediately on mount
+  - Conflicted with initialization useEffect trying to start scanner
+  - Both effects attempted to access camera simultaneously → AbortError
+- **Solution**:
+  - Added `isScannerReady` state (default: false)
+  - Set to `true` after successful scanner.start() and camera initialization
+  - Modified auto-restart useEffect to check `!isScannerReady` guard
+  - Added `isScannerReady` to dependency array of auto-restart effect
+- Files: components/scanner/fullscreen-scanner.tsx (lines 66, 171, 186, 200, 256), agentlog.md
+- Verification: npm run test:tsc ✅, npm run test:e2e scanner-fullscreen ✅ (14/14 passed)
+- Impact: Scanner initializes cleanly without camera access conflicts, auto-restart only activates after full initialization
+
 2025-10-09 01:45 — Scanner: Auto-Restart for Lost Video Stream
 - **Issue (scroll working, video still failing)**:
   - Video lost srcObject after scanning, causing black screen

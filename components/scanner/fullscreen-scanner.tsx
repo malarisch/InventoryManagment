@@ -63,6 +63,7 @@ export function FullscreenScanner({
   const [isFlashOn, setIsFlashOn] = useState<boolean>(false);
   const [manualCode, setManualCode] = useState<string>("");
   const [showManualEntry, setShowManualEntry] = useState(false);
+  const [isScannerReady, setIsScannerReady] = useState(false);
 
   const resetScanner = useCallback(() => {
     setError(null);
@@ -167,6 +168,8 @@ export function FullscreenScanner({
           if (availableCameras.length > 0) {
             setSelectedCamera(availableCameras[0]?.id ?? "");
           }
+          // Mark scanner as ready after successful initialization
+          setIsScannerReady(true);
         }
       } catch (err) {
         console.error("Scanner initialization error", err);
@@ -181,6 +184,7 @@ export function FullscreenScanner({
 
     return () => {
       isActive = false;
+      setIsScannerReady(false);
       if (scannerRef.current) {
         try {
           scannerRef.current.stop();
@@ -195,7 +199,8 @@ export function FullscreenScanner({
 
   // Ensure video element stays active and scanner keeps running
   useEffect(() => {
-    if (!isOpen || !videoRef.current) return;
+    // Only run auto-restart if scanner is fully initialized
+    if (!isOpen || !videoRef.current || !isScannerReady) return;
 
     const video = videoRef.current;
     let isRestartingScanner = false;
@@ -245,7 +250,7 @@ export function FullscreenScanner({
       clearInterval(checkInterval);
       document.removeEventListener("visibilitychange", handleVisibilityChange);
     };
-  }, [isOpen]);
+  }, [isOpen, isScannerReady]);
 
   const switchCamera = useCallback(
     async (cameraId: string) => {
