@@ -207,10 +207,10 @@ export function NiimbotPrinter({ assetTagId, onComplete, onCancel }: NiimbotPrin
       
       // Store debug info
       setDebugInfo({
-        templateMm: `${template.tagWidthMm}mm × ${template.tagHeightMm}mm`,
-        calculatedPx: `Template: ${templateWidthPx}×${templateHeightPx}px, Paper: ${paperWidthPx}×${paperHeightPx}px`,
-        alignedPx: `Paper: ${alignedPaperWidthPx}×${paperHeightPx}px, Scale: ${(scale * 100).toFixed(1)}%`,
-        imgPx: `Scaled: ${scaledTemplateWidth}×${scaledTemplateHeight}px, Offset: (${offsetX}, ${offsetY})`,
+        templateMm: `Template: ${template.tagWidthMm}mm × ${template.tagHeightMm}mm`,
+        calculatedPx: `Paper: ${paperWidthPx}px × ${paperHeightPx}px (from printer: ${printerInfo.printheadPixels}px width)`,
+        alignedPx: `Aligned Paper: ${alignedPaperWidthPx}px × ${paperHeightPx}px, Scale: ${(scale * 100).toFixed(1)}%`,
+        imgPx: `Template scaled: ${scaledTemplateWidth}px × ${scaledTemplateHeight}px, Offset: (${offsetX}, ${offsetY})`,
         canvasPx: "", // Will be set after canvas is drawn
       });
       
@@ -245,12 +245,18 @@ export function NiimbotPrinter({ assetTagId, onComplete, onCancel }: NiimbotPrin
       const ctx = canvas.getContext("2d");
       if (!ctx) throw new Error("Canvas context unavailable");
       
+      console.log("Canvas setup:", { width: canvas.width, height: canvas.height });
+      console.log("Image dimensions:", { width: img.width, height: img.height });
+      console.log("Drawing at offset:", { offsetX, offsetY, scaledTemplateWidth, scaledTemplateHeight });
+      
       // Fill with white background
       ctx.fillStyle = "white";
       ctx.fillRect(0, 0, canvas.width, canvas.height);
       
       // Draw scaled and centered template
       ctx.drawImage(img, offsetX, offsetY, scaledTemplateWidth, scaledTemplateHeight);
+      
+      console.log("Canvas drawing completed");
       
       // Update debug info with actual canvas dimensions
       setDebugInfo(prev => prev ? { 
@@ -351,31 +357,24 @@ export function NiimbotPrinter({ assetTagId, onComplete, onCancel }: NiimbotPrin
         {debugInfo && (
           <div className="p-3 bg-blue-50 dark:bg-blue-950 rounded-md space-y-1 text-sm border border-blue-200 dark:border-blue-800">
             <div className="font-semibold mb-2">Debug Information:</div>
-            <div><strong>Template Size:</strong> {debugInfo.templateMm}</div>
-            <div><strong>Calculated:</strong> {debugInfo.calculatedPx}</div>
-            <div><strong>Aligned (÷8):</strong> {debugInfo.alignedPx}</div>
-            {debugInfo.imgPx && <div><strong>Image Loaded:</strong> {debugInfo.imgPx}</div>}
-            {debugInfo.canvasPx && <div><strong>Canvas Size:</strong> {debugInfo.canvasPx}</div>}
+            <div><strong>Template:</strong> {debugInfo.templateMm}</div>
+            <div><strong>Paper:</strong> {debugInfo.calculatedPx}</div>
+            <div><strong>Aligned:</strong> {debugInfo.alignedPx}</div>
+            <div><strong>Scaled:</strong> {debugInfo.imgPx}</div>
+            {debugInfo.canvasPx && <div><strong>Canvas:</strong> {debugInfo.canvasPx}</div>}
           </div>
         )}
 
-        {/* Canvas Preview - show when we have content to display */}
-        {debugInfo && (status === "preview" || status === "printing") && (
-          <div className="border rounded-md p-3 bg-white dark:bg-gray-900">
-            <div className="text-sm font-semibold mb-2">Canvas Preview (will be sent to printer):</div>
-            <div className="overflow-auto max-h-96 border border-gray-300 dark:border-gray-700 rounded">
-              <canvas 
-                ref={canvasRef} 
-                className="max-w-full h-auto"
-              />
-            </div>
+        {/* Canvas - always mounted, visibility controlled by status */}
+        <div className={`border rounded-md p-3 bg-white dark:bg-gray-900 ${(status === "preview" || status === "printing") ? "" : "hidden"}`}>
+          <div className="text-sm font-semibold mb-2">Canvas Preview (will be sent to printer):</div>
+          <div className="overflow-auto max-h-96 border border-gray-300 dark:border-gray-700 rounded">
+            <canvas 
+              ref={canvasRef} 
+              className="max-w-full h-auto"
+            />
           </div>
-        )}
-
-        {/* Hidden canvas for initial rendering - always mounted so ref is available */}
-        {(status !== "preview" && status !== "printing") && (
-          <canvas ref={canvasRef} className="hidden" />
-        )}
+        </div>
 
         <div className="flex gap-2 flex-wrap">
           {status === "disconnected" && (
