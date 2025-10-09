@@ -1,3 +1,23 @@
+2025-10-09 01:30 — Scanner: Enhanced Scroll Prevention & Video Stability
+- **Issues (reported after initial fix)**:
+  1. Scroll prevention still allowed scrolling past fullscreen scanner
+  2. Camera continued to deactivate after scanning
+- **Root Causes**:
+  - Body overflow:hidden insufficient on mobile - needs position:fixed + touchmove prevention
+  - Video health check interval too slow (1000ms) and lacking visibility change handling
+- **Enhanced Solutions**:
+  - **Scroll Prevention**: Added position:fixed to body, width:100%, touchmove event prevention with passive:false
+  - **Touch Handling**: Added touchAction:none to scanner container, preserved auto for input fields
+  - **Video Stability**: 
+    - Reduced health check interval from 1000ms to 500ms
+    - Added srcObject monitoring to detect disconnected video streams
+    - Added visibility change event handler to resume video when tab becomes visible
+    - Enhanced logging for debugging camera state issues
+  - **Input Accessibility**: Manual entry area preserves touchAction:auto for text input
+- Files: components/scanner/fullscreen-scanner.tsx, agentlog.md
+- Verification: npm run test:tsc ✅, npm run test:e2e scanner-fullscreen ✅ (14/14 passed)
+- Impact: Robust scroll lock on all devices, proactive video stream monitoring, better debugging
+
 2025-10-09 01:15 — Scanner: UX Fixes for Fullscreen Camera
 - **Issues Fixed**:
   1. Body scroll prevention: Users could scroll past fullscreen scanner

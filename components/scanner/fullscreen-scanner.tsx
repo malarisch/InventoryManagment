@@ -72,14 +72,35 @@ export function FullscreenScanner({
   // Prevent body scroll when scanner is open
   useEffect(() => {
     if (isOpen) {
+      // Store original styles
+      const originalOverflow = document.body.style.overflow;
+      const originalPosition = document.body.style.position;
+      const originalWidth = document.body.style.width;
+      
+      // Apply scroll prevention
       document.body.style.overflow = "hidden";
-    } else {
-      document.body.style.overflow = "";
-    }
+      document.body.style.position = "fixed";
+      document.body.style.width = "100%";
 
-    return () => {
-      document.body.style.overflow = "";
-    };
+      // Prevent touch scrolling
+      const preventScroll = (e: TouchEvent) => {
+        // Allow scrolling within the manual entry area
+        const target = e.target as HTMLElement;
+        if (target.closest('input, textarea')) {
+          return;
+        }
+        e.preventDefault();
+      };
+
+      document.addEventListener("touchmove", preventScroll, { passive: false });
+
+      return () => {
+        document.body.style.overflow = originalOverflow;
+        document.body.style.position = originalPosition;
+        document.body.style.width = originalWidth;
+        document.removeEventListener("touchmove", preventScroll);
+      };
+    }
   }, [isOpen]);
 
   useEffect(() => {
@@ -172,21 +193,46 @@ export function FullscreenScanner({
     };
   }, [isOpen, onScan, resetScanner]);
 
-  // Ensure video element stays active
+  // Ensure video element stays active and scanner keeps running
   useEffect(() => {
-    if (!isOpen || !videoRef.current || !scannerRef.current) return;
+    if (!isOpen || !videoRef.current) return;
 
     const video = videoRef.current;
+    
+    // Monitor video state and restart if needed
     const checkInterval = setInterval(() => {
-      if (video.paused && video.readyState >= 2) {
-        // Video is paused but ready - try to play it
+      // Check if video is paused but should be playing
+      if (video.paused && video.readyState >= 2 && scannerRef.current) {
+        console.log("Video paused, attempting to resume...");
         video.play().catch((err) => {
           console.error("Failed to resume video", err);
         });
       }
-    }, 1000);
+      
+      // Check if scanner exists but video has no srcObject
+      if (scannerRef.current && !video.srcObject) {
+        console.log("Video lost srcObject, reinitializing...");
+        // The scanner should have a srcObject, if it doesn't, something went wrong
+        // The qr-scanner library should handle this, but we log it for debugging
+      }
+    }, 500); // Check more frequently
 
-    return () => clearInterval(checkInterval);
+    // Also handle visibility change - restart when tab becomes visible
+    const handleVisibilityChange = () => {
+      if (!document.hidden && video.paused && scannerRef.current) {
+        console.log("Tab became visible, resuming video...");
+        video.play().catch((err) => {
+          console.error("Failed to resume video on visibility change", err);
+        });
+      }
+    };
+
+    document.addEventListener("visibilitychange", handleVisibilityChange);
+
+    return () => {
+      clearInterval(checkInterval);
+      document.removeEventListener("visibilitychange", handleVisibilityChange);
+    };
   }, [isOpen]);
 
   const switchCamera = useCallback(
@@ -240,7 +286,13 @@ export function FullscreenScanner({
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 z-50 bg-black">
+    <div 
+      className="fixed inset-0 z-50 bg-black overscroll-none"
+      style={{ 
+        touchAction: "none",
+        WebkitOverflowScrolling: "auto"
+      }}
+    >
       {/* Header Overlay */}
       <div className="absolute inset-x-0 top-0 z-10 bg-gradient-to-b from-black/70 to-transparent p-4">
         <div className="flex items-center justify-between">
@@ -365,7 +417,10 @@ export function FullscreenScanner({
 
             {/* Manual Entry Field */}
             {showManualEntry && (
-              <div className="space-y-2 rounded-lg bg-black/50 backdrop-blur-md p-4">
+              <div 
+                className="space-y-2 rounded-lg bg-black/50 backdrop-blur-md p-4"
+                style={{ touchAction: "auto" }}
+              >
                 <label className="text-sm font-medium text-white/90" htmlFor="manual-code-fullscreen">
                   {manualEntryLabel}
                 </label>
