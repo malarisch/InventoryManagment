@@ -69,6 +69,19 @@ export function FullscreenScanner({
     lastScanRef.current = { code: "", timestamp: 0 };
   }, []);
 
+  // Prevent body scroll when scanner is open
+  useEffect(() => {
+    if (isOpen) {
+      document.body.style.overflow = "hidden";
+    } else {
+      document.body.style.overflow = "";
+    }
+
+    return () => {
+      document.body.style.overflow = "";
+    };
+  }, [isOpen]);
+
   useEffect(() => {
     if (!isOpen) return;
 
@@ -158,6 +171,23 @@ export function FullscreenScanner({
       }
     };
   }, [isOpen, onScan, resetScanner]);
+
+  // Ensure video element stays active
+  useEffect(() => {
+    if (!isOpen || !videoRef.current || !scannerRef.current) return;
+
+    const video = videoRef.current;
+    const checkInterval = setInterval(() => {
+      if (video.paused && video.readyState >= 2) {
+        // Video is paused but ready - try to play it
+        video.play().catch((err) => {
+          console.error("Failed to resume video", err);
+        });
+      }
+    }, 1000);
+
+    return () => clearInterval(checkInterval);
+  }, [isOpen]);
 
   const switchCamera = useCallback(
     async (cameraId: string) => {

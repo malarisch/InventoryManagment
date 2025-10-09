@@ -391,7 +391,11 @@ export function ScannerScreen({ initialMode, initialLocation, initialJob }: Scan
         onClose={() => setScannerOpen(false)}
         onScan={handleScan}
         title={activeModeDefinition?.label ?? "Scanner"}
-        instructions="Code auf Höhe der Markierung halten"
+        instructions={
+          mode === "assign-location" && targetLocation
+            ? `Location: ${targetLocation.name ?? `#${targetLocation.id}`}`
+            : "Code auf Höhe der Markierung halten"
+        }
       />
     </div>
   );

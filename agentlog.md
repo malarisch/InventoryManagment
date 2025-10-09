@@ -1,3 +1,17 @@
+2025-10-09 01:15 — Scanner: UX Fixes for Fullscreen Camera
+- **Issues Fixed**:
+  1. Body scroll prevention: Users could scroll past fullscreen scanner
+  2. Black camera after location scan: Video element stopped working after setting location in assign-location mode
+  3. Location name in instructions: Needed dynamic badge text showing selected location
+- **Solutions**:
+  - Added body overflow:hidden when fullscreen scanner is open (components/scanner/fullscreen-scanner.tsx)
+  - Added video health check that resumes paused video elements every second
+  - Made instructions prop dynamic based on mode and targetLocation (components/scanner/scanner-screen.tsx)
+  - In assign-location mode with location set: shows "Location: [name]" instead of generic instruction
+- Files: components/scanner/fullscreen-scanner.tsx, components/scanner/scanner-screen.tsx, tests/e2e/scanner-fullscreen.loggedin.spec.ts, agentlog.md
+- Verification: npm run test:tsc ✅, npm run test:e2e scanner-fullscreen ✅ (14/14 passed)
+- Impact: Fixed scroll leak, camera reliability improved, better user feedback in location mode
+
 2025-10-09 01:00 — Scanner: Fullscreen Camera Overhaul
 - **Changes**: Major redesign of scanner functionality with fullscreen camera experience
   - Created new FullscreenScanner component (components/scanner/fullscreen-scanner.tsx)

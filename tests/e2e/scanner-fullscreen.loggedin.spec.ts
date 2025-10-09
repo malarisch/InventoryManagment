@@ -173,6 +173,9 @@ test.describe("Scanner Location Mode", () => {
     await expect(page.getByRole("dialog")).toBeVisible();
     await expect(page.getByRole("heading", { name: "Standort auswählen" })).toBeVisible();
   });
+
+  // Note: Testing location name in scanner instructions requires pre-existing locations in test DB
+  // This is tested manually or in integration tests with proper fixtures
 });
 
 test.describe("Scanner Job Modes", () => {
