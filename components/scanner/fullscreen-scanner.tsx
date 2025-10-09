@@ -198,28 +198,40 @@ export function FullscreenScanner({
     if (!isOpen || !videoRef.current) return;
 
     const video = videoRef.current;
+    let isRestartingScanner = false;
     
-    // Monitor video state and restart if needed
-    const checkInterval = setInterval(() => {
+    // Monitor video state and restart scanner if needed
+    const checkInterval = setInterval(async () => {
+      // Check if video lost its srcObject (scanner stopped)
+      if (!video.srcObject && scannerRef.current && !isRestartingScanner) {
+        console.log("Video lost srcObject, restarting scanner...");
+        isRestartingScanner = true;
+        
+        try {
+          // Stop and restart the scanner
+          await scannerRef.current.stop();
+          await scannerRef.current.start();
+          console.log("Scanner successfully restarted");
+        } catch (err) {
+          console.error("Failed to restart scanner", err);
+        } finally {
+          isRestartingScanner = false;
+        }
+        return;
+      }
+      
       // Check if video is paused but should be playing
-      if (video.paused && video.readyState >= 2 && scannerRef.current) {
+      if (video.paused && video.readyState >= 2 && video.srcObject) {
         console.log("Video paused, attempting to resume...");
         video.play().catch((err) => {
           console.error("Failed to resume video", err);
         });
       }
-      
-      // Check if scanner exists but video has no srcObject
-      if (scannerRef.current && !video.srcObject) {
-        console.log("Video lost srcObject, reinitializing...");
-        // The scanner should have a srcObject, if it doesn't, something went wrong
-        // The qr-scanner library should handle this, but we log it for debugging
-      }
-    }, 500); // Check more frequently
+    }, 500); // Check frequently
 
     // Also handle visibility change - restart when tab becomes visible
-    const handleVisibilityChange = () => {
-      if (!document.hidden && video.paused && scannerRef.current) {
+    const handleVisibilityChange = async () => {
+      if (!document.hidden && video.paused && scannerRef.current && video.srcObject) {
         console.log("Tab became visible, resuming video...");
         video.play().catch((err) => {
           console.error("Failed to resume video on visibility change", err);

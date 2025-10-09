@@ -1,3 +1,22 @@
+2025-10-09 01:45 — Scanner: Auto-Restart for Lost Video Stream
+- **Issue (scroll working, video still failing)**:
+  - Video lost srcObject after scanning, causing black screen
+  - Log showed "Video lost srcObject, reinitializing..." repeatedly
+  - Camera only resumed when manually clicking camera switcher button
+- **Root Cause**:
+  - QR-Scanner stops/resets video stream after successful scan
+  - State updates from onScan callback trigger React re-renders
+  - Video element loses connection to camera stream (srcObject becomes null)
+  - Previous solution only logged the issue, didn't fix it
+- **Solution**:
+  - **Active Scanner Restart**: When srcObject is lost, explicitly call stop() then start() on scanner
+  - **Restart Guard**: Added isRestartingScanner flag to prevent concurrent restart attempts
+  - **Stream Verification**: Check for srcObject existence before attempting video.play()
+  - **Logging**: Enhanced logs to track restart lifecycle ("restarting..." → "successfully restarted")
+- Files: components/scanner/fullscreen-scanner.tsx, agentlog.md
+- Verification: npm run test:tsc ✅, npm run test:e2e scanner-fullscreen ✅ (14/14 passed)
+- Impact: Camera stream automatically recovers after each scan, no manual intervention needed
+
 2025-10-09 01:30 — Scanner: Enhanced Scroll Prevention & Video Stability
 - **Issues (reported after initial fix)**:
   1. Scroll prevention still allowed scrolling past fullscreen scanner
