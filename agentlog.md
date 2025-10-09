@@ -1,3 +1,19 @@
+2025-10-09 15:15 — Fix: Print Dialog UX und korrekte Druck-Dimensionen
+- **UX Issues Fixed**:
+  * Modal zu schmal → `sm:max-w-md` (448px) → `sm:max-w-lg` (512px)
+  * Button-Text überläuft → `whitespace-normal text-left` hinzugefügt
+  * Icons schrumpfen → `shrink-0` für Icons
+  * Beschreibungstexte gekürzt für bessere Lesbarkeit
+- **Proper Print Dimensions**: Neue `/api/asset-tags/[id]/print` Route
+  * HTML-Seite mit exakten `@page` Dimensionen aus Template (mm)
+  * CSS: `size: {width}mm {height}mm` + `margin: 0`
+  * SVG embedded mit 100% width/height für perfekten Fit
+  * Print-Button + optionales Auto-Print nach 500ms
+  * Verwendet `tagWidthMm` und `tagHeightMm` aus AssetTagTemplate
+- **Property Name Fixes**: template.width/height → tagWidthMm/tagHeightMm in allen Components
+- **Normal Print Flow**: Öffnet jetzt druckoptimierte HTML-Seite statt raw SVG
+- **Files**: app/api/asset-tags/[id]/print/route.ts (neu), components/asset-tags/{asset-tag-print-dialog,niimbot-printer}.tsx
+
 2025-10-09 14:45 — Niimbot Bluetooth Label Printer Integration
 - **User Request**: Integrate Niimbot Bluetooth label printer for direct printing from browser
 - **Library Integration**: Installed @mmote/niimbluelib, researched actual API via GitHub repo (Context7 docs showed low-level protocol only)
