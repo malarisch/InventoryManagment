@@ -16,14 +16,27 @@ export type FileEntry = {
   public?: boolean;
 };
 
-/** Type guard to validate a potential FileEntry at runtime. */
+/**
+ * Type guard to validate a potential FileEntry at runtime.
+ * 
+ * @param x - Unknown value to check
+ * @returns True if x is a valid FileEntry with required id and link strings
+ */
 export function isFileEntry(x: unknown): x is FileEntry {
   if (!x || typeof x !== 'object') return false;
   const obj = x as Record<string, unknown>;
   return typeof obj.id === 'string' && typeof obj.link === 'string';
 }
 
-/** Normalize any unknown value into a FileEntry[] (dropping invalid items). */
+/**
+ * Normalize any unknown value into a FileEntry[] (dropping invalid items).
+ * 
+ * Filters out any entries that don't match the FileEntry shape. Used when
+ * reading the files JSONB column from the database.
+ * 
+ * @param value - Unknown value (typically from JSON column)
+ * @returns Array of valid FileEntry objects (may be empty)
+ */
 export function normalizeFileArray(value: unknown): FileEntry[] {
   if (!Array.isArray(value)) return [];
   return value.filter(isFileEntry) as FileEntry[];

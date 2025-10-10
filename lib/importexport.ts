@@ -36,6 +36,16 @@ type TransactionalPrisma = Omit<PrismaClient<Prisma.PrismaClientOptions, never, 
 
 type CompanyData = Prisma.PromiseReturnType<typeof getCompanyData>
 
+/**
+ * Export complete company data including all related entities.
+ * 
+ * Retrieves a company and all its associated records (articles, equipment,
+ * locations, jobs, users, history, etc.) using Prisma include. Returns nested
+ * structure suitable for JSON serialization and import.
+ * 
+ * @param companyId - String representation of company ID
+ * @returns Complete company object with all relations, or null if not found
+ */
 export async function getCompanyData(companyId: string) {
     return prisma.companies.findUnique({
         where: {id: BigInt(companyId)},
@@ -64,6 +74,19 @@ export async function getCompanyData(companyId: string) {
 }
 
 
+/**
+ * Import company data under a new company and user ownership.
+ * 
+ * Creates a new company with all related entities from exported data. Always
+ * creates a fresh company (never updates existing). Handles ID mapping for
+ * foreign keys, preserves metadata, and establishes user membership. Wrapped
+ * in a transaction to ensure atomicity.
+ * 
+ * @param companyData - Complete company export from getCompanyData
+ * @param newUser - User ID that will own the imported company
+ * @returns The newly created company record
+ * @throws Error if company data is missing or transaction fails
+ */
 export async function importCompanyData(companyData: CompanyData, newUser: string) {
     // Start a transaction to ensure data integrity
     return prisma.$transaction(async (prisma: TransactionalPrisma) => {

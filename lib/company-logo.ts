@@ -2,7 +2,13 @@ import { normalizeFileArray } from "@/lib/files";
 
 /**
  * Extract the company logo URL from company data.
- * First checks metadata.logoUrl, then falls back to searching files array for logo images.
+ * 
+ * First checks metadata.logoUrl for an explicit logo URL, then falls back to
+ * searching the files array for public images that appear to be logos based on
+ * naming conventions or being the only public image.
+ * 
+ * @param company - Company record with optional files and metadata properties
+ * @returns Public URL to the logo image, or null if no logo is found
  */
 export function getCompanyLogo(company: { files?: unknown; metadata?: unknown } | null): string | null {
   if (!company) return null;

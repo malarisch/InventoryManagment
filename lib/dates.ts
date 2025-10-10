@@ -13,6 +13,13 @@ const DATE_LOCALES: Record<string, Locale> = {
 /**
  * Parse strings coming from the database into Date instances while handling
  * common inconsistencies (missing "T" separator or timezone information).
+ * 
+ * Handles various date string formats from PostgreSQL, including those missing
+ * the ISO 8601 "T" separator or timezone indicators. Forces UTC interpretation
+ * when no timezone is present to prevent local offset drift.
+ * 
+ * @param input - Date string from database (ISO 8601 format expected)
+ * @returns Parsed Date object, or null if input is invalid/empty
  */
 export function safeParseDate(input?: string | null): Date | null {
   if (!input) return null;
@@ -31,6 +38,13 @@ export function safeParseDate(input?: string | null): Date | null {
 
 /**
  * Format a date-only value using either date-fns locales or Intl fallback.
+ * 
+ * Formats dates in short format (dd.MM.yy for German locale). Falls back to
+ * Intl.DateTimeFormat if the requested locale isn't bundled in DATE_LOCALES.
+ * 
+ * @param d - Date object to format
+ * @param locale - BCP 47 locale string (default: "de-DE")
+ * @returns Formatted date string, or "—" if date is null/invalid
  */
 export function formatDate(d?: Date | null, locale: string = "de-DE"): string {
   if (!d) return "—";
@@ -51,6 +65,13 @@ export function formatDate(d?: Date | null, locale: string = "de-DE"): string {
 
 /**
  * Format a date-time value using either date-fns locales or Intl fallback.
+ * 
+ * Formats date and time with seconds (dd.MM.yyyy HH:mm:ss for German locale).
+ * Falls back to Intl.DateTimeFormat if the requested locale isn't bundled.
+ * 
+ * @param d - Date object to format
+ * @param locale - BCP 47 locale string (default: "de-DE")
+ * @returns Formatted date-time string, or "—" if date is null/invalid
  */
 export function formatDateTime(d?: Date | null, locale: string = "de-DE"): string {
   if (!d) return "—";

@@ -3,6 +3,12 @@ import { twMerge } from "tailwind-merge";
 
 /**
  * Merge conditional Tailwind class lists while resolving conflicts.
+ * 
+ * Combines multiple class name strings/conditionals using clsx and then
+ * deduplicates with tailwind-merge to ensure proper Tailwind precedence.
+ * 
+ * @param inputs - Class values (strings, objects, arrays) to merge
+ * @returns Merged and deduplicated class string
  */
 export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));

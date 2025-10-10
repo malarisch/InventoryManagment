@@ -20,6 +20,13 @@ export const USER_DISPLAY_META_KEYS = [
 
 /**
  * Return the first non-empty string value for any key in order.
+ * 
+ * Iterates through the provided keys array and returns the first value found
+ * that is a non-empty string. Used to extract display names from user metadata.
+ * 
+ * @param meta - User metadata object from auth.users.raw_user_meta_data
+ * @param keys - Array of metadata keys to check in priority order
+ * @returns First non-empty string value found, or undefined if none exist
  */
 export function pickFirstString(meta: Record<string, unknown>, keys: readonly string[]): string | undefined {
   for (const key of keys) {
@@ -33,8 +40,15 @@ export function pickFirstString(meta: Record<string, unknown>, keys: readonly st
 
 /**
  * Resolve a human-friendly display string for a given user id using the
- * provided Supabase client. Prefers profile metadata values, falls back to
- * email and finally null when nothing is available.
+ * provided Supabase client.
+ * 
+ * Prefers display name from user metadata (display_name, name, full_name, etc.),
+ * falls back to email address, and returns null when nothing is available.
+ * Uses the provided Supabase client which must have appropriate RLS access.
+ * 
+ * @param supabase - Supabase client instance (must have access to auth schema)
+ * @param id - User ID to look up
+ * @returns User's display name, email, or null if user not found
  */
 export async function fetchUserDisplay(supabase: SupabaseClient, id?: string | null): Promise<string | null> {
   if (!id) return null;
@@ -60,6 +74,12 @@ export async function fetchUserDisplay(supabase: SupabaseClient, id?: string | n
 /**
  * Derive a readable fallback display value from a UUID when user labels are
  * unavailable.
+ * 
+ * Creates a shortened representation of a UUID in format "#1234…5678" for
+ * display when full user information cannot be retrieved.
+ * 
+ * @param id - User UUID string
+ * @returns Shortened display format (#first4…last4), original string if short, or null if empty
  */
 export function fallbackDisplayFromId(id?: string | null): string | null {
   if (!id) return null;

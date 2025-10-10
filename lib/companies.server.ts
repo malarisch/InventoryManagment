@@ -3,8 +3,13 @@ import { createClient as createServerClient } from "@/lib/supabase/server";
 
 /**
  * Get the active company ID from cookie (server-side only).
- * Returns null if no cookie is set or if the user doesn't have access to that company.
- * Should be called from Server Components or API Routes.
+ * 
+ * Retrieves the currently selected company ID from the active_company_id cookie.
+ * If no cookie is set, attempts to find the first available company through
+ * membership or ownership. Verifies user has access to the company via RLS.
+ * 
+ * @returns Company ID number if found and user has access, null otherwise
+ * @throws Never - returns null on any error
  */
 export async function getActiveCompanyId(): Promise<number | null> {
   const cookieStore = await cookies();

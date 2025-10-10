@@ -1,3 +1,15 @@
+2025-10-10 (Today) — TSDoc: Add comprehensive function documentation
+- **Function Documentation Added** (TSDoc-style with @param, @returns, @throws):
+  * Root lib/ files (7 files): companies.ts, company-logo.ts, dates.ts, files.ts, log.ts, userDisplay.ts, utils.ts
+  * companies.server.ts: getActiveCompanyId with cookie/RLS verification flow
+  * asset-tags/: auto-create (createAndAttachAssetTag), code.ts (buildAssetTagCode, defaultTemplateId)
+  * metadata/builders.ts: buildCustomerMetadata, buildEquipmentMetadata, buildAdminCompanyMetadata
+  * importexport.ts: getCompanyData, importCompanyData with transaction details
+- **Documentation Coverage**: 20+ functions now have complete parameter/return documentation
+- **Quality**: All functions include purpose, parameter descriptions, return values, and error conditions
+- **Verification**: `npm run test:tsc` ✅ passed
+- **Files**: 14 lib/ files updated with TSDoc comments, agentlog.md
+
 2025-10-10 (Today) — Chore: Repository cleanup and documentation
 - **Cleanup Tasks**:
   * Removed unused `supabase/config_noseed.toml` (duplicate config with seed paths commented out, not referenced)

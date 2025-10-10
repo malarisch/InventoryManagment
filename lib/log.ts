@@ -1,6 +1,13 @@
 /**
  * Minimal logging helper with optional Logflare forwarding.
- * If LOGFLARE_SOURCE and LOGFLARE_API_KEY are not set, falls back to console.
+ * 
+ * Sends events to Logflare if LOGFLARE_SOURCE and LOGFLARE_API_KEY env vars
+ * are set. Otherwise falls back to console.info. All errors are silently
+ * swallowed to prevent logging issues from breaking application flow.
+ * 
+ * @param event - Event name/identifier
+ * @param payload - Optional event data to include
+ * @returns Promise that resolves when logging completes (or fails silently)
  */
 export async function logEvent(event: string, payload?: Record<string, unknown>) {
   try {

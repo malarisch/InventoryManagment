@@ -2,10 +2,13 @@ import type { CustomerMetadata, EquipmentMetadata, adminCompanyMetadata } from "
 import { defaultCustomerMetadataDE, defaultEquipmentMetadataDE, defaultAdminCompanyMetadataDE } from "@/lib/metadata/defaults";
 
 /**
- * buildCustomerMetadata
- *
  * Merge provided partial customer metadata with project defaults.
- * Ensures stable shape and default values for downstream storage.
+ * 
+ * Ensures stable shape and default values for downstream storage by filling
+ * in any missing fields with defaults from defaultCustomerMetadataDE.
+ * 
+ * @param input - Partial customer metadata from form/user input
+ * @returns Complete CustomerMetadata object with all fields populated
  */
 export function buildCustomerMetadata(input: Partial<CustomerMetadata>): CustomerMetadata {
   return {
@@ -19,10 +22,13 @@ export function buildCustomerMetadata(input: Partial<CustomerMetadata>): Custome
 }
 
 /**
- * buildEquipmentMetadata
- *
- * Merge provided partial equipment metadata with project defaults. Preserves nested
- * structures like power and ensures typed return value.
+ * Merge provided partial equipment metadata with project defaults.
+ * 
+ * Preserves nested structures like power specs and case configuration while
+ * ensuring typed return value. Handles null input gracefully.
+ * 
+ * @param input - Partial equipment metadata from form/user input
+ * @returns Complete EquipmentMetadata object with all fields populated
  */
 export function buildEquipmentMetadata(input: Partial<EquipmentMetadata>): EquipmentMetadata {
   // Handle null input
@@ -44,10 +50,13 @@ export function buildEquipmentMetadata(input: Partial<EquipmentMetadata>): Equip
 }
 
 /**
- * buildAdminCompanyMetadata
- *
  * Normalize and fill missing fields for company admin metadata using defaults.
- * This function carefully merges nested `standardData` and `customTypes`.
+ * 
+ * Carefully merges nested `standardData` and `customTypes` while preserving
+ * existing values. Ensures all required company settings fields are present.
+ * 
+ * @param input - Partial company metadata from form/user input
+ * @returns Complete adminCompanyMetadata object with all fields populated
  */
 export function buildAdminCompanyMetadata(input: Partial<adminCompanyMetadata>): adminCompanyMetadata {
   const base = defaultAdminCompanyMetadataDE;

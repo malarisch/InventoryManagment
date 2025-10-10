@@ -2,18 +2,29 @@ import type {adminCompanyMetadata, asset_tag_template_print} from "@/components/
 
 export type AssetTagEntityType = "article" | "equipment" | "case" | "location";
 
+interface PlaceholderData {
+  [key: string]: string;
+}
+
 /**
  * Build a printed_code for an asset tag using company-wide and entity-specific prefixes.
+ * 
+ * Generates human-readable asset tag codes by combining company prefix, entity prefix,
+ * and ID number. Supports custom templates with placeholder substitution.
+ * 
  * Format examples:
  *  - company + entity: ACME-EQ-42
  *  - only company: ACME-42
  *  - only entity: EQ-42
  *  - none: 42
+ * 
+ * @param meta - Company metadata containing prefix configuration
+ * @param entity - Type of entity (article, equipment, case, location)
+ * @param id - Numeric ID of the entity
+ * @param template - Optional template with custom string format and placeholders
+ * @param placeholders - Optional additional placeholder values for template substitution
+ * @returns Generated asset tag code string
  */
-
-interface PlaceholderData {
-  [key: string]: string;
-}
 export function buildAssetTagCode(
   meta: adminCompanyMetadata,
   entity: AssetTagEntityType,
@@ -70,7 +81,13 @@ export function buildAssetTagCode(
   return `${parts.join("-")}-${id}`;
 }
 
-/** Determine default template id for given entity type from company metadata. */
+/**
+ * Determine default template id for given entity type from company metadata.
+ * 
+ * @param meta - Company metadata containing default template configuration
+ * @param entity - Type of entity to get template for
+ * @returns Template ID if configured, undefined otherwise
+ */
 export function defaultTemplateId(meta: adminCompanyMetadata, entity: AssetTagEntityType): number | undefined {
   switch (entity) {
     case "article": return meta.defaultArticleAssetTagTemplateId;

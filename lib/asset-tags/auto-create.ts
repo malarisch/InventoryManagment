@@ -3,9 +3,22 @@ import type { adminCompanyMetadata } from "@/components/metadataTypes.types";
 import { createClient } from "@/lib/supabase/client";
 
 /**
- * createAndAttachAssetTag
- * Creates an asset tag using a template and updates the target entity row with the new asset_tag id.
- * Assumes RLS permits current user for company scope.
+ * Create an asset tag and attach it to an entity.
+ * 
+ * Creates a new asset_tags record with generated code and template reference,
+ * then updates the target entity (article/equipment/case/location) to reference
+ * the new tag. Assumes RLS permits current user for company scope.
+ * 
+ * @param params - Configuration object
+ * @param params.companyId - Company ID for multi-tenant scoping
+ * @param params.userId - User ID to set as created_by
+ * @param params.entity - Entity type (article, equipment, case, location)
+ * @param params.entityId - ID of the entity to attach tag to
+ * @param params.table - Database table name matching entity type
+ * @param params.templateId - Asset tag template to use for printing
+ * @param params.companyMeta - Company metadata for prefix generation
+ * @returns The ID of the newly created asset tag
+ * @throws Error if tag creation or entity update fails
  */
 export async function createAndAttachAssetTag(params: {
   companyId: number;
