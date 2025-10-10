@@ -1,3 +1,14 @@
+2025-10-10 (Today) — UX: Reorder article edit page buttons to match equipment layout
+- **User Request**: Move "Gespeichert" verification message positioning to match equipment page
+- **Changes**:
+  * Moved Asset Tag Print/View buttons from right side to left side (with other action buttons)
+  * Status feedback span now appears at end of all buttons (after Asset Tag actions)
+  * "Equipment hinzufügen" button remains isolated on right side as secondary action
+- **Final Layout**: Left (Delete, Asset Tag Create, Save, Asset Tag Print/View, Status) / Right (Equipment Add)
+- **Consistency**: Now perfectly matches equipment edit page button ordering and grouping
+- **Verification**: `npm run test:tsc` ✅ passed
+- **Files**: app/management/articles/[id]/page.tsx, agentlog.md
+
 2025-10-10 (Today) — UX: Move "Speichern" button to top card in article edit page
 - **User Request**: Align article edit page layout with equipment edit page
 - **Changes**:

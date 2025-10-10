@@ -99,16 +99,6 @@ export default async function ArticleDetailPage({ params }: { params: Promise<{ 
                 <Button type="submit" form={ARTICLE_EDIT_FORM_ID}>
                   Speichern
                 </Button>
-                <span
-                  id={ARTICLE_EDIT_STATUS_ID}
-                  aria-live="polite"
-                  className="min-h-[1.25rem] text-sm text-muted-foreground"
-                />
-              </div>
-              <div className="flex items-center gap-2">
-                <Button asChild variant="secondary">
-                  <Link href={`/management/equipments/new?articleId=${article.id}`}>Equipment hinzufügen</Link>
-                </Button>
                 {article.asset_tag && (
                   <>
                     <AssetTagPrintButton assetTagId={article.asset_tag} />
@@ -119,6 +109,16 @@ export default async function ArticleDetailPage({ params }: { params: Promise<{ 
                     </Button>
                   </>
                 )}
+                <span
+                  id={ARTICLE_EDIT_STATUS_ID}
+                  aria-live="polite"
+                  className="min-h-[1.25rem] text-sm text-muted-foreground"
+                />
+              </div>
+              <div className="flex items-center gap-2">
+                <Button asChild variant="secondary">
+                  <Link href={`/management/equipments/new?articleId=${article.id}`}>Equipment hinzufügen</Link>
+                </Button>
               </div>
             </div>
           </CardContent>
