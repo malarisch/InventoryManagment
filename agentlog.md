@@ -1,3 +1,12 @@
+2025-10-10 (Today) — UX: Remove duplicate status feedback from article edit form
+- **User Report**: "Die 'Gespeichert' Rückmeldung ist noch immer unten auf der Article Seite"
+- **Root Cause**: Status span existed in BOTH page.tsx (correct) and article-edit-form.tsx (duplicate)
+- **Solution**: Removed status span from form component, added statusElementId prop pattern like equipment form
+- **Implementation**: Form manages saving/message/error state, updates external element via useEffect + DOM manipulation
+- **Result**: Status feedback now appears only once - in top card next to save button
+- **Files**: components/forms/article-edit-form.tsx, app/management/articles/[id]/page.tsx
+- **Verification**: `npm run test:tsc` ✅ passed
+
 2025-10-10 (Today) — UX: Reorder article edit page buttons to match equipment layout
 - **User Request**: Move "Gespeichert" verification message positioning to match equipment page
 - **Changes**:
