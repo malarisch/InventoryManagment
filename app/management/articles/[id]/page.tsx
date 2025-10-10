@@ -125,7 +125,7 @@ export default async function ArticleDetailPage({ params }: { params: Promise<{ 
         </Card>
 
         {/* Form Cards now at top level (no nesting inside another Card) */}
-        <ArticleEditForm article={article} />
+        <ArticleEditForm article={article} statusElementId={ARTICLE_EDIT_STATUS_ID} />
 
         <Card>
           <CardHeader>

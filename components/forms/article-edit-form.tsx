@@ -20,7 +20,13 @@ type Contact = Tables<"contacts">;
 export const ARTICLE_EDIT_FORM_ID = "article-edit-form";
 export const ARTICLE_EDIT_STATUS_ID = "article-edit-status";
 
-export function ArticleEditForm({ article }: { article: Article }) {
+type ArticleEditFormProps = {
+  article: Article;
+  onStatusChange?: (status: { saving: boolean; message: string | null; error: string | null }) => void;
+  statusElementId?: string;
+};
+
+export function ArticleEditForm({ article, onStatusChange, statusElementId }: ArticleEditFormProps) {
   const supabase = useMemo(() => createClient(), []);
   const [name, setName] = useState<string>(article.name ?? "");
   const [defaultLocation, setDefaultLocation] = useState<number | "">(article.default_location ?? "");
@@ -62,6 +68,28 @@ export function ArticleEditForm({ article }: { article: Article }) {
       active = false;
     };
   }, [supabase, article.company_id]);
+
+  // Mirror status updates into the external aria-live region used by the save button.
+  useEffect(() => {
+    if (!statusElementId) return;
+    const el = document.getElementById(statusElementId);
+    if (!el) return;
+    const text = error ?? message ?? "";
+    el.classList.remove("text-green-600", "text-red-600", "text-muted-foreground");
+    if (error) {
+      el.classList.add("text-red-600");
+    } else if (message) {
+      el.classList.add("text-green-600");
+    } else {
+      el.classList.add("text-muted-foreground");
+    }
+    el.textContent = text;
+  }, [statusElementId, message, error]);
+
+  // Notify parent of status changes
+  useEffect(() => {
+    onStatusChange?.({ saving, message, error });
+  }, [saving, message, error, onStatusChange]);
 
   useEffect(() => {
     let active = true;
@@ -267,16 +295,6 @@ export function ArticleEditForm({ article }: { article: Article }) {
       </Card>
 
       <div className="md:col-span-12 grid grid-cols-1 gap-6">{metadataCards}</div>
-
-      <span
-        id={ARTICLE_EDIT_STATUS_ID}
-        aria-live="polite"
-        className="md:col-span-12 min-h-[1.25rem] text-sm"
-      >
-        {saving && <span className="text-muted-foreground">Speichern…</span>}
-        {message && <span className="text-green-600">{message}</span>}
-        {error && <span className="text-red-600">{error}</span>}
-      </span>
 
       <ContactFormDialog
         open={contactDialogOpen}

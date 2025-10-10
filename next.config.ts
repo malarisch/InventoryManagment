@@ -8,7 +8,7 @@ const nextConfig: NextConfig = {
   typescript: {
     tsconfigPath: (process.env.NODE_ENV == 'production' ? './tsconfig.build.json' : "./tsconfig.json"),
   },
-  
+  allowDevOrigins: ["localhost", "127.0.0.1", "192.168.178.57", "mac-mini-von-mala.local"],
   images: {
     remotePatterns: [
       {
