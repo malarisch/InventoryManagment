@@ -1,3 +1,11 @@
+/**
+ * Next.js middleware for Supabase session management.
+ * 
+ * Updates Supabase auth session cookies on each request and handles auth
+ * refresh tokens. Must be used in middleware.ts at the project root.
+ * 
+ * @module lib/supabase/middleware
+ */
 import { createServerClient } from "@supabase/ssr";
 import { NextResponse, type NextRequest } from "next/server";
 import { hasEnvVars } from "../utils";

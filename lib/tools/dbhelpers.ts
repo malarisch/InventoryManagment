@@ -1,3 +1,12 @@
+/**
+ * Database test helpers for Playwright E2E tests.
+ * 
+ * Provides utilities to seed test data (companies, articles, equipment, users),
+ * generate asset tags, and clean up test databases. Used primarily in Playwright
+ * setup/teardown hooks.
+ * 
+ * @module lib/tools/dbhelpers
+ */
 import 'dotenv/config';
 import {Prisma, PrismaClient} from '@/lib/generated/prisma';
 import {

@@ -1,3 +1,12 @@
+/**
+ * Default metadata values for entities.
+ * 
+ * Provides baseline metadata structures for customers, equipment, and company settings.
+ * These defaults are merged with user input in metadata builders to ensure consistent
+ * data shapes across the application.
+ * 
+ * @module lib/metadata/defaults
+ */
 import type {
   adminCompanyMetadata,
   ArticleMetadata,

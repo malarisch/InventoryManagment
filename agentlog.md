@@ -1,3 +1,19 @@
+2025-10-10 (Today) — Chore: Repository cleanup and documentation
+- **Cleanup Tasks**:
+  * Removed unused `supabase/config_noseed.toml` (duplicate config with seed paths commented out, not referenced)
+  * Verified all lib/ files are actively used via grep_search
+  * Confirmed SQL seed scripts are part of active Supabase config
+- **Documentation Added** (module-level JSDoc comments):
+  * `lib/importexport.ts`: Company data import/export utilities
+  * `lib/history/describe.ts`: History entry description generator
+  * `lib/jobs/asset-summary.ts`: Job asset summary calculations
+  * `lib/metadata/{defaults,inherit}.ts`: Default metadata values and inheritance
+  * `lib/scanner/{actions,resolve}.ts`: Scanner action handlers and asset tag resolution
+  * `lib/supabase/middleware.ts`: Next.js middleware for Supabase session management
+  * `lib/tools/{dbhelpers,deleteCompany,seed}.ts`: Test helpers, cleanup, and seeding utilities
+- **Verification**: `npm run test:tsc` ✅ passed
+- **Files**: 11 lib/ modules documented, supabase/config_noseed.toml deleted, agentlog.md
+
 2025-10-09 15:15 — Fix: Print Dialog UX und korrekte Druck-Dimensionen
 - **UX Issues Fixed**:
   * Modal zu schmal → `sm:max-w-md` (448px) → `sm:max-w-lg` (512px)

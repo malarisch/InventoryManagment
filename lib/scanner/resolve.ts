@@ -1,3 +1,12 @@
+/**
+ * Asset tag resolution utilities.
+ * 
+ * Resolves scanned codes to specific database entities (equipment, case, article, location)
+ * by checking asset_tags and NFC tags tables. Returns typed asset information for use
+ * in scanner action handlers.
+ * 
+ * @module lib/scanner/resolve
+ */
 import type { SupabaseClient } from "@supabase/supabase-js";
 import type { Database, Tables } from "@/database.types";
 

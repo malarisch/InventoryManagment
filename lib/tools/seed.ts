@@ -1,3 +1,11 @@
+/**
+ * Database seeding utility for development and testing.
+ * 
+ * Creates sample companies, users, equipment, locations, and related entities
+ * for local development. Can be run standalone or imported for programmatic seeding.
+ * 
+ * @module lib/tools/seed
+ */
 import { PrismaClient } from "@/lib/generated/prisma";
 
 type Created = {

@@ -1,3 +1,12 @@
+/**
+ * Company metadata inheritance utilities.
+ * 
+ * Normalizes and validates company metadata structures, ensuring they conform to
+ * expected types and contain default values. Used when loading company settings
+ * to provide stable metadata shapes for downstream consumers.
+ * 
+ * @module lib/metadata/inherit
+ */
 import type { adminCompanyMetadata, Power } from "@/components/metadataTypes.types";
 import { defaultAdminCompanyMetadataDE } from "@/lib/metadata/defaults";
 

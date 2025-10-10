@@ -1,3 +1,11 @@
+/**
+ * Company deletion utility for test cleanup.
+ * 
+ * Recursively deletes a company and all related data in FK-dependency order.
+ * Used in test teardown to ensure clean state between test runs.
+ * 
+ * @module lib/tools/deleteCompany
+ */
 import "@/lib/setup-env"
 import {PrismaClient} from "@/lib/generated/prisma";
 const prisma = new PrismaClient();

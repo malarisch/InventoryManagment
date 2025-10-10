@@ -1,4 +1,12 @@
-//
+/**
+ * Company data import/export utilities.
+ * 
+ * Provides functions to export complete company data (including all related entities)
+ * and import it under a new company ownership. Used for company backup/restore and
+ * data migration workflows.
+ * 
+ * @module lib/importexport
+ */
 import {
     articles,
     asset_tag_templates,

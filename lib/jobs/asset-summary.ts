@@ -1,3 +1,11 @@
+/**
+ * Job asset summary calculations.
+ * 
+ * Aggregates booked assets (equipment and cases) for a job to compute total price,
+ * weight, volume, and item counts. Used in job detail views and reports.
+ * 
+ * @module lib/jobs/asset-summary
+ */
 import type { SupabaseClient } from "@supabase/supabase-js";
 import type { Database, Tables } from "@/database.types";
 import type { ArticleMetadata, EquipmentMetadata, DimensionsCm } from "@/components/metadataTypes.types";

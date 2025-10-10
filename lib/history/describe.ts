@@ -1,3 +1,12 @@
+/**
+ * History entry description generator.
+ * 
+ * Converts raw history entries (table name, operation, old_data payload) into
+ * human-readable German descriptions for display in history tables and cards.
+ * 
+ * @module lib/history/describe
+ */
+
 type HistoryOp = "INSERT" | "UPDATE" | "DELETE";
 
 type SummaryConfig = {

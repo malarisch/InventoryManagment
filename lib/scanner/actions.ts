@@ -1,3 +1,14 @@
+/**
+ * Scanner action handlers for different scanning modes.
+ * 
+ * Processes scanned asset tags and performs mode-specific actions:
+ * - lookup: find and display asset information
+ * - assign-location: update equipment/case/article location
+ * - job-book: book assets to a job
+ * - job-pack: mark assets as on-job
+ * 
+ * @module lib/scanner/actions
+ */
 import type { SupabaseClient } from "@supabase/supabase-js";
 import type { Database, Tables } from "@/database.types";
 import type { ResolvedAsset } from "./resolve";
