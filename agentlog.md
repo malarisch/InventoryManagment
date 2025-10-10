@@ -1,3 +1,15 @@
+2025-10-10 (Today) — UX: Move "Speichern" button to top card in article edit page
+- **User Request**: Align article edit page layout with equipment edit page
+- **Changes**:
+  * Moved "Speichern" button from bottom of form to first card (alongside Delete/Asset Tag actions)
+  * Moved save status feedback span to first card for immediate visibility
+  * Added exported form IDs (ARTICLE_EDIT_FORM_ID, ARTICLE_EDIT_STATUS_ID) for external button binding
+  * Removed unused Button import from article-edit-form.tsx
+  * Matches equipment page UX pattern: all primary actions in top card
+- **Layout**: Left side (Delete, Asset Tag Create, Save + Status) / Right side (Equipment Add, Print, View)
+- **Verification**: `npm run test:tsc` ✅ passed
+- **Files**: app/management/articles/[id]/page.tsx, components/forms/article-edit-form.tsx, agentlog.md
+
 2025-10-10 (Today) — TSDoc: Add comprehensive function documentation
 - **Function Documentation Added** (TSDoc-style with @param, @returns, @throws):
   * Root lib/ files (7 files): companies.ts, company-logo.ts, dates.ts, files.ts, log.ts, userDisplay.ts, utils.ts

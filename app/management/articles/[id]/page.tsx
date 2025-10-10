@@ -2,7 +2,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { createClient } from "@/lib/supabase/server";
 import { getActiveCompanyId } from "@/lib/companies.server";
 import type { Tables } from "@/database.types";
-import { ArticleEditForm } from "@/components/forms/article-edit-form";
+import { ArticleEditForm, ARTICLE_EDIT_FORM_ID, ARTICLE_EDIT_STATUS_ID } from "@/components/forms/article-edit-form";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { DeleteWithUndo } from "@/components/forms/delete-with-undo";
@@ -87,8 +87,8 @@ export default async function ArticleDetailPage({ params }: { params: Promise<{ 
           </CardHeader>
           <CardContent>
             <div className="mb-1 flex flex-wrap items-center justify-between gap-3">
-              <DeleteWithUndo table="articles" id={article.id} payload={article as Record<string, unknown>} redirectTo="/management/articles" />
-              <div className="flex items-center gap-2">
+              <div className="flex flex-wrap items-center gap-2">
+                <DeleteWithUndo table="articles" id={article.id} payload={article as Record<string, unknown>} redirectTo="/management/articles" />
                 {!article.asset_tag && (
                   <AssetTagCreateForm 
                     item={{ id: article.id, name: article.name || `Artikel #${article.id}` }} 
@@ -96,6 +96,16 @@ export default async function ArticleDetailPage({ params }: { params: Promise<{ 
                     companyId={article.company_id} 
                   />
                 )}
+                <Button type="submit" form={ARTICLE_EDIT_FORM_ID}>
+                  Speichern
+                </Button>
+                <span
+                  id={ARTICLE_EDIT_STATUS_ID}
+                  aria-live="polite"
+                  className="min-h-[1.25rem] text-sm text-muted-foreground"
+                />
+              </div>
+              <div className="flex items-center gap-2">
                 <Button asChild variant="secondary">
                   <Link href={`/management/equipments/new?articleId=${article.id}`}>Equipment hinzufügen</Link>
                 </Button>

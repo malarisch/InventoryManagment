@@ -5,7 +5,6 @@ import { createClient } from "@/lib/supabase/client";
 import type { Tables } from "@/database.types";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Button } from "@/components/ui/button";
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/components/ui/card";
 import { ArticleMetadataForm } from "@/components/forms/partials/article-metadata-form";
 import { ContactFormDialog } from "@/components/forms/contacts/contact-form-dialog";
@@ -17,6 +16,9 @@ type Article = Tables<"articles">;
 type Location = Tables<"locations">;
 type AssetTag = Tables<"asset_tags">;
 type Contact = Tables<"contacts">;
+
+export const ARTICLE_EDIT_FORM_ID = "article-edit-form";
+export const ARTICLE_EDIT_STATUS_ID = "article-edit-status";
 
 export function ArticleEditForm({ article }: { article: Article }) {
   const supabase = useMemo(() => createClient(), []);
@@ -198,7 +200,7 @@ export function ArticleEditForm({ article }: { article: Article }) {
   }
 
   return (
-    <form onSubmit={onSubmit} className="grid grid-cols-1 md:grid-cols-12 gap-6">
+    <form id={ARTICLE_EDIT_FORM_ID} onSubmit={onSubmit} className="grid grid-cols-1 md:grid-cols-12 gap-6">
       <Card className="md:col-span-5">
         <CardHeader>
           <CardTitle>Basisdaten</CardTitle>
@@ -266,11 +268,15 @@ export function ArticleEditForm({ article }: { article: Article }) {
 
       <div className="md:col-span-12 grid grid-cols-1 gap-6">{metadataCards}</div>
 
-      <div className="md:col-span-12 flex items-center gap-3 justify-end">
-        <Button type="submit" disabled={saving}>{saving ? "Speichern…" : "Speichern"}</Button>
-        {message && <span className="text-sm text-green-600">{message}</span>}
-        {error && <span className="text-sm text-red-600">{error}</span>}
-      </div>
+      <span
+        id={ARTICLE_EDIT_STATUS_ID}
+        aria-live="polite"
+        className="md:col-span-12 min-h-[1.25rem] text-sm"
+      >
+        {saving && <span className="text-muted-foreground">Speichern…</span>}
+        {message && <span className="text-green-600">{message}</span>}
+        {error && <span className="text-red-600">{error}</span>}
+      </span>
 
       <ContactFormDialog
         open={contactDialogOpen}
