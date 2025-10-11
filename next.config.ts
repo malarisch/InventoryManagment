@@ -1,8 +1,10 @@
 import type { NextConfig } from "next";
 
+
+
 const nextConfig: NextConfig = {
   // Enable standalone output for Docker deployments
-  output: 'standalone',
+  output: (process.env.MOBILE_TARGET == "true") ? "export" : 'standalone',
   serverExternalPackages: ["@supabase/ssr"],
   // Use separate tsconfig for build to exclude test files
   typescript: {
@@ -25,5 +27,6 @@ const nextConfig: NextConfig = {
     ],
   },
 };
+
 
 export default nextConfig;

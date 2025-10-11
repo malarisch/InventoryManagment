@@ -12,21 +12,29 @@
     "url": "https://github.com/malarisch/InventoryManagment/issues"
   },
   "homepage": "https://github.com/malarisch/InventoryManagment#readme",
+  "workspaces": ["pwa"],
   "scripts": {
     "dev": "next dev --turbopack",
     "build": "next build",
     "build:vercel": "prisma generate && next build",
+    "build:app": "next build pwa/ && cap sync",
     "start": "next start",
     "lint": "eslint .",
     "test:e2e": "playwright test",
     "test:unit": "vitest run",
     "test:tsc": "tsc --noEmit",
     "test": "npm run lint && npm run test:tsc && npm run test:unit && npm run test:e2e",
-    "seed:dev": "tsx lib/tools/seed.ts",
     "supabase-gen-types": "supabase migrations up && supabase gen types typescript --local > ./database.types.ts"
+
   },
-  "supabase:write-env": "supabase gen types typescript > .env.local",
   "dependencies": {
+    "@capacitor/app": "7.1.0",
+    "@capacitor/cli": "7.4.3",
+    "@capacitor/core": "7.4.3",
+    "@capacitor/haptics": "7.0.2",
+    "@capacitor/ios": "7.4.3",
+    "@capacitor/keyboard": "7.0.3",
+    "@capacitor/status-bar": "7.0.3",
     "@hookform/resolvers": "^5.2.2",
     "@mmote/niimbluelib": "0.0.1-alpha.29",
     "@prisma/client": "^6.16.2",
