@@ -63,7 +63,6 @@ playwright/.auth
 /playwright/
 /.playwright-mcp/
 
-
-pwa/out/*
-pwa/.next
-./pwa/out
+# PWA build output
+pwa/out/
+pwa/.next/
