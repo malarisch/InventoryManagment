@@ -62,3 +62,8 @@ playwright/.auth
 /lib/generated/prisma
 /playwright/
 /.playwright-mcp/
+
+
+pwa/out/*
+pwa/.next
+./pwa/out

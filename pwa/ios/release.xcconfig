@@ -1,0 +1,2 @@
+#include "App/Pods/Target Support Files/Pods-App/Pods-App.release.xcconfig"
+CAPACITOR_DEBUG = false

@@ -3,8 +3,10 @@ import type { NextConfig } from "next";
 
 
 const nextConfig: NextConfig = {
-  basePath: (process.env.NODE_ENV!=="production") ? '/pwa/out' : '',
-  trailingSlash: false,
+  trailingSlash: true,
+  optimization: {
+    minimize: (process.env.NODE_ENV == "production") ? true : false,
+  },
   images: {
     remotePatterns: [
       {
@@ -23,12 +25,16 @@ const nextConfig: NextConfig = {
     unoptimized: true,
   },
   output: 'export',
-  swcMinify: true,
   transpilePackages: [
     '@ionic/react',
     '@ionic/core',
     '@stencil/core',
     'ionicons',
+  ],
+  allowedDevOrigins: [
+    'http://192.168.178.57:3000',
+    'http://localhost:3000',
+    '192.168.178.57'
   ],
 };
 
