@@ -1,3 +1,17 @@
+2025-10-13 (Heute) — PWA: Dark Mode, Company Selector, Scanner Modi (WIP)
+- **Aufgabe**: PWA App verbessern - UI-Fixes, Company-Auswahl, Scanner-Modi (Asset & Location)
+- **Erledigt**:
+  * ✅ Dark Mode: Ionic dark mode mit System-Präferenz-Erkennung (`ionic-theme.css`)
+  * ✅ iOS Status Bar: Transparent overlay, entfernt weiße Bar (`StatusBar.setOverlaysWebView`)
+  * ✅ Company-Auswahl: `CompanySelector` Modal, Speicherung in localStorage, Wechsel-Button im Header
+  * ✅ UIScene Lifecycle: iOS App auf moderne UIScene-Architektur migriert (SceneDelegate)
+  * ✅ Scanner-Komponenten: AssetDetailCard, ScanLog, ScannerControls, TargetSelector
+  * ✅ Scanner-Utils: `lookupAssetByCode()` - Equipment/Location/Case/Article lookup via asset_tags
+- **In Arbeit**: Location-Modus Scan-Logik mit Equipment-Zuordnung, Case-Updates, Fehlerbehandlung
+- **Nächste Schritte**: ScannerComponent refactoring für beide Modi, Location-Workflow implementieren
+- **Commits**: 3 commits (gitignore cleanup, dark mode + company selector, scanner foundation)
+- **Files**: pwa/app/layout.tsx, pwa/components/{MainApp,CompanySelector,Scanner*,AssetDetailCard,ScanLog,TargetSelector}.tsx, pwa/lib/scanner-{types,utils}.ts, pwa/ios/...
+
 2025-10-10 (Today) — UX: Remove duplicate status feedback from article edit form
 - **User Report**: "Die 'Gespeichert' Rückmeldung ist noch immer unten auf der Article Seite"
 - **Root Cause**: Status span existed in BOTH page.tsx (correct) and article-edit-form.tsx (duplicate)
