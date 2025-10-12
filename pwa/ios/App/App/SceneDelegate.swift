@@ -8,11 +8,12 @@ class SceneDelegate: UIResponder, UIWindowSceneDelegate {
     func scene(_ scene: UIScene, willConnectTo session: UISceneSession, options connectionOptions: UIScene.ConnectionOptions) {
         guard let windowScene = (scene as? UIWindowScene) else { return }
         
-        window = UIWindow(windowScene: windowScene)
+        // Don't create a new window - it's already created from the storyboard
+        // Just reference it
+        self.window = windowScene.windows.first
         
-        if let rootViewController = window?.rootViewController as? CAPBridgeViewController {
-            rootViewController.setServerBasePath(path: "")
-        }
+        // The root view controller is already set from Main.storyboard
+        // No additional configuration needed here
     }
 
     func sceneDidDisconnect(_ scene: UIScene) {
