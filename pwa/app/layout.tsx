@@ -17,6 +17,9 @@ import '@ionic/react/css/text-transformation.css';
 import '@ionic/react/css/flex-utils.css';
 import '@ionic/react/css/display.css';
 
+/* Custom Ionic Dark Mode and Theme */
+import './ionic-theme.css';
+
 
 import { Geist } from "next/font/google";
 import { ThemeProvider } from "next-themes";

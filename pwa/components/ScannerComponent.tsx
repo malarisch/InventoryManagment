@@ -28,7 +28,8 @@ import {
   checkmarkCircle, 
   alertCircle,
   camera,
-  logOut
+  logOut,
+  business
 } from 'ionicons/icons';
 import { BarcodeScanner, BarcodeFormat } from '@capacitor-mlkit/barcode-scanning';
 import type { Barcode } from '@capacitor-mlkit/barcode-scanning';
@@ -36,9 +37,17 @@ import { Capacitor } from '@capacitor/core';
 import { createSupabaseClient } from '../lib/supabase/client';
 import type { User } from '@supabase/supabase-js';
 
+interface Company {
+  id: string;
+  name: string;
+  description: string | null;
+}
+
 interface ScannerComponentProps {
   user: User;
+  company: Company;
   onLogout: () => void;
+  onChangeCompany: () => void;
 }
 
 interface ScanResult {
@@ -49,7 +58,7 @@ interface ScanResult {
   status: 'success' | 'error' | 'warning';
 }
 
-export function ScannerComponent({ user, onLogout }: ScannerComponentProps) {
+export function ScannerComponent({ user, company, onLogout, onChangeCompany }: ScannerComponentProps) {
   const [scanning, setScanning] = useState(false);
   const [flashEnabled, setFlashEnabled] = useState(false);
   const [scanResults, setScanResults] = useState<ScanResult[]>([]);
@@ -238,7 +247,14 @@ export function ScannerComponent({ user, onLogout }: ScannerComponentProps) {
     <IonPage>
       <IonHeader>
         <IonToolbar>
-          <IonTitle>Inventory Scanner</IonTitle>
+          <IonTitle>{company.name}</IonTitle>
+          <IonButton
+            slot="start"
+            fill="clear"
+            onClick={onChangeCompany}
+          >
+            <IonIcon icon={business} />
+          </IonButton>
           <IonButton
             slot="end"
             fill="clear"
