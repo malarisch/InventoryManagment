@@ -6,27 +6,20 @@ import {
   IonHeader, 
   IonTitle, 
   IonToolbar,
-  IonCard,
-  IonCardContent,
   IonButton,
   IonAlert,
   IonIcon,
   IonText,
-  IonList,
-  IonItem,
-  IonLabel,
-  IonBadge,
   IonFab,
   IonFabButton,
   IonPage,
-  IonLoading
+  IonLoading,
+  IonCard,
+  IonCardContent
 } from '@ionic/react';
 import { 
-  qrCode, 
   flashlight, 
   flashOffOutline, 
-  checkmarkCircle, 
-  alertCircle,
   camera,
   logOut,
   business
@@ -35,7 +28,13 @@ import { BarcodeScanner, BarcodeFormat } from '@capacitor-mlkit/barcode-scanning
 import type { Barcode } from '@capacitor-mlkit/barcode-scanning';
 import { Capacitor } from '@capacitor/core';
 import { createSupabaseClient } from '../lib/supabase/client';
+import { lookupAssetByCode, createLogEntry } from '../lib/scanner-utils';
 import type { User } from '@supabase/supabase-js';
+import type { ScanMode, ScannedEntity, ActiveTarget, ScanLogEntry } from '../lib/scanner-types';
+import { AssetDetailCard } from './AssetDetailCard';
+import { ScanLog } from './ScanLog';
+import { ScannerControls } from './ScannerControls';
+import { TargetSelector } from './TargetSelector';
 
 interface Company {
   id: string;
@@ -50,23 +49,21 @@ interface ScannerComponentProps {
   onChangeCompany: () => void;
 }
 
-interface ScanResult {
-  id: string;
-  code: string;
-  format: string;
-  timestamp: string;
-  status: 'success' | 'error' | 'warning';
-}
-
-export function ScannerComponent({ user, company, onLogout, onChangeCompany }: ScannerComponentProps) {
+export function ScannerComponent({ company, onLogout, onChangeCompany }: ScannerComponentProps) {
   const [scanning, setScanning] = useState(false);
   const [flashEnabled, setFlashEnabled] = useState(false);
-  const [scanResults, setScanResults] = useState<ScanResult[]>([]);
   const [alertOpen, setAlertOpen] = useState(false);
   const [alertMessage, setAlertMessage] = useState('');
   const [alertHeader, setAlertHeader] = useState('');
   const [isSupported, setIsSupported] = useState(false);
   const [loading, setLoading] = useState(true);
+  
+  // Scanner mode and state
+  const [scanMode, setScanMode] = useState<ScanMode>('asset');
+  const [activeTarget, setActiveTarget] = useState<ActiveTarget | null>(null);
+  const [lastScannedEntity, setLastScannedEntity] = useState<ScannedEntity | null>(null);
+  const [scanLog, setScanLog] = useState<ScanLogEntry[]>([]);
+  const [showTargetSelector, setShowTargetSelector] = useState(false);
   
   const supabase = useMemo(() => createSupabaseClient(), []);
 
@@ -76,17 +73,15 @@ export function ScannerComponent({ user, company, onLogout, onChangeCompany }: S
 
   const checkSupport = async () => {
     try {
-      // Check if platform supports native scanning
       if (Capacitor.isNativePlatform()) {
         const { supported } = await BarcodeScanner.isSupported();
         setIsSupported(supported);
         
         if (!supported) {
           setAlertHeader('Scanner nicht verfügbar');
-          setAlertMessage('Der native Barcode-Scanner funktioniert nur auf einem echten iOS-Gerät mit Kamera. Im Simulator steht diese Funktion nicht zur Verfügung.');
+          setAlertMessage('Der native Barcode-Scanner funktioniert nur auf einem echten iOS-Gerät mit Kamera.');
         }
       } else {
-        // On web, use fallback
         setIsSupported(false);
         setAlertHeader('Web-Version');
         setAlertMessage('Der Scanner ist nur in der nativen iOS-App verfügbar.');
@@ -95,13 +90,12 @@ export function ScannerComponent({ user, company, onLogout, onChangeCompany }: S
       console.error('Error checking scanner support:', error);
       setIsSupported(false);
       
-      // Check if it's the simulator UNIMPLEMENTED error
       if (error && typeof error === 'object' && 'code' in error && error.code === 'UNIMPLEMENTED') {
         setAlertHeader('Simulator erkannt');
-        setAlertMessage('Der Barcode-Scanner funktioniert nur auf einem echten iOS-Gerät. Bitte testen Sie die App auf einem physischen iPhone mit Kamera.');
+        setAlertMessage('Der Barcode-Scanner funktioniert nur auf einem echten iOS-Gerät.');
       } else {
         setAlertHeader('Fehler');
-        setAlertMessage('Der Scanner konnte nicht initialisiert werden. Bitte überprüfen Sie die Kameraberechtigungen.');
+        setAlertMessage('Der Scanner konnte nicht initialisiert werden.');
       }
     } finally {
       setLoading(false);
@@ -134,54 +128,307 @@ export function ScannerComponent({ user, company, onLogout, onChangeCompany }: S
       setScanning(true);
       
       if (Capacitor.isNativePlatform()) {
-        // Use native scanner
         const result = await BarcodeScanner.scan({
           formats: [BarcodeFormat.QrCode, BarcodeFormat.Code128, BarcodeFormat.Ean13]
         });
 
         if (result.barcodes && result.barcodes.length > 0) {
           const barcode = result.barcodes[0];
-          handleScanResult(barcode);
+          await handleScanResult(barcode);
         }
-      } else {
-        // Web fallback - show a message
-        showAlert('Web-Modus', 'Auf dem Web verwenden Sie bitte die native App für optimale Scanner-Funktionalität.');
       }
     } catch (error) {
       console.error('Scanning error:', error);
-      showAlert('Scan-Fehler', 'Fehler beim Scannen des Barcodes. Bitte versuchen Sie es erneut.');
+      showAlert('Scan-Fehler', 'Fehler beim Scannen des Barcodes.');
     } finally {
       setScanning(false);
     }
   };
 
-  const handleScanResult = (barcode: Barcode) => {
-    const newResult: ScanResult = {
-      id: Date.now().toString(),
-      code: barcode.rawValue || barcode.displayValue,
-      format: barcode.format,
-      timestamp: new Date().toLocaleTimeString('de-DE'),
-      status: 'success'
-    };
-
-    setScanResults(prev => [newResult, ...prev.slice(0, 9)]); // Keep last 10 results
+  const handleScanResult = async (barcode: Barcode) => {
+    const code = barcode.rawValue || barcode.displayValue;
     
-    // Here you would typically process the scanned code
-    // For example, look up equipment in database, update location, etc.
-    processScannedCode(newResult.code);
-  };
+    if (!supabase) {
+      showAlert('Fehler', 'Datenbankverbindung nicht verfügbar.');
+      return;
+    }
 
-  const processScannedCode = async (code: string) => {
     try {
-      // Example: Look up equipment by asset tag or barcode
-      // This would integrate with your inventory system
-      console.log('Processing scanned code:', code);
+      // Look up the scanned code
+      const entity = await lookupAssetByCode(supabase, code, company.id);
       
-      // For demonstration, just show success
-      showAlert('Scan erfolgreich', `Code gescannt: ${code}`);
+      if (!entity) {
+        const logEntry = createLogEntry(
+          'Scan',
+          { type: 'unknown', id: '', name: 'Unbekannt', code },
+          'error',
+          'Code nicht gefunden'
+        );
+        setScanLog(prev => [logEntry, ...prev]);
+        showAlert('Nicht gefunden', `Code "${code}" wurde in der Datenbank nicht gefunden.`);
+        return;
+      }
+
+      setLastScannedEntity(entity);
+
+      if (scanMode === 'asset') {
+        // Asset mode: Just show the details
+        const logEntry = createLogEntry(
+          'Asset gescannt',
+          entity,
+          'success',
+          `${entity.name} wurde gescannt`
+        );
+        setScanLog(prev => [logEntry, ...prev]);
+      } else {
+        // Location mode: Complex workflow
+        await handleLocationModeScan(entity, code);
+      }
     } catch (error) {
       console.error('Error processing scan:', error);
-      showAlert('Verarbeitungsfehler', 'Fehler beim Verarbeiten des gescannten Codes.');
+      showAlert('Fehler', 'Fehler beim Verarbeiten des Scans.');
+    }
+  };
+
+  const handleLocationModeScan = async (entity: ScannedEntity, _code: string) => {
+    if (!supabase) return;
+
+    // Handle location scan - sets as active target
+    if (entity.type === 'location') {
+      setActiveTarget({ type: 'location', id: entity.id, name: entity.name });
+      const logEntry = createLogEntry(
+        'Location aktiv',
+        entity,
+        'success',
+        `${entity.name} ist jetzt die aktive Location`
+      );
+      setScanLog(prev => [logEntry, ...prev]);
+      return;
+    }
+
+    // Handle case scan
+    if (entity.type === 'case') {
+      // If no active target and this is first scan, set case as active
+      if (!activeTarget) {
+        setActiveTarget({ type: 'case', id: entity.id, name: entity.name });
+        const logEntry = createLogEntry(
+          'Case aktiv',
+          entity,
+          'success',
+          `${entity.name} ist jetzt das aktive Case`
+        );
+        setScanLog(prev => [logEntry, ...prev]);
+        return;
+      }
+
+      // If active location, update case equipment location
+      if (activeTarget.type === 'location') {
+        await updateCaseLocation(entity, activeTarget);
+        return;
+      }
+    }
+
+    // Handle article scan - error in location mode
+    if (entity.type === 'article') {
+      const logEntry = createLogEntry(
+        'Fehler',
+        entity,
+        'error',
+        'Artikel können nicht umgebucht werden'
+      );
+      setScanLog(prev => [logEntry, ...prev]);
+      showAlert('Fehler', 'Artikel können im Location-Modus nicht umgebucht werden. Nur Equipment und Cases.');
+      return;
+    }
+
+    // Handle equipment scan
+    if (entity.type === 'equipment') {
+      if (!activeTarget) {
+        // No active target - just show info
+        const logEntry = createLogEntry(
+          'Equipment gescannt',
+          entity,
+          'warning',
+          'Kein aktives Ziel. Wählen Sie zuerst eine Location oder ein Case aus.'
+        );
+        setScanLog(prev => [logEntry, ...prev]);
+        showAlert('Kein Ziel', 'Bitte wählen Sie zuerst eine Location oder ein Case aus, bevor Sie Equipment scannen.');
+        return;
+      }
+
+      if (activeTarget.type === 'case') {
+        await addEquipmentToCase(entity, activeTarget);
+      } else {
+        await updateEquipmentLocation(entity, activeTarget);
+      }
+    }
+  };
+
+  const updateCaseLocation = async (caseEntity: ScannedEntity, location: ActiveTarget) => {
+    if (!supabase) return;
+
+    try {
+      // Get case equipment ID
+      const { data: caseData, error: caseError } = await supabase
+        .from('cases')
+        .select('case_equipment')
+        .eq('id', caseEntity.id)
+        .single();
+
+      if (caseError || !caseData?.case_equipment) {
+        throw new Error('Case Equipment nicht gefunden');
+      }
+
+      // Check if already at this location
+      const { data: equipData } = await supabase
+        .from('equipments')
+        .select('current_location')
+        .eq('id', caseData.case_equipment)
+        .single();
+
+      if (equipData?.current_location === location.id) {
+        const logEntry = createLogEntry(
+          'Bereits vorhanden',
+          caseEntity,
+          'warning',
+          `Case ist bereits an Location ${location.name}`
+        );
+        setScanLog(prev => [logEntry, ...prev]);
+        showAlert('Bereits vorhanden', `Dieses Case ist bereits an Location "${location.name}".`);
+        return;
+      }
+
+      // Update location
+      const { error: updateError } = await supabase
+        .from('equipments')
+        .update({ current_location: location.id })
+        .eq('id', caseData.case_equipment);
+
+      if (updateError) throw updateError;
+
+      const logEntry = createLogEntry(
+        'Case umgebucht',
+        caseEntity,
+        'success',
+        `Case → ${location.name}`
+      );
+      setScanLog(prev => [logEntry, ...prev]);
+      showAlert('Erfolg', `Case "${caseEntity.name}" wurde zu Location "${location.name}" umgebucht.`);
+    } catch (error) {
+      console.error('Error updating case location:', error);
+      const logEntry = createLogEntry(
+        'Fehler',
+        caseEntity,
+        'error',
+        'Fehler beim Umbuchen'
+      );
+      setScanLog(prev => [logEntry, ...prev]);
+      showAlert('Fehler', 'Fehler beim Umbuchen des Cases.');
+    }
+  };
+
+  const addEquipmentToCase = async (equipment: ScannedEntity, caseTarget: ActiveTarget) => {
+    if (!supabase) return;
+
+    try {
+      // Get case contents
+      const { data: caseData, error: caseError } = await supabase
+        .from('cases')
+        .select('contained_equipment_ids')
+        .eq('id', caseTarget.id)
+        .single();
+
+      if (caseError) throw caseError;
+
+      const containedIds = (caseData?.contained_equipment_ids || []) as string[];
+
+      // Check if already in case
+      if (containedIds.includes(equipment.id)) {
+        const logEntry = createLogEntry(
+          'Bereits im Case',
+          equipment,
+          'warning',
+          `Equipment ist bereits in Case ${caseTarget.name}`
+        );
+        setScanLog(prev => [logEntry, ...prev]);
+        showAlert('Bereits vorhanden', `Equipment "${equipment.name}" ist bereits in diesem Case.`);
+        return;
+      }
+
+      // Add to case
+      const { error: updateError } = await supabase
+        .from('cases')
+        .update({ 
+          contained_equipment_ids: [...containedIds, equipment.id] 
+        })
+        .eq('id', caseTarget.id);
+
+      if (updateError) throw updateError;
+
+      const logEntry = createLogEntry(
+        'Equipment → Case',
+        equipment,
+        'success',
+        `${equipment.name} → ${caseTarget.name}`
+      );
+      setScanLog(prev => [logEntry, ...prev]);
+      showAlert('Erfolg', `Equipment "${equipment.name}" wurde zu Case "${caseTarget.name}" hinzugefügt.`);
+    } catch (error) {
+      console.error('Error adding equipment to case:', error);
+      const logEntry = createLogEntry(
+        'Fehler',
+        equipment,
+        'error',
+        'Fehler beim Hinzufügen zum Case'
+      );
+      setScanLog(prev => [logEntry, ...prev]);
+      showAlert('Fehler', 'Fehler beim Hinzufügen des Equipments zum Case.');
+    }
+  };
+
+  const updateEquipmentLocation = async (equipment: ScannedEntity, location: ActiveTarget) => {
+    if (!supabase) return;
+
+    try {
+      // Check if already at this location
+      if (equipment.details?.currentLocation === location.name) {
+        const logEntry = createLogEntry(
+          'Bereits vorhanden',
+          equipment,
+          'warning',
+          `Equipment ist bereits an Location ${location.name}`
+        );
+        setScanLog(prev => [logEntry, ...prev]);
+        showAlert('Bereits vorhanden', `Equipment "${equipment.name}" ist bereits an Location "${location.name}".`);
+        return;
+      }
+
+      // Update location
+      const { error: updateError } = await supabase
+        .from('equipments')
+        .update({ current_location: location.id })
+        .eq('id', equipment.id);
+
+      if (updateError) throw updateError;
+
+      const logEntry = createLogEntry(
+        'Equipment umgebucht',
+        equipment,
+        'success',
+        `${equipment.name} → ${location.name}`
+      );
+      setScanLog(prev => [logEntry, ...prev]);
+      showAlert('Erfolg', `Equipment "${equipment.name}" wurde zu Location "${location.name}" umgebucht.`);
+    } catch (error) {
+      console.error('Error updating equipment location:', error);
+      const logEntry = createLogEntry(
+        'Fehler',
+        equipment,
+        'error',
+        'Fehler beim Umbuchen'
+      );
+      setScanLog(prev => [logEntry, ...prev]);
+      showAlert('Fehler', 'Fehler beim Umbuchen des Equipments.');
     }
   };
 
@@ -195,7 +442,6 @@ export function ScannerComponent({ user, company, onLogout, onChangeCompany }: S
       setFlashEnabled(!flashEnabled);
     } catch (error) {
       console.error('Flash toggle error:', error);
-      showAlert('Flash-Fehler', 'Fehler beim Umschalten der Taschenlampe.');
     }
   };
 
@@ -216,22 +462,11 @@ export function ScannerComponent({ user, company, onLogout, onChangeCompany }: S
     }
   };
 
-  const getStatusColor = (status: string) => {
-    switch (status) {
-      case 'success': return 'success';
-      case 'error': return 'danger';
-      case 'warning': return 'warning';
-      default: return 'medium';
-    }
-  };
-
-  const getStatusIcon = (status: string) => {
-    switch (status) {
-      case 'success': return checkmarkCircle;
-      case 'error': return alertCircle;
-      case 'warning': return alertCircle;
-      default: return qrCode;
-    }
+  const handleScanModeChange = (mode: ScanMode) => {
+    setScanMode(mode);
+    setActiveTarget(null);
+    setLastScannedEntity(null);
+    setScanLog([]);
   };
 
   if (loading) {
@@ -266,71 +501,39 @@ export function ScannerComponent({ user, company, onLogout, onChangeCompany }: S
       </IonHeader>
       
       <IonContent>
-        <div className="scanner-content">
-          <IonCard>
-            <IonCardContent>
-              <div className="scanner-header">
-                <IonIcon icon={qrCode} size="large" className="scanner-icon" />
-                <IonText>
-                  <h2>Barcode Scanner</h2>
-                  <p>Scannen Sie Asset-Tags und Barcodes für Ihre Inventarverwaltung. hehe huhu</p>
-                </IonText>
-              </div>
+        <div className="scanner-content" style={{ padding: '1rem', paddingBottom: '300px' }}>
+          <ScannerControls
+            scanMode={scanMode}
+            onScanModeChange={handleScanModeChange}
+            activeTarget={activeTarget}
+            onClearTarget={() => setActiveTarget(null)}
+            onSelectTarget={() => setShowTargetSelector(true)}
+          />
 
-              <div className="user-info">
-                <IonText color="medium">
-                  <p>Angemeldet als: {user.email}</p>
-                </IonText>
-              </div>
-
-              {!isSupported && (
-                <IonCard color="warning">
-                  <IonCardContent>
-                    <IonText>
-                      <h3>⚠️ Scanner nicht verfügbar</h3>
-                      <p><strong>{alertHeader}</strong></p>
-                      <p>{alertMessage}</p>
-                      <p style={{ marginTop: '1rem', fontSize: '0.9rem' }}>
-                        💡 <strong>Tipp:</strong> Um den Scanner zu testen, installieren Sie die App auf einem echten iPhone.
-                      </p>
-                    </IonText>
-                  </IonCardContent>
-                </IonCard>
-              )}
-            </IonCardContent>
-          </IonCard>
-
-          {scanResults.length > 0 && (
-            <IonCard>
+          {!isSupported && (
+            <IonCard color="warning">
               <IonCardContent>
                 <IonText>
-                  <h3>Letzte Scans</h3>
+                  <h3>⚠️ Scanner nicht verfügbar</h3>
+                  <p><strong>{alertHeader}</strong></p>
+                  <p>{alertMessage}</p>
+                  <p style={{ marginTop: '1rem', fontSize: '0.9rem' }}>
+                    💡 <strong>Tipp:</strong> Um den Scanner zu testen, installieren Sie die App auf einem echten iPhone.
+                  </p>
                 </IonText>
-                <IonList>
-                  {scanResults.map((result) => (
-                    <IonItem key={result.id}>
-                      <IonIcon 
-                        icon={getStatusIcon(result.status)} 
-                        color={getStatusColor(result.status)}
-                        slot="start" 
-                      />
-                      <IonLabel>
-                        <h3>{result.code}</h3>
-                        <p>{result.format} • {result.timestamp}</p>
-                      </IonLabel>
-                      <IonBadge 
-                        color={getStatusColor(result.status)}
-                        slot="end"
-                      >
-                        {result.status}
-                      </IonBadge>
-                    </IonItem>
-                  ))}
-                </IonList>
               </IonCardContent>
             </IonCard>
           )}
+
+          {lastScannedEntity && scanMode === 'asset' && (
+            <AssetDetailCard entity={lastScannedEntity} />
+          )}
         </div>
+
+        {/* Scan Log for Location Mode */}
+        {scanMode === 'location' && scanLog.length > 0 && (
+          <ScanLog entries={scanLog} />
+        )}
 
         {/* Floating Action Buttons */}
         <IonFab vertical="bottom" horizontal="center" slot="fixed">
@@ -362,31 +565,14 @@ export function ScannerComponent({ user, company, onLogout, onChangeCompany }: S
           message={alertMessage}
           buttons={['OK']}
         />
-      </IonContent>
 
-      <style jsx>{`
-        .scanner-content {
-          padding: 1rem;
-          padding-bottom: 100px; /* Space for FABs */
-        }
-        
-        .scanner-header {
-          text-align: center;
-          margin-bottom: 1rem;
-        }
-        
-        .scanner-icon {
-          margin-bottom: 1rem;
-          color: var(--ion-color-primary);
-        }
-        
-        .user-info {
-          text-align: center;
-          margin-top: 1rem;
-          padding-top: 1rem;
-          border-top: 1px solid var(--ion-color-light);
-        }
-      `}</style>
+        <TargetSelector
+          isOpen={showTargetSelector}
+          onDidDismiss={() => setShowTargetSelector(false)}
+          onTargetSelected={setActiveTarget}
+          companyId={company.id}
+        />
+      </IonContent>
     </IonPage>
   );
 }

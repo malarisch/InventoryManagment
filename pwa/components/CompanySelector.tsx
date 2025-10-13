@@ -55,6 +55,12 @@ export function CompanySelector({
   }, [isOpen]);
 
   const loadCompanies = async () => {
+    if (!supabase) {
+      setError('Datenbankverbindung nicht verfügbar');
+      setLoading(false);
+      return;
+    }
+    
     try {
       setLoading(true);
       setError(null);
