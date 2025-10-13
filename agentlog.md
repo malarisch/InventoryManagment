@@ -1,4 +1,4 @@
-2025-10-13 (Heute) — PWA: Dark Mode, Company Selector, Scanner Modi (WIP)
+2025-10-13 (Heute) — PWA: Dark Mode, Company Selector, Scanner Modi - FERTIG ✅
 - **Aufgabe**: PWA App verbessern - UI-Fixes, Company-Auswahl, Scanner-Modi (Asset & Location)
 - **Erledigt**:
   * ✅ Dark Mode: Ionic dark mode mit System-Präferenz-Erkennung (`ionic-theme.css`)
@@ -7,10 +7,19 @@
   * ✅ UIScene Lifecycle: iOS App auf moderne UIScene-Architektur migriert (SceneDelegate)
   * ✅ Scanner-Komponenten: AssetDetailCard, ScanLog, ScannerControls, TargetSelector
   * ✅ Scanner-Utils: `lookupAssetByCode()` - Equipment/Location/Case/Article lookup via asset_tags
-- **In Arbeit**: Location-Modus Scan-Logik mit Equipment-Zuordnung, Case-Updates, Fehlerbehandlung
-- **Nächste Schritte**: ScannerComponent refactoring für beide Modi, Location-Workflow implementieren
-- **Commits**: 3 commits (gitignore cleanup, dark mode + company selector, scanner foundation)
-- **Files**: pwa/app/layout.tsx, pwa/components/{MainApp,CompanySelector,Scanner*,AssetDetailCard,ScanLog,TargetSelector}.tsx, pwa/lib/scanner-{types,utils}.ts, pwa/ios/...
+  * ✅ **Asset-Modus**: Scan → Detailansicht von Equipment/Location/Case/Artikel
+  * ✅ **Location-Modus**: Vollständiger Workflow implementiert:
+    - Location-Scan → aktives Ziel
+    - Case-Scan (kein Ziel) → Case wird aktiv
+    - Case-Scan (mit Location) → Case-Equipment Location Update
+    - Equipment-Scan (mit Case) → Equipment zu Case hinzufügen
+    - Equipment-Scan (mit Location) → Equipment Location Update
+  * ✅ **Fehlerbehandlung**: Bereits an Location, bereits im Case, Artikel-Fehler, kein Ziel
+  * ✅ **Scan-Log**: Floating card mit letzten 5 Operationen + Status
+- **Ergebnis**: Vollständig funktionsfähige Scanner-App mit zwei Modi, RLS-konformen DB-Updates
+- **Commits**: 5 commits (gitignore, dark mode, scanner foundation, scanner complete, agentlog)
+- **Build**: ✅ `npm run build` erfolgreich
+- **Files**: pwa/components/ScannerComponent.tsx (600+ lines, komplett neu), pwa/lib/scanner-{types,utils}.ts
 
 2025-10-10 (Today) — UX: Remove duplicate status feedback from article edit form
 - **User Report**: "Die 'Gespeichert' Rückmeldung ist noch immer unten auf der Article Seite"
