@@ -568,7 +568,7 @@ export function AssetTagTemplateForm({ templateId }: AssetTagTemplateFormProps) 
                 <div className="font-medium mb-1">Verfügbare Platzhalter</div>
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-4 gap-y-1">
                   <div><code>{`{company-prefix}`}</code>: Firmenpräfix aus Metadaten</div>
-                  <div><code>{`{prefix}`}</code>: Template-Prefix (z. B. EQ)</div>
+                  <div><code>{`{entity-prefix}`}</code>: Template-Prefix (z. B. EQ)</div>
                   <div><code>{`{code}`}</code>: Nummer mit Padding (Länge)</div>
                   <div><code>{`{suffix}`}</code>: Template-Suffix</div>
                   <div><code>{`{company_name}`}</code>: Firmenname</div>
@@ -849,6 +849,13 @@ export function AssetTagTemplateForm({ templateId }: AssetTagTemplateFormProps) 
                   <div className="flex items-center gap-2">
                     <code className="bg-muted px-2 py-1 rounded">{'{equipment_name}'}</code>
                     <span className="text-muted-foreground">Equipment Name</span>
+                  </div>
+                  <div className="text-muted-foreground ml-2">→ {DEFAULT_PREVIEW_DATA.equipment_name}</div>
+                </div>
+                <div className="flex flex-col gap-1">
+                  <div className="flex items-center gap-2">
+                    <code className="bg-muted px-2 py-1 rounded">{'{general_name}'}</code>
+                    <span className="text-muted-foreground">General Name</span>
                   </div>
                   <div className="text-muted-foreground ml-2">→ {DEFAULT_PREVIEW_DATA.equipment_name}</div>
                 </div>
