@@ -153,7 +153,11 @@ export async function metadataFromThomann(url: string): Promise<ArticleMetadata 
         if (!urlObj.hostname.includes("thomann.de")) {
             return null
         }
-        const response = await axios.get(url)
+        const response = await axios.get(url, {
+            headers: {
+                "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.0.0 Safari/537.36"
+            }
+        })
         const html = response.data as string
         const $ = cheerio.load(html)
         const price: Price = {
