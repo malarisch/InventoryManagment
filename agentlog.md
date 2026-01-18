@@ -1,3 +1,7 @@
+2026-01-19 12:00 — Artikel-Import von Thomann
+- Neues API-Route `/api/articles/import-thomann` nutzt `metadataFromThomann`, setzt Namen aus Hersteller + Modell und legt Artikel für die aktive Company an.
+- Artikel-Übersicht: Button "Artikel von Thomann importieren" mit Modal für die URL, ruft Import-API und leitet nach Erstellung auf die Artikeldetailseite weiter.
+- Verifikation: `npm run test:tsc` ✅
 2025-10-09 15:15 — Fix: Print Dialog UX und korrekte Druck-Dimensionen
 - **UX Issues Fixed**:
   * Modal zu schmal → `sm:max-w-md` (448px) → `sm:max-w-lg` (512px)
