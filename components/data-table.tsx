@@ -121,7 +121,8 @@ export function DataTable<T extends { id: number }>(
               setLoading(false);
               return;
             }
-            (data as Array<{ id: number }> | null ?? []).forEach((row) => {
+            const relatedRows = (data ?? []) as unknown as Array<{ id: number }>;
+            relatedRows.forEach((row) => {
               if (typeof row?.id === 'number') ids.add(row.id);
             });
           }

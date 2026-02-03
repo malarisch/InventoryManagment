@@ -1826,3 +1826,7 @@ Files: lib/tools/deleteCompany.ts, tests/vitest/delete-company.test.ts. Next: ru
 2026-02-03 15:26 — Fix DataTable generic constraint build error
 - Simplified PostgrestFilterBuilder typing to avoid generic constraint mismatch.
 - Files: components/data-table.tsx
+
+2026-02-03 15:28 — Fix related search type casting
+- Cast related lookup data via unknown to satisfy strict TS parser errors.
+- Files: components/data-table.tsx
