@@ -1818,3 +1818,7 @@ Files: lib/tools/deleteCompany.ts, tests/vitest/delete-company.test.ts. Next: ru
 2026-02-03 15:16 — Fix Niimbot canvas scaling to printhead width
 - Canvas sizing now uses printer printhead width and scaled height, keeping aspect ratio.
 - Files: components/asset-tags/niimbot-printer.tsx
+
+2026-02-03 15:22 — Fix DataTable filter builder typing
+- Use PostgrestFilterBuilder typing for base filters to satisfy Next.js build.
+- Files: components/data-table.tsx

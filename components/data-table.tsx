@@ -3,6 +3,7 @@
 
 import { useDeferredValue, useEffect, useMemo, useState, type ReactNode } from 'react';
 import { createClient } from '@/lib/supabase/client';
+import type { PostgrestFilterBuilder } from '@supabase/postgrest-js';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -67,7 +68,7 @@ export function DataTable<T extends { id: number }>(
       const to = from + pageSize - 1;
       let query = supabase.from(tableName).select(select, { count: 'exact' }).order('created_at', { ascending: false });
 
-      const applyBaseFilters = (builder: ReturnType<typeof supabase.from>) => {
+      const applyBaseFilters = <T,>(builder: PostgrestFilterBuilder<T, any, any, any>) => {
         let next = builder;
         filters.forEach(({ column, operator = 'eq', value }) => {
           next = next.filter(column, operator, value as never);
