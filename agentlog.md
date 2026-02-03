@@ -1814,3 +1814,7 @@ Files: lib/tools/deleteCompany.ts, tests/vitest/delete-company.test.ts. Next: ru
 2026-02-03 15:13 — Fix related search embed error
 - Related-field search now embeds foreign tables in lookup queries to satisfy PostgREST.
 - Files: components/data-table.tsx
+
+2026-02-03 15:16 — Fix Niimbot canvas scaling to printhead width
+- Canvas sizing now uses printer printhead width and scaled height, keeping aspect ratio.
+- Files: components/asset-tags/niimbot-printer.tsx
