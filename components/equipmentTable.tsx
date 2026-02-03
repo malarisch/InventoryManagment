@@ -294,6 +294,8 @@ export function EquipmentTable({ pageSize = 10, className, onScanClick }: Props)
         { field: 'asset_tag', type: 'number' },
         { field: 'article_id', type: 'number' },
         { field: 'current_location', type: 'number' },
+        { field: 'articles.name', type: 'text' },
+        { field: 'asset_tags.printed_code', type: 'text' },
       ]}
       select="*, articles(name), asset_tags:asset_tag(printed_code), current_location_location:current_location(id,name)"
       onRowsLoaded={handleRowsLoaded}

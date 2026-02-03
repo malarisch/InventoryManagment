@@ -1793,3 +1793,7 @@ Files: lib/tools/deleteCompany.ts, tests/vitest/delete-company.test.ts. Next: ru
 - DataTable returns zero rows when search term doesn't match supported field types.
 - Global search now finds equipments by article name, asset tag code, and numeric IDs.
 - Files: components/data-table.tsx, app/management/search/page.tsx
+
+2026-02-03 14:34 — Equipment table search by article and asset tag
+- Equipment table search includes article names and asset tag printed codes.
+- Files: components/equipmentTable.tsx
