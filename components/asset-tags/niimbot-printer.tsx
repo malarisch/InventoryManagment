@@ -299,7 +299,7 @@ export function NiimbotPrinter({ assetTagId, onComplete, onCancel }: NiimbotPrin
       const printTaskType = client.getPrintTaskType() || "B1"; // Fallback to B1
       const printTask = client.abstraction.newPrintTask(printTaskType, {
         totalPages: 1,
-        density: 20,
+        density: 7,
       });
 
       await printTask.printInit();
