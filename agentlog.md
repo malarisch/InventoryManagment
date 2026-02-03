@@ -1788,3 +1788,8 @@ Files: lib/tools/deleteCompany.ts, tests/vitest/delete-company.test.ts. Next: ru
 - Tests decken Placeholder-Varianten ab; TypeScript läuft grün.
 - Files: lib/asset-tags/code.ts, tests/vitest/asset-tag-code.test.ts
 - Verification: npm run test:tsc ✅, npm run test:unit -- tests/vitest/asset-tag-code.test.ts ✅
+
+2026-02-03 14:31 — Fix equipment search filtering
+- DataTable returns zero rows when search term doesn't match supported field types.
+- Global search now finds equipments by article name, asset tag code, and numeric IDs.
+- Files: components/data-table.tsx, app/management/search/page.tsx

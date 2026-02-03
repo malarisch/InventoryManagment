@@ -31,6 +31,21 @@ export default function SearchPage() {
       setError(null);
 
       try {
+        const term = query.trim();
+        const numericTerm = Number(term);
+        const isNumeric = Number.isFinite(numericTerm);
+        const equipmentOrFilters: string[] = [
+          `articles.name.ilike.%${term}%`,
+          `asset_tags.printed_code.ilike.%${term}%`,
+        ];
+        if (isNumeric) {
+          equipmentOrFilters.push(
+            `id.eq.${numericTerm}`,
+            `asset_tag.eq.${numericTerm}`,
+            `article_id.eq.${numericTerm}`,
+          );
+        }
+
         const [articles, contacts, equipments, jobs, locations, cases] = await Promise.all([
           supabase.from('articles').select('*').textSearch('name', query, { type: 'websearch' }),
           supabase
@@ -38,7 +53,10 @@ export default function SearchPage() {
             .select('id, display_name, company_name, forename, surname, first_name, last_name, contact_type, customer_type')
             .eq('contact_type', 'customer')
             .textSearch('display_name', query, { type: 'websearch' }),
-          supabase.from('equipments').select('*, articles(name)').textSearch('id', query, { type: 'websearch' }),
+          supabase
+            .from('equipments')
+            .select('id, article_id, asset_tag, articles(name), asset_tags:asset_tag(printed_code)')
+            .or(equipmentOrFilters.join(',')),
           supabase.from('jobs').select('*').textSearch('name', query, { type: 'websearch' }),
           supabase.from('locations').select('*').textSearch('name', query, { type: 'websearch' }),
           supabase.from('cases').select('*').textSearch('name', query, { type: 'websearch' }),

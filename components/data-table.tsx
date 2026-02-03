@@ -84,9 +84,14 @@ export function DataTable<T extends { id: number }>(
         });
         if (filters.length > 0) {
           query = query.or(filters.join(','));
+        } else {
+          if (!isActive) return;
+          setRows([]);
+          onRowsLoaded?.([]);
+          setCount(0);
+          setLoading(false);
+          return;
         }
-        // If no filters match the search term type, just show all results
-        // (don't artificially restrict to id.eq.0 which shows nothing)
       }
 
       const { data, error, count } = await query.range(from, to);
