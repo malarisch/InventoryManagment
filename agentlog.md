@@ -1797,3 +1797,7 @@ Files: lib/tools/deleteCompany.ts, tests/vitest/delete-company.test.ts. Next: ru
 2026-02-03 14:34 — Equipment table search by article and asset tag
 - Equipment table search includes article names and asset tag printed codes.
 - Files: components/equipmentTable.tsx
+
+2026-02-03 14:40 — Allow spaces in article metadata inputs
+- Article metadata general fields no longer strip spaces while typing; trim happens on blur.
+- Files: components/forms/partials/article-metadata-form.tsx

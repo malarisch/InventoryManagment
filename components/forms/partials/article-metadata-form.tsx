@@ -294,7 +294,7 @@ export function ArticleMetadataForm({
     ensureSectionActive("notes", !!local.notes);
   }, [local, adminMeta, ensureSectionActive]);
 
-  function setTextField<K extends keyof ArticleMetadata>(key: K, raw: string, trim = true) {
+  function setTextField<K extends keyof ArticleMetadata>(key: K, raw: string, trim = false) {
     const trimmed = trim ? raw.trim() : raw;
     update((prev) => ({
       ...prev,
@@ -365,6 +365,9 @@ export function ArticleMetadataForm({
               onChange={(event) =>
                 setTextField("manufacturer", event.target.value)
               }
+              onBlur={(event) =>
+                setTextField("manufacturer", event.target.value, true)
+              }
             />
           </div>
           <div className="grid gap-1.5">
@@ -373,6 +376,7 @@ export function ArticleMetadataForm({
               id="amf-model"
               value={local.model ?? ""}
               onChange={(event) => setTextField("model", event.target.value)}
+              onBlur={(event) => setTextField("model", event.target.value, true)}
             />
           </div>
           <div className="grid gap-1.5">
@@ -383,6 +387,9 @@ export function ArticleMetadataForm({
               onChange={(event) =>
                 setTextField("manufacturerPartNumber", event.target.value)
               }
+              onBlur={(event) =>
+                setTextField("manufacturerPartNumber", event.target.value, true)
+              }
             />
           </div>
           <div className="grid gap-1.5">
@@ -391,6 +398,7 @@ export function ArticleMetadataForm({
               id="amf-ean"
               value={local.EAN ?? ""}
               onChange={(event) => setTextField("EAN", event.target.value)}
+              onBlur={(event) => setTextField("EAN", event.target.value, true)}
             />
           </div>
           <div className="grid gap-1.5">
@@ -399,6 +407,7 @@ export function ArticleMetadataForm({
               id="amf-upc"
               value={local.UPC ?? ""}
               onChange={(event) => setTextField("UPC", event.target.value)}
+              onBlur={(event) => setTextField("UPC", event.target.value, true)}
             />
           </div>
           <div className="col-span-full flex items-center gap-3 rounded-md border border-dashed p-3">
