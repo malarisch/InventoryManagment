@@ -105,7 +105,7 @@ export function DataTable<T extends { id: number }>(
           for (const [relation, relationFilters] of relatedFilters.entries()) {
             let relatedQuery = supabase
               .from(tableName)
-              .select('id')
+              .select(`id, ${relation}!inner(id)`)
               .order('created_at', { ascending: false });
             relatedQuery = applyBaseFilters(relatedQuery);
             relatedQuery = relatedQuery.or(relationFilters.join(','), { foreignTable: relation });

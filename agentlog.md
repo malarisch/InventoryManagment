@@ -1810,3 +1810,7 @@ Files: lib/tools/deleteCompany.ts, tests/vitest/delete-company.test.ts. Next: ru
 - DataTable now supports related-field search via foreign table filters and merges matches safely.
 - Equipment search uses asset_tag relation name for printed_code search.
 - Files: components/data-table.tsx, components/equipmentTable.tsx
+
+2026-02-03 15:13 — Fix related search embed error
+- Related-field search now embeds foreign tables in lookup queries to satisfy PostgREST.
+- Files: components/data-table.tsx
