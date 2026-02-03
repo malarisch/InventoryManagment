@@ -68,7 +68,9 @@ export function DataTable<T extends { id: number }>(
       const to = from + pageSize - 1;
       let query = supabase.from(tableName).select(select, { count: 'exact' }).order('created_at', { ascending: false });
 
-      const applyBaseFilters = <T,>(builder: PostgrestFilterBuilder<T, any, any, any>) => {
+      const applyBaseFilters = (
+        builder: PostgrestFilterBuilder<any, any, any, any>,
+      ) => {
         let next = builder;
         filters.forEach(({ column, operator = 'eq', value }) => {
           next = next.filter(column, operator, value as never);

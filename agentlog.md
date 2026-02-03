@@ -1822,3 +1822,7 @@ Files: lib/tools/deleteCompany.ts, tests/vitest/delete-company.test.ts. Next: ru
 2026-02-03 15:22 — Fix DataTable filter builder typing
 - Use PostgrestFilterBuilder typing for base filters to satisfy Next.js build.
 - Files: components/data-table.tsx
+
+2026-02-03 15:26 — Fix DataTable generic constraint build error
+- Simplified PostgrestFilterBuilder typing to avoid generic constraint mismatch.
+- Files: components/data-table.tsx
