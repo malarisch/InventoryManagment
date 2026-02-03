@@ -14,6 +14,7 @@ import { FileManager } from "@/components/files/file-manager";
 import { AssetTagCreateForm } from "@/components/forms/asset-tag-create-form";
 import { Button } from "@/components/ui/button";
 import { Scan } from "lucide-react";
+import { AssetTagPrintButton } from "@/components/asset-tags/asset-tag-print-button";
 
 type LocationRow = Tables<"locations"> & { asset_tags?: { printed_code: string | null } | null };
 type EquipmentRow = Tables<"equipments"> & {
@@ -86,14 +87,8 @@ export default async function LocationDetailPage({ params }: { params: Promise<{
             {` • Erstellt von: ${creator ?? (loc.created_by === currentUserId ? 'Du' : fallbackDisplayFromId(loc.created_by)) ?? '—'}`}
           </p>
           <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
-            <DeleteWithUndo table="locations" id={loc.id} payload={loc as Record<string, unknown>} redirectTo="/management/locations" />
-            <div className="flex items-center gap-2">
-              <Button variant="outline" asChild className="flex items-center gap-2">
-                <Link href={`/management/scanner?mode=assign-location&locationId=${loc.id}`}>
-                  <Scan className="h-4 w-4" />
-                  Kameramodus
-                </Link>
-              </Button>
+            <div className="flex flex-wrap items-center gap-2">
+              <DeleteWithUndo table="locations" id={loc.id} payload={loc as Record<string, unknown>} redirectTo="/management/locations" />
               {!loc.asset_tag && (
                 <AssetTagCreateForm
                   item={{ id: loc.id, name: loc.name || `Standort #${loc.id}` }}
@@ -101,6 +96,28 @@ export default async function LocationDetailPage({ params }: { params: Promise<{
                   companyId={loc.company_id}
                 />
               )}
+              {loc.asset_tag ? (
+                <>
+                  <AssetTagPrintButton assetTagId={loc.asset_tag} />
+                  <Button asChild variant="outline">
+                    <Link
+                      href={`/api/asset-tags/${loc.asset_tag}/render?format=svg`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                    >
+                      Asset Tag anzeigen
+                    </Link>
+                  </Button>
+                </>
+              ) : null}
+            </div>
+            <div className="flex items-center gap-2">
+              <Button variant="outline" asChild className="flex items-center gap-2">
+                <Link href={`/management/scanner?mode=assign-location&locationId=${loc.id}`}>
+                  <Scan className="h-4 w-4" />
+                  Kameramodus
+                </Link>
+              </Button>
             </div>
           </div>
           {/* Main edit form without extra Card wrapper */}

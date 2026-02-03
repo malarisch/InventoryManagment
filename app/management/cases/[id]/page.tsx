@@ -11,6 +11,9 @@ import { WorkshopTodoCreateInline } from "@/components/forms/workshop-todo-creat
 import { MaintenanceLogsCard } from "@/components/maintenance/maintenance-logs-card";
 import { fetchUserDisplayAdmin } from "@/lib/users/userDisplay.server";
 import { CaseEquipmentCard } from "@/components/case-equipment-card";
+import { AssetTagCreateForm } from "@/components/forms/asset-tag-create-form";
+import { AssetTagPrintButton } from "@/components/asset-tags/asset-tag-print-button";
+import { Button } from "@/components/ui/button";
 
 type CaseEquipmentRow = Tables<"equipments"> & {
   articles?: { name: string } | null;
@@ -95,7 +98,30 @@ export default async function CaseDetailPage({ params }: { params: Promise<{ id:
           </CardHeader>
           <CardContent>
             <div className="mb-2 flex flex-wrap items-center justify-between gap-3">
-              <DeleteWithUndo table="cases" id={row.id} payload={row as Record<string, unknown>} redirectTo="/management/cases" />
+              <div className="flex flex-wrap items-center gap-2">
+                <DeleteWithUndo table="cases" id={row.id} payload={row as Record<string, unknown>} redirectTo="/management/cases" />
+                {!row.asset_tag && caseCompanyId ? (
+                  <AssetTagCreateForm
+                    item={{ id: row.id, name: row.name ?? `Case #${row.id}` }}
+                    table="cases"
+                    companyId={caseCompanyId}
+                  />
+                ) : null}
+                {row.asset_tag ? (
+                  <>
+                    <AssetTagPrintButton assetTagId={row.asset_tag} />
+                    <Button asChild variant="outline">
+                      <Link
+                        href={`/api/asset-tags/${row.asset_tag}/render?format=svg`}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                      >
+                        Asset Tag anzeigen
+                      </Link>
+                    </Button>
+                  </>
+                ) : null}
+              </div>
               {caseCompanyId ? (
                 <div className="flex items-center gap-2">
                   <span className="text-sm text-muted-foreground">Werkstatt:</span>

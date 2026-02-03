@@ -1801,3 +1801,7 @@ Files: lib/tools/deleteCompany.ts, tests/vitest/delete-company.test.ts. Next: ru
 2026-02-03 14:40 — Allow spaces in article metadata inputs
 - Article metadata general fields no longer strip spaces while typing; trim happens on blur.
 - Files: components/forms/partials/article-metadata-form.tsx
+
+2026-02-03 14:44 — Add asset tag print buttons to case and location detail pages
+- Added asset tag create/print actions on case detail page and print actions on location detail page.
+- Files: app/management/cases/[id]/page.tsx, app/management/locations/[id]/page.tsx
