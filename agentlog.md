@@ -1805,3 +1805,8 @@ Files: lib/tools/deleteCompany.ts, tests/vitest/delete-company.test.ts. Next: ru
 2026-02-03 14:44 — Add asset tag print buttons to case and location detail pages
 - Added asset tag create/print actions on case detail page and print actions on location detail page.
 - Files: app/management/cases/[id]/page.tsx, app/management/locations/[id]/page.tsx
+
+2026-02-03 15:11 — Fix equipment search with related fields
+- DataTable now supports related-field search via foreign table filters and merges matches safely.
+- Equipment search uses asset_tag relation name for printed_code search.
+- Files: components/data-table.tsx, components/equipmentTable.tsx

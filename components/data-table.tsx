@@ -67,23 +67,93 @@ export function DataTable<T extends { id: number }>(
       const to = from + pageSize - 1;
       let query = supabase.from(tableName).select(select, { count: 'exact' }).order('created_at', { ascending: false });
 
-      filters.forEach(({ column, operator = 'eq', value }) => {
-        query = query.filter(column, operator, value as never);
-      });
+      const applyBaseFilters = (builder: ReturnType<typeof supabase.from>) => {
+        let next = builder;
+        filters.forEach(({ column, operator = 'eq', value }) => {
+          next = next.filter(column, operator, value as never);
+        });
+        return next;
+      };
+
+      query = applyBaseFilters(query);
 
       const term = dq.trim();
       if (term.length > 0 && searchableFields.length > 0) {
         const filters: string[] = [];
+        const relatedFilters = new Map<string, string[]>();
         searchableFields.forEach(({ field, type }) => {
           if (type === 'number') {
             const numeric = Number(term);
             if (!Number.isNaN(numeric)) filters.push(`${field}.eq.${numeric}`);
           } else {
-            filters.push(`${field}.ilike.%${term}%`);
+            const dotIndex = field.indexOf('.');
+            if (dotIndex > 0) {
+              const relation = field.slice(0, dotIndex);
+              const column = field.slice(dotIndex + 1);
+              const list = relatedFilters.get(relation) ?? [];
+              list.push(`${column}.ilike.%${term}%`);
+              relatedFilters.set(relation, list);
+            } else {
+              filters.push(`${field}.ilike.%${term}%`);
+            }
           }
         });
         if (filters.length > 0) {
           query = query.or(filters.join(','));
+        } else if (relatedFilters.size > 0) {
+          const ids = new Set<number>();
+          for (const [relation, relationFilters] of relatedFilters.entries()) {
+            let relatedQuery = supabase
+              .from(tableName)
+              .select('id')
+              .order('created_at', { ascending: false });
+            relatedQuery = applyBaseFilters(relatedQuery);
+            relatedQuery = relatedQuery.or(relationFilters.join(','), { foreignTable: relation });
+            const { data, error } = await relatedQuery;
+            if (error) {
+              setError(error.message);
+              setRows([]);
+              onRowsLoaded?.([]);
+              setCount(0);
+              setLoading(false);
+              return;
+            }
+            (data as Array<{ id: number }> | null ?? []).forEach((row) => {
+              if (typeof row?.id === 'number') ids.add(row.id);
+            });
+          }
+
+          if (!isActive) return;
+          if (ids.size === 0) {
+            setRows([]);
+            onRowsLoaded?.([]);
+            setCount(0);
+            setLoading(false);
+            return;
+          }
+
+          const idList = Array.from(ids);
+          let idQuery = supabase
+            .from(tableName)
+            .select(select)
+            .order('created_at', { ascending: false })
+            .in('id', idList);
+          idQuery = applyBaseFilters(idQuery);
+          const { data, error } = await idQuery.range(from, to);
+          if (!isActive) return;
+          if (error) {
+            setError(error.message);
+            setRows([]);
+            onRowsLoaded?.([]);
+            setCount(0);
+          } else {
+            const typedRows = ((data as unknown) as T[]) ?? [];
+            setRows(typedRows);
+            onRowsLoaded?.(typedRows);
+            setCount(idList.length);
+          }
+          setLoading(false);
+          return;
         } else {
           if (!isActive) return;
           setRows([]);
